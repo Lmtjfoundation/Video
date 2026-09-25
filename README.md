@@ -60,7 +60,7 @@ npm run use-recording -- recordings/take-2026-09-25T01-16-42.wav
 npm run render:talking
 ```
 
-`use-recording` accepts any audio or video file (WAV, M4A, MP3, WebM, MP4...). It converts the file, evens out the volume, trims silence at both ends, and transcribes it to write `public/voice.wav` and `public/captions.json`. It also picks a gesture per caption: `shake` for lines starting with "no" or "nah", `tilt` for questions, `lean` for the first line and exclamations, `nod` otherwise. Fix any misheard words or change gestures in `public/captions.json` before rendering. For better transcription, add `--model small.en`.
+`use-recording` accepts any audio or video file: voice memos (M4A, including lossless), WhatsApp and Telegram voice notes (OPUS/OGG), Android recordings (AMR/3GP), MP3, WAV, FLAC, CAF, WMA, WebM, and videos with sound (MP4/MOV). Install [ffmpeg](https://ffmpeg.org/download.html) for the full set of formats; without it the script falls back to Remotion's bundled ffmpeg, which can't read AMR, ALAC, CAF or WMA. It converts the file, evens out the volume, trims silence at both ends, and transcribes it to write `public/voice.wav` and `public/captions.json`. It also picks a gesture per caption: `shake` for lines starting with "no" or "nah", `tilt` for questions, `lean` for the first line and exclamations, `nod` otherwise. Fix any misheard words or change gestures in `public/captions.json` before rendering. For better transcription, add `--model small.en`.
 
 ### Change what he says with text-to-speech
 
