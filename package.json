@@ -8,7 +8,9 @@
     "render": "remotion render TitleCard out/title-card.mp4",
     "still": "remotion still TitleCard out/title-card.png --frame=60",
     "typecheck": "tsc --noEmit",
-    "render:talking": "remotion render TalkingCharacter out/talking-character.mp4"
+    "render:talking": "remotion render TalkingCharacter out/talking-character.mp4",
+    "record": "node scripts/recorder-server.mjs",
+    "use-recording": "python3 scripts/use_recording.py"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.528",
