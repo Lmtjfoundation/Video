@@ -7,10 +7,12 @@
     "dev": "remotion studio",
     "render": "remotion render TitleCard out/title-card.mp4",
     "still": "remotion still TitleCard out/title-card.png --frame=60",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "render:talking": "remotion render TalkingCharacter out/talking-character.mp4"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.528",
+    "@remotion/media-utils": "^4.0.528",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "remotion": "^4.0.528",

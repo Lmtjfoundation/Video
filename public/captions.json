@@ -1,0 +1,38 @@
+[
+  {
+    "text": "Hold up.",
+    "start": 0.4,
+    "end": 0.969,
+    "gesture": "lean"
+  },
+  {
+    "text": "Hold up.",
+    "start": 1.219,
+    "end": 1.799,
+    "gesture": "lean"
+  },
+  {
+    "text": "You mean to tell me you made a whole video,",
+    "start": 2.249,
+    "end": 4.177,
+    "gesture": "nod"
+  },
+  {
+    "text": "and didn't even put me in it?",
+    "start": 4.327,
+    "end": 5.546,
+    "gesture": "tilt"
+  },
+  {
+    "text": "Nah.",
+    "start": 6.146,
+    "end": 6.378,
+    "gesture": "shake"
+  },
+  {
+    "text": "Run it back.",
+    "start": 6.878,
+    "end": 7.656,
+    "gesture": "nod"
+  }
+]

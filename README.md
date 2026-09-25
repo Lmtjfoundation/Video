@@ -17,6 +17,7 @@ npm install
 | `npm run dev` | Open Remotion Studio (live preview and props editor in the browser) |
 | `npm run render` | Render the `TitleCard` composition to `out/title-card.mp4` |
 | `npm run still` | Render frame 60 of `TitleCard` to `out/title-card.png` |
+| `npm run render:talking` | Render the `TalkingCharacter` composition to `out/talking-character.mp4` |
 | `npm run typecheck` | Type-check the project |
 
 Render any composition with custom props:
@@ -33,6 +34,31 @@ npx remotion render TitleCard out/custom.mp4 --props='{"title":"Hello","subtitle
 - `remotion.config.ts` — CLI render settings
 
 To add a new video, create a component in `src/` and register it as another `<Composition>` in `src/Root.tsx`.
+
+## Talking character
+
+`TalkingCharacter` animates a single still image as a 2D cutout puppet (1080x1920, vertical):
+
+- **Talking:** the lower jaw (lip, lower teeth, chin and beard) is a separate layer that slides down to show a mouth interior. How far it opens on each frame follows the loudness of `public/voice.wav`.
+- **Blinking:** eyelids sweep down every few seconds.
+- **Body motion:** idle sway and breathing, plus a gesture per spoken line (`lean`, `nod`, `tilt`, `shake`).
+- **Captions:** each line pops in, timed from `public/captions.json`.
+
+### Change what he says
+
+The voice uses [Piper](https://github.com/rhasspy/piper), a free offline text-to-speech tool.
+
+1. Install Piper and download a voice (the commands are at the top of `scripts/make_voice.py`).
+2. Edit `LINES` in `scripts/make_voice.py` with the text, the pause after each line, and a gesture.
+3. Run `python3 scripts/make_voice.py`, then `npm run render:talking`.
+
+The video length follows the audio automatically. You can also drop in your own recording as `public/voice.wav` and edit `public/captions.json` by hand.
+
+### Use a different character image
+
+1. Replace `public/character/source.jpg`.
+2. Update the mouth and jaw coordinates in `scripts/prepare_character.py` and `src/talking/rig.ts`, and the eye coordinates in `src/talking/rig.ts`.
+3. Run `python3 scripts/prepare_character.py` (requires `pip install pillow numpy`).
 
 ## License note
 
