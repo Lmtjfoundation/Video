@@ -2,3 +2,4 @@ node_modules/
 out/
 voices/
 recordings/
+__pycache__/
