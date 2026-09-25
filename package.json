@@ -1,0 +1,23 @@
+{
+  "name": "video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI videos and motion graphics built with Remotion",
+  "scripts": {
+    "dev": "remotion studio",
+    "render": "remotion render TitleCard out/title-card.mp4",
+    "still": "remotion still TitleCard out/title-card.png --frame=60",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.528",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "^4.0.528",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2"
+  }
+}
