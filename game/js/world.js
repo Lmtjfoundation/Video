@@ -1281,7 +1281,7 @@ export class World {
     const rng = mulberry32(4242);
     // countryside forest
     let tries = 0;
-    while (tries++ < 9000) {
+    while (tries++ < (this.treeTries || 5000)) {
       const x = WORLD_BOUNDS.minX + rng() * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
       const z = WORLD_BOUNDS.minZ + rng() * (WORLD_BOUNDS.maxZ - WORLD_BOUNDS.minZ);
       if (this.inCity(x, z, 30)) continue;

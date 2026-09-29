@@ -103,6 +103,12 @@
   #play { font-family: var(--big-font); font-size: 34px; letter-spacing: 3px; background: var(--gold); color: #111; border: none; padding: 12px 48px; cursor: pointer; box-shadow: 5px 5px 0 #000; }
   #play:hover { background: #fff; }
   #play:disabled { background: #666; cursor: wait; }
+  #quality { margin-top: 12px; font-family: var(--hud-font); font-size: 14px; letter-spacing: 2px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #fff6; padding: 6px 16px; cursor: pointer; }
+  #fatal { background: #0b0610; z-index: 20; gap: 14px; padding: 24px; }
+  #fatal[hidden] { display: none; }
+  #fatal h2 { font-family: var(--big-font); font-size: 44px; margin: 0; color: #ff5b5b; }
+  #fatal p { max-width: 560px; font-size: 18px; }
+  #fatal button { font-family: var(--big-font); font-size: 24px; background: var(--gold); color: #111; border: none; padding: 10px 36px; cursor: pointer; }
   #loading { margin-top: 12px; font-size: 16px; color: #ddd; min-height: 20px; }
   .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 26px; max-width: 980px; width: 100%; margin-top: 26px; text-align: left; font-size: 15px; background: rgba(0,0,0,0.45); padding: 16px 20px; }
   .controls h3 { margin: 0 0 6px; font-family: var(--big-font); font-weight: 400; letter-spacing: 2px; color: var(--gold); }
@@ -167,10 +173,17 @@
   <p>Click to resume</p>
 </div>
 
+<div id="fatal" class="screen" hidden>
+  <h2>Something went wrong</h2>
+  <p></p>
+  <button type="button" onclick="location.reload()">RELOAD</button>
+</div>
+
 <div id="title" class="screen">
   <div class="logo">GRAND THEFT<span>SOUTHERN HEAT</span></div>
   <div class="cities"><b>DALLAS</b> • <i>NEW ORLEANS</i> • <u>ATLANTA</u></div>
   <button id="play" disabled>LOADING…</button>
+  <button id="quality" type="button">GRAPHICS</button>
   <div id="loading">Building three cities…</div>
   <div class="controls">
     <div>

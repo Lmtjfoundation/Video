@@ -35,10 +35,18 @@ const SKY_KEYS = [
 class Game {
   constructor() {
     this.canvas = document.getElementById('game');
-    this.low = params.get('quality') === 'low';
+    let pref = null;
+    try { pref = localStorage.getItem('gt-quality'); } catch (e) { /* storage unavailable */ }
+    const q = params.get('quality') || pref;
+    const weak = matchMedia('(pointer: coarse)').matches || (navigator.deviceMemory && navigator.deviceMemory <= 4);
+    this.low = q ? q === 'low' : !!weak;
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: !this.low, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(this.low ? 1 : Math.min(window.devicePixelRatio, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      showFatal('Your graphics card ran out of memory. Switch Graphics to LOW on the title screen, then reload.');
+    });
     this.renderer.shadowMap.enabled = !this.low;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -82,6 +90,7 @@ class Game {
     await tick();
     this.buildSky();
     this.world = new World(this.scene);
+    this.world.treeTries = this.low ? 2500 : 5000;
     progress('Raising Dallas, New Orleans and Atlanta…');
     await tick();
     this.world.build();
@@ -190,7 +199,7 @@ class Game {
     this.scene.add(this.hemi);
     this.sun = new THREE.DirectionalLight(0xfff2dd, 2.5);
     this.sun.castShadow = !this.low;
-    this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.shadow.mapSize.set(1024, 1024);
     const sc = this.sun.shadow.camera;
     sc.left = -110; sc.right = 110; sc.top = 110; sc.bottom = -110; sc.near = 10; sc.far = 900;
     this.sun.shadow.bias = -0.0006;
@@ -1104,6 +1113,13 @@ class Game {
 }
 
 function smoothAngleMix(a, b, t) { return a + wrapAngle(b - a) * t; }
+function showFatal(msg) {
+  const el = document.getElementById('fatal');
+  if (!el || !el.hidden) return;
+  el.querySelector('p').textContent = msg;
+  el.hidden = false;
+  if (document.pointerLockElement) document.exitPointerLock();
+}
 function tick() { return new Promise((r) => setTimeout(r, 0)); }
 
 // ------------------------------------------------------------------- boot
@@ -1111,6 +1127,14 @@ const game = new Game();
 window.__game = game;
 const playBtn = document.getElementById('play');
 const loading = document.getElementById('loading');
+const qBtn = document.getElementById('quality');
+qBtn.textContent = `GRAPHICS: ${game.low ? 'LOW' : 'HIGH'}`;
+qBtn.addEventListener('click', () => {
+  try { localStorage.setItem('gt-quality', game.low ? 'high' : 'low'); } catch (e) { /* storage unavailable */ }
+  location.reload();
+});
+window.addEventListener('error', (e) => { if (!game.started) showFatal(e.message); });
+window.addEventListener('unhandledrejection', (e) => { if (!game.started) showFatal(String(e.reason && e.reason.message || e.reason)); });
 game.init((msg) => { loading.textContent = msg; }).then(() => {
   loading.textContent = 'Ready. Click PLAY — best with headphones.';
   playBtn.disabled = false;
