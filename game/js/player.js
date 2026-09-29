@@ -17,7 +17,7 @@ export const WEAPON_ORDER = ['fist', 'pistol', 'smg', 'shotgun', 'rpg', 'minigun
 export class Player {
   constructor(game) {
     this.game = game;
-    this.model = buildHuman({ shirt: '#2e7d32', pants: '#c8b58a', skin: '#8d5a3b', hair: '#111', shoes: '#f0f0f0', armed: true });
+    this.model = buildHuman({ shirt: '#2e7d32', pants: '#c8b58a', skin: '#8d5a3b', hair: '#111', shoes: '#f0f0f0', armed: true, female: false, sleeves: 'short', build: 1.12, height: 1.03 });
     this.group = this.model.group;
     this.pos = this.group.position;
     this.h = 0;
