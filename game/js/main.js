@@ -1,10 +1,12 @@
 // Grand Theft: Southern Heat — main game loop and glue.
 import * as THREE from 'three';
 import { World, WORLD_BOUNDS } from './world.js';
-import { setAnisotropy } from './textures.js';
+import { setAnisotropy, setTextureScale } from './textures.js';
 import { Vehicle, VEHICLE_TYPES, resolveVehicleCollisions } from './vehicles.js';
 import { Player, WEAPONS } from './player.js';
 import { Effects } from './effects.js';
+import { Graphics } from './graphics.js';
+import { buildViewmodel } from './viewmodel.js';
 import { AudioEngine, STATIONS } from './audio.js';
 import { Input } from './input.js';
 import { HUD } from './hud.js';
@@ -19,6 +21,9 @@ const SAVE_KEY = 'gt-southern-heat-save';
 const params = new URLSearchParams(location.search);
 
 // time-of-day palette: [hour, skyTop, horizon, sunIntensity, hemiIntensity]
+// height of the bore above each first-person gun's grip
+const BORE = { pistol: 0.05, smg: 0.05, shotgun: 0.062, rpg: 0.1, minigun: 0.05 };
+
 const SKY_KEYS = [
   [0, '#03050d', '#0d1428', 0, 0.6],
   [4.5, '#060a1a', '#1a1a33', 0, 0.6],
@@ -40,7 +45,7 @@ class Game {
     const q = params.get('quality') || pref;
     const weak = matchMedia('(pointer: coarse)').matches || (navigator.deviceMemory && navigator.deviceMemory <= 4);
     this.low = q ? q === 'low' : !!weak;
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: !this.low, powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(this.low ? 1 : Math.min(window.devicePixelRatio, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.canvas.addEventListener('webglcontextlost', (e) => {
@@ -51,7 +56,8 @@ class Game {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
-    setAnisotropy(Math.min(8, this.renderer.capabilities.getMaxAnisotropy()));
+    setAnisotropy(Math.min(this.low ? 4 : 16, this.renderer.capabilities.getMaxAnisotropy()));
+    setTextureScale(this.low ? 1 : 2);
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.3, 3200);
@@ -164,48 +170,28 @@ class Game {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.gfx.resize(window.innerWidth, window.innerHeight);
+    this.vmCamera.aspect = window.innerWidth / window.innerHeight;
+    this.vmCamera.updateProjectionMatrix();
     this.fx.setPixelScale(this.renderer.domElement.height);
   }
 
   // --------------------------------------------------------------- sky/light
   buildSky() {
-    const g = new THREE.SphereGeometry(2800, 32, 16);
-    this.skyUniforms = {
-      top: { value: new THREE.Color('#2f72c0') }, horizon: { value: new THREE.Color('#bfe0f5') },
-      sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: new THREE.Color('#fff2cc') }, night: { value: 0 },
-    };
-    const m = new THREE.ShaderMaterial({
-      uniforms: this.skyUniforms, side: THREE.BackSide, depthWrite: false, fog: false,
-      vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); vec4 p = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position = p.xyww; }`,
-      fragmentShader: `
-        uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir; uniform vec3 sunCol; uniform float night;
-        varying vec3 vDir;
-        float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,45.164))) * 43758.5453); }
-        void main(){
-          float h = clamp(vDir.y, -0.2, 1.0);
-          vec3 col = mix(horizon, top, pow(max(h, 0.0), 0.55));
-          if (h < 0.0) col = mix(horizon, horizon * 0.6, -h * 4.0);
-          float sd = max(dot(normalize(vDir), normalize(sunDir)), 0.0);
-          col += sunCol * (pow(sd, 900.0) * 3.0 + pow(sd, 12.0) * 0.35);
-          // stars
-          vec3 sp = floor(vDir * 420.0);
-          float s = step(0.9975, hash(sp)) * night * smoothstep(0.05, 0.3, h);
-          col += vec3(s);
-          gl_FragColor = vec4(col, 1.0);
-        }`,
-    });
-    this.sky = new THREE.Mesh(g, m);
-    this.sky.frustumCulled = false;
-    this.sky.renderOrder = -1;
-    this.scene.add(this.sky);
-
+    // first-person weapon scene, drawn on top of the world with its own narrower FOV
+    this.vmScene = new THREE.Scene();
+    this.vmCamera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.01, 10);
+    this.vmHemi = new THREE.HemisphereLight(0xcfe8ff, 0x4a4030, 1);
+    this.vmSun = new THREE.DirectionalLight(0xffffff, 2);
+    this.vmScene.add(this.vmHemi, this.vmSun, this.vmSun.target);
+    this.gfx = new Graphics(this.renderer, this.scene, this.camera, this.low ? 'low' : 'high', { scene: this.vmScene, camera: this.vmCamera });
     this.hemi = new THREE.HemisphereLight(0xcfe8ff, 0x4a4030, 1.0);
     this.scene.add(this.hemi);
     this.sun = new THREE.DirectionalLight(0xfff2dd, 2.5);
     this.sun.castShadow = !this.low;
-    this.sun.shadow.mapSize.set(1024, 1024);
+    this.sun.shadow.mapSize.set(this.low ? 1024 : 2048, this.low ? 1024 : 2048);
     const sc = this.sun.shadow.camera;
-    sc.left = -110; sc.right = 110; sc.top = 110; sc.bottom = -110; sc.near = 10; sc.far = 900;
+    sc.left = -90; sc.right = 90; sc.top = 90; sc.bottom = -90; sc.near = 10; sc.far = 900;
     this.sun.shadow.bias = -0.0006;
     this.sun.shadow.normalBias = 0.6;
     this.scene.add(this.sun, this.sun.target);
@@ -236,15 +222,12 @@ class Game {
     const sunDir = new THREE.Vector3(Math.cos(ang) * 0.8, Math.sin(ang), 0.45).normalize();
     const night = clamp((0.12 - sunDir.y) / 0.32, 0, 1);
     this.night = night;
-    this.skyUniforms.top.value.copy(top);
-    this.skyUniforms.horizon.value.copy(hor);
-    this.skyUniforms.sunDir.value.copy(sunDir);
-    this.skyUniforms.night.value = night;
-    this.skyUniforms.sunCol.value.set(night > 0.5 ? '#000' : sunDir.y < 0.25 ? '#ffb070' : '#fff2cc');
-    this.scene.fog.color.copy(hor);
-    this.scene.fog.near = rain > 0 ? 80 : 250;
-    this.scene.fog.far = rain > 0 ? 700 : night > 0.5 ? 1100 : 1500;
-    this.hemi.intensity = hemiI;
+    this.gfx.setSun(sunDir, night, rain);
+    this.scene.fog.color.copy(hor).multiplyScalar(0.82);
+    this.scene.background = this.scene.fog.color;
+    this.scene.fog.near = rain > 0 ? 60 : 180;
+    this.scene.fog.far = rain > 0 ? 700 : night > 0.5 ? 1300 : 2400;
+    this.hemi.intensity = hemiI * 0.55;
     this.hemi.color.copy(top).lerp(new THREE.Color('#ffffff'), 0.5);
     // sun or moon
     const light = sunDir.y > -0.05 ? sunDir : new THREE.Vector3(-sunDir.x, -sunDir.y, sunDir.z);
@@ -254,8 +237,9 @@ class Game {
     this.sun.target.position.set(c.x, 0, c.z);
     this.sun.position.set(c.x + light.x * 400, Math.max(40, light.y * 400), c.z + light.z * 400);
     this.world.setNight(night);
-    this.renderer.toneMappingExposure = 1.0 + night * 0.25;
-    this.sky.position.copy(this.camera.position);
+    this.wetness = clamp((this.wetness || 0) + (rain > 0 ? dt / 20 : -dt / 90), 0, 1);
+    this.world.setWet(this.wetness);
+    this.renderer.toneMappingExposure = 0.75 + night * 0.35;
   }
 
   // ------------------------------------------------------------ spawning
@@ -497,6 +481,8 @@ class Game {
     } else if (t < range) {
       const hx = ox + dx * t, hy = oy + dy * t, hz = oz + dz * t;
       this.fx.impact(hx, hy, hz);
+      const n = this.world.hitNormal(hx, hy, hz, dx, dy, dz, this._hitN || (this._hitN = new THREE.Vector3()));
+      if (n) this.fx.bulletHole(hx, hy, hz, n);
       if (explosive) this.explosion(hx, hy, hz, 0.5, 'player');
     }
     if (tracer) this.fx.tracer(ox, oy, oz, ox + dx * Math.min(t, range), oy + dy * Math.min(t, range), oz + dz * Math.min(t, range), source === 'player' ? [1, 0.85, 0.5] : [1, 0.5, 0.4]);
@@ -975,52 +961,35 @@ class Game {
 
   // ---------------------------------------------------------- first person
   buildViewmodel() {
-    const vm = new THREE.Group();
-    const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, ...o });
-    const skin = M(0x8d5a3b), sleeve = M(0x2e7d32), metal = M(0x1c1c1e, { metalness: 0.6, roughness: 0.35 }), olive = M(0x4b5a32);
-    const box = (w, h, d, m, x, y, z, parent) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); parent.add(b); return b; };
-    // right arm + hand
-    const right = new THREE.Group();
-    box(0.06, 0.06, 0.4, sleeve, 0, 0, 0.2, right);
-    box(0.055, 0.06, 0.08, skin, 0, 0, -0.03, right);
-    right.position.set(0.24, -0.25, -0.42);
-    vm.add(right);
-    const left = new THREE.Group();
-    box(0.06, 0.06, 0.4, sleeve, 0, 0, 0.2, left);
-    box(0.055, 0.06, 0.08, skin, 0, 0, -0.03, left);
-    left.position.set(-0.24, -0.26, -0.44);
-    vm.add(left);
-    // one model per weapon, parented to the right hand
-    const guns = {};
-    const gun = (name, build) => { const g = new THREE.Group(); build(g); g.position.set(0, 0.03, -0.1); g.visible = false; right.add(g); guns[name] = g; };
-    gun('pistol', (g) => { box(0.04, 0.07, 0.22, metal, 0, 0.02, -0.08, g); box(0.035, 0.1, 0.05, metal, 0, -0.04, 0, g); });
-    gun('smg', (g) => { box(0.05, 0.08, 0.34, metal, 0, 0.02, -0.12, g); box(0.035, 0.14, 0.05, metal, 0, -0.07, -0.05, g); });
-    gun('shotgun', (g) => { box(0.05, 0.06, 0.6, M(0x5a3a22), 0, 0.02, -0.2, g); box(0.035, 0.035, 0.5, metal, 0, 0.07, -0.3, g); });
-    gun('rpg', (g) => { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.95, 12), olive); t.rotation.x = Math.PI / 2; t.position.set(0, 0.08, -0.25); g.add(t); box(0.05, 0.12, 0.06, metal, 0, -0.03, 0, g); });
-    gun('minigun', (g) => {
-      const barrels = new THREE.Group();
-      for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; const b = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.7, 6), metal); b.rotation.x = Math.PI / 2; b.position.set(Math.cos(a) * 0.035, Math.sin(a) * 0.035, 0); barrels.add(b); }
-      barrels.position.set(0, 0.03, -0.35);
-      g.add(barrels);
-      box(0.12, 0.12, 0.2, metal, 0, 0.03, 0, g);
-      g.userData.barrels = barrels;
-    });
-    // muzzle marker for tracers
-    const tip = new THREE.Object3D();
-    right.add(tip);
-    vm.visible = false;
-    this.camera.add(vm);
-    this.scene.add(this.camera);
-    this.viewmodel = vm;
-    this.vm = { right, left, guns, tip, kick: 0 };
+    this.vm = buildViewmodel(this.vmCamera, this.vmScene);
+    this.vm.kick = 0; this.vm.swayX = 0; this.vm.swayY = 0; this.vm.lastYaw = 0; this.vm.lastPitch = 0; this.vm.flashT = 0;
+    this.vm.right.add(this.vm.tip);
+    this._invQ = new THREE.Quaternion();
+    this.viewmodel = this.vm.group;
   }
 
   fpMuzzle() {
-    const p = this.player, g = this.vm.guns[p.weapon];
-    const len = { pistol: 0.2, smg: 0.3, shotgun: 0.5, rpg: 0.7, minigun: 0.7 }[p.weapon] || 0.2;
-    this.vm.tip.position.set(0, 0.05, -0.1 - len);
+    const p = this.player, G = this.vm.guns[p.weapon];
+    const cp = this.camera.position;
+    if (!G) return cp.clone();
+    this.vm.tip.position.set(0, BORE[p.weapon] || 0.05, G.muzzle);
+    this.vm.group.updateMatrixWorld(true);
+    // the gun lives in its own camera space: map the tip through the screen into the world
+    const v = this.vm.tip.getWorldPosition(new THREE.Vector3()).project(this.vmCamera);
+    v.z = 0.5;
     this.camera.updateMatrixWorld();
-    return this.vm.tip.getWorldPosition(new THREE.Vector3());
+    v.unproject(this.camera).sub(cp).normalize();
+    return v.multiplyScalar(0.7).add(cp);
+  }
+
+  // called by the player on every shot to kick the view model
+  vmShot() {
+    const vm = this.vm, w = this.player.weapon;
+    vm.kick = Math.min(1.2, vm.kick + (w === 'shotgun' || w === 'rpg' ? 1 : w === 'pistol' ? 0.6 : w === 'minigun' ? 0.15 : 0.3));
+    vm.flashT = w === 'rpg' ? 0.09 : 0.05;
+    vm.flash.rotation.z = Math.random() * Math.PI;
+    const s = w === 'shotgun' || w === 'rpg' ? 1.8 : w === 'pistol' ? 0.9 : 1.1;
+    vm.flash.scale.setScalar(s * (0.8 + Math.random() * 0.4));
   }
 
   updateFirstPerson(dt) {
@@ -1050,7 +1019,8 @@ class Game {
       ex = p.pos.x + Math.sin(cam.yaw) * 0.15;
       ez = p.pos.z + Math.cos(cam.yaw) * 0.15;
       ey = p.pos.y + (p.swimming ? 0.55 : 1.68) + bob;
-      fov = p.aiming ? 55 : 75;
+      const Gv = this.vm.guns[p.weapon];
+      fov = 75 + ((Gv ? Gv.adsFov : 65) - 75) * p.adsK + p.sprintK * 6;
       p.group.visible = false;
     }
     cam.pitch = clamp(cam.pitch, -1.35, 1.35);
@@ -1062,7 +1032,7 @@ class Game {
       this.shakeAmt = Math.max(0, this.shakeAmt - dt * 2.5);
     }
     cam.fov = smoothDamp(cam.fov, fov, 6, dt);
-    this.camera.near = 0.05;
+    this.camera.near = 0.1;
     this.camera.position.set(ex, ey, ez);
     this.camera.lookAt(ex + fx, ey + fy, ez + fz);
     if (v && !v.isHeli) this.camera.rotateZ(-v.rollVis * 0.6);
@@ -1071,26 +1041,85 @@ class Game {
 
     // hands and gun
     const vm = this.vm;
-    this.viewmodel.visible = !v && p.chuteState !== 'open';
+    this.viewmodel.visible = !v && p.chuteState !== 'open' && !p.dead;
     if (!this.viewmodel.visible) return;
     const melee = p.weapon === 'fist';
-    for (const [k, g] of Object.entries(vm.guns)) g.visible = k === p.weapon;
+    const G = vm.guns[p.weapon];
+    for (const [k, gg] of Object.entries(vm.guns)) gg.g.visible = k === p.weapon;
+    vm.rHand.visible = !melee;
+    vm.rightFist.visible = melee;
+    vm.leftFree.visible = melee;
     const twoHanded = !melee && p.weapon !== 'pistol';
+    vm.leftSupport.visible = twoHanded;
     const moving = Math.hypot(p.vx, p.vz);
     const sway = p.grounded ? Math.min(1, moving / 5) : 0;
-    const bx = Math.cos(p.phase) * 0.015 * sway, by = Math.abs(Math.sin(p.phase)) * 0.015 * sway;
-    vm.kick = Math.max(0, vm.kick - dt * 6);
-    const recent = performance.now() - p.lastShot < 80;
-    if (recent && !melee) vm.kick = Math.min(1, vm.kick + (p.weapon === 'shotgun' || p.weapon === 'rpg' ? 1 : 0.35));
-    const aimX = p.aiming && !melee ? 0.2 : 0;
-    vm.right.position.set(0.24 - aimX + bx, -0.25 + by + (p.aiming ? 0.07 : 0), -0.42 + vm.kick * 0.08);
-    vm.right.rotation.set(vm.kick * 0.25, 0, 0);
-    // punching: the right fist jabs forward
-    if (melee && p.punchT > 0) vm.right.position.z -= Math.sin((0.3 - p.punchT) / 0.3 * Math.PI) * 0.25;
-    vm.left.visible = melee || twoHanded;
-    vm.left.position.set(melee ? -0.24 + bx : -0.04 - aimX * 0.5 + bx, -0.26 + by, melee ? -0.44 : -0.6);
-    const mg = vm.guns.minigun.userData.barrels;
-    if (p.weapon === 'minigun' && this.input.mouse.left) mg.rotation.z += dt * 40;
+    const ads = p.adsK;
+    const bobK = sway * (1 - ads * 0.85) * (p.sprinting ? 2 : 1);
+    const bx = Math.cos(p.phase) * 0.012 * bobK, by = Math.abs(Math.sin(p.phase)) * 0.012 * bobK;
+    // breathing and mouse-look lag
+    const t = this.time;
+    const breathe = Math.sin(t * 1.6) * 0.003 * (1 - ads * 0.7);
+    const dYaw = wrapAngle(cam.yaw - vm.lastYaw), dPitch = cam.pitch - vm.lastPitch;
+    vm.lastYaw = cam.yaw; vm.lastPitch = cam.pitch;
+    vm.swayX = smoothDamp(vm.swayX, clamp(dYaw * 1.5, -0.04, 0.04) * (1 - ads * 0.8), 10, dt);
+    vm.swayY = smoothDamp(vm.swayY, clamp(-dPitch * 1.5, -0.04, 0.04) * (1 - ads * 0.8), 10, dt);
+    vm.kick = Math.max(0, vm.kick - dt * 7);
+    const kick = vm.kick;
+    const sprint = p.sprintK;
+    if (melee) {
+      // fists come up when you throw a punch and drop out of view again after a moment
+      const guard = clamp(1.5 - (performance.now() - p.lastShot) / 1000, 0, 1);
+      vm.guard = smoothDamp(vm.guard || 0, guard, 8, dt);
+      const low = (1 - vm.guard) * 0.3;
+      vm.right.position.set(0.2 + bx, -0.22 + by + breathe - low, -0.42);
+      vm.right.rotation.set(0.1, 0, 0);
+      if (p.punchT > 0) vm.right.position.z -= Math.sin((0.3 - p.punchT) / 0.3 * Math.PI) * 0.22;
+      vm.leftFree.position.set(-0.2 + bx, -0.22 + by + breathe - low, -0.44);
+      vm.leftFree.rotation.set(0.1, 0, 0);
+    } else {
+      const hp = G.hipPos;
+      const x = hp[0] + (0 - hp[0]) * ads, y = hp[1] + (-G.sightY - hp[1]) * ads, z = hp[2] + (-G.ads - hp[2]) * ads;
+      // reload: gun tilts and drops, magazine comes out and goes back in
+      let rl = 0, rr = 0;
+      if (p.reloadT > 0) { rr = 1 - p.reloadT / p.reloadDur; rl = Math.sin(Math.PI * rr); }
+      vm.right.position.set(
+        x + bx - vm.swayX - rl * 0.03 - sprint * 0.06,
+        y + by + breathe + vm.swayY - rl * 0.07 - sprint * 0.05,
+        z + kick * (0.04 + (1 - ads) * 0.03) + rl * 0.04,
+      );
+      vm.right.rotation.set(kick * 0.12 + rl * 0.35 - sprint * 0.5, -0.04 * (1 - ads) + sprint * 0.7, rl * 0.7 + sprint * 0.2);
+      // magazine / pump / warhead animation
+      if (G.mag) G.mag.position.y = rr > 0.15 && rr < 0.65 ? -Math.sin((rr - 0.15) / 0.5 * Math.PI) * 0.22 : 0;
+      if (G.warhead) G.warhead.visible = !(p.clip.rpg === 0 && p.reloadT <= 0) && !(rr > 0.1 && rr < 0.55);
+      if (G.pump) G.pump.position.z = p.pumpT > 0 ? Math.sin((1 - p.pumpT / 0.5) * Math.PI) * 0.08 : rl > 0 && p.weapon === 'shotgun' ? Math.abs(Math.sin(rr * Math.PI * 6)) * 0.05 : 0;
+      if (G.support) {
+        const sup = G.support;
+        // during a reload the support hand fetches a new magazine
+        const mag = rr > 0.1 && rr < 0.7 ? Math.sin((rr - 0.1) / 0.6 * Math.PI) : 0;
+        vm.leftSupport.position.set(sup[0] - mag * 0.05, sup[1] - mag * 0.2, sup[2] + mag * 0.12 + (G.pump && G.pump.position.z ? G.pump.position.z : 0));
+      }
+      if (G.barrels && this.input.mouse.left && p.reloadT <= 0) G.barrels.rotation.z += dt * 40;
+    }
+    // muzzle flash
+    vm.flashT -= dt;
+    const fl = vm.flashT > 0 && !melee;
+    vm.flash.visible = fl;
+    if (G) vm.flash.position.set(0, BORE[p.weapon] || 0.05, G.muzzle - 0.05);
+    vm.light.position.copy(vm.flash.position);
+    vm.light.intensity = fl ? 3 : 0;
+    // light the gun like the world around it (sun direction in camera space)
+    this.vmHemi.color.copy(this.hemi.color); this.vmHemi.groundColor.copy(this.hemi.groundColor);
+    this.vmHemi.intensity = this.hemi.intensity + (this.scene.environmentIntensity || 0) * 0.6;
+    this.vmSun.color.copy(this.sun.color); this.vmSun.intensity = this.sun.intensity * 0.8;
+    this.vmSun.position.subVectors(this.sun.position, this.sun.target.position).normalize()
+      .applyQuaternion(this._invQ.copy(this.camera.quaternion).invert());
+    this.vmScene.environment = this.scene.environment;
+    this.vmScene.environmentIntensity = (this.scene.environmentIntensity || 0) * 0.7;
+    // forearms always reach back to the shoulders
+    vm.group.updateMatrixWorld(true);
+    vm.rArm.lookAt(vm.shoulderR);
+    vm.lArm.lookAt(vm.shoulderL);
+    vm.lFreeArm.lookAt(vm.shoulderL);
   }
 
   // ---------------------------------------------------------------- audio
@@ -1153,7 +1182,7 @@ class Game {
         this.world.update(t, raw);
         this.updateSkyOnly();
       }
-      this.renderer.render(this.scene, this.camera);
+      this.gfx.render(this.camera.position, performance.now() / 1000);
       this.input.endFrame();
       return;
     }
@@ -1164,7 +1193,7 @@ class Game {
       if (input.pressed('KeyM') || input.pressed('Escape')) { if (this.hud.mapOpen) { this.hud.toggleMap(); this.input.lock(); } }
       if (this.hud.mapOpen) this.hud.drawMap();
       this.audio.setEngine(false, 0, 0); this.audio.setScreech(0);
-      this.renderer.render(this.scene, this.camera);
+      this.gfx.render(this.camera.position, performance.now() / 1000);
       input.endFrame();
       return;
     }
@@ -1212,15 +1241,15 @@ class Game {
     this.updateCamera(raw);
     this.updateHeadlight();
     this.updateAudio(dt);
+    this.gfx.setHurt(p.dead ? 0.6 : clamp((35 - p.health) / 35, 0, 1));
     this.hud.update(raw);
     if (this.frame % 900 === 0) this.persist();
-    this.renderer.render(this.scene, this.camera);
+    this.gfx.render(this.camera.position, this.time);
     input.endFrame();
   }
 
   updateSkyOnly() {
     if (!this._skyInit) { this._skyInit = true; this.updateSky(0); }
-    this.sky.position.copy(this.camera.position);
   }
 
   updateHeadlight() {
@@ -1236,7 +1265,7 @@ class Game {
 
   showHelp() {
     this.hud.help(`<b>F</b> steal/enter/exit • <b>Shift</b> sprint / nitro • <b>Space</b> jump / handbrake<br>
-      <b>LMB</b> shoot • <b>RMB</b> aim • <b>1-6</b> weapons • <b>R</b> radio • <b>E</b> horn/siren<br>
+      <b>LMB</b> shoot • <b>RMB</b> aim down sights • <b>R</b> reload (radio in cars) • <b>1-6</b> weapons • <b>E</b> horn/siren<br>
       <b>M</b> map + GPS • <b>V</b> camera • <b>T</b> cheats • <b>P</b> pause<br>
       Cheats: HESOYAM, TOOLUP, PAINKILLER, LAWYERUP, FUGITIVE, SKYFALL, COMET, BUZZOFF, RHINO, MONSTER, ROCKET, CATCHME, HOPTOIT, FLOATER, SLOWMO, MAKEITRAIN, TIMEWARP, HIGHEX, HOTHANDS, SPEEDFREAK, SLIPPERY, FULLCLIP, RIOT, ARMAGEDDON`, 12);
   }

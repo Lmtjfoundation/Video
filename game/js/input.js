@@ -105,14 +105,15 @@ export class Input {
         e.preventDefault();
         b.classList.add('on');
         if (b.dataset.key) { this.down.add(b.dataset.key); this.keys.add(b.dataset.key); }
-        if (b.dataset.mouse) { this.mouse.left = true; this.mouse.leftDown = true; }
+        if (b.dataset.mouse === 'right') this.mouse.right = !this.mouse.right; // toggle aim
+        else if (b.dataset.mouse) { this.mouse.left = true; this.mouse.leftDown = true; }
         if (b.dataset.wheel) this.mouse.wheel += 1;
       };
       const release = (e) => {
         e.preventDefault();
         b.classList.remove('on');
         if (b.dataset.key) this.keys.delete(b.dataset.key);
-        if (b.dataset.mouse) this.mouse.left = false;
+        if (b.dataset.mouse === 'left') this.mouse.left = false;
       };
       b.addEventListener('touchstart', press, { passive: false });
       b.addEventListener('touchend', release, { passive: false });

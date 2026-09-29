@@ -138,7 +138,7 @@ export class AudioEngine {
     const t = this.t, k = this.distGain(dist);
     if (k <= 0) return;
     switch (kind) {
-      case 'pistol': this.noiseHit(t, 0.18, 2600, 'lowpass', 0.8 * k); this.tone(t, 180, 0.08, 'sine', 0.5 * k, null, { to: 60 }); break;
+      case 'pistol': this.noiseHit(t, 0.18, 2600, 'lowpass', 0.8 * k); this.tone(t, 180, 0.08, 'sine', 0.5 * k, null, { to: 60 }); this.noiseHit(t + 0.02, 0.5, 900, 'lowpass', 0.12 * k); break;
       case 'smg': this.noiseHit(t, 0.09, 3200, 'lowpass', 0.55 * k); this.tone(t, 150, 0.05, 'sine', 0.35 * k, null, { to: 60 }); break;
       case 'shotgun': this.noiseHit(t, 0.4, 1800, 'lowpass', 1.0 * k, null, 1, 300); this.tone(t, 120, 0.2, 'sine', 0.8 * k, null, { to: 40 }); break;
       case 'minigun': this.noiseHit(t, 0.05, 3500, 'lowpass', 0.4 * k); break;
@@ -147,6 +147,29 @@ export class AudioEngine {
       case 'punch': this.noiseHit(t, 0.08, 900, 'lowpass', 0.5 * k); this.tone(t, 120, 0.08, 'sine', 0.4 * k, null, { to: 70 }); break;
       case 'empty': this.tone(t, 1600, 0.03, 'square', 0.1); break;
     }
+  }
+
+  // magazine out / in / slide release, timed to the reload animation
+  reload(kind) {
+    if (!this.ctx) return;
+    const t = this.t;
+    const click = (at, f, g) => { this.noiseHit(t + at, 0.05, f, 'bandpass', g, null, 4); this.tone(t + at, f / 3, 0.03, 'square', g * 0.15); };
+    if (kind === 'shotgun') {
+      for (let i = 0; i < 4; i++) click(0.3 + i * 0.5, 1800, 0.25);
+      click(2.3, 900, 0.4); click(2.45, 1200, 0.4);
+    } else if (kind === 'rpg') {
+      click(0.5, 700, 0.35); click(1.6, 900, 0.4);
+    } else {
+      const d = kind === 'smg' ? 1.9 : 1.4;
+      click(d * 0.2, 1400, 0.3); click(d * 0.6, 1100, 0.35); click(d * 0.85, 2200, 0.4);
+    }
+  }
+
+  footstep(k = 0.5) {
+    if (!this.ctx) return;
+    const t = this.t;
+    this.noiseHit(t, 0.07, 500 + Math.random() * 300, 'lowpass', 0.12 * k);
+    this.noiseHit(t + 0.01, 0.04, 2500 + Math.random() * 1500, 'bandpass', 0.03 * k, null, 2);
   }
 
   explosion(dist = 0, big = 1) {

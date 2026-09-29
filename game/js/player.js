@@ -6,11 +6,12 @@ import { clamp, rand, wrapAngle, smoothAngle, dist2 } from './util.js';
 
 export const WEAPONS = {
   fist: { name: 'Fists', icon: '✊', rate: 0.4, melee: true, dmg: 20 },
-  pistol: { name: 'Pistol', icon: '🔫', rate: 0.2, dmg: 36, spread: 0.008, range: 220, sound: 'pistol', max: 250, give: 60 },
-  smg: { name: 'Micro SMG', icon: '🔫', rate: 0.075, dmg: 20, spread: 0.03, range: 180, auto: true, sound: 'smg', max: 600, give: 180 },
-  shotgun: { name: 'Pump Shotgun', icon: '💥', rate: 0.85, dmg: 16, pellets: 9, spread: 0.07, range: 70, sound: 'shotgun', force: 9, max: 80, give: 24 },
-  rpg: { name: 'RPG', icon: '🚀', rate: 1.1, projectile: 'rocket', sound: 'rpg', max: 30, give: 8 },
-  minigun: { name: 'Minigun', icon: '⚙️', rate: 0.03, dmg: 24, spread: 0.04, range: 220, auto: true, sound: 'minigun', max: 5000, give: 1500 },
+  // mag: rounds per magazine, reload: seconds, recoil: view kick (radians), bloom: spread added per shot
+  pistol: { name: 'Pistol', icon: '🔫', rate: 0.16, dmg: 36, spread: 0.012, range: 220, sound: 'pistol', max: 250, give: 60, mag: 15, reload: 1.4, recoil: 0.028, bloom: 0.012 },
+  smg: { name: 'Micro SMG', icon: '🔫', rate: 0.075, dmg: 20, spread: 0.028, range: 180, auto: true, sound: 'smg', max: 600, give: 180, mag: 30, reload: 1.9, recoil: 0.014, bloom: 0.006 },
+  shotgun: { name: 'Pump Shotgun', icon: '💥', rate: 0.85, dmg: 16, pellets: 9, spread: 0.06, range: 70, sound: 'shotgun', force: 9, max: 80, give: 24, mag: 8, reload: 2.6, recoil: 0.09, bloom: 0.02 },
+  rpg: { name: 'RPG', icon: '🚀', rate: 1.1, projectile: 'rocket', sound: 'rpg', max: 30, give: 8, mag: 1, reload: 2.4, recoil: 0.06, bloom: 0 },
+  minigun: { name: 'Minigun', icon: '⚙️', rate: 0.03, dmg: 24, spread: 0.035, range: 220, auto: true, sound: 'minigun', max: 5000, give: 1500, recoil: 0.004, bloom: 0.002 },
 };
 export const WEAPON_ORDER = ['fist', 'pistol', 'smg', 'shotgun', 'rpg', 'minigun'];
 
@@ -42,6 +43,16 @@ export class Player {
     this.bustTimer = 0;
     this.lastShot = -99;
     this.spin = 0;
+    // first-person gun handling
+    this.clip = {};           // rounds in the current magazine (part of weapons[w])
+    this.reloadT = 0; this.reloadDur = 1;
+    this.adsK = 0;            // 0 = hip, 1 = aiming down sights
+    this.sprintK = 0;
+    this.sprinting = false;
+    this.bloom = 0;           // extra spread from sustained fire
+    this.recoilBack = 0;      // view kick still to recover
+    this.pumpT = 0;
+    this.stepPhase = 0;
     game.scene.add(this.group);
     this.buildChute();
   }
@@ -67,6 +78,24 @@ export class Player {
     const W = WEAPONS[w];
     this.weapons[w] = Math.min(W.max || Infinity, (this.weapons[w] || 0) + (ammo ?? W.give));
     this.weapon = w;
+    this.reloadT = 0;
+  }
+
+  // rounds loaded in the current magazine
+  loaded(w = this.weapon) {
+    const W = WEAPONS[w], total = this.weapons[w] || 0;
+    if (!W.mag) return total;
+    if (this.clip[w] === undefined) this.clip[w] = Math.min(W.mag, total);
+    return Math.min(this.clip[w], total);
+  }
+
+  startReload() {
+    const W = WEAPONS[this.weapon];
+    if (!W.mag || this.reloadT > 0 || this.vehicle) return;
+    const total = this.weapons[this.weapon] || 0;
+    if (this.loaded() >= Math.min(W.mag, total)) return;
+    this.reloadT = this.reloadDur = W.reload;
+    this.game.audio.reload(this.weapon);
   }
 
   cycleWeapon(dir) {
@@ -74,6 +103,7 @@ export class Player {
     let i = owned.indexOf(this.weapon);
     i = (i + dir + owned.length) % owned.length;
     this.weapon = owned[i];
+    this.reloadT = 0;
     this.game.hud.weaponChanged();
   }
 
@@ -91,9 +121,28 @@ export class Player {
     for (let k = 1; k <= 6; k++) {
       if (input.pressed('Digit' + k)) {
         const w = WEAPON_ORDER[k - 1];
-        if (this.weapons[w] > 0) { this.weapon = w; g.hud.weaponChanged(); }
+        if (this.weapons[w] > 0 && w !== this.weapon) { this.weapon = w; this.reloadT = 0; g.hud.weaponChanged(); }
       }
     }
+
+    // reloading
+    if (this.reloadT > 0) {
+      this.reloadT -= dt;
+      if (this.reloadT <= 0) {
+        this.reloadT = 0;
+        const W = WEAPONS[this.weapon];
+        this.clip[this.weapon] = Math.min(W.mag, this.weapons[this.weapon] || 0);
+      }
+    }
+    if (input.pressed('KeyR') && !this.vehicle) this.startReload();
+    // recoil recovery: the view drifts most of the way back down
+    if (this.recoilBack > 0) {
+      const back = Math.min(this.recoilBack, this.recoilBack * dt * 7 + dt * 0.02);
+      cam.pitch += back;
+      this.recoilBack -= back;
+    }
+    this.bloom = Math.max(0, this.bloom - dt * (this.adsK > 0.5 ? 0.12 : 0.08));
+    this.pumpT = Math.max(0, this.pumpT - dt);
 
     if (this.vehicle) this.updateInVehicle(dt, input, cam);
     else this.updateOnFoot(dt, input, cam);
@@ -114,8 +163,14 @@ export class Player {
     const ml = Math.hypot(mx, mz);
     if (ml > 0) { mx /= ml; mz /= ml; }
 
-    this.aiming = input.mouse.right || (input.mouse.left && !WEAPONS[this.weapon].melee) || (performance.now() - this.lastShot < 600);
-    const sprint = input.key('ShiftLeft') || input.key('ShiftRight');
+    const fp = g.cam.mode === 0;
+    const Wc = WEAPONS[this.weapon];
+    const ads = input.mouse.right && !Wc.melee && !this.swimming && this.chuteState !== 'open';
+    this.aiming = ads || (!fp && ((input.mouse.left && !Wc.melee) || (performance.now() - this.lastShot < 600)));
+    const sprint = (input.key('ShiftLeft') || input.key('ShiftRight')) && !ads;
+    this.sprinting = sprint && fwd > 0 && this.grounded && performance.now() - this.lastShot > 400;
+    this.adsK += ((ads && this.reloadT <= 0 ? 1 : 0) - this.adsK) * Math.min(1, dt * 12);
+    this.sprintK += ((this.sprinting ? 1 : 0) - this.sprintK) * Math.min(1, dt * 8);
     let speed = this.swimming ? 3 : sprint ? 8.5 : 5.2;
     if (g.cheats.fastRun) speed *= 1.8;
     if (this.aiming) speed = Math.min(speed, 3.6);
@@ -196,11 +251,17 @@ export class Player {
     const W = WEAPONS[this.weapon];
     if (this.weapons[this.weapon] <= 0 && this.weapon !== 'fist') this.cycleWeapon(-1);
     const fire = W.auto ? input.mouse.left : input.mouse.leftDown;
-    if (fire && this.cooldown <= 0 && !this.swimming && this.chuteState !== 'open') this.fire(cam);
+    if (fire && this.reloadT <= 0 && W.mag && this.loaded() <= 0 && this.weapons[this.weapon] > 0) this.startReload();
+    else if (fire && this.cooldown <= 0 && this.reloadT <= 0 && !this.swimming && this.chuteState !== 'open') this.fire(cam);
 
     // animation
     const sp = Math.hypot(this.vx, this.vz);
     this.phase += dt * sp * (this.swimming ? 1.5 : 3.1);
+    // footsteps twice per stride
+    if (this.grounded && sp > 1.5) {
+      const st = Math.floor(this.phase / Math.PI);
+      if (st !== this.stepPhase) { this.stepPhase = st; g.audio.footstep(sp > 7 ? 1 : sp > 4 ? 0.7 : 0.45); }
+    }
     animateHuman(this.model, this.phase, this.grounded || this.swimming ? Math.min(1, sp * 0.18) : 0.3, this.aiming && !W.melee, dt);
     if (this.punchT > 0) {
       this.punchT -= dt;
@@ -283,8 +344,22 @@ export class Player {
     if (W.melee) { this.punch(); return; }
     if (this.weapons[this.weapon] !== Infinity) {
       if (this.weapons[this.weapon] <= 0) { g.audio.shot('empty'); return; }
-      if (!g.cheats.infiniteAmmo) this.weapons[this.weapon]--;
+      if (!fromVehicle && W.mag && this.loaded() <= 0) { g.audio.shot('empty'); this.startReload(); return; }
+      if (!g.cheats.infiniteAmmo) {
+        this.weapons[this.weapon]--;
+        if (W.mag && !fromVehicle) this.clip[this.weapon] = this.loaded() - 1;
+      }
     }
+    // recoil: kick the view up and a little sideways, most of it recovers
+    if (!fromVehicle && W.recoil) {
+      const k = W.recoil * (1 - this.adsK * 0.35) * (this.grounded ? 1 : 1.5);
+      cam.pitch -= k;
+      cam.yaw += rand(-k, k) * 0.35;
+      this.recoilBack += k * 0.75;
+      this.bloom = Math.min(0.06, this.bloom + (W.bloom || 0));
+    }
+    if (g.cam.mode === 0 && !fromVehicle) g.vmShot();
+    if (this.weapon === 'shotgun') this.pumpT = 0.5;
     // muzzle position
     let mx, my, mz;
     if (fromVehicle) {
@@ -311,13 +386,23 @@ export class Player {
     }
     const pellets = W.pellets || 1;
     for (let i = 0; i < pellets; i++) {
-      const s = W.spread * (this.aiming ? 1 : 1.6);
+      const s = this.currentSpread() * (W.pellets ? 1 : 0.6);
       let ddx = dx + rand(-s, s), ddy = dy + rand(-s, s), ddz = dz + rand(-s, s);
       const ll = Math.hypot(ddx, ddy, ddz); ddx /= ll; ddy /= ll; ddz /= ll;
       g.fireBullet(mx, my, mz, ddx, ddy, ddz, W.dmg, W.range, 'player', W.force || 2, i === 0 || i % 3 === 0);
     }
     if (this.weapon === 'minigun') g.shake(0.06);
     if (this.weapon === 'shotgun') g.shake(0.2);
+  }
+
+  // cone half-angle for the next shot (also drives the crosshair size)
+  currentSpread() {
+    const W = WEAPONS[this.weapon];
+    if (!W.spread) return 0;
+    const moving = Math.min(1, Math.hypot(this.vx, this.vz) / 5);
+    let s = W.spread * (1 + moving * 0.8 + (this.grounded || this.vehicle ? 0 : 1.5)) + this.bloom;
+    s *= 1 - this.adsK * (W.pellets ? 0.3 : 0.65);
+    return s;
   }
 
   punch() {

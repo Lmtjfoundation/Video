@@ -3,7 +3,10 @@
 import * as THREE from 'three';
 import { GeoBuilder, mat } from './geo.js';
 import * as TX from './textures.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { mulberry32, clamp, pointSegDist, dist2 } from './util.js';
+
+const pick = (arr, rng) => arr[Math.floor(rng() * arr.length)];
 
 export const PITCH = 100;       // distance between road centrelines
 export const ROAD_HALF = 9;     // half width of city roads
@@ -112,6 +115,7 @@ export class World {
     this.animated = [];
     this.nightBasic = [];     // basic materials whose colour scales with night
     this.nightEmissive = [];  // standard materials whose emissiveIntensity scales
+    this.wetMats = [];        // materials that get glossier in the rain
     this.treeList = [];
     this.lampList = [];
     this.labels = [];         // for the big map
@@ -128,6 +132,7 @@ export class World {
     this.buildCountryside();
     this.buildTrees();
     this.buildLamps();
+    this.buildStreetFurniture();
     this.placePickups();
   }
 
@@ -138,24 +143,27 @@ export class World {
       const glassy = name === 'glass' || name === 'dark';
       const m = new THREE.MeshStandardMaterial({
         map: st.map, emissiveMap: st.emissiveMap, emissive: 0xffffff, emissiveIntensity: 0,
-        vertexColors: true, roughness: glassy ? 0.35 : 0.85, metalness: glassy ? 0.35 : 0.05,
+        normalMap: st.normalMap, normalScale: new THREE.Vector2(glassy ? 0.6 : 1.2, glassy ? 0.6 : 1.2),
+        roughnessMap: st.ormMap, metalnessMap: st.ormMap,
+        vertexColors: true, roughness: 1, metalness: 1, envMapIntensity: glassy ? 1.4 : 1,
       });
       this.facadeMats[name] = m;
-      this.nightEmissive.push({ m, k: 1.1 });
+      this.nightEmissive.push({ m, k: 0.65 });
     }
     this.detailMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
     this.lightsMat = new THREE.MeshBasicMaterial({ vertexColors: true });
     this.nightBasic.push({ m: this.lightsMat, day: 0.45, night: 1.2 });
     const conc = TX.concreteTexture();
-    this.slabMat = new THREE.MeshStandardMaterial({ map: conc, vertexColors: true, roughness: 0.95 });
+    this.slabMat = this.pbrMat(conc, { vertexColors: true }, 0.2);
     this.parkMat = new THREE.MeshStandardMaterial({ map: TX.parkTexture(), roughness: 1 });
-    this.parkingMat = new THREE.MeshStandardMaterial({ map: TX.parkingTexture(), roughness: 0.9 });
+    this.parkingMat = this.pbrMat(TX.parkingTexture(), {}, 0.7);
     this.helipadMat = new THREE.MeshStandardMaterial({ map: TX.helipadTexture(), roughness: 0.8 });
-    this.roadMat = new THREE.MeshStandardMaterial({ map: TX.cityRoadTexture(), roughness: 0.92 });
+    this.roadMat = this.pbrMat(TX.cityRoadTexture(), {}, 0.75);
     this.roadMat.polygonOffset = true; this.roadMat.polygonOffsetFactor = -1;
-    this.hwyMat = new THREE.MeshStandardMaterial({ map: TX.highwayTexture(), roughness: 0.9 });
+    this.hwyMat = this.pbrMat(TX.highwayTexture(), {}, 0.75);
     this.hwyMat.polygonOffset = true; this.hwyMat.polygonOffsetFactor = -2;
     this.asphaltMat = new THREE.MeshStandardMaterial({ color: 0x3a3b3e, roughness: 0.95 });
+    this.wetMats.push({ m: this.asphaltMat, base: 0.95, wet: 0.7 });
     this.asphaltMat.polygonOffset = true; this.asphaltMat.polygonOffsetFactor = -2;
     this.whiteMat = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.7 });
     this.goldMat = new THREE.MeshStandardMaterial({ color: 0xd4a73a, metalness: 0.9, roughness: 0.25, emissive: 0xffb830, emissiveIntensity: 0 });
@@ -163,6 +171,21 @@ export class World {
     this.glassGreenMat = new THREE.MeshStandardMaterial({ color: 0x5f8f86, metalness: 0.6, roughness: 0.2 });
     this.darkMetalMat = new THREE.MeshStandardMaterial({ color: 0x44474d, metalness: 0.6, roughness: 0.4 });
     this.rampMat = this.makeRampMat();
+  }
+
+  // Standard material that picks up the normal / roughness maps generated with a texture.
+  // `wet` is how much the surface roughness drops when it rains (puddles, sheen).
+  pbrMat(map, opts = {}, wet = 0) {
+    const m = new THREE.MeshStandardMaterial({ map, roughness: 1, ...opts });
+    const { normalMap, roughMap } = map.userData;
+    if (normalMap) { normalMap.repeat.copy(map.repeat); m.normalMap = normalMap; m.normalScale.set(1, 1); }
+    if (roughMap) { roughMap.repeat.copy(map.repeat); m.roughnessMap = roughMap; }
+    if (wet) this.wetMats.push({ m, base: 1, wet });
+    return m;
+  }
+
+  setWet(k) {
+    for (const { m, base, wet } of this.wetMats) m.roughness = base * (1 - wet * k);
   }
 
   makeRampMat() {
@@ -182,8 +205,8 @@ export class World {
     const g = new THREE.PlaneGeometry(w, h);
     g.rotateX(-Math.PI / 2);
     const tex = TX.grassTexture();
-    tex.repeat.set(w / 24, h / 24);
-    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: tex, roughness: 1 }));
+    tex.repeat.set(w / 16, h / 16);
+    const m = new THREE.Mesh(g, this.pbrMat(tex, {}, 0.3));
     m.position.set((WORLD_BOUNDS.minX + WORLD_BOUNDS.maxX) / 2, -0.12, (WORLD_BOUNDS.minZ + WORLD_BOUNDS.maxZ) / 2);
     m.receiveShadow = true;
     this.scene.add(m);
@@ -797,10 +820,12 @@ export class World {
         const base = TX.FACADE_STYLES.glass;
         const map = base.map.clone(); map.needsUpdate = true;
         const em = base.emissiveMap.clone(); em.needsUpdate = true;
+        const nm = base.normalMap.clone(); nm.needsUpdate = true;
+        const orm = base.ormMap.clone(); orm.needsUpdate = true;
         map.repeat.set(2 * Math.PI * r / base.tileW, h / base.tileH);
-        em.repeat.copy(map.repeat);
-        const m = new THREE.MeshStandardMaterial({ map, emissiveMap: em, emissive: 0xffffff, emissiveIntensity: 0, color: 0xe8f4ff, metalness: 0.5, roughness: 0.25 });
-        this.nightEmissive.push({ m, k: 1.1 });
+        for (const t of [em, nm, orm]) t.repeat.copy(map.repeat);
+        const m = new THREE.MeshStandardMaterial({ map, emissiveMap: em, emissive: 0xffffff, emissiveIntensity: 0, color: 0xe8f4ff, normalMap: nm, roughnessMap: orm, metalnessMap: orm, metalness: 1, roughness: 1 });
+        this.nightEmissive.push({ m, k: 0.65 });
         const cyl = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 36, 1, true), m);
         cyl.position.set(bx, h / 2, bz); cyl.castShadow = true;
         const cap = new THREE.Mesh(new THREE.CylinderGeometry(r + 2, r + 2, 8, 36), this.darkMetalMat);
@@ -1311,39 +1336,59 @@ export class World {
 
     const byKind = {};
     for (const t of this.treeList) (byKind[t.kind] ||= []).push(t);
-    const trunkM = new THREE.MeshStandardMaterial({ color: 0x5a4030, roughness: 1 });
-    const trunkG = new THREE.CylinderGeometry(0.25, 0.4, 1, 6); trunkG.translate(0, 0.5, 0);
+    const trunkM = new THREE.MeshStandardMaterial({ color: 0x4e3a2c, roughness: 0.95 });
+    const trunkG = new THREE.CylinderGeometry(0.2, 0.42, 1, 7, 2, true); trunkG.translate(0, 0.5, 0);
+    { // gnarly trunk
+      const p = trunkG.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const y = p.getY(i), a = Math.atan2(p.getZ(i), p.getX(i));
+        const k = 1 + Math.sin(a * 3 + y * 7) * 0.12;
+        p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k);
+      }
+      trunkG.computeVertexNormals();
+    }
+    const leaf = TX.leafTexture();
+    leaf.repeat.set(3, 3);
+    leaf.userData.normalMap.repeat.set(3, 3);
+    const foliage = (hex) => new THREE.MeshStandardMaterial({ color: hex, map: leaf, normalMap: leaf.userData.normalMap, vertexColors: true, roughness: 0.85, side: THREE.DoubleSide });
     const canopy = {
-      oak: [new THREE.IcosahedronGeometry(3.2, 0).translate(0, 6.5, 0), new THREE.MeshStandardMaterial({ color: 0x3f6b2a, roughness: 1, flatShading: true }), 5],
-      pine: [new THREE.ConeGeometry(2.6, 9, 7).translate(0, 8, 0), new THREE.MeshStandardMaterial({ color: 0x2c4f2a, roughness: 1, flatShading: true }), 5],
-      palm: [new THREE.ConeGeometry(3.5, 1.8, 7).translate(0, 9.2, 0), new THREE.MeshStandardMaterial({ color: 0x4f8a34, roughness: 1, flatShading: true }), 9],
-      cypress: [new THREE.CylinderGeometry(2.8, 1.5, 5, 7).translate(0, 8, 0), new THREE.MeshStandardMaterial({ color: 0x51683a, roughness: 1, flatShading: true }), 7],
+      oak: [treeCanopy('oak'), foliage(0x4f7a34), 5],
+      pine: [treeCanopy('pine'), foliage(0x35593a), 4],
+      palm: [treeCanopy('palm'), foliage(0x5d8c3a), 9],
+      cypress: [treeCanopy('cypress'), foliage(0x5b7440), 6],
     };
     const dummy = new THREE.Object3D();
-    const all = this.treeList.length;
-    const trunks = new THREE.InstancedMesh(trunkG, trunkM, all);
-    let ti = 0;
+    // one instanced mesh per kind per 400 m chunk so off-screen chunks are frustum culled
+    const CH = 400;
     for (const [kind, list] of Object.entries(byKind)) {
       const [geo, m, trunkH] = canopy[kind];
-      const inst = new THREE.InstancedMesh(geo, m, list.length);
-      list.forEach((t, i) => {
-        dummy.position.set(t.x, 0, t.z);
-        dummy.rotation.set(0, (t.x * 13.1) % 6.28, 0);
-        dummy.scale.set(t.s, t.s, t.s);
-        dummy.updateMatrix();
-        inst.setMatrixAt(i, dummy.matrix);
-        dummy.scale.set(t.s, t.s * trunkH, t.s);
-        dummy.updateMatrix();
-        trunks.setMatrixAt(ti++, dummy.matrix);
-        this.addBoxCollider(t.x, t.z, 0.8 * t.s, 0.8 * t.s, trunkH * t.s, 'tree');
-      });
-      inst.castShadow = true;
-      inst.computeBoundingSphere();
-      this.scene.add(inst);
+      const chunks = new Map();
+      for (const t of list) {
+        const k = Math.floor(t.x / CH) + ',' + Math.floor(t.z / CH);
+        if (!chunks.has(k)) chunks.set(k, []);
+        chunks.get(k).push(t);
+      }
+      for (const chunk of chunks.values()) {
+        const inst = new THREE.InstancedMesh(geo, m, chunk.length);
+        const trunks = new THREE.InstancedMesh(trunkG, trunkM, chunk.length);
+        chunk.forEach((t, i) => {
+          dummy.position.set(t.x, 0, t.z);
+          dummy.rotation.set(0, (t.x * 13.1) % 6.28, 0);
+          dummy.scale.set(t.s, t.s, t.s);
+          dummy.updateMatrix();
+          inst.setMatrixAt(i, dummy.matrix);
+          dummy.scale.set(t.s * (kind === 'palm' ? 0.7 : 1), t.s * trunkH, t.s * (kind === 'palm' ? 0.7 : 1));
+          dummy.updateMatrix();
+          trunks.setMatrixAt(i, dummy.matrix);
+          this.addBoxCollider(t.x, t.z, 0.8 * t.s, 0.8 * t.s, trunkH * t.s, 'tree');
+        });
+        for (const o of [inst, trunks]) {
+          o.castShadow = true;
+          o.computeBoundingSphere();
+          this.scene.add(o);
+        }
+      }
     }
-    trunks.castShadow = true;
-    trunks.computeBoundingSphere();
-    this.scene.add(trunks);
   }
 
   buildLamps() {
@@ -1366,6 +1411,137 @@ export class World {
     });
     for (const m of [poles, arms, heads]) { m.computeBoundingSphere(); this.scene.add(m); }
     poles.castShadow = true;
+  }
+
+  // Traffic signals at every intersection plus hydrants, bins, benches and news boxes on the sidewalks.
+  buildStreetFurniture() {
+    const rng = mulberry32(909);
+    const d = new THREE.Object3D();
+    const metal = new THREE.MeshStandardMaterial({ color: 0x3b3e42, metalness: 0.7, roughness: 0.45 });
+    // --- traffic signals: pole + mast arm + head, arm along local +x, lenses facing local +z
+    const signals = [];
+    for (const def of CITY_DEFS) {
+      for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) {
+        const x = def.cx + (i - 4) * PITCH, z = def.cz + (j - 4) * PITCH;
+        const phase = rng();
+        // corners: (+,+) over the N-S road, (-,-) too, (+,-) and (-,+) over the E-W road
+        if (i > 0 && j > 0) signals.push({ x: x - 10.6, z: z - 10.6, h: 0, phase });
+        if (i < 8 && j < 8) signals.push({ x: x + 10.6, z: z + 10.6, h: Math.PI, phase });
+        if (i > 0 && j < 8) signals.push({ x: x - 10.6, z: z + 10.6, h: -Math.PI / 2, phase: phase + 0.5 });
+        if (i < 8 && j > 0) signals.push({ x: x + 10.6, z: z - 10.6, h: Math.PI / 2, phase: phase + 0.5 });
+      }
+    }
+    const poleG = mergeGeometries([
+      new THREE.CylinderGeometry(0.11, 0.14, 6.2, 10).translate(0, 3.1, 0),
+      new THREE.CylinderGeometry(0.2, 0.24, 0.35, 10).translate(0, 0.17, 0),
+      new THREE.CylinderGeometry(0.07, 0.09, 6.5, 8).rotateZ(Math.PI / 2).translate(3.25, 5.9, 0),
+      new THREE.CylinderGeometry(0.02, 0.02, 3.2, 4).rotateZ(Math.PI / 2 - 0.25).translate(1.6, 6.3, 0),
+      new THREE.BoxGeometry(0.34, 1.05, 0.28).translate(6.0, 5.3, 0),
+      new THREE.BoxGeometry(0.5, 1.25, 0.04).translate(6.0, 5.3, -0.16),
+      // pedestrian signal box
+      new THREE.BoxGeometry(0.3, 0.35, 0.25).translate(0, 2.8, 0.2),
+    ]);
+    const lensG = new THREE.CircleGeometry(0.11, 14);
+    const visorG = new THREE.CylinderGeometry(0.13, 0.13, 0.18, 12, 1, true, -Math.PI / 2, Math.PI).rotateX(Math.PI / 2).translate(0, 0.02, 0.09);
+    const nS = signals.length;
+    const poles = new THREE.InstancedMesh(poleG, metal, nS);
+    const lenses = new THREE.InstancedMesh(lensG, new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), nS * 3);
+    const visors = new THREE.InstancedMesh(visorG, metal, nS * 3);
+    const m4 = new THREE.Matrix4(), off = new THREE.Matrix4();
+    signals.forEach((sg, i) => {
+      d.position.set(sg.x, 0.25, sg.z); d.rotation.set(0, sg.h, 0); d.scale.set(1, 1, 1); d.updateMatrix();
+      poles.setMatrixAt(i, d.matrix);
+      for (let k = 0; k < 3; k++) {
+        off.makeTranslation(6.0, 5.63 - k * 0.33, 0.145);
+        m4.multiplyMatrices(d.matrix, off);
+        lenses.setMatrixAt(i * 3 + k, m4);
+        visors.setMatrixAt(i * 3 + k, m4);
+      }
+    });
+    for (const m of [poles, lenses, visors]) { m.computeBoundingSphere(); this.scene.add(m); }
+    poles.castShadow = true;
+    const LENS = [[1, 0.12, 0.08], [1, 0.7, 0.1], [0.2, 1, 0.45]];
+    const col = new THREE.Color();
+    let lastT = -1;
+    this.animated.push((t) => {
+      if (t - lastT < 0.25) return;
+      lastT = t;
+      signals.forEach((sg, i) => {
+        const ph = (t / 30 + sg.phase) % 1;
+        const on = ph < 0.45 ? 2 : ph < 0.52 ? 1 : 0; // green, amber, red
+        for (let k = 0; k < 3; k++) {
+          const c = LENS[k], lit = k === on ? 1.6 : 0.08;
+          lenses.setColorAt(i * 3 + k, col.setRGB(c[0] * lit, c[1] * lit, c[2] * lit));
+        }
+      });
+      lenses.instanceColor.needsUpdate = true;
+    });
+    this.animated[this.animated.length - 1](0); // create instance colours before shaders compile
+
+    // --- sidewalk props
+    const lists = { hydrant: [], bin: [], bench: [], news: [] };
+    for (const b of this.sidewalkBlocks) {
+      if (b.special === 'park') continue;
+      for (let side = 0; side < 4; side++) {
+        const kind = pick(['hydrant', 'bin', 'bin', 'bench', 'news', 'hydrant'], rng);
+        let along = 4 + rng() * 24;
+        if (rng() < 0.5) along = -along;
+        const e = 39.2; // just inside the curb
+        const x = b.x + (side === 0 ? along : side === 1 ? -along : side === 2 ? e : -e);
+        const z = b.z + (side === 0 ? e : side === 1 ? -e : along);
+        // face the street
+        const h = side === 0 ? 0 : side === 1 ? Math.PI : side === 2 ? Math.PI / 2 : -Math.PI / 2;
+        lists[kind].push({ x, z, h });
+      }
+    }
+    const red = new THREE.MeshStandardMaterial({ color: 0xa8231a, roughness: 0.45, metalness: 0.3 });
+    const green = new THREE.MeshStandardMaterial({ color: 0x1f3b2a, roughness: 0.6, metalness: 0.5 });
+    const wood = new THREE.MeshStandardMaterial({ color: 0x6b4a2e, roughness: 0.7 });
+    const blue = new THREE.MeshStandardMaterial({ color: 0x1f4f9a, roughness: 0.4, metalness: 0.4 });
+    const props = {
+      hydrant: [[mergeGeometries([
+        new THREE.CylinderGeometry(0.14, 0.17, 0.62, 12).translate(0, 0.31, 0),
+        new THREE.SphereGeometry(0.15, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.62, 0),
+        new THREE.CylinderGeometry(0.2, 0.2, 0.06, 12).translate(0, 0.05, 0),
+        new THREE.CylinderGeometry(0.06, 0.06, 0.42, 8).rotateZ(Math.PI / 2).translate(0, 0.45, 0),
+        new THREE.CylinderGeometry(0.075, 0.075, 0.12, 8).rotateX(Math.PI / 2).translate(0, 0.42, 0.14),
+        new THREE.CylinderGeometry(0.03, 0.03, 0.06, 6).translate(0, 0.78, 0),
+      ]), red]],
+      bin: [[mergeGeometries([
+        new THREE.CylinderGeometry(0.3, 0.26, 0.95, 16, 1, true).translate(0, 0.5, 0),
+        new THREE.CylinderGeometry(0.33, 0.33, 0.06, 16).translate(0, 0.98, 0),
+        new THREE.CylinderGeometry(0.2, 0.2, 0.04, 12).translate(0, 0.02, 0),
+      ]), green]],
+      bench: [
+        [mergeGeometries([0, 1, 2].map((k) => new THREE.BoxGeometry(1.8, 0.05, 0.12).translate(0, 0.45, -0.18 + k * 0.14)).concat(
+          [0, 1].map((k) => new THREE.BoxGeometry(1.8, 0.12, 0.04).translate(0, 0.65 + k * 0.17, -0.3).rotateX(0)))), wood],
+        [mergeGeometries([-0.75, 0.75].flatMap((x) => [
+          new THREE.BoxGeometry(0.06, 0.45, 0.06).translate(x, 0.22, 0.12),
+          new THREE.BoxGeometry(0.06, 0.9, 0.06).translate(x, 0.45, -0.3),
+          new THREE.BoxGeometry(0.06, 0.05, 0.5).translate(x, 0.43, -0.08),
+        ])), metal],
+      ],
+      news: [[mergeGeometries([
+        new THREE.BoxGeometry(0.5, 0.75, 0.45).translate(0, 0.55, 0),
+        new THREE.BoxGeometry(0.46, 0.3, 0.02).translate(0, 0.72, 0.23),
+        new THREE.BoxGeometry(0.06, 0.2, 0.06).translate(-0.2, 0.1, 0),
+        new THREE.BoxGeometry(0.06, 0.2, 0.06).translate(0.2, 0.1, 0),
+      ]), blue]],
+    };
+    for (const [kind, parts] of Object.entries(props)) {
+      const list = lists[kind];
+      if (!list.length) continue;
+      for (const [geo, m] of parts) {
+        const inst = new THREE.InstancedMesh(geo, m, list.length);
+        list.forEach((it, i) => {
+          d.position.set(it.x, 0.25, it.z); d.rotation.set(0, it.h, 0); d.updateMatrix();
+          inst.setMatrixAt(i, d.matrix);
+        });
+        inst.castShadow = true;
+        inst.computeBoundingSphere();
+        this.scene.add(inst);
+      }
+    }
   }
 
   placePickups() {
@@ -1481,6 +1657,27 @@ export class World {
       if (y < c.top && x >= c.minX && x <= c.maxX && z >= c.minZ && z <= c.maxZ) return true;
     }
     return false;
+  }
+
+  // Surface normal where a ray (direction d) hit solid geometry at (x, y, z), or null
+  // for small props that shouldn't carry decals.
+  hitNormal(x, y, z, dx, dy, dz, out) {
+    const px = x + dx * 0.06, py = y + dy * 0.06, pz = z + dz * 0.06;
+    const items = this.cellItems(px, pz);
+    if (items) {
+      for (const id of items) {
+        const c = this.colliders[id];
+        if (!(py < c.top && px >= c.minX && px <= c.maxX && pz >= c.minZ && pz <= c.maxZ)) continue;
+        if (c.maxX - c.minX < 1.5 && c.maxZ - c.minZ < 1.5) return null;
+        const d = [px - c.minX, c.maxX - px, pz - c.minZ, c.maxZ - pz, c.top - py];
+        let k = 0;
+        for (let i = 1; i < 5; i++) if (d[i] < d[k]) k = i;
+        out.set(k === 0 ? -1 : k === 1 ? 1 : 0, k === 4 ? 1 : 0, k === 2 ? -1 : k === 3 ? 1 : 0);
+        return out;
+      }
+    }
+    if (py < 0.05 && !this.isWater(px, pz)) return out.set(0, 1, 0);
+    return null;
   }
 
   // March a ray through the collider grid. Returns hit distance or maxDist.
@@ -1599,4 +1796,83 @@ export class World {
     this.time = t;
     for (const fn of this.animated) fn(t, dt);
   }
+}
+
+// ------------------------------------------------------------ vegetation
+// Canopy geometry built from several noisy lobes, with darker undersides baked
+// into vertex colours so the instanced trees read as leafy volumes.
+function lobe(r, x, y, z, rng, detail = 0) {
+  const g = new THREE.IcosahedronGeometry(r, detail);
+  const p = g.attributes.position, n = g.attributes.normal;
+  // soft, sphere-like normals (plus a little noise) make the foliage look fluffy rather than faceted
+  for (let i = 0; i < p.count; i++) {
+    const px = p.getX(i), py = p.getY(i), pz = p.getZ(i);
+    const k = 1 + Math.sin(px * 5.1 + pz * 3.7) * 0.1 + Math.sin(py * 4.3) * 0.08;
+    const l = Math.hypot(px, py, pz) || 1;
+    n.setXYZ(i, px / l + (rng() - 0.5) * 0.3, py / l + (rng() - 0.5) * 0.3, pz / l + (rng() - 0.5) * 0.3);
+    p.setXYZ(i, px * k + x, py * k * 0.85 + y, pz * k + z);
+  }
+  g.normalizeNormals();
+  return g;
+}
+
+function shadeCanopy(g, y0, y1, rng, flatNormals = false) {
+  const p = g.attributes.position, col = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const t = clamp((p.getY(i) - y0) / (y1 - y0), 0, 1);
+    const v = (0.45 + t * 0.6) * (0.9 + rng() * 0.2);
+    col[i * 3] = v * (0.95 + rng() * 0.1); col[i * 3 + 1] = v; col[i * 3 + 2] = v * 0.9;
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  if (flatNormals) g.computeVertexNormals();
+  return g;
+}
+
+function treeCanopy(kind) {
+  const rng = mulberry32(kind.length * 31);
+  const parts = [];
+  if (kind === 'oak') {
+    parts.push(lobe(2.6, 0, 6.6, 0, rng, 1));
+    for (let i = 0; i < 5; i++) {
+      const a = i / 6 * Math.PI * 2 + rng();
+      parts.push(lobe(1.6 + rng() * 0.8, Math.cos(a) * 2, 5.8 + rng() * 1.8, Math.sin(a) * 2, rng));
+    }
+    parts.push(lobe(1.8, 0.3, 8.2, -0.2, rng));
+    return shadeCanopy(mergeGeometries(parts), 4, 9.5, rng);
+  }
+  if (kind === 'pine') {
+    for (let i = 0; i < 5; i++) {
+      const c = new THREE.ConeGeometry(2.8 - i * 0.48, 3.2, 8, 1, true);
+      c.translate(0, 4.2 + i * 1.7, 0);
+      const p = c.attributes.position;
+      for (let j = 0; j < p.count; j++) {
+        const k = 1 + (rng() - 0.5) * 0.4;
+        p.setX(j, p.getX(j) * k); p.setZ(j, p.getZ(j) * k);
+      }
+      parts.push(c.toNonIndexed());
+    }
+    return shadeCanopy(mergeGeometries(parts), 3, 13, rng, true);
+  }
+  if (kind === 'cypress') {
+    for (let i = 0; i < 5; i++) parts.push(lobe(1.9 - Math.abs(i - 2) * 0.25, (rng() - 0.5) * 0.6, 5 + i * 1.3, (rng() - 0.5) * 0.6, rng));
+    return shadeCanopy(mergeGeometries(parts), 4, 11, rng);
+  }
+  // palm: drooping fronds from the crown
+  for (let i = 0; i < 10; i++) {
+    const f = new THREE.PlaneGeometry(0.9, 4.2, 1, 8);
+    f.translate(0, 2.1, 0);
+    const p = f.attributes.position;
+    for (let j = 0; j < p.count; j++) {
+      const t = p.getY(j) / 4.2;
+      const x = p.getX(j) * (1 - t * 0.8);
+      p.setXYZ(j, x, t * 1.6 - t * t * 3.2, t * 4.2 + Math.abs(x) * 0.4);
+    }
+    f.rotateY(i / 10 * Math.PI * 2 + rng() * 0.3);
+    f.translate(0, 9.1, 0);
+    parts.push(f.toNonIndexed());
+  }
+  const crown = lobe(0.5, 0, 9.0, 0, rng, 0);
+  parts.push(crown);
+  const g = mergeGeometries(parts);
+  return shadeCanopy(g, 7, 10, rng, true);
 }

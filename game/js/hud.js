@@ -95,7 +95,17 @@ export class HUD {
     el.stars.style.visibility = lvl > 0 || g.wanted.flashT > 0 ? 'visible' : 'hidden';
     // weapon ammo
     const ammo = p.weapons[p.weapon];
-    el.weapon.lastChild.textContent = ammo === Infinity || p.weapon === 'fist' ? '' : (g.cheats.infiniteAmmo ? '∞' : ammo);
+    const W = WEAPONS[p.weapon];
+    let txt = '';
+    if (g.cheats.infiniteAmmo) txt = '∞';
+    else if (ammo !== Infinity && p.weapon !== 'fist') {
+      if (W.mag) {
+        const c = p.loaded();
+        txt = p.reloadT > 0 ? 'RELOADING' : `${c} / ${ammo - c}`;
+        el.weapon.classList.toggle('low', p.reloadT <= 0 && c <= Math.ceil(W.mag * 0.25));
+      } else txt = ammo;
+    }
+    el.weapon.lastChild.textContent = txt;
     // timer
     const t = g.missions.timer;
     if (t !== null && g.missions.state === 'active') {
@@ -132,7 +142,15 @@ export class HUD {
     const armed = !WEAPONS[p.weapon].melee || (p.vehicle && (p.vehicle.type === 'tank' || p.vehicle.type === 'heli'));
     const fp = g.cam.mode === 0 && !p.vehicle;
     el.cross.classList.toggle('hidden', p.dead || (!fp && ((!armed && !p.vehicle) || (p.vehicle && !armed))));
-    el.cross.classList.toggle('aim', p.aiming && !p.vehicle);
+    el.cross.classList.toggle('aim', p.aiming && !p.vehicle && !fp);
+    // first person: four ticks spread with the weapon's current accuracy, hidden on iron sights
+    el.cross.classList.toggle('fp', fp);
+    if (fp) {
+      const spread = p.currentSpread();
+      const gap = 4 + Math.round(spread / Math.tan((g.camera.fov * Math.PI) / 360) * innerHeight * 0.5);
+      el.cross.style.setProperty('--gap', `${Math.min(gap, 90)}px`);
+      el.cross.style.opacity = armed && !p.swimming ? 0.9 * (1 - p.adsK) * (1 - p.sprintK) : 0;
+    } else el.cross.style.opacity = '';
     // timers for transient elements
     if ((this.hintT -= dt) <= 0) el.hint.classList.add('hidden');
     if ((this.helpT -= dt) <= 0) el.help.classList.add('hidden');

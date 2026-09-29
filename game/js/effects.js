@@ -151,6 +151,43 @@ export class Effects {
     scene.add(this.rain);
     this.rainSeed = false;
     this.raining = 0;
+    // bullet holes: one instanced quad pool reused in a ring
+    this.maxHoles = 256;
+    const hc = document.createElement('canvas'); hc.width = hc.height = 64;
+    const hx = hc.getContext('2d');
+    const rg2 = hx.createRadialGradient(32, 32, 2, 32, 32, 30);
+    rg2.addColorStop(0, 'rgba(10,8,6,1)'); rg2.addColorStop(0.22, 'rgba(25,22,20,0.95)'); rg2.addColorStop(0.35, 'rgba(120,112,100,0.6)'); rg2.addColorStop(1, 'rgba(60,55,50,0)');
+    hx.fillStyle = rg2; hx.fillRect(0, 0, 64, 64);
+    hx.strokeStyle = 'rgba(20,18,16,0.6)'; hx.lineWidth = 1;
+    for (let i = 0; i < 7; i++) {
+      const a = Math.random() * Math.PI * 2, l = 10 + Math.random() * 16;
+      hx.beginPath(); hx.moveTo(32, 32); hx.lineTo(32 + Math.cos(a) * l, 32 + Math.sin(a) * l); hx.stroke();
+    }
+    const htex = new THREE.CanvasTexture(hc); htex.colorSpace = THREE.SRGBColorSpace;
+    const hm = new THREE.MeshStandardMaterial({ map: htex, transparent: true, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -4 });
+    this.holes = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.16, 0.16), hm, this.maxHoles);
+    this.holes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.holes.count = 0;
+    this.holes.frustumCulled = false;
+    scene.add(this.holes);
+    this.hcur = 0;
+    this._hm = new THREE.Matrix4(); this._hq = new THREE.Quaternion(); this._hz = new THREE.Vector3(0, 0, 1);
+    this._hs = new THREE.Vector3(); this._hp = new THREE.Vector3(); this._hr = new THREE.Quaternion();
+  }
+
+  bulletHole(x, y, z, n) {
+    const s = 0.7 + Math.random() * 0.6;
+    this._hq.setFromUnitVectors(this._hz, n);
+    this._hr.setFromAxisAngle(this._hz, Math.random() * Math.PI * 2);
+    this._hq.multiply(this._hr);
+    this._hp.set(x + n.x * 0.01, y + n.y * 0.01, z + n.z * 0.01);
+    this._hm.compose(this._hp, this._hq, this._hs.set(s, s, s));
+    this.holes.setMatrixAt(this.hcur, this._hm);
+    this.hcur = (this.hcur + 1) % this.maxHoles;
+    this.holes.count = Math.min(this.maxHoles, this.holes.count + 1);
+    this.holes.instanceMatrix.needsUpdate = true;
+    // chips of plaster / concrete
+    for (let i = 0; i < 4; i++) this.norm.emit(x, y, z, n.x * 2 + rand(-1, 1), n.y * 2 + rand(0.5, 2), n.z * 2 + rand(-1, 1), 0.5, 0.08, [0.45, 0.42, 0.38], 1, 9, 0.5, 0);
   }
 
   setPixelScale(h) {

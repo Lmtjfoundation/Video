@@ -20,7 +20,7 @@ URL options:
 
 | Param | Effect |
 |---|---|
-| `?quality=low` | No shadows, no antialiasing, 1× pixel ratio (for weaker GPUs) |
+| `?quality=low` | No shadows, ambient occlusion or MSAA, 1× pixel ratio and half-resolution textures (for weaker GPUs) |
 | `?hour=22` | Start at a given hour (0–24) |
 | `?density=0.5` | Scale traffic and pedestrian density |
 | `?autostart` | Skip the title screen |
@@ -36,6 +36,29 @@ URL options:
 The **I-20**, **I-49** and **I-59** interstates connect the cities, and the **Lake Pontchartrain Causeway** crosses the lake. Along the way you'll find billboards, truck stops, oil pumpjacks, bayou shacks, stunt ramps, and a military depot east of Atlanta where a tank is parked.
 
 Each city has a hospital, a police station with a helipad, and a safehouse with a car and a helicopter. There is also a full day/night cycle (16 real minutes per day), rain, and a starry night sky.
+
+## Realistic first-person shooter
+
+The game plays in first person by default.
+
+- **Guns and hands**: every weapon is a detailed first-person model, including slide serrations, iron sights with glowing dots, a pump-action shotgun with a wooden forend, a spinning minigun and an RPG warhead. The weapon renders in its own pass with a narrower field of view, as real shooters do, so it never clips through walls.
+- **Gunplay**:
+  - Magazines and reloading: press **R**, or pull the trigger on an empty magazine. The HUD shows `rounds in magazine / reserve`.
+  - Aim down sights with the **right mouse button** for a zoomed view with far less spread.
+  - Recoil climbs the view and recovers, and sustained fire makes your shots spread wider.
+  - The dynamic crosshair shows your current accuracy.
+  - Movement: sprinting lowers the gun, and the weapon sways with your mouse and bobs as you walk.
+  - Feedback: muzzle flashes light up the scene, bullets leave holes in walls and the ground, and you hear footsteps and reload sounds.
+- **Rendering**:
+  - A physically based sky with image-based lighting and reflections baked from it.
+  - Ambient occlusion (GTAO), bloom, filmic tone mapping, colour grading, vignette and film grain. The edges of the screen turn red when you're badly hurt.
+  - Physically based materials with normal, roughness and metalness maps. Brick shows mortar relief, office windows are glossy and reflective, and asphalt has aggregate, cracks, tyre tracks and oil stains.
+  - Roads and sidewalks get wet and reflective in the rain, then dry out afterwards.
+  - Lit windows at night have ceiling-light gradients, blinds and silhouettes.
+- **Cars and streets**:
+  - Cars have rounded bodies with wheel arches, clear-coated metallic paint and glass greenhouses.
+  - Streets have traffic signals that cycle at every intersection, plus hydrants, trash cans, benches and news boxes.
+  - Trees have leafy multi-lobe canopies, and palms have drooping fronds.
 
 ## Features
 
@@ -55,9 +78,9 @@ Each city has a hospital, a police station with a helipad, and a safehouse with 
 | WASD | Move | W / S | Gas / brake-reverse | W / S | Tilt forward / back |
 | Shift | Sprint | A / D | Steer | A / D | Yaw |
 | Space | Jump / parachute | Space | Handbrake | Space | Climb |
-| LMB / RMB | Shoot / aim | Shift | **Nitro** | Shift | Descend |
+| LMB / RMB | Shoot / aim down sights | Shift | **Nitro** | Shift | Descend |
 | 1–6, wheel | Weapons | E | Horn (siren in cop cars) | LMB | Rockets |
-| F | Steal / enter car | R | Radio station | F | Bail out |
+| F, R | Enter car, reload | R | Radio station | F | Bail out |
 
 Other keys: **M** opens the map and GPS, **T** opens the cheat console, **V** switches between first-person (the default) and third-person views, **H** shows help, and **P**/**Esc** pauses.
 
@@ -70,13 +93,15 @@ Other keys: **M** opens the map and GPS, **T** opens the cheat console, **V** sw
 ```
 game/
   index.html        HUD markup, styles, title screen
-  lib/              vendored three.js (MIT) + BufferGeometryUtils
+  lib/              vendored three.js (MIT) and the addons it uses (post-processing, Sky, geometry utils)
   js/main.js        game loop, camera, combat, sky/day-night, cheats, death/busted
   js/world.js       city generation, landmarks, highways, water, collision grid, road graph + A*
   js/vehicles.js    vehicle models, driving/heli physics, damage, vehicle collisions
   js/ai.js          traffic, police pursuit, racers, police helicopter AI
   js/people.js      character rig, pedestrians, cops, gangs
-  js/player.js      player controller, weapons, parachute, swimming
+  js/player.js      player controller, weapons (magazines, recoil, spread), parachute, swimming
+  js/viewmodel.js   first-person hands and weapon models
+  js/graphics.js    sky, image-based lighting, post-processing (AO, bloom, grading)
   js/police.js      wanted level and police dispatch
   js/population.js  spawning/despawning of traffic, parked cars and peds
   js/missions.js    the six missions

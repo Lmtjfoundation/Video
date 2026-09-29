@@ -79,6 +79,13 @@
 
   #crosshair { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: #fff; box-shadow: 0 0 2px #000; opacity: 0.85; }
   #crosshair.aim { width: 22px; height: 22px; margin: -11px 0 0 -11px; background: transparent; border: 2px solid rgba(255,255,255,0.9); }
+  #crosshair.fp { width: 2px; height: 2px; margin: -1px 0 0 -1px; --gap: 6px; }
+  #crosshair.fp::before, #crosshair.fp::after { content: ''; position: absolute; left: 50%; top: 50%; background: #fff; box-shadow: 0 0 2px #000; }
+  #crosshair.fp::before { width: 2px; height: calc(var(--gap) * 2 + 20px); margin: calc(-1 * var(--gap) - 10px) 0 0 -1px;
+    -webkit-mask: linear-gradient(#000 0 10px, transparent 10px calc(100% - 10px), #000 calc(100% - 10px)); mask: linear-gradient(#000 0 10px, transparent 10px calc(100% - 10px), #000 calc(100% - 10px)); }
+  #crosshair.fp::after { height: 2px; width: calc(var(--gap) * 2 + 20px); margin: -1px 0 0 calc(-1 * var(--gap) - 10px);
+    -webkit-mask: linear-gradient(90deg, #000 0 10px, transparent 10px calc(100% - 10px), #000 calc(100% - 10px)); mask: linear-gradient(90deg, #000 0 10px, transparent 10px calc(100% - 10px), #000 calc(100% - 10px)); }
+  #weapon.low small { color: #ff5a4a; }
   #hitmarker { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; opacity: 0; transition: opacity 0.15s; }
   #hitmarker::before, #hitmarker::after { content: ''; position: absolute; left: 12px; top: 0; width: 2px; height: 26px; background: #fff; }
   #hitmarker::before { transform: rotate(45deg); } #hitmarker::after { transform: rotate(-45deg); }
@@ -182,12 +189,13 @@
   <div class="stick"><div class="knob"></div></div>
   <div class="btns">
     <button type="button" data-key="KeyT" class="sm">CHEAT</button>
-    <button type="button" data-key="KeyR" class="sm">RADIO</button>
+    <button type="button" data-key="KeyR" class="sm">RELOAD</button>
     <button type="button" data-key="KeyM" class="sm">MAP</button>
     <button type="button" data-wheel="1" class="sm">WEAPON</button>
     <button type="button" data-key="ShiftLeft">NITRO<br><small>sprint/down</small></button>
     <button type="button" data-key="KeyF">ENTER<br><small>exit</small></button>
     <button type="button" data-key="Space">JUMP<br><small>brake/up</small></button>
+    <button type="button" data-mouse="right" class="sm">AIM</button>
     <button type="button" data-mouse="left" class="fire">FIRE</button>
   </div>
 </div>
@@ -229,7 +237,7 @@
       <h3>ON FOOT</h3>
       <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move &nbsp; <kbd>Shift</kbd> Sprint<br>
       <kbd>Space</kbd> Jump / open parachute<br>
-      <kbd>Mouse</kbd> Look &nbsp; <kbd>LMB</kbd> Shoot &nbsp; <kbd>RMB</kbd> Aim<br>
+      <kbd>Mouse</kbd> Look &nbsp; <kbd>LMB</kbd> Shoot &nbsp; <kbd>RMB</kbd> Aim down sights &nbsp; <kbd>R</kbd> Reload<br>
       <kbd>1</kbd>–<kbd>6</kbd> / <kbd>Wheel</kbd> Weapons<br>
       <kbd>F</kbd> Steal / enter vehicle
     </div>
@@ -254,7 +262,7 @@
 </div>
 
 <script type="importmap">
-{ "imports": { "three": "./lib/three.module.min.js" } }
+{ "imports": { "three": "./lib/three.module.min.js", "three/addons/": "./lib/addons/" } }
 </script>
 <script type="module" src="./js/main.js"></script>
 </body>

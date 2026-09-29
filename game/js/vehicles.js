@@ -2,6 +2,7 @@
 // damage/fire/explosions and vehicle-vs-vehicle collisions.
 import * as THREE from 'three';
 import { GeoBuilder, mat } from './geo.js';
+import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { clamp, lerp, rand, pick, wrapAngle, smoothDamp } from './util.js';
 
 export const VEHICLE_TYPES = {
@@ -25,15 +26,18 @@ const paintCache = new Map();
 function paintMat(hex) {
   let m = paintCache.get(hex);
   if (!m) {
-    m = new THREE.MeshStandardMaterial({ color: hex, metalness: 0.55, roughness: 0.32 });
+    // metallic base coat under a glossy clear coat
+    m = new THREE.MeshPhysicalMaterial({ color: hex, metalness: 0.6, roughness: 0.38, clearcoat: 1, clearcoatRoughness: 0.06 });
     paintCache.set(hex, m);
   }
   return m;
 }
 const detailMat = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.3, roughness: 0.45 });
+const shellGlassMat = new THREE.MeshPhysicalMaterial({ color: 0x141b24, metalness: 0.1, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0, envMapIntensity: 1.6 });
+const glassMat = new THREE.MeshPhysicalMaterial({ vertexColors: true, metalness: 0.1, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0, envMapIntensity: 1.6 });
 const lampMat = new THREE.MeshBasicMaterial({ vertexColors: true });
 export const charredMat = new THREE.MeshStandardMaterial({ color: 0x1a1816, roughness: 1, metalness: 0.1 });
-const tireMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
+const tireMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.85 });
 const hubMat = new THREE.MeshStandardMaterial({ color: 0xb8b8b8, metalness: 0.9, roughness: 0.25 });
 const redOn = new THREE.MeshBasicMaterial({ color: 0xff1a1a });
 const blueOn = new THREE.MeshBasicMaterial({ color: 0x1a4dff });
@@ -46,7 +50,7 @@ const wheelGeoCache = new Map();
 function wheelGeo(r, w) {
   const k = r + ':' + w;
   if (!wheelGeoCache.has(k)) {
-    const t = new THREE.CylinderGeometry(r, r, w, 14);
+    const t = new THREE.CylinderGeometry(r, r, w, 20);
     t.rotateZ(Math.PI / 2);
     const h = new THREE.CylinderGeometry(r * 0.6, r * 0.6, w + 0.02, 8);
     h.rotateZ(Math.PI / 2);
@@ -57,6 +61,51 @@ function wheelGeo(r, w) {
 
 const GLASS = '#1b2633', CHROME = '#c8c8c8', BLACK = '#161616', GRILL = '#222';
 
+// Rounded car body: a side profile (with wheel arches) extruded across the width
+// with bevelled edges, plus a glass greenhouse on top.
+// o: { L, W, bottom, belt, nose, tail, top, gh: [rearBase, rearTop, frontTop, frontBase], wheels: [zFront, zRear], R }
+function carShell(o) {
+  const { L, W, bottom: b, belt, nose, tail, top } = o;
+  const R = o.R + 0.07, wy = o.R;
+  const s = new THREE.Shape();
+  s.moveTo(-L / 2 + 0.12, b);
+  for (const z of [o.wheels[1], o.wheels[0]]) {
+    s.lineTo(z - R, b);
+    s.lineTo(z - R, wy);
+    s.absarc(z, wy, R, Math.PI, 0, true);
+    s.lineTo(z + R, b);
+  }
+  s.lineTo(L / 2 - 0.1, b);
+  s.quadraticCurveTo(L / 2, b + 0.02, L / 2, nose);
+  s.quadraticCurveTo(L / 2 - 0.02, belt - 0.04, L / 2 - 0.45, belt - 0.07);
+  s.lineTo(o.gh[3] + 0.1, belt);
+  s.lineTo(-L / 2 + 0.35, belt);
+  s.quadraticCurveTo(-L / 2, belt, -L / 2, tail);
+  s.lineTo(-L / 2, b + 0.12);
+  s.quadraticCurveTo(-L / 2, b, -L / 2 + 0.12, b);
+  const bev = 0.07, depth = W - bev * 2;
+  const body = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: bev, bevelSize: 0.05, bevelSegments: 4, curveSegments: 12 });
+  body.translate(0, 0, -depth / 2).rotateY(-Math.PI / 2);
+  // greenhouse
+  const [r0, r1, f1, f0] = o.gh;
+  const g = new THREE.Shape();
+  g.moveTo(r0, belt - 0.02);
+  g.quadraticCurveTo(r0 + (r1 - r0) * 0.35, top, r1, top);
+  g.lineTo(f1, top);
+  g.quadraticCurveTo(f1 + (f0 - f1) * 0.3, top - 0.02, f0, belt - 0.02);
+  g.lineTo(r0, belt - 0.02);
+  const gd = W * 0.8;
+  const glass = new THREE.ExtrudeGeometry(g, { depth: gd, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.03, bevelSegments: 4, curveSegments: 10 });
+  glass.translate(0, 0, -gd / 2).rotateY(-Math.PI / 2);
+  const smooth = (geo) => {
+    geo.deleteAttribute('uv');
+    const m = mergeVertices(geo, 1e-4);
+    m.computeVertexNormals();
+    return m;
+  };
+  return { body: smooth(body), glass: smooth(glass) };
+}
+
 // ---------------------------------------------------------------- model build
 function buildModel(T, color) {
   const group = new THREE.Group();
@@ -65,6 +114,8 @@ function buildModel(T, color) {
   const P = new GeoBuilder(); // paint
   const D = new GeoBuilder(); // details
   const Lm = new GeoBuilder(); // lamps
+  const Gl = new GeoBuilder(); // glass
+  let shell = null;
   const parts = { wheels: [], steer: [] };
   const L = T.len, W = T.wid;
   const hl = '#fff6d8', tl = '#ff2a2a';
@@ -93,15 +144,12 @@ function buildModel(T, color) {
 
   switch (T.style) {
     case 'sedan': case 'police': case 'taxi': {
-      P.box(0, 0.3, 0, W, 0.62, L, color);
-      D.box(0, 0.92, -0.2, W * 0.86, 0.52, L * 0.46, GLASS);
-      P.box(0, 1.44, -0.25, W * 0.84, 0.08, L * 0.38, color);
+      shell = carShell({ L, W, bottom: 0.28, belt: 0.95, nose: 0.68, tail: 0.86, top: 1.47, gh: [-L * 0.33, -L * 0.18, L * 0.04, L * 0.2], wheels: [L * 0.32, -L * 0.3], R: T.wheelR });
       D.box(0, 0.3, L / 2 + 0.05, W * 0.9, 0.28, 0.12, GRILL);
       D.box(0, 0.25, -L / 2 - 0.05, W * 0.9, 0.2, 0.1, BLACK);
       lamps(0.62, L / 2 + 0.02, -L / 2 - 0.02, W / 2 - 0.35);
       if (T.style === 'police') {
         D.box(0, 0.45, 0.2, W + 0.02, 0.45, L * 0.52, '#f4f4f4');
-        D.box(0, 0.93, -0.2, W * 0.87, 0.02, L * 0.3, GLASS);
         D.box(0, 1.52, -0.25, 1.4, 0.1, 0.35, '#333');
         const red = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.18, 0.3), redOn);
         red.position.set(-0.38, 1.66, -0.25);
@@ -118,10 +166,7 @@ function buildModel(T, color) {
       break;
     }
     case 'sports': {
-      P.box(0, 0.22, 0, W, 0.5, L, color);
-      P.box(0, 0.72, L * 0.25, W * 0.9, 0.08, L * 0.4, color);
-      D.box(0, 0.72, -0.35, W * 0.8, 0.38, L * 0.34, GLASS);
-      P.box(0, 1.1, -0.45, W * 0.72, 0.05, L * 0.22, color);
+      shell = carShell({ L, W, bottom: 0.2, belt: 0.74, nose: 0.42, tail: 0.7, top: 1.13, gh: [-L * 0.36, -L * 0.14, L * 0.0, L * 0.22], wheels: [L * 0.33, -L * 0.3], R: T.wheelR });
       D.box(0, 1.0, -L / 2 + 0.2, W * 0.95, 0.06, 0.4, BLACK);
       D.box(-W * 0.35, 0.72, -L / 2 + 0.3, 0.08, 0.28, 0.1, BLACK);
       D.box(W * 0.35, 0.72, -L / 2 + 0.3, 0.08, 0.28, 0.1, BLACK);
@@ -131,9 +176,7 @@ function buildModel(T, color) {
       break;
     }
     case 'muscle': {
-      P.box(0, 0.3, 0, W, 0.62, L, color);
-      D.box(0, 0.92, -0.35, W * 0.84, 0.42, L * 0.38, GLASS);
-      P.box(0, 1.34, -0.4, W * 0.82, 0.07, L * 0.3, color);
+      shell = carShell({ L, W, bottom: 0.3, belt: 0.95, nose: 0.8, tail: 0.9, top: 1.36, gh: [-L * 0.3, -L * 0.17, L * 0.0, L * 0.12], wheels: [L * 0.32, -L * 0.3], R: T.wheelR });
       D.box(-0.25, 0.925, 0.8, 0.22, 0.01, L * 0.45, '#f0f0f0');
       D.box(0.25, 0.925, 0.8, 0.22, 0.01, L * 0.45, '#f0f0f0');
       D.box(0, 0.92, L * 0.22, 0.7, 0.22, 0.9, BLACK); // hood scoop
@@ -147,7 +190,7 @@ function buildModel(T, color) {
       const lift = T.style === 'monster' ? 1.5 : 0;
       P.box(0, 0.45 + lift, 0.2, W, 0.75, L - 0.4, color);
       P.box(0, 1.2 + lift, 0.55, W * 0.94, 0.6, L * 0.32, color);
-      D.box(0, 1.25 + lift, 0.55, W * 0.95, 0.46, L * 0.3, GLASS);
+      Gl.box(0, 1.25 + lift, 0.55, W * 0.95, 0.46, L * 0.3, GLASS);
       P.box(0, 1.8 + lift, 0.55, W * 0.94, 0.08, L * 0.3, color);
       D.box(0, 1.2 + lift, -L * 0.28, W * 0.9, 0.08, L * 0.38, '#2a2a2a'); // bed floor
       D.box(0, 0.45 + lift, L / 2 + 0.02, W, 0.5, 0.15, CHROME);
@@ -166,9 +209,9 @@ function buildModel(T, color) {
     }
     case 'van': {
       P.box(0, 0.35, 0, W, 2.0, L, color);
-      D.box(0, 1.35, L / 2 - 0.25, W * 0.92, 0.7, 0.55, GLASS);
-      D.box(-W / 2 - 0.01, 1.4, L * 0.28, 0.02, 0.6, 1.0, GLASS);
-      D.box(W / 2 + 0.01, 1.4, L * 0.28, 0.02, 0.6, 1.0, GLASS);
+      Gl.box(0, 1.35, L / 2 - 0.25, W * 0.92, 0.7, 0.55, GLASS);
+      Gl.box(-W / 2 - 0.01, 1.4, L * 0.28, 0.02, 0.6, 1.0, GLASS);
+      Gl.box(W / 2 + 0.01, 1.4, L * 0.28, 0.02, 0.6, 1.0, GLASS);
       D.box(0, 0.35, L / 2 + 0.05, W * 0.95, 0.3, 0.12, GRILL);
       lamps(0.75, L / 2 + 0.02, -L / 2 - 0.02, W / 2 - 0.35);
       addWheels(T.wheelR, 0.3, [L * 0.33, -L * 0.32], [-W / 2 + 0.14, W / 2 - 0.14]);
@@ -176,9 +219,9 @@ function buildModel(T, color) {
     }
     case 'bus': {
       P.box(0, 0.4, 0, W, 2.8, L, color);
-      D.box(-W / 2 - 0.01, 1.7, -0.2, 0.02, 1.0, L * 0.8, GLASS);
-      D.box(W / 2 + 0.01, 1.7, -0.2, 0.02, 1.0, L * 0.8, GLASS);
-      D.box(0, 1.3, L / 2 + 0.01, W * 0.9, 1.6, 0.02, GLASS);
+      Gl.box(-W / 2 - 0.01, 1.7, -0.2, 0.02, 1.0, L * 0.8, GLASS);
+      Gl.box(W / 2 + 0.01, 1.7, -0.2, 0.02, 1.0, L * 0.8, GLASS);
+      Gl.box(0, 1.3, L / 2 + 0.01, W * 0.9, 1.6, 0.02, GLASS);
       Lm.box(0, 2.85, L / 2 + 0.02, W * 0.6, 0.3, 0.04, '#ffae00');
       lamps(0.7, L / 2 + 0.02, -L / 2 - 0.02, W / 2 - 0.35);
       addWheels(T.wheelR, 0.4, [L * 0.35, -L * 0.3], [-W / 2 + 0.2, W / 2 - 0.2]);
@@ -241,7 +284,7 @@ function buildModel(T, color) {
     }
     case 'heli': {
       P.box(0, 0.8, 0.5, 2.2, 2.0, 4.2, color);
-      D.box(0, 1.2, 2.3, 2.0, 1.4, 1.0, GLASS);
+      Gl.box(0, 1.2, 2.3, 2.0, 1.4, 1.0, GLASS);
       P.box(0, 1.5, -3.3, 0.5, 0.5, 5, color);
       P.box(0, 1.6, -5.6, 0.15, 1.6, 0.9, color);
       P.box(0, 2.8, 0.3, 1.0, 0.3, 1.8, color);
@@ -274,7 +317,15 @@ function buildModel(T, color) {
     }
   }
 
-  const paint = new THREE.Mesh(P.build(), paintMat(color));
+  let paintGeo = P.vertexCount ? P.build() : null;
+  if (paintGeo) { paintGeo.deleteAttribute('color'); paintGeo.deleteAttribute('uv'); }
+  if (shell) {
+    paintGeo = paintGeo ? mergeGeometries([paintGeo, shell.body]) : shell.body;
+    const gm = new THREE.Mesh(shell.glass, shellGlassMat);
+    body.add(gm);
+  }
+  if (Gl.vertexCount) body.add(new THREE.Mesh(Gl.build(), glassMat));
+  const paint = new THREE.Mesh(paintGeo, paintMat(color));
   paint.castShadow = true;
   body.add(paint);
   parts.paint = paint;
