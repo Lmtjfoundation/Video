@@ -58,6 +58,7 @@ class Game {
     this.scene.fog = new THREE.Fog(0xbfe0f5, 250, 1500);
 
     this.settings = { density: parseFloat(params.get('density') || '1') };
+    if (this.low && !params.get('density')) this.settings.density = 0.6;
     this.cheats = {};
     this.save = this.loadSave();
     this.time = 0;
@@ -128,11 +129,13 @@ class Game {
 
   start() {
     this.started = true;
+    if (matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && !matchMedia('(pointer: fine)').matches)) this.input.setupTouch();
     this.audio.init();
     this.input.lock();
     document.getElementById('title').classList.add('hidden');
     this.hud.show();
-    this.hud.help('Welcome to the <b>Southern Triangle</b>.<br>Steal a car with <b>F</b>. Press <b>M</b> for the map and GPS.<br>Mission markers are the <b>lettered squares</b>. Press <b>T</b> for cheats. <b>H</b> shows help again.', 10);
+    if (this.input.touch) this.hud.help('Welcome to the <b>Southern Triangle</b>.<br>Left stick moves, drag the screen to look.<br>Walk up to a car and tap <b>ENTER</b>. Tap <b>MAP</b> to set GPS.', 10);
+    else this.hud.help('Welcome to the <b>Southern Triangle</b>.<br>Steal a car with <b>F</b>. Press <b>M</b> for the map and GPS.<br>Mission markers are the <b>lettered squares</b>. Press <b>T</b> for cheats. <b>H</b> shows help again.', 10);
     this.hud.bigMessage('DALLAS', '#ffb347', 3, 'small', 'WELCOME TO');
     this.canvas.addEventListener('click', () => {
       if (!this.started) return;

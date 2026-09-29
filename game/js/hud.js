@@ -25,7 +25,8 @@ export class HUD {
     this.route = null; this.routeT = 0;
     this.buildStaticMap();
     this.mapOpen = false;
-    this.el.mapCanvas.addEventListener('mousedown', (e) => this.mapClick(e));
+    this.el.mapCanvas.addEventListener('pointerdown', (e) => this.mapClick(e));
+    document.getElementById('mapClose').addEventListener('click', () => this.game.input.down.add('KeyM'));
     this.el.mapCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
     this.weaponChanged();
   }

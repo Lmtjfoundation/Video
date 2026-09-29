@@ -89,6 +89,30 @@
   #cheat input { font-family: var(--big-font); font-size: 30px; background: #111; color: var(--gold); border: none; outline: none; padding: 6px 10px; width: 360px; letter-spacing: 3px; text-transform: uppercase; }
   #cheat div { font-size: 13px; color: #aaa; margin-top: 6px; }
 
+  #mapClose { position: absolute; right: 20px; top: 20px; font-family: var(--big-font); font-size: 20px; letter-spacing: 1px; background: var(--gold); color: #111; border: none; padding: 8px 18px; cursor: pointer; }
+  #touch { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  #touch .stick { position: absolute; left: 22px; bottom: 26px; width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.35); pointer-events: auto; touch-action: none; }
+  #touch .knob { position: absolute; left: 45px; top: 45px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.55); }
+  #touch .btns { position: absolute; right: 14px; bottom: 18px; display: grid; grid-template-columns: repeat(4, 64px); gap: 8px; pointer-events: auto; }
+  #touch button { height: 64px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.45); background: rgba(0,0,0,0.45); color: #fff; font-family: var(--hud-font); font-size: 12px; font-weight: 700; line-height: 1.1; touch-action: none; -webkit-user-select: none; user-select: none; }
+  #touch button small { font-size: 9px; font-weight: 400; opacity: 0.8; }
+  #touch button.sm { height: 34px; border-radius: 17px; font-size: 10px; }
+  #touch button.fire { background: rgba(200,40,40,0.6); }
+  #touch button.on { background: rgba(242,194,48,0.7); color: #111; }
+  body.touch #minimapWrap { left: auto; right: 12px; top: 12px; bottom: auto; width: 150px; }
+  body.touch #minimap { width: 150px; height: 108px; }
+  body.touch #topright { right: 176px; top: 10px; }
+  body.touch #stars { font-size: 22px; height: 26px; }
+  body.touch #money { font-size: 24px; }
+  body.touch #weapon { font-size: 15px; }
+  body.touch #zone, body.touch #speedo { bottom: auto; top: 150px; right: 12px; }
+  body.touch #zone .district { font-size: 20px; }
+  body.touch #help { left: 12px; top: 10px; max-width: 46vw; font-size: 13px; padding: 8px 10px; }
+  body.touch #objective { bottom: 190px; font-size: 16px; }
+  body.touch #big { font-size: 64px; }
+  body.touch #big.small { font-size: 40px; }
+  body.touch #missionCard .title { font-size: 38px; }
+  body.touch #crosshair { opacity: 0.6; }
   #mapOverlay { position: fixed; inset: 0; background: rgba(8,12,18,0.96); pointer-events: auto; }
   #mapCanvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
   #mapLegend { position: absolute; left: 20px; bottom: 20px; font-size: 15px; background: rgba(0,0,0,0.6); padding: 10px 14px; line-height: 1.6; }
@@ -154,6 +178,20 @@
   <div id="damage"></div>
 </div>
 
+<div id="touch" hidden>
+  <div class="stick"><div class="knob"></div></div>
+  <div class="btns">
+    <button type="button" data-key="KeyT" class="sm">CHEAT</button>
+    <button type="button" data-key="KeyR" class="sm">RADIO</button>
+    <button type="button" data-key="KeyM" class="sm">MAP</button>
+    <button type="button" data-wheel="1" class="sm">WEAPON</button>
+    <button type="button" data-key="ShiftLeft">NITRO<br><small>sprint/down</small></button>
+    <button type="button" data-key="KeyF">ENTER<br><small>exit</small></button>
+    <button type="button" data-key="Space">JUMP<br><small>brake/up</small></button>
+    <button type="button" data-mouse="left" class="fire">FIRE</button>
+  </div>
+</div>
+
 <div id="cheat" class="hidden">
   <input id="cheatInput" maxlength="24" placeholder="ENTER CHEAT" autocomplete="off" spellcheck="false">
   <div>Press Enter to activate, Esc to cancel. (Hint: HESOYAM, TOOLUP, RHINO, BUZZOFF, SKYFALL, ARMAGEDDON...)</div>
@@ -161,6 +199,7 @@
 
 <div id="mapOverlay" class="hidden">
   <canvas id="mapCanvas"></canvas>
+  <button id="mapClose" type="button">CLOSE MAP</button>
   <div id="mapLegend">
     <b>MAP</b> — Click to set a GPS waypoint • Right-click to clear • <kbd>M</kbd> close<br>
     <span style="color:#ffcf33">■</span> Missions &nbsp; <span style="color:#7fff7f">⌂</span> Safehouse &nbsp; <span style="color:#ff4b4b">✚</span> Hospital &nbsp; <span style="color:#6aa2ff">★</span> Police &nbsp; <span style="color:#ffd23f">⤴</span> Stunt jump
