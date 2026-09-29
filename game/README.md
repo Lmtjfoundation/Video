@@ -59,7 +59,7 @@ Each city has a hospital, a police station with a helipad, and a safehouse with 
 | 1–6, wheel | Weapons | E | Horn (siren in cop cars) | LMB | Rockets |
 | F | Steal / enter car | R | Radio station | F | Bail out |
 
-Other keys: **M** opens the map and GPS, **T** opens the cheat console, **V** changes the camera, **H** shows help, and **P**/**Esc** pauses.
+Other keys: **M** opens the map and GPS, **T** opens the cheat console, **V** switches between first-person (the default) and third-person views, **H** shows help, and **P**/**Esc** pauses.
 
 ## Cheats (press T)
 

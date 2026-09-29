@@ -141,6 +141,7 @@ export class Player {
       this.vx += mx * 3 * dt; this.vz += mz * 3 * dt;
     }
     if (this.aiming) this.h = smoothAngle(this.h, yaw, 20, dt);
+    if (g.cam.mode === 0) this.h = yaw; // first person: body faces where you look
 
     if (this.chuteState !== 'open') this.vy -= (g.cheats.moonGravity ? 7 : 22) * dt;
     this.pos.x += this.vx * dt; this.pos.z += this.vz * dt; this.pos.y += this.vy * dt;
@@ -289,6 +290,8 @@ export class Player {
     if (fromVehicle) {
       const v = this.vehicle;
       mx = v.pos.x - Math.cos(v.h) * 1.0; my = v.pos.y + v.T.hgt * 0.8; mz = v.pos.z + Math.sin(v.h) * 1.0;
+    } else if (g.cam.mode === 0) {
+      ({ x: mx, y: my, z: mz } = g.fpMuzzle());
     } else {
       mx = this.pos.x + Math.sin(this.h) * 0.6 - Math.cos(this.h) * 0.36;
       my = this.pos.y + 1.55;

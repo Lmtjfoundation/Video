@@ -130,7 +130,8 @@ export class HUD {
     } else el.speedo.classList.add('hidden');
     // crosshair
     const armed = !WEAPONS[p.weapon].melee || (p.vehicle && (p.vehicle.type === 'tank' || p.vehicle.type === 'heli'));
-    el.cross.classList.toggle('hidden', p.dead || (!armed && !p.vehicle) || (p.vehicle && !armed));
+    const fp = g.cam.mode === 0 && !p.vehicle;
+    el.cross.classList.toggle('hidden', p.dead || (!fp && ((!armed && !p.vehicle) || (p.vehicle && !armed))));
     el.cross.classList.toggle('aim', p.aiming && !p.vehicle);
     // timers for transient elements
     if ((this.hintT -= dt) <= 0) el.hint.classList.add('hidden');

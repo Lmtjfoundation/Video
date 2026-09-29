@@ -73,7 +73,7 @@ class Game {
     this.stats = { kills: 0, stunts: 0, cars: 0, cheats: 0 };
     this.started = false;
     this.paused = false;
-    this.cam = { yaw: Math.PI, pitch: 0.18, dist: 5, idle: 0, fov: 70, mode: 0, pos: new THREE.Vector3() };
+    this.cam = { yaw: Math.PI, pitch: 0.05, dist: 5, idle: 0, fov: 75, mode: 0, pos: new THREE.Vector3() }; // mode 0 = first person
   }
 
   loadSave() {
@@ -109,6 +109,7 @@ class Game {
     this.missions = new Missions(this);
     this.buildPickups();
     this.buildHeadlight();
+    this.buildViewmodel();
     // start outside the Dallas safehouse
     const sh = this.world.spawns.safehouses.find((s) => s.city === 'dallas');
     this.player.pos.set(sh.x, 0.3, sh.z + 4);
@@ -914,14 +915,20 @@ class Game {
     cam.yaw -= mdx * sens;
     cam.pitch = clamp(cam.pitch + mdy * sens, -0.9, 1.35);
     if (Math.abs(mdx) + Math.abs(mdy) > 0.5) cam.idle = 0; else cam.idle += dt;
-    if (input.pressed('KeyV')) cam.mode = (cam.mode + 1) % 3;
+    if (input.pressed('KeyV')) {
+      cam.mode = (cam.mode + 1) % 3;
+      this.hud.help(cam.mode === 0 ? 'Camera: <b>first person</b>' : 'Camera: <b>third person</b>', 1.5);
+    }
+    if (cam.mode === 0 && !p.dead) { this.updateFirstPerson(dt); return; }
+    this.viewmodel.visible = false;
+    this.camera.near = 0.3;
     let target = new THREE.Vector3();
     let dist, fov = 70, shoulder = 0;
     if (v) {
       const T = v.T;
       target.set(v.pos.x, v.pos.y + T.hgt * 0.75 + (v.isHeli ? 1.5 : 0.8), v.pos.z);
-      dist = (v.isHeli ? 15 : T.len * 1.2 + 3.8) * [1, 1.6, 0.6][cam.mode];
-      if (T.style === 'bike') dist = 5.2 * [1, 1.6, 0.6][cam.mode];
+      dist = (v.isHeli ? 15 : T.len * 1.2 + 3.8) * [1, 1, 1.6][cam.mode];
+      if (T.style === 'bike') dist = 5.2 * [1, 1, 1.6][cam.mode];
       if (cam.idle > 1.0 && (v.speed > 3 || v.isHeli)) {
         const back = v.forwardSpeed < -2 && !v.isHeli;
         const velH = Math.atan2(v.vx, v.vz);
@@ -933,7 +940,7 @@ class Game {
       fov = 70 + clamp(sp - 15, 0, 50) * 0.35 + (v.input.nitro && p.nitro > 0 ? 8 : 0);
     } else {
       target.set(p.pos.x, p.pos.y + (p.swimming ? 0.6 : 1.65), p.pos.z);
-      dist = (p.aiming ? 2.4 : 4.4) * [1, 1.5, 0.7][cam.mode];
+      dist = (p.aiming ? 2.4 : 4.4) * [1, 1, 1.5][cam.mode];
       shoulder = p.aiming ? 0.75 : 0.45;
       fov = p.aiming ? 52 : 70;
       if (p.chuteState === 'open') { dist = 9; }
@@ -964,6 +971,126 @@ class Game {
     this.camera.fov = cam.fov;
     if (this.debugCam) { const d = this.debugCam; this.camera.position.set(d.pos.x, d.pos.y, d.pos.z); this.camera.lookAt(d.look.x, d.look.y, d.look.z); this.camera.fov = 60; }
     this.camera.updateProjectionMatrix();
+  }
+
+  // ---------------------------------------------------------- first person
+  buildViewmodel() {
+    const vm = new THREE.Group();
+    const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, ...o });
+    const skin = M(0x8d5a3b), sleeve = M(0x2e7d32), metal = M(0x1c1c1e, { metalness: 0.6, roughness: 0.35 }), olive = M(0x4b5a32);
+    const box = (w, h, d, m, x, y, z, parent) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); parent.add(b); return b; };
+    // right arm + hand
+    const right = new THREE.Group();
+    box(0.06, 0.06, 0.4, sleeve, 0, 0, 0.2, right);
+    box(0.055, 0.06, 0.08, skin, 0, 0, -0.03, right);
+    right.position.set(0.24, -0.25, -0.42);
+    vm.add(right);
+    const left = new THREE.Group();
+    box(0.06, 0.06, 0.4, sleeve, 0, 0, 0.2, left);
+    box(0.055, 0.06, 0.08, skin, 0, 0, -0.03, left);
+    left.position.set(-0.24, -0.26, -0.44);
+    vm.add(left);
+    // one model per weapon, parented to the right hand
+    const guns = {};
+    const gun = (name, build) => { const g = new THREE.Group(); build(g); g.position.set(0, 0.03, -0.1); g.visible = false; right.add(g); guns[name] = g; };
+    gun('pistol', (g) => { box(0.04, 0.07, 0.22, metal, 0, 0.02, -0.08, g); box(0.035, 0.1, 0.05, metal, 0, -0.04, 0, g); });
+    gun('smg', (g) => { box(0.05, 0.08, 0.34, metal, 0, 0.02, -0.12, g); box(0.035, 0.14, 0.05, metal, 0, -0.07, -0.05, g); });
+    gun('shotgun', (g) => { box(0.05, 0.06, 0.6, M(0x5a3a22), 0, 0.02, -0.2, g); box(0.035, 0.035, 0.5, metal, 0, 0.07, -0.3, g); });
+    gun('rpg', (g) => { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.95, 12), olive); t.rotation.x = Math.PI / 2; t.position.set(0, 0.08, -0.25); g.add(t); box(0.05, 0.12, 0.06, metal, 0, -0.03, 0, g); });
+    gun('minigun', (g) => {
+      const barrels = new THREE.Group();
+      for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; const b = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.7, 6), metal); b.rotation.x = Math.PI / 2; b.position.set(Math.cos(a) * 0.035, Math.sin(a) * 0.035, 0); barrels.add(b); }
+      barrels.position.set(0, 0.03, -0.35);
+      g.add(barrels);
+      box(0.12, 0.12, 0.2, metal, 0, 0.03, 0, g);
+      g.userData.barrels = barrels;
+    });
+    // muzzle marker for tracers
+    const tip = new THREE.Object3D();
+    right.add(tip);
+    vm.visible = false;
+    this.camera.add(vm);
+    this.scene.add(this.camera);
+    this.viewmodel = vm;
+    this.vm = { right, left, guns, tip, kick: 0 };
+  }
+
+  fpMuzzle() {
+    const p = this.player, g = this.vm.guns[p.weapon];
+    const len = { pistol: 0.2, smg: 0.3, shotgun: 0.5, rpg: 0.7, minigun: 0.7 }[p.weapon] || 0.2;
+    this.vm.tip.position.set(0, 0.05, -0.1 - len);
+    this.camera.updateMatrixWorld();
+    return this.vm.tip.getWorldPosition(new THREE.Vector3());
+  }
+
+  updateFirstPerson(dt) {
+    const cam = this.cam, p = this.player, v = p.vehicle;
+    let ex, ey, ez, fov = 75;
+    if (v) {
+      const T = v.T;
+      const sh = Math.sin(v.h), ch = Math.cos(v.h);
+      // driver seat: left of centre, a little behind the middle, just under the roof
+      const side = v.isHeli ? 0.45 : T.style === 'bike' ? 0 : T.wid * 0.22;
+      const back = v.isHeli ? -2.3 : T.style === 'bike' ? 0.25 : T.style === 'bus' ? -T.len * 0.42 : T.len * 0.08;
+      const lift = T.style === 'monster' ? 1.5 : 0;
+      const up = v.isHeli ? 2.3 : T.style === 'bike' ? 1.55 : T.style === 'bus' ? 2.5 : T.style === 'tank' ? 3.1 : T.style === 'van' ? 1.9 : Math.max(T.hgt * 0.85, 1.12) + lift;
+      ex = v.pos.x + ch * side - sh * back;
+      ez = v.pos.z - sh * side - ch * back;
+      ey = v.pos.y + up;
+      if (v.parts.rider) v.parts.rider.visible = false;
+      if (cam.idle > 1.0 && (v.speed > 3 || v.isHeli)) {
+        const reversing = v.forwardSpeed < -2 && !v.isHeli;
+        cam.yaw = smoothAngle(cam.yaw, reversing ? v.h + Math.PI : v.h, v.isHeli ? 1.5 : 4, dt);
+        cam.pitch = smoothDamp(cam.pitch, v.isHeli ? 0.25 : 0.04, 2, dt);
+      }
+      fov = 75 + clamp(v.speed - 15, 0, 50) * 0.3 + (v.input.nitro && p.nitro > 0 ? 8 : 0);
+    } else {
+      const moving = Math.hypot(p.vx, p.vz);
+      const bob = p.grounded ? Math.sin(p.phase * 2) * 0.035 * Math.min(1, moving / 5) : 0;
+      ex = p.pos.x + Math.sin(cam.yaw) * 0.15;
+      ez = p.pos.z + Math.cos(cam.yaw) * 0.15;
+      ey = p.pos.y + (p.swimming ? 0.55 : 1.68) + bob;
+      fov = p.aiming ? 55 : 75;
+      p.group.visible = false;
+    }
+    cam.pitch = clamp(cam.pitch, -1.35, 1.35);
+    const cp = Math.cos(cam.pitch);
+    const fx = Math.sin(cam.yaw) * cp, fy = -Math.sin(cam.pitch), fz = Math.cos(cam.yaw) * cp;
+    if (this.shakeAmt > 0) {
+      const s = this.shakeAmt * 0.3;
+      ex += rand(-s, s); ey += rand(-s, s); ez += rand(-s, s);
+      this.shakeAmt = Math.max(0, this.shakeAmt - dt * 2.5);
+    }
+    cam.fov = smoothDamp(cam.fov, fov, 6, dt);
+    this.camera.near = 0.05;
+    this.camera.position.set(ex, ey, ez);
+    this.camera.lookAt(ex + fx, ey + fy, ez + fz);
+    if (v && !v.isHeli) this.camera.rotateZ(-v.rollVis * 0.6);
+    this.camera.fov = cam.fov;
+    this.camera.updateProjectionMatrix();
+
+    // hands and gun
+    const vm = this.vm;
+    this.viewmodel.visible = !v && p.chuteState !== 'open';
+    if (!this.viewmodel.visible) return;
+    const melee = p.weapon === 'fist';
+    for (const [k, g] of Object.entries(vm.guns)) g.visible = k === p.weapon;
+    const twoHanded = !melee && p.weapon !== 'pistol';
+    const moving = Math.hypot(p.vx, p.vz);
+    const sway = p.grounded ? Math.min(1, moving / 5) : 0;
+    const bx = Math.cos(p.phase) * 0.015 * sway, by = Math.abs(Math.sin(p.phase)) * 0.015 * sway;
+    vm.kick = Math.max(0, vm.kick - dt * 6);
+    const recent = performance.now() - p.lastShot < 80;
+    if (recent && !melee) vm.kick = Math.min(1, vm.kick + (p.weapon === 'shotgun' || p.weapon === 'rpg' ? 1 : 0.35));
+    const aimX = p.aiming && !melee ? 0.2 : 0;
+    vm.right.position.set(0.24 - aimX + bx, -0.25 + by + (p.aiming ? 0.07 : 0), -0.42 + vm.kick * 0.08);
+    vm.right.rotation.set(vm.kick * 0.25, 0, 0);
+    // punching: the right fist jabs forward
+    if (melee && p.punchT > 0) vm.right.position.z -= Math.sin((0.3 - p.punchT) / 0.3 * Math.PI) * 0.25;
+    vm.left.visible = melee || twoHanded;
+    vm.left.position.set(melee ? -0.24 + bx : -0.04 - aimX * 0.5 + bx, -0.26 + by, melee ? -0.44 : -0.6);
+    const mg = vm.guns.minigun.userData.barrels;
+    if (p.weapon === 'minigun' && this.input.mouse.left) mg.rotation.z += dt * 40;
   }
 
   // ---------------------------------------------------------------- audio
