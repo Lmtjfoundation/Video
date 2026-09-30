@@ -22,8 +22,14 @@ const PANTS = ['#1f2d4a', '#2b2b2b', '#5d4037', '#3e4b3a', '#c8b58a', '#455a64',
 const HAIR = ['#141110', '#2b1d14', '#4a3222', '#7a5230', '#c9a15a', '#8a8a8a', '#a0522d'];
 const SHOES = ['#161616', '#f0f0f0', '#5a3a22', '#2d2d4a', '#8a1c1c'];
 
-const cap = (r, len, seg = 8) => new THREE.CapsuleGeometry(r, len, 3, seg);
-const sph = (r, w = 12, h = 8) => new THREE.SphereGeometry(r, w, h);
+const cap = (r, len, seg = 16) => new THREE.CapsuleGeometry(r, len, 5, seg);
+const sph = (r, w = 20, h = 14) => new THREE.SphereGeometry(r, w, h);
+// smooth body part turned from a side profile: pts = [[radius, y], ...] top to bottom
+const lathe = (pts, seg = 18) => {
+  const v = pts.map(([r, y]) => new THREE.Vector2(Math.max(r, 0.0005), y));
+  if (v[0].y > v[v.length - 1].y) v.reverse(); // LatheGeometry faces outward for bottom-to-top profiles
+  return new THREE.LatheGeometry(v, seg);
+};
 
 // Build one rig segment from parts [geometry, matrix, colour]
 function segment(parts) {
@@ -57,14 +63,18 @@ export function buildHuman(o = {}) {
   // ---- torso, neck and head: one merged mesh
   const sw = build * (female ? 0.9 : 1);
   const hipW = female ? 1.12 : 1;
+  // torso and hips are turned from anatomical profiles, then flattened front-to-back
+  const waist = female ? 0.13 : 0.145;
   const body = [
-    [cap(0.115, 0.12), mat(0, 0.99, 0, 0, 0, Math.PI / 2, 0.9, hipW, 0.78), pants],                           // pelvis
-    [cap(0.145, 0.22), mat(0, 1.2, 0, 0, 0, 0, 0.92 * sw, 1, 0.66), shirt],                                  // waist
-    [cap(0.17, 0.2), mat(0, 1.36, 0.005, 0, 0, 0, 1.02 * sw, 1, 0.7), shirt],                                 // chest
-    [cap(0.07, 0.34 * sw), mat(0, 1.46, 0, 0, 0, Math.PI / 2, 1, 1, 0.9), shirt],                             // shoulders
-    [new THREE.CylinderGeometry(0.048, 0.056, 0.12, 10), mat(0, 1.55, 0.005), skin],                         // neck
-    [sph(0.108, 16, 12), mat(0, 1.68, 0.01, 0, 0, 0, 0.9, 1.15, 1.0), skin],                                  // skull
-    [sph(0.075, 12, 8), mat(0, 1.615, 0.035, 0, 0, 0, 0.95, 0.75, 1.0), skin],                               // jaw
+    [lathe([[0, 1.08], [0.135, 1.08], [0.146, 1.02], [0.148, 0.96], [0.13, 0.9], [0.06, 0.87], [0, 0.87]], 22), mat(0, 0, 0, 0, 0, 0, hipW, 1, 0.64), pants], // hips
+    [lathe([[0, 1.555], [0.05, 1.55], [0.1, 1.53], [0.16, 1.5], [0.19, 1.46], [0.19, 1.4], [0.18, 1.32], [0.16, 1.24], [waist, 1.17], [waist + 0.004, 1.1], [0.152 * hipW, 1.03], [0.15 * hipW, 1.0], [0, 0.995]], 22),
+      mat(0, 0, 0.005, 0, 0, 0, sw, 1, 0.62), shirt],                                                        // chest, waist
+    [sph(0.055), mat(-0.17 * sw, 1.45, 0, 0, 0, 0, 1, 0.85, 1.05), shirt],                                       // shoulder caps
+    [sph(0.055), mat(0.17 * sw, 1.45, 0, 0, 0, 0, 1, 0.85, 1.05), shirt],
+    [lathe([[0.046, 1.63], [0.047, 1.58], [0.055, 1.54], [0.07, 1.52]], 14), mat(0, 0, 0.005), skin],       // neck
+    [sph(0.108, 24, 18), mat(0, 1.68, 0.01, 0, 0, 0, 0.9, 1.15, 1.0), skin],                                  // skull
+    [sph(0.075, 18, 12), mat(0, 1.615, 0.035, 0, 0, 0, 0.95, 0.75, 1.0), skin],                              // jaw
+    [sph(0.03, 12, 8), mat(-0.045, 1.645, 0.085), skin], [sph(0.03, 12, 8), mat(0.045, 1.645, 0.085), skin],  // cheeks
     [sph(0.022, 8, 6), mat(-0.098, 1.67, 0.005, 0, 0, 0, 0.5, 1, 0.8), shade],                                // ears
     [sph(0.022, 8, 6), mat(0.098, 1.67, 0.005, 0, 0, 0, 0.5, 1, 0.8), shade],
     [sph(0.017, 8, 6), mat(-0.036, 1.695, 0.093), '#f4f1ea'],                                                 // eye whites
@@ -73,7 +83,7 @@ export function buildHuman(o = {}) {
     [sph(0.009, 6, 4), mat(0.036, 1.695, 0.108), '#1e1712'],
     [new THREE.BoxGeometry(0.042, 0.008, 0.012), mat(-0.037, 1.722, 0.1, 0, 0, female ? 0.12 : 0.05), hair],   // brows
     [new THREE.BoxGeometry(0.042, 0.008, 0.012), mat(0.037, 1.722, 0.1, 0, 0, female ? -0.12 : -0.05), hair],
-    [new THREE.ConeGeometry(0.018, 0.05, 6), mat(0, 1.668, 0.112, Math.PI / 2 + 0.3, 0, 0), shade],          // nose
+    [lathe([[0.004, 0.05], [0.012, 0.03], [0.02, 0.005], [0.014, -0.004], [0, -0.006]], 10), mat(0, 1.64, 0.105, -0.25, 0, 0, 1, 1, 0.8), shade], // nose
     [new THREE.BoxGeometry(0.04, 0.009, 0.01), mat(0, 1.626, 0.1), '#' + lip.getHexString()],                 // mouth
   ];
   // hair styles
@@ -82,18 +92,18 @@ export function buildHuman(o = {}) {
     const top = new THREE.SphereGeometry(0.114, 16, 10, 0, Math.PI * 2, 0, style === 'buzz' || style === 'fade' ? Math.PI * 0.42 : Math.PI * 0.55);
     body.push([top, mat(0, 1.685, -0.004, -0.12, 0, 0, 0.94, 1.18, 1.05), hair]);
   }
-  if (style === 'long') body.push([new THREE.BoxGeometry(0.2, 0.3, 0.06), mat(0, 1.56, -0.075), hair], [new THREE.BoxGeometry(0.035, 0.22, 0.1), mat(-0.095, 1.6, -0.02), hair], [new THREE.BoxGeometry(0.035, 0.22, 0.1), mat(0.095, 1.6, -0.02), hair]);
-  if (style === 'bob') body.push([new THREE.CylinderGeometry(0.118, 0.125, 0.14, 14, 1, true), mat(0, 1.64, -0.01), hair]);
+  if (style === 'long') body.push([new THREE.SphereGeometry(0.12, 20, 12, Math.PI * 0.2, Math.PI * 1.6, Math.PI * 0.3, Math.PI * 0.5), mat(0, 1.64, -0.01, 0, Math.PI, 0, 0.98, 2.1, 0.95), hair]);
+  if (style === 'bob') body.push([new THREE.SphereGeometry(0.122, 20, 12, Math.PI * 0.25, Math.PI * 1.5, Math.PI * 0.3, Math.PI * 0.4), mat(0, 1.66, -0.01, 0, Math.PI, 0, 1, 1.2, 1), hair]);
   if (style === 'bun') body.push([sph(0.05), mat(0, 1.8, -0.07), hair]);
-  if (style === 'curly') for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2; body.push([sph(0.045, 8, 6), mat(Math.cos(a) * 0.07, 1.78 + Math.sin(i) * 0.015, Math.sin(a) * 0.07 - 0.01), hair]); }
-  if (female) body.push([sph(0.075, 10, 8), mat(-0.06, 1.35, 0.075, 0, 0, 0, 1, 0.9, 0.7), shirt], [sph(0.075, 10, 8), mat(0.06, 1.35, 0.075, 0, 0, 0, 1, 0.9, 0.7), shirt]);
-  if (skirt) body.push([new THREE.CylinderGeometry(0.17 * hipW, 0.27, 0.42, 14, 1, true), mat(0, 0.8, 0), pants]);
+  if (style === 'curly') for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2; body.push([sph(0.045, 12, 8), mat(Math.cos(a) * 0.07, 1.775 + Math.sin(i * 2.3) * 0.02, Math.sin(a) * 0.07 - 0.01), hair]); }
+  if (female) body.push([sph(0.07, 16, 12), mat(-0.06, 1.35, 0.07, 0, 0, 0, 1, 0.9, 0.75), shirt], [sph(0.07, 16, 12), mat(0.06, 1.35, 0.07, 0, 0, 0, 1, 0.9, 0.75), shirt]);
+  if (skirt) body.push([lathe([[0.16, 1.0], [0.19, 0.9], [0.24, 0.7], [0.27, 0.58]], 22), mat(0, 0, 0, 0, 0, 0, hipW, 1, 0.8), pants]);
   // headwear
   if (o.hat === 'cop') body.push([new THREE.CylinderGeometry(0.118, 0.118, 0.08, 16), mat(0, 1.78, 0), '#10204a'], [new THREE.BoxGeometry(0.2, 0.012, 0.09), mat(0, 1.745, 0.1), '#0a0a0a'], [new THREE.BoxGeometry(0.03, 0.03, 0.01), mat(0, 1.79, 0.12), '#d4a73a']);
   else if (o.hat === 'cowboy') body.push([new THREE.CylinderGeometry(0.21, 0.23, 0.015, 18), mat(0, 1.77, 0, 0, 0, 0, 1, 1, 1.1), '#e8dcc2'], [new THREE.CylinderGeometry(0.09, 0.11, 0.12, 14), mat(0, 1.83, 0), '#e8dcc2'], [new THREE.CylinderGeometry(0.112, 0.112, 0.02, 14), mat(0, 1.785, 0), '#5a3a22']);
   else if (o.hat === 'cap') { const c = o.capColor || pick(SHIRTS); body.push([new THREE.SphereGeometry(0.118, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0, 1.72, 0), c], [new THREE.CylinderGeometry(0.1, 0.1, 0.01, 14, 1, false, -Math.PI / 2, Math.PI), mat(0, 1.725, 0.07, 0, 0, 0, 1, 1, 0.9), c]); }
   if (o.beads) for (const c of ['#7a3fbf', '#2fa84f', '#e8c33a']) body.push([new THREE.TorusGeometry(0.13, 0.012, 4, 16), mat(0, 1.43 - Math.random() * 0.06, 0.03, Math.PI / 2 - 0.35, 0, 0), c]);
-  if (o.vest) body.push([cap(0.18, 0.22), mat(0, 1.3, 0, 0, 0, 0, 1.05 * sw, 1, 0.75), o.vest]);
+  if (o.vest) body.push([lathe([[0.17, 1.5], [0.2, 1.44], [0.2, 1.3], [0.18, 1.15], [0.17, 1.12]], 22), mat(0, 0, 0.005, 0, 0, 0, sw * 1.02, 1, 0.68), o.vest]);
   const torso = segment(body);
   rig.add(torso);
 
@@ -101,12 +111,16 @@ export function buildHuman(o = {}) {
   const legColor = skirt ? skin : pants;
   const mkLeg = (x) => {
     const hip = new THREE.Group(); hip.position.set(x, 0.95, 0); rig.add(hip);
-    hip.add(segment([[cap(female ? 0.078 : 0.084, 0.34), mat(0, -0.22, 0), skirt ? skin : pants]]));
+    const t = female ? 0.93 : 1;
+    // thigh: full at the top, narrowing to the knee
+    hip.add(segment([[lathe([[0, 0.03], [0.07 * t, 0.02], [0.088 * t, -0.04], [0.085 * t, -0.16], [0.072 * t, -0.3], [0.06, -0.42], [0.055, -0.46], [0, -0.47]]), mat(0, 0, 0, 0, 0, 0, 1, 1, 0.95), skirt ? skin : pants]]));
     const knee = new THREE.Group(); knee.position.set(0, -0.44, 0); hip.add(knee);
     knee.add(segment([
-      [cap(0.064, 0.3), mat(0, -0.19, 0), shorts || skirt ? skin : legColor],
-      [cap(0.05, 0.16), mat(0, -0.45, 0.05, Math.PI / 2, 0, 0, 1.05, 1, 0.8), shoes],
-      [new THREE.BoxGeometry(0.1, 0.02, 0.26), mat(0, -0.49, 0.05), '#2a2a2a'],
+      // shin with a calf muscle behind
+      [lathe([[0, 0.02], [0.055, 0.01], [0.06, -0.08], [0.056, -0.16], [0.044, -0.28], [0.036, -0.38], [0.034, -0.43], [0, -0.44]]), mat(0, 0, -0.005), shorts || skirt ? skin : legColor],
+      // shoe: rounded upper, toe box and a sole
+      [sph(0.055, 16, 12), mat(0, -0.44, 0.045, 0, 0, 0, 0.95, 0.75, 2.1), shoes],
+      [new THREE.CapsuleGeometry(0.05, 0.16, 4, 14), mat(0, -0.482, 0.045, Math.PI / 2, 0, 0, 1.05, 1, 0.35), '#2a2a2a'],
     ]));
     return [hip, knee];
   };
@@ -116,11 +130,18 @@ export function buildHuman(o = {}) {
   // ---- arms: shoulder -> upper arm, elbow -> forearm + hand
   const mkArm = (x) => {
     const sh = new THREE.Group(); sh.position.set(x * sw, 1.45, 0); rig.add(sh);
-    sh.add(segment([[cap(0.052, 0.2), mat(0, -0.14, 0), shirt], ...(shortSleeves ? [[cap(0.045, 0.1), mat(0, -0.22, 0), skin]] : [])]));
+    const upper = [[0, 0.03], [0.05, 0.02], [0.056, -0.04], [0.05, -0.14], [0.043, -0.25], [0.04, -0.29], [0, -0.31]];
+    sh.add(segment(shortSleeves
+      ? [[lathe(upper.map(([r, y]) => [r * 0.9, y])), mat(0, 0, 0), skin], [lathe([[0, 0.035], [0.056, 0.025], [0.062, -0.04], [0.058, -0.12], [0.052, -0.13]]), mat(0, 0, 0), shirt]]
+      : [[lathe(upper), mat(0, 0, 0), shirt]]));
     const el = new THREE.Group(); el.position.set(0, -0.29, 0); sh.add(el);
     el.add(segment([
-      [cap(0.043, 0.19), mat(0, -0.12, 0), shortSleeves ? skin : shirt],
-      [sph(0.045, 10, 8), mat(0, -0.28, 0.01, 0, 0, 0, 0.8, 1.15, 0.6), skin],
+      // forearm: thick below the elbow, slim at the wrist
+      [lathe([[0, 0.02], [0.04, 0.01], [0.045, -0.05], [0.036, -0.17], [0.028, -0.23], [0, -0.24]]), mat(0, 0, 0), shortSleeves ? skin : shirt],
+      // hand: palm, fingers and thumb
+      [sph(0.036, 14, 10), mat(0, -0.27, 0.005, 0, 0, 0, 0.75, 1.15, 0.45), skin],
+      [new THREE.CapsuleGeometry(0.018, 0.05, 4, 10), mat(0, -0.32, 0.008, 0, 0, 0, 1.4, 1, 0.8), skin],
+      [new THREE.CapsuleGeometry(0.011, 0.035, 3, 8), mat(0.025 * Math.sign(x), -0.275, 0.025, 0.4, 0, 0.5 * Math.sign(x)), skin],
     ]));
     return [sh, el];
   };

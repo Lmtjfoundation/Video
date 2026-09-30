@@ -3,6 +3,31 @@
 import * as THREE from 'three';
 import { GeoBuilder, mat } from './geo.js';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+// Same API as GeoBuilder.box, but every part gets softly rounded edges (no hard
+// polygon look); geometries are merged with a per-vertex colour.
+class RoundBuilder {
+  constructor() { this.parts = []; this.count = 0; }
+  get vertexCount() { return this.count; }
+  add(geo, color) {
+    const g = geo.index ? geo : mergeVertices(geo);
+    if (g.attributes.uv) g.deleteAttribute('uv');
+    const c = new THREE.Color(color), n = g.attributes.position.count;
+    const col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    this.parts.push(g);
+    this.count += n;
+  }
+  box(cx, y0, cz, w, h, d, color) {
+    const m = Math.min(w, h, d);
+    const r = Math.min(0.22, m * 0.3);
+    const seg = m > 0.3 ? 3 : 1;
+    this.add(new RoundedBoxGeometry(w, h, d, seg, r).translate(cx, y0 + h / 2, cz), color);
+  }
+  build() { return mergeGeometries(this.parts); }
+}
 import { clamp, lerp, rand, pick, wrapAngle, smoothDamp } from './util.js';
 
 export const VEHICLE_TYPES = {
@@ -50,9 +75,11 @@ const wheelGeoCache = new Map();
 function wheelGeo(r, w) {
   const k = r + ':' + w;
   if (!wheelGeoCache.has(k)) {
-    const t = new THREE.CylinderGeometry(r, r, w, 20);
+    // tyre with rounded shoulders (lathe profile) and a multi-spoke rim
+    const pr = [[r * 0.62, -w / 2], [r * 0.93, -w / 2], [r, -w / 2 + w * 0.2], [r, w / 2 - w * 0.2], [r * 0.93, w / 2], [r * 0.62, w / 2]];
+    const t = new THREE.LatheGeometry(pr.map(([a, b]) => new THREE.Vector2(a, b)), 28);
     t.rotateZ(Math.PI / 2);
-    const h = new THREE.CylinderGeometry(r * 0.6, r * 0.6, w + 0.02, 8);
+    const h = new THREE.CylinderGeometry(r * 0.62, r * 0.62, w * 0.9, 20);
     h.rotateZ(Math.PI / 2);
     wheelGeoCache.set(k, [t, h]);
   }
@@ -111,15 +138,15 @@ function buildModel(T, color) {
   const group = new THREE.Group();
   const body = new THREE.Group(); // tilts with suspension
   group.add(body);
-  const P = new GeoBuilder(); // paint
-  const D = new GeoBuilder(); // details
-  const Lm = new GeoBuilder(); // lamps
-  const Gl = new GeoBuilder(); // glass
+  const P = new RoundBuilder(); // paint
+  const D = new RoundBuilder(); // details
+  const Lm = new RoundBuilder(); // lamps
+  const Gl = new RoundBuilder(); // glass
   let shell = null;
   const parts = { wheels: [], steer: [] };
   const L = T.len, W = T.wid;
   const hl = '#fff6d8', tl = '#ff2a2a';
-  const tails = new GeoBuilder();
+  const tails = new RoundBuilder();
 
   const addWheels = (r, wid, zs, xs, y = r) => {
     const [tg, hg] = wheelGeo(r, wid);
@@ -264,10 +291,10 @@ function buildModel(T, color) {
       Lm.box(-0.9, 1.5, L / 2 + 0.02, 0.3, 0.2, 0.05, hl); Lm.box(0.9, 1.5, L / 2 + 0.02, 0.3, 0.2, 0.05, hl);
       const turret = new THREE.Group();
       turret.position.set(0, 2.1, -0.2);
-      const tb = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.9, 3.4), paintMat(color)); tb.position.y = 0.45; tb.castShadow = true;
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 5, 10), paintMat(color));
+      const tb = new THREE.Mesh(new RoundedBoxGeometry(2.8, 0.9, 3.4, 3, 0.3), paintMat(color)); tb.position.y = 0.45; tb.castShadow = true;
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 5, 20), paintMat(color));
       barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.55, 3.9);
-      const hatch = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.25, 10), paintMat('#3b4828')); hatch.position.set(0.6, 1.0, -0.6);
+      const hatch = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.25, 24), paintMat('#3b4828')); hatch.position.set(0.6, 1.0, -0.6);
       turret.add(tb, barrel, hatch);
       body.add(turret);
       parts.turret = turret;
@@ -283,11 +310,12 @@ function buildModel(T, color) {
       break;
     }
     case 'heli': {
-      P.box(0, 0.8, 0.5, 2.2, 2.0, 4.2, color);
-      Gl.box(0, 1.2, 2.3, 2.0, 1.4, 1.0, GLASS);
-      P.box(0, 1.5, -3.3, 0.5, 0.5, 5, color);
-      P.box(0, 1.6, -5.6, 0.15, 1.6, 0.9, color);
-      P.box(0, 2.8, 0.3, 1.0, 0.3, 1.8, color);
+      // streamlined fuselage, bubble canopy, tapered tail boom and fin
+      P.add(new THREE.SphereGeometry(1, 28, 18).scale(1.1, 1.0, 2.3).translate(0, 1.75, 0.3), color);
+      Gl.add(new THREE.SphereGeometry(1, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.55).rotateX(Math.PI / 2 - 0.25).scale(0.98, 0.9, 1.3).translate(0, 1.95, 1.2), GLASS);
+      P.add(new THREE.CylinderGeometry(0.16, 0.42, 4.6, 16).rotateX(Math.PI / 2).translate(0, 1.95, -3.4), color);
+      P.add(new RoundedBoxGeometry(0.14, 1.6, 0.9, 2, 0.06).rotateX(-0.3).translate(0, 2.4, -5.6), color);
+      P.add(new THREE.CapsuleGeometry(0.4, 1.2, 6, 16).rotateX(Math.PI / 2).translate(0, 2.85, 0.3), color);
       D.box(-0.9, 0, 0.4, 0.12, 0.12, 4.2, '#444');
       D.box(0.9, 0, 0.4, 0.12, 0.12, 4.2, '#444');
       D.box(-0.9, 0.1, 1.2, 0.08, 0.7, 0.08, '#444'); D.box(0.9, 0.1, 1.2, 0.08, 0.7, 0.08, '#444');
@@ -303,7 +331,7 @@ function buildModel(T, color) {
       tails.box(0, 1.6, -6.1, 0.2, 0.2, 0.1, tl);
       const rotor = new THREE.Group(); rotor.position.set(0, 3.1, 0.3);
       const bladeM = new THREE.MeshStandardMaterial({ color: 0x222222 });
-      const blade = new THREE.BoxGeometry(11, 0.06, 0.35);
+      const blade = new RoundedBoxGeometry(11, 0.06, 0.35, 1, 0.03);
       const b1 = new THREE.Mesh(blade, bladeM), b2 = new THREE.Mesh(blade, bladeM); b2.rotation.y = Math.PI / 2;
       rotor.add(b1, b2);
       const disc = new THREE.Mesh(new THREE.CircleGeometry(5.5, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.0, depthWrite: false }));
@@ -318,7 +346,7 @@ function buildModel(T, color) {
   }
 
   let paintGeo = P.vertexCount ? P.build() : null;
-  if (paintGeo) { paintGeo.deleteAttribute('color'); paintGeo.deleteAttribute('uv'); }
+  if (paintGeo) paintGeo.deleteAttribute('color');
   if (shell) {
     paintGeo = paintGeo ? mergeGeometries([paintGeo, shell.body]) : shell.body;
     const gm = new THREE.Mesh(shell.glass, shellGlassMat);

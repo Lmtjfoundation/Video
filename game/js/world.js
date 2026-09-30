@@ -533,7 +533,7 @@ export class World {
       const w = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.4, 0.1, 20), new THREE.MeshStandardMaterial({ color: 0x3c7fa0, roughness: 0.1, metalness: 0.3 }));
       w.position.set(bx, 0.82, bz);
       this.scene.add(w);
-      const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.6, 4, 8), new THREE.MeshStandardMaterial({ color: 0xcfefff, transparent: true, opacity: 0.6 }));
+      const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.6, 4, 16), new THREE.MeshStandardMaterial({ color: 0xcfefff, transparent: true, opacity: 0.6 }));
       jet.position.set(bx, 2.8, bz);
       this.scene.add(jet);
       this.addBoxCollider(bx, bz, 12, 12, 0.8, 'low');
@@ -635,7 +635,7 @@ export class World {
         this.buildPark(bx, bz, rng, { trees: 8, noFountain: true, clear: 16 });
         const shaftM = new THREE.MeshStandardMaterial({ color: 0xd8d4cc, roughness: 0.6 });
         for (const [ox, oz] of [[0, 0], [3.2, 1.8], [-3.2, 1.8], [0, -3.6]]) {
-          const s = new THREE.Mesh(new THREE.CylinderGeometry(ox === 0 && oz === 0 ? 3 : 2.2, 2.6, 150, 12), shaftM);
+          const s = new THREE.Mesh(new THREE.CylinderGeometry(ox === 0 && oz === 0 ? 3 : 2.2, 2.6, 150, 28), shaftM);
           s.position.set(bx + ox, 75, bz + oz);
           s.castShadow = true;
           S.add(s);
@@ -752,7 +752,7 @@ export class World {
         const spire = (x, z, h, r) => {
           const t = new THREE.Mesh(new THREE.BoxGeometry(r * 2, h, r * 2), this.whiteMat);
           t.position.set(x, h / 2, z); t.castShadow = true;
-          const c = new THREE.Mesh(new THREE.ConeGeometry(r * 1.2, h * 0.5, 8), new THREE.MeshStandardMaterial({ color: 0x3a3d44, metalness: 0.4 }));
+          const c = new THREE.Mesh(new THREE.ConeGeometry(r * 1.2, h * 0.5, 20), new THREE.MeshStandardMaterial({ color: 0x3a3d44, metalness: 0.4 }));
           c.position.set(x, h + h * 0.25, z);
           S.add(t, c);
           this.addBoxCollider(x, z, r * 2, r * 2, h);
@@ -808,7 +808,7 @@ export class World {
         this.addBuilding(B, bx, bz, 30, 14, 30, 'dark', rng, { y0: h, tint: '#d8c8b8' });
         const pyr = new THREE.Mesh(new THREE.ConeGeometry(21, 26, 4, 1), this.goldMat);
         pyr.rotation.y = Math.PI / 4; pyr.position.set(bx, h + 14 + 13, bz);
-        const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 1.4, 30, 8), this.goldMat);
+        const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 1.4, 30, 20), this.goldMat);
         spire.position.set(bx, h + 14 + 26 + 15, bz);
         S.add(pyr, spire);
         this.labels.push({ text: 'Bank of America Plaza', x: bx, z: bz });
@@ -876,7 +876,7 @@ export class World {
         drum.position.set(bx, 23, bz);
         const dome = new THREE.Mesh(new THREE.SphereGeometry(8.4, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), this.goldMat);
         dome.position.set(bx, 28, bz); dome.scale.y = 1.3;
-        const lantern = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.5, 6, 8), this.goldMat);
+        const lantern = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.5, 6, 18), this.goldMat);
         lantern.position.set(bx, 41, bz);
         S.add(body, drum, dome, lantern);
         for (let k = -3; k <= 3; k++) B.detail.box(bx + k * 3.5, 0, bz + 16, 1.6, 16, 1.6, '#f7f5f0');
@@ -919,7 +919,7 @@ export class World {
     const mat = new THREE.MeshBasicMaterial({ color });
     this.nightBasic.push({ m: mat, day: 0.7, night: 1.3 });
     for (const off of [-1.2, 1.2]) {
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.35, 6, 48), mat);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.35, 12, 64), mat);
       rim.position.z = off;
       wheel.add(rim);
     }
@@ -1108,7 +1108,7 @@ export class World {
     const wheel = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 10, 16), red);
     wheel.rotation.z = Math.PI / 2; wheel.position.set(0, 3, -24);
     for (const sx of [-2, 2]) {
-      const st = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 10, 10), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+      const st = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 10, 20), new THREE.MeshStandardMaterial({ color: 0x222222 }));
       st.position.set(sx, 11, 8);
       g.add(st);
     }
@@ -1215,7 +1215,7 @@ export class World {
     const pad = new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), this.asphaltMat);
     pad.position.set(fx, 0.02, fz);
     this.scene.add(pad);
-    const hangar = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 30, 16, 1, false, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x5b6b4a, roughness: 0.8 }));
+    const hangar = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 30, 36, 1, false, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x5b6b4a, roughness: 0.8 }));
     hangar.rotation.z = Math.PI / 2; hangar.rotation.y = Math.PI / 2; hangar.position.set(fx + 15, 0, fz - 20);
     this.scene.add(hangar);
     this.addBoxCollider(fx + 15, fz - 20, 30, 28, 13);
@@ -1337,7 +1337,7 @@ export class World {
     const byKind = {};
     for (const t of this.treeList) (byKind[t.kind] ||= []).push(t);
     const trunkM = new THREE.MeshStandardMaterial({ color: 0x4e3a2c, roughness: 0.95 });
-    const trunkG = new THREE.CylinderGeometry(0.2, 0.42, 1, 7, 2, true); trunkG.translate(0, 0.5, 0);
+    const trunkG = new THREE.CylinderGeometry(0.2, 0.42, 1, 10, 2, true); trunkG.translate(0, 0.5, 0);
     { // gnarly trunk
       const p = trunkG.attributes.position;
       for (let i = 0; i < p.count; i++) {
@@ -1393,24 +1393,35 @@ export class World {
 
   buildLamps() {
     const n = this.lampList.length;
-    const poleG = new THREE.CylinderGeometry(0.1, 0.16, 7.5, 6).translate(0, 3.75, 0);
-    const armG = new THREE.BoxGeometry(0.12, 0.12, 2.4).translate(0, 7.4, 1.1);
-    const headG = new THREE.BoxGeometry(0.5, 0.18, 0.9).translate(0, 7.3, 2.2);
+    const poleG = new THREE.CylinderGeometry(0.1, 0.16, 7.5, 10, 1, true).translate(0, 3.75, 0);
+    // curved mast arm and a cobra-head luminaire
+    const arc = new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, 7.2, 0), new THREE.Vector3(0, 7.9, 0.4), new THREE.Vector3(0, 7.6, 2.0));
+    const armG = new THREE.TubeGeometry(arc, 8, 0.06, 6);
+    const headG = new THREE.SphereGeometry(0.5, 12, 4, 0, Math.PI * 2, 0, Math.PI / 2).scale(0.55, 0.35, 1).rotateX(Math.PI).translate(0, 7.62, 2.3);
     const poleM = new THREE.MeshStandardMaterial({ color: 0x3a3c40, metalness: 0.6, roughness: 0.4 });
     const headM = new THREE.MeshBasicMaterial({ color: 0xffe2a8 });
     this.nightBasic.push({ m: headM, day: 0.5, night: 1.6 });
-    const poles = new THREE.InstancedMesh(poleG, poleM, n);
-    const arms = new THREE.InstancedMesh(armG, poleM, n);
-    const heads = new THREE.InstancedMesh(headG, headM, n);
     const d = new THREE.Object3D();
-    this.lampList.forEach((l, i) => {
-      d.position.set(l.x, 0.25, l.z);
-      d.rotation.set(0, l.h, 0);
-      d.updateMatrix();
-      poles.setMatrixAt(i, d.matrix); arms.setMatrixAt(i, d.matrix); heads.setMatrixAt(i, d.matrix);
-    });
-    for (const m of [poles, arms, heads]) { m.computeBoundingSphere(); this.scene.add(m); }
-    poles.castShadow = true;
+    // 300 m chunks so lamps behind the camera or across town are culled
+    const chunks = new Map();
+    for (const l of this.lampList) {
+      const k = Math.floor(l.x / 300) + ',' + Math.floor(l.z / 300);
+      if (!chunks.has(k)) chunks.set(k, []);
+      chunks.get(k).push(l);
+    }
+    for (const list of chunks.values()) {
+      const poles = new THREE.InstancedMesh(poleG, poleM, list.length);
+      const arms = new THREE.InstancedMesh(armG, poleM, list.length);
+      const heads = new THREE.InstancedMesh(headG, headM, list.length);
+      list.forEach((l, i) => {
+        d.position.set(l.x, 0.25, l.z);
+        d.rotation.set(0, l.h, 0);
+        d.updateMatrix();
+        poles.setMatrixAt(i, d.matrix); arms.setMatrixAt(i, d.matrix); heads.setMatrixAt(i, d.matrix);
+      });
+      for (const m of [poles, arms, heads]) { m.computeBoundingSphere(); this.scene.add(m); }
+      poles.castShadow = true;
+    }
   }
 
   // Traffic signals at every intersection plus hydrants, bins, benches and news boxes on the sidewalks.
@@ -1432,9 +1443,9 @@ export class World {
       }
     }
     const poleG = mergeGeometries([
-      new THREE.CylinderGeometry(0.11, 0.14, 6.2, 10).translate(0, 3.1, 0),
-      new THREE.CylinderGeometry(0.2, 0.24, 0.35, 10).translate(0, 0.17, 0),
-      new THREE.CylinderGeometry(0.07, 0.09, 6.5, 8).rotateZ(Math.PI / 2).translate(3.25, 5.9, 0),
+      new THREE.CylinderGeometry(0.11, 0.14, 6.2, 16).translate(0, 3.1, 0),
+      new THREE.CylinderGeometry(0.2, 0.24, 0.35, 16).translate(0, 0.17, 0),
+      new THREE.CylinderGeometry(0.07, 0.09, 6.5, 12).rotateZ(Math.PI / 2).translate(3.25, 5.9, 0),
       new THREE.CylinderGeometry(0.02, 0.02, 3.2, 4).rotateZ(Math.PI / 2 - 0.25).translate(1.6, 6.3, 0),
       new THREE.BoxGeometry(0.34, 1.05, 0.28).translate(6.0, 5.3, 0),
       new THREE.BoxGeometry(0.5, 1.25, 0.04).translate(6.0, 5.3, -0.16),
@@ -1503,8 +1514,8 @@ export class World {
         new THREE.CylinderGeometry(0.14, 0.17, 0.62, 12).translate(0, 0.31, 0),
         new THREE.SphereGeometry(0.15, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.62, 0),
         new THREE.CylinderGeometry(0.2, 0.2, 0.06, 12).translate(0, 0.05, 0),
-        new THREE.CylinderGeometry(0.06, 0.06, 0.42, 8).rotateZ(Math.PI / 2).translate(0, 0.45, 0),
-        new THREE.CylinderGeometry(0.075, 0.075, 0.12, 8).rotateX(Math.PI / 2).translate(0, 0.42, 0.14),
+        new THREE.CylinderGeometry(0.06, 0.06, 0.42, 12).rotateZ(Math.PI / 2).translate(0, 0.45, 0),
+        new THREE.CylinderGeometry(0.075, 0.075, 0.12, 12).rotateX(Math.PI / 2).translate(0, 0.42, 0.14),
         new THREE.CylinderGeometry(0.03, 0.03, 0.06, 6).translate(0, 0.78, 0),
       ]), red]],
       bin: [[mergeGeometries([
@@ -1842,7 +1853,7 @@ function treeCanopy(kind) {
   }
   if (kind === 'pine') {
     for (let i = 0; i < 5; i++) {
-      const c = new THREE.ConeGeometry(2.8 - i * 0.48, 3.2, 8, 1, true);
+      const c = new THREE.ConeGeometry(2.8 - i * 0.48, 3.2, 12, 1, true);
       c.translate(0, 4.2 + i * 1.7, 0);
       const p = c.attributes.position;
       for (let j = 0; j < p.count; j++) {

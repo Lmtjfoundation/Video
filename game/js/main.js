@@ -553,7 +553,7 @@ class Game {
   // ------------------------------------------------------------ projectiles
   spawnRocket(x, y, z, dx, dy, dz, source, opts = {}) {
     if (!this.rocketGeo) {
-      this.rocketGeo = new THREE.CylinderGeometry(0.08, 0.12, 0.9, 8).rotateX(Math.PI / 2);
+      this.rocketGeo = new THREE.CylinderGeometry(0.08, 0.12, 0.9, 14).rotateX(Math.PI / 2);
       this.rocketMat = new THREE.MeshStandardMaterial({ color: 0x556b2f });
     }
     const m = new THREE.Mesh(this.rocketGeo, this.rocketMat);
