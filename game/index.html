@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grand Theft: Southern Heat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --hud-font: 'Oswald', 'Arial Narrow', Arial, sans-serif;
+    --big-font: 'Anton', Impact, 'Arial Black', sans-serif;
+    --green: #72c86a; --blue: #4aa3df; --gold: #f2c230;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: var(--hud-font); user-select: none; }
+  canvas#game { display: block; width: 100vw; height: 100vh; transition: filter 1.5s; }
+  canvas#game.wasted { filter: grayscale(1) contrast(1.2) brightness(0.8); }
+  .hidden { display: none !important; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  #minimapWrap { position: absolute; left: 24px; bottom: 24px; width: 236px; }
+  #minimap { width: 236px; height: 170px; border-radius: 6px; border: 3px solid rgba(0,0,0,0.7); display: block; background: #25302a; }
+  #bars { display: flex; gap: 4px; margin-top: 4px; }
+  .bar { height: 9px; background: rgba(0,0,0,0.6); flex: 1; position: relative; overflow: hidden; }
+  .bar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transition: width 0.2s; }
+  #hpBar > i { background: var(--green); }
+  #hpBar.low > i { background: #d43c3c; animation: blink 0.6s infinite; }
+  #armBar > i { background: var(--blue); }
+  #nitroBar { flex: 0 0 60px; }
+  #nitroBar > i { background: #7ad3ff; }
+  @keyframes blink { 50% { opacity: 0.35; } }
+
+  #topright { position: absolute; right: 28px; top: 20px; text-align: right; }
+  #stars { font-size: 30px; letter-spacing: 2px; height: 36px; }
+  #stars span { color: rgba(255,255,255,0.18); text-shadow: 0 0 3px #000; }
+  #stars span.on { color: #fff; }
+  #stars.searching span.on { animation: blink 0.5s infinite; color: #9fb4ff; }
+  #weapon { font-size: 20px; font-weight: 600; text-shadow: 0 2px 4px #000; margin-top: 2px; }
+  #weapon small { color: #ccc; font-weight: 400; margin-left: 6px; }
+  #money { font-family: var(--big-font); font-size: 34px; color: #7fd477; text-shadow: 2px 2px 0 #000, 0 0 6px #000; letter-spacing: 1px; }
+  #moneyDelta { font-family: var(--big-font); font-size: 22px; color: #7fd477; text-shadow: 2px 2px 0 #000; height: 26px; transition: opacity 0.5s; }
+  #timer { font-family: var(--big-font); font-size: 36px; text-shadow: 2px 2px 0 #000; margin-top: 4px; }
+  #timer.warn { color: #ff5b5b; }
+  #race { font-family: var(--big-font); font-size: 42px; color: var(--gold); text-shadow: 2px 2px 0 #000; }
+
+  #zone { position: absolute; right: 28px; bottom: 28px; text-align: right; transition: opacity 0.8s; }
+  #zone .district { font-family: var(--big-font); font-size: 30px; text-shadow: 2px 2px 0 #000; letter-spacing: 1px; }
+  #zone .city { font-size: 18px; font-weight: 600; text-shadow: 1px 1px 0 #000; letter-spacing: 3px; }
+  #zone .veh { font-size: 20px; font-style: italic; color: #ffd98a; text-shadow: 1px 1px 0 #000; }
+
+  #speedo { position: absolute; right: 30px; bottom: 120px; text-align: right; font-family: var(--big-font); text-shadow: 2px 2px 0 #000; }
+  #speedo .num { font-size: 54px; line-height: 1; }
+  #speedo .unit { font-size: 16px; letter-spacing: 2px; color: #ddd; }
+  #speedo .alt { font-size: 18px; color: #9fd4ff; }
+
+  #help { position: absolute; left: 24px; top: 20px; max-width: 360px; background: rgba(0,0,0,0.78); padding: 12px 16px; font-size: 16px; line-height: 1.45; border-radius: 3px; transition: opacity 0.3s; }
+  #help b { color: var(--gold); }
+  #hint { position: absolute; left: 50%; bottom: 150px; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 6px 14px; font-size: 17px; border-radius: 3px; }
+
+  #radio { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); text-align: center; transition: opacity 0.5s; }
+  #radio .name { font-family: var(--big-font); font-size: 34px; text-shadow: 2px 2px 0 #000; }
+  #radio .sub { font-size: 16px; letter-spacing: 2px; text-shadow: 1px 1px 0 #000; }
+
+  #objective { position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); font-size: 22px; text-shadow: 2px 2px 2px #000, 0 0 8px #000; text-align: center; max-width: 80vw; }
+  #objective b { color: var(--gold); }
+
+  #big { position: absolute; left: 0; right: 0; top: 38%; text-align: center; font-family: var(--big-font); font-size: 110px; letter-spacing: 3px; text-shadow: 4px 4px 0 #000, 0 0 30px rgba(0,0,0,0.8); transition: opacity 0.4s, transform 0.4s; }
+  #big.small { font-size: 60px; }
+  #bigSub { position: absolute; left: 0; right: 0; top: calc(38% + 130px); text-align: center; font-size: 28px; text-shadow: 2px 2px 0 #000; }
+  #stunt { position: absolute; left: 0; right: 0; top: 22%; text-align: center; font-family: var(--big-font); font-size: 50px; color: var(--gold); text-shadow: 3px 3px 0 #000; transition: opacity 0.4s; }
+  #stunt small { display: block; font-family: var(--hud-font); font-size: 24px; color: #fff; }
+
+  #missionCard { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); text-align: center; width: min(720px, 90vw); }
+  #missionCard .title { font-family: var(--big-font); font-size: 64px; text-shadow: 3px 3px 0 #000; }
+  #missionCard .city { font-size: 18px; letter-spacing: 6px; color: #ddd; }
+  #missionCard .desc { font-size: 22px; margin-top: 10px; text-shadow: 1px 1px 2px #000; background: rgba(0,0,0,0.55); padding: 8px 14px; display: inline-block; }
+
+  #crosshair { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: #fff; box-shadow: 0 0 2px #000; opacity: 0.85; }
+  #crosshair.aim { width: 22px; height: 22px; margin: -11px 0 0 -11px; background: transparent; border: 2px solid rgba(255,255,255,0.9); }
+  #crosshair.fp { width: 2px; height: 2px; margin: -1px 0 0 -1px; --gap: 6px; }
+  #crosshair.fp::before, #crosshair.fp::after { content: ''; position: absolute; left: 50%; top: 50%; background: #fff; box-shadow: 0 0 2px #000; }
+  #crosshair.fp::before { width: 2px; height: calc(var(--gap) * 2 + 20px); margin: calc(-1 * var(--gap) - 10px) 0 0 -1px;
+    -webkit-mask: linear-gradient(#000 0 10px, transparent 10px calc(100% - 10px), #000 calc(100% - 10px)); mask: linear-gradient(#000 0 10px, transparent 10px calc(100% - 10px), #000 calc(100% - 10px)); }
+  #crosshair.fp::after { height: 2px; width: calc(var(--gap) * 2 + 20px); margin: -1px 0 0 calc(-1 * var(--gap) - 10px);
+    -webkit-mask: linear-gradient(90deg, #000 0 10px, transparent 10px calc(100% - 10px), #000 calc(100% - 10px)); mask: linear-gradient(90deg, #000 0 10px, transparent 10px calc(100% - 10px), #000 calc(100% - 10px)); }
+  #weapon.low small { color: #ff5a4a; }
+  #hitmarker { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; opacity: 0; transition: opacity 0.15s; }
+  #hitmarker::before, #hitmarker::after { content: ''; position: absolute; left: 12px; top: 0; width: 2px; height: 26px; background: #fff; }
+  #hitmarker::before { transform: rotate(45deg); } #hitmarker::after { transform: rotate(-45deg); }
+  #hitmarker.kill::before, #hitmarker.kill::after { background: #ff3b3b; }
+  #damage { position: absolute; inset: 0; box-shadow: inset 0 0 160px rgba(200,0,0,0.9); opacity: 0; transition: opacity 0.4s; }
+
+  #cheat { position: fixed; left: 50%; top: 30%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 14px 18px; border: 2px solid var(--gold); pointer-events: auto; }
+  #cheat input { font-family: var(--big-font); font-size: 30px; background: #111; color: var(--gold); border: none; outline: none; padding: 6px 10px; width: 360px; letter-spacing: 3px; text-transform: uppercase; }
+  #cheat div { font-size: 13px; color: #aaa; margin-top: 6px; }
+
+  #mapClose { position: absolute; right: 20px; top: 20px; font-family: var(--big-font); font-size: 20px; letter-spacing: 1px; background: var(--gold); color: #111; border: none; padding: 8px 18px; cursor: pointer; }
+  #touch { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  #touch .stick { position: absolute; left: 22px; bottom: 26px; width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.35); pointer-events: auto; touch-action: none; }
+  #touch .knob { position: absolute; left: 45px; top: 45px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.55); }
+  #touch .btns { position: absolute; right: 14px; bottom: 18px; display: grid; grid-template-columns: repeat(4, 64px); gap: 8px; pointer-events: auto; }
+  #touch button { height: 64px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.45); background: rgba(0,0,0,0.45); color: #fff; font-family: var(--hud-font); font-size: 12px; font-weight: 700; line-height: 1.1; touch-action: none; -webkit-user-select: none; user-select: none; }
+  #touch button small { font-size: 9px; font-weight: 400; opacity: 0.8; }
+  #touch button.sm { height: 34px; border-radius: 17px; font-size: 10px; }
+  #touch button.fire { background: rgba(200,40,40,0.6); }
+  #touch button.on { background: rgba(242,194,48,0.7); color: #111; }
+  body.touch #minimapWrap { left: auto; right: 12px; top: 12px; bottom: auto; width: 150px; }
+  body.touch #minimap { width: 150px; height: 108px; }
+  body.touch #topright { right: 176px; top: 10px; }
+  body.touch #stars { font-size: 22px; height: 26px; }
+  body.touch #money { font-size: 24px; }
+  body.touch #weapon { font-size: 15px; }
+  body.touch #zone, body.touch #speedo { bottom: auto; top: 150px; right: 12px; }
+  body.touch #zone .district { font-size: 20px; }
+  body.touch #help { left: 12px; top: 10px; max-width: 46vw; font-size: 13px; padding: 8px 10px; }
+  body.touch #objective { bottom: 190px; font-size: 16px; }
+  body.touch #big { font-size: 64px; }
+  body.touch #big.small { font-size: 40px; }
+  body.touch #missionCard .title { font-size: 38px; }
+  body.touch #crosshair { opacity: 0.6; }
+  #mapOverlay { position: fixed; inset: 0; background: rgba(8,12,18,0.96); pointer-events: auto; }
+  #mapCanvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+  #mapLegend { position: absolute; left: 20px; bottom: 20px; font-size: 15px; background: rgba(0,0,0,0.6); padding: 10px 14px; line-height: 1.6; }
+
+  /* ---------- menus ---------- */
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: auto; }
+  #title { background: radial-gradient(ellipse at 50% 120%, #ff6a2a 0%, #b0205a 30%, #2a0e3a 60%, #07060d 100%); overflow-y: auto; padding: 24px 16px; justify-content: flex-start; }
+  #title .logo { font-family: var(--big-font); font-size: clamp(48px, 9vw, 120px); line-height: 0.92; letter-spacing: 2px; text-shadow: 5px 5px 0 #000; margin-top: 4vh; }
+  #title .logo span { display: block; font-size: 0.45em; letter-spacing: 12px; color: var(--gold); }
+  #title .cities { font-size: clamp(16px, 2.2vw, 24px); letter-spacing: 8px; margin: 14px 0 22px; }
+  #title .cities b { color: #ffb347; } #title .cities i { color: #b48cff; font-style: normal; font-weight: 700; } #title .cities u { color: #ff6b6b; text-decoration: none; font-weight: 700; }
+  #play { font-family: var(--big-font); font-size: 34px; letter-spacing: 3px; background: var(--gold); color: #111; border: none; padding: 12px 48px; cursor: pointer; box-shadow: 5px 5px 0 #000; }
+  #play:hover { background: #fff; }
+  #play:disabled { background: #666; cursor: wait; }
+  #quality { margin-top: 12px; font-family: var(--hud-font); font-size: 14px; letter-spacing: 2px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #fff6; padding: 6px 16px; cursor: pointer; }
+  #fatal { background: #0b0610; z-index: 20; gap: 14px; padding: 24px; }
+  #fatal[hidden] { display: none; }
+  #fatal h2 { font-family: var(--big-font); font-size: 44px; margin: 0; color: #ff5b5b; }
+  #fatal p { max-width: 560px; font-size: 18px; }
+  #fatal button { font-family: var(--big-font); font-size: 24px; background: var(--gold); color: #111; border: none; padding: 10px 36px; cursor: pointer; }
+  #loading { margin-top: 12px; font-size: 16px; color: #ddd; min-height: 20px; }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 26px; max-width: 980px; width: 100%; margin-top: 26px; text-align: left; font-size: 15px; background: rgba(0,0,0,0.45); padding: 16px 20px; }
+  .controls h3 { margin: 0 0 6px; font-family: var(--big-font); font-weight: 400; letter-spacing: 2px; color: var(--gold); }
+  .controls kbd { display: inline-block; min-width: 22px; text-align: center; background: #222; border: 1px solid #555; border-bottom-width: 3px; padding: 0 5px; border-radius: 3px; font-family: var(--hud-font); font-size: 13px; margin-right: 4px; }
+  #pause { background: rgba(0,0,0,0.7); }
+  #pause h1 { font-family: var(--big-font); font-size: 80px; margin: 0; letter-spacing: 4px; }
+  #pause p { font-size: 20px; }
+  #stats { font-size: 18px; line-height: 1.7; color: #ddd; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="minimapWrap">
+    <canvas id="minimap" width="472" height="340"></canvas>
+    <div id="bars">
+      <div class="bar" id="hpBar"><i></i></div>
+      <div class="bar" id="armBar"><i></i></div>
+      <div class="bar" id="nitroBar" title="Nitro"><i></i></div>
+    </div>
+  </div>
+  <div id="topright">
+    <div id="stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+    <div id="weapon"></div>
+    <div id="money">$0</div>
+    <div id="moneyDelta"></div>
+    <div id="timer" class="hidden"></div>
+    <div id="race" class="hidden"></div>
+  </div>
+  <div id="zone"><div class="veh"></div><div class="district"></div><div class="city"></div></div>
+  <div id="speedo" class="hidden"><div class="alt"></div><div class="num">0</div><div class="unit">MPH</div></div>
+  <div id="help" class="hidden"></div>
+  <div id="hint" class="hidden"></div>
+  <div id="radio" style="opacity:0"><div class="name"></div><div class="sub"></div></div>
+  <div id="objective"></div>
+  <div id="stunt" style="opacity:0"></div>
+  <div id="missionCard" class="hidden"><div class="city"></div><div class="title"></div><div class="desc"></div></div>
+  <div id="big" style="opacity:0"></div>
+  <div id="bigSub"></div>
+  <div id="crosshair"></div>
+  <div id="hitmarker"></div>
+  <div id="damage"></div>
+</div>
+
+<div id="touch" hidden>
+  <div class="stick"><div class="knob"></div></div>
+  <div class="btns">
+    <button type="button" data-key="KeyT" class="sm">CHEAT</button>
+    <button type="button" data-key="KeyR" class="sm">RELOAD</button>
+    <button type="button" data-key="KeyM" class="sm">MAP</button>
+    <button type="button" data-wheel="1" class="sm">WEAPON</button>
+    <button type="button" data-key="ShiftLeft">NITRO<br><small>sprint/down</small></button>
+    <button type="button" data-key="KeyF">ENTER<br><small>exit</small></button>
+    <button type="button" data-key="Space">JUMP<br><small>brake/up</small></button>
+    <button type="button" data-mouse="right" class="sm">AIM</button>
+    <button type="button" data-mouse="left" class="fire">FIRE</button>
+  </div>
+</div>
+
+<div id="cheat" class="hidden">
+  <input id="cheatInput" maxlength="24" placeholder="ENTER CHEAT" autocomplete="off" spellcheck="false">
+  <div>Press Enter to activate, Esc to cancel. (Hint: HESOYAM, TOOLUP, RHINO, BUZZOFF, SKYFALL, ARMAGEDDON...)</div>
+</div>
+
+<div id="mapOverlay" class="hidden">
+  <canvas id="mapCanvas"></canvas>
+  <button id="mapClose" type="button">CLOSE MAP</button>
+  <div id="mapLegend">
+    <b>MAP</b> — Click to set a GPS waypoint • Right-click to clear • <kbd>M</kbd> close<br>
+    <span style="color:#ffcf33">■</span> Missions &nbsp; <span style="color:#7fff7f">⌂</span> Safehouse &nbsp; <span style="color:#ff4b4b">✚</span> Hospital &nbsp; <span style="color:#6aa2ff">★</span> Police &nbsp; <span style="color:#ffd23f">⤴</span> Stunt jump
+  </div>
+</div>
+
+<div id="pause" class="screen hidden">
+  <h1>PAUSED</h1>
+  <div id="stats"></div>
+  <p>Click to resume</p>
+</div>
+
+<div id="fatal" class="screen" hidden>
+  <h2>Something went wrong</h2>
+  <p></p>
+  <button type="button" onclick="location.reload()">RELOAD</button>
+</div>
+
+<div id="title" class="screen">
+  <div class="logo">GRAND THEFT<span>SOUTHERN HEAT</span></div>
+  <div class="cities"><b>DALLAS</b> • <i>NEW ORLEANS</i> • <u>ATLANTA</u></div>
+  <button id="play" disabled>LOADING…</button>
+  <button id="quality" type="button">GRAPHICS</button>
+  <div id="loading">Building three cities…</div>
+  <div class="controls">
+    <div>
+      <h3>ON FOOT</h3>
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move &nbsp; <kbd>Shift</kbd> Sprint<br>
+      <kbd>Space</kbd> Jump / open parachute<br>
+      <kbd>Mouse</kbd> Look &nbsp; <kbd>LMB</kbd> Shoot &nbsp; <kbd>RMB</kbd> Aim down sights &nbsp; <kbd>R</kbd> Reload<br>
+      <kbd>1</kbd>–<kbd>6</kbd> / <kbd>Wheel</kbd> Weapons<br>
+      <kbd>F</kbd> Steal / enter vehicle
+    </div>
+    <div>
+      <h3>DRIVING</h3>
+      <kbd>W</kbd>/<kbd>S</kbd> Gas / brake &nbsp; <kbd>A</kbd><kbd>D</kbd> Steer<br>
+      <kbd>Space</kbd> Handbrake (drift!)<br>
+      <kbd>Shift</kbd> NITRO &nbsp; <kbd>E</kbd> Horn / siren<br>
+      <kbd>LMB</kbd> Drive-by / cannon / rockets<br>
+      <kbd>R</kbd> Radio station &nbsp; <kbd>F</kbd> Exit (bail at speed)
+    </div>
+    <div>
+      <h3>HELICOPTER</h3>
+      <kbd>W</kbd>/<kbd>S</kbd> Nose down / up<br>
+      <kbd>A</kbd>/<kbd>D</kbd> Yaw &nbsp; <kbd>Space</kbd> Climb &nbsp; <kbd>Shift</kbd> Descend<br>
+      <kbd>LMB</kbd> Rockets (Hornet)
+      <h3 style="margin-top:10px">GAME</h3>
+      <kbd>M</kbd> Map &amp; GPS &nbsp; <kbd>T</kbd> Cheats &nbsp; <kbd>V</kbd> Camera<br>
+      <kbd>H</kbd> Help &nbsp; <kbd>P</kbd>/<kbd>Esc</kbd> Pause
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "./lib/three.module.min.js", "three/addons/": "./lib/addons/" } }
+</script>
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>
