@@ -74,8 +74,11 @@ export async function anthropicHeaders(key: string): Promise<Record<string, stri
   return { "x-api-key": key, "anthropic-version": "2023-06-01", ...(workspace ? { "anthropic-workspace-id": workspace } : {}) };
 }
 
-/** Turns Claude's workspace-related 400/404 answers into plain instructions (null when it's another error). */
+/** Turns Claude's account/workspace errors into plain instructions (null when it's another error). */
 export function anthropicWorkspaceHint(status: number, body: string) {
+  if (/credit balance is too low/i.test(body)) {
+    return "Your Claude API account is out of credits, so Claude can't write right now. Add credits in the Claude Console → Settings → Billing. On a Max plan, first claim your monthly API credits on claude.ai → Settings → Billing → API credits and link the same Console organization this key belongs to.";
+  }
   if (status === 400 && /anthropic-workspace-id is required|not scoped to a workspace/i.test(body)) {
     return "This Claude key is a personal key that isn't tied to one workspace, so it needs a workspace ID. Add it in Admin → App settings → Integrations → Claude (Claude Console → Settings → Workspaces → ID column, starts with wrkspc_), or create a key scoped to a workspace.";
   }
@@ -128,16 +131,29 @@ export async function integrationStatus() {
   };
 }
 
-/** Lightweight live checks used by the admin "Test" buttons (none of them spend credits). */
+/** Live checks for the admin "Test" buttons. Only the Claude test spends anything: one tiny reply (a tiny fraction of a cent) to confirm billing works. */
 export async function testIntegration(which: "anthropic" | "elevenlabs" | "pexels" | "stripe"): Promise<{ ok: boolean; message: string }> {
   try {
     if (which === "anthropic") {
       const key = await anthropicKey();
       if (!key) return { ok: false, message: "No Claude API key saved yet." };
-      const res = await fetch("https://api.anthropic.com/v1/models?limit=5", { headers: await anthropicHeaders(key) });
+      const headers = await anthropicHeaders(key);
+      const res = await fetch("https://api.anthropic.com/v1/models?limit=50", { headers });
       if (res.ok) {
         const ws = res.headers.get("anthropic-workspace-id");
-        return { ok: true, message: ws ? `Claude API key works (workspace ${ws}).` : "Claude API key works." };
+        const where = ws ? ` (workspace ${ws})` : "";
+        // The key is valid; now confirm the account can actually generate (credits / billing) with one tiny reply.
+        const ids = (((await res.json().catch(() => ({}))) as { data?: { id: string }[] }).data ?? []).map((m) => m.id);
+        const model = ids.find((m) => m.includes("haiku")) ?? ids[0] ?? process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5-5";
+        const gen = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { ...headers, "content-type": "application/json" },
+          body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: "user", content: "Hi" }] }),
+        });
+        if (gen.ok) return { ok: true, message: `Claude works — key, workspace and billing all OK${where}.` };
+        const gtext = await gen.text();
+        const ghint = anthropicWorkspaceHint(gen.status, gtext);
+        return { ok: false, message: ghint ?? `The key is valid${where}, but a test reply failed (${gen.status}): ${gtext.slice(0, 160)}` };
       }
       const text = await res.text();
       const hint = anthropicWorkspaceHint(res.status, text);
