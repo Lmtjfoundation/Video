@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CreditCard } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
@@ -21,6 +21,29 @@ export default function PlansPage() {
 
   const me = status?.me;
   const sub = me?.user.billing;
+
+  // Arriving from the public pricing page with a chosen plan: open checkout once the account is loaded.
+  const [wanted, setWanted] = useState<{ plan: string; interval: "month" | "year" } | null>(null);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const plan = q.get("plan");
+    if (plan && ["creator", "pro", "unlimited"].includes(plan)) {
+      setWanted({ plan, interval: q.get("interval") === "year" ? "year" : "month" });
+      window.history.replaceState(null, "", "/plans");
+    }
+  }, []);
+  useEffect(() => {
+    if (!wanted || !me) return;
+    setWanted(null);
+    const subscribed = !!me.user.billing?.subscriptionId && me.user.billing?.status !== "canceled";
+    if (inNativeApp() || me.plan.id !== "free" || subscribed) return;
+    toast("Opening secure checkout…", "info");
+    api<{ url: string }>("/api/billing/checkout", { body: { plan: wanted.plan, interval: wanted.interval } })
+      .then(({ url }) => {
+        window.location.href = url;
+      })
+      .catch((e: Error) => toast(e.message, "error"));
+  }, [wanted, me, toast]);
   return (
     <>
       <PageHeader title="Plans & Billing" subtitle="Credits pay for AI writing. Everything else is included on every plan." />
@@ -29,7 +52,14 @@ export default function PlansPage() {
           <div>
             <p className="label">Current plan</p>
             <p className="mt-1 text-2xl font-semibold text-white">{me.plan.name}</p>
-            {sub?.status && <Badge tone={sub.status === "active" ? "mint" : "gold"}>{sub.status}{sub.currentPeriodEnd ? ` · renews ${new Date(sub.currentPeriodEnd).toLocaleDateString()}` : ""}</Badge>}
+            {sub?.status && (
+              <Badge tone={sub.status === "active" && !sub.cancelAtPeriodEnd ? "mint" : "gold"}>
+                {sub.cancelAtPeriodEnd && sub.status !== "canceled" ? "cancelled" : sub.status.replace("_", " ")}
+                {sub.currentPeriodEnd && sub.status !== "canceled"
+                  ? ` · ${sub.cancelAtPeriodEnd ? "ends" : "renews"} ${new Date(sub.currentPeriodEnd).toLocaleDateString()}`
+                  : ""}
+              </Badge>
+            )}
           </div>
           <Usage label="AI credits" used={me.plan.credits - me.creditsLeft} total={me.plan.credits} />
           <Usage label="Posts this month" used={me.user.usage.posts} total={me.plan.postsPerMonth} />

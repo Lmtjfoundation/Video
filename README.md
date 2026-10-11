@@ -80,14 +80,40 @@ npm run dev            # http://localhost:3000
 
 Open the app and sign up. **The first account becomes the admin** on the Unlimited plan. Everyone after that signs up on Free (you can close sign-ups or require approval in Admin → App settings).
 
-### Payments (Stripe)
+On a public server, set `SETUP_CODE` (any secret phrase). The sign-up page then asks for it before creating the first (owner) account, so nobody else can claim a freshly deployed site. Later sign-ups don't need it.
 
-1. In Stripe, create three Products (Creator, Pro, Unlimited), each with a **monthly** and a **yearly** recurring Price: $12/$120, $29/$288, $59/$588 (or your own prices — update `src/lib/plans.ts` to match).
-2. Put the six price IDs in `STRIPE_PRICE_CREATOR_MONTHLY` … `STRIPE_PRICE_UNLIMITED_ANNUAL`, and your secret key in `STRIPE_SECRET_KEY`.
-3. Add a webhook endpoint `{APP_URL}/api/stripe/webhook` for `checkout.session.completed` and `customer.subscription.created/updated/deleted`; put its signing secret in `STRIPE_WEBHOOK_SECRET`.
-4. Turn on the Customer Portal in Stripe (Settings → Billing → Customer portal) so users can switch plans, update cards and cancel.
+### Integrations (paste keys in the app)
+
+Admin → App settings → **Integrations** stores service keys encrypted on the server (AES-256-GCM with `ENCRYPTION_KEY`), shows only masked previews, and has a **Test** button for each:
+
+| Service | Used for | Required? |
+|---|---|---|
+| Claude (Anthropic) | niches, posts, scripts, video plans, replies | yes |
+| ElevenLabs | voiceover on rendered videos | optional |
+| Pexels | stock footage for video scenes | optional |
+| Resend | "Forgot password?" emails | optional (needs a domain verified in Resend) |
+| Stripe | subscriptions | to charge money |
+
+A key set as an environment variable (e.g. `ANTHROPIC_API_KEY`) always wins over the one saved in the app.
+
+### Payments (Stripe) — one click
+
+1. In Stripe → Developers → API keys, copy the **secret key** (`sk_test_…` to try it with test cards, `sk_live_…` to take real money).
+2. In the app: Admin → App settings → Integrations → Stripe → paste it → **Connect Stripe & create plans**. The app then, in your Stripe account:
+   - creates the Creator, Pro and Unlimited products with monthly and yearly USD prices from `src/lib/plans.ts` ($12/$120, $29/$288, $59/$588),
+   - registers the webhook `{APP_URL}/api/stripe/webhook` (checkout + subscription events) and stores its signing secret,
+   - sets up the Customer Portal (switch plans, update card, invoices, cancel at period end) with your Terms and Privacy links.
+3. Running it again is safe: existing products and prices are reused. To go live, activate your Stripe account, paste the `sk_live_` key and press the button again.
+
+Test card in test mode: `4242 4242 4242 4242`, any future date, any CVC.
+
+Prefer environment variables? `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and `STRIPE_PRICE_<PLAN>_<MONTHLY|ANNUAL>` still work and override the in-app values.
 
 Until Stripe is set up, paid plans show "Coming soon" and you can assign plans by hand in Admin → Users.
+
+### Legal pages
+
+`/terms` (with the refund policy), `/privacy` and `/data-deletion` are public and use the business name, support email and governing law you set in Admin → App settings. Stripe asks for these links when you activate payments, and Meta, Google, X, LinkedIn and TikTok ask for them in app review. They're a solid starting point, not legal advice — have them reviewed for your business.
 
 **Why these prices:** comparable tools charge $15–$29 to start (OpusClip $15, AutoShorts $19, Later $25, SocialBee $29) and usually cover only video, or only scheduling. Each Nexus Pulse credit costs at most about 1.1¢ of Claude usage, so every paid plan stays profitable even if a subscriber uses every credit: about 33–59% gross margin on monthly billing in that worst case (about 19% on yearly Unlimited), and 65–77% at a typical half usage, after card fees. Admin → Overview shows your MRR and an AI-cost ceiling.
 
@@ -162,15 +188,14 @@ Railway runs the app as an always-on server, so the built-in scheduler posts on 
 1. Create an account at railway.com and start a **new project → Deploy from GitHub repo** (push this folder to a private GitHub repo first) or use the Railway CLI: `railway up` from this folder.
 2. Add a **Volume** to the service, mounted at `/data`. This keeps your database and uploads when the app redeploys.
 3. In the service's **Variables**, add:
-   - `ANTHROPIC_API_KEY` — from console.anthropic.com
+   - `SETUP_CODE` — a secret phrase; the first sign-up must enter it to become the owner
    - `APP_URL` — your Railway URL, e.g. `https://nexus-pulse-production.up.railway.app` (Settings → Networking → Generate Domain)
    - `ENCRYPTION_KEY` — run `npm run gen:key` (or any 32+ random characters)
    - `CRON_SECRET` — any long random string
    - `INTERNAL_SCHEDULER` = `1`
    - `DATA_DIR` = `/data`
-   - `ADMIN_EMAILS` — your email, so your account is the admin
-   - Optional now, needed later: Stripe keys and prices, Supabase (instead of the volume), platform app keys (or enter those in the app's Setup Wizard).
-4. Deploy. Open the URL, sign up with the admin email, then go to **Settings → Accounts** and use the Setup Wizard for each platform.
+   - Optional: `ANTHROPIC_API_KEY` and the other service keys (or paste them later in Admin → App settings → Integrations), Supabase (instead of the volume), platform app keys (or enter those in the app's Setup Wizard).
+4. Deploy. Open the URL, sign up with the setup code, add your Claude key and connect Stripe in **Admin → App settings**, then go to **Settings → Accounts** and use the Setup Wizard for each platform.
 5. Each platform's redirect URL is shown in the wizard: `APP_URL/api/connect/<platform>/callback`.
 
 ## Mobile app

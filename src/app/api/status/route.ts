@@ -1,6 +1,7 @@
 import { authed, ok } from "@/lib/http-api";
 import { credentialStatuses, getSettings, listLogs, listPosts, listReplies } from "@/lib/repo";
 import { llmConfigured } from "@/lib/llm";
+import { stripeReady } from "@/lib/billing";
 import { storageMode } from "@/lib/db";
 import { localParts } from "@/lib/time";
 import { kvGet } from "@/lib/repo";
@@ -26,6 +27,7 @@ export const GET = authed(async (_req, user) => {
   const weekPosts = upcoming.filter((p) => new Date(p.scheduledAt!).getTime() < weekAhead);
 
   const plan = planById(user.plan);
+  const [llm, stripe] = await Promise.all([llmConfigured(), stripeReady()]);
   return ok({
     me: {
       user: publicUser(user),
@@ -34,7 +36,14 @@ export const GET = authed(async (_req, user) => {
       postsLeft: plan.postsPerMonth === null ? null : Math.max(0, plan.postsPerMonth - user.usage.posts),
     },
     settings,
-    env: { llm: llmConfigured(), storage: storageMode(), encryption: !!process.env.ENCRYPTION_KEY, cron: !!process.env.CRON_SECRET, stripe: !!process.env.STRIPE_SECRET_KEY, appUrl: !!process.env.APP_URL },
+    env: {
+      llm,
+      storage: storageMode(),
+      encryption: !!process.env.ENCRYPTION_KEY,
+      cron: !!process.env.CRON_SECRET || process.env.INTERNAL_SCHEDULER === "1",
+      stripe,
+      appUrl: !!process.env.APP_URL,
+    },
     credentials: creds,
     cooldowns: cooldowns ?? {},
     stats: {

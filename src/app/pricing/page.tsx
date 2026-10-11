@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Activity } from "lucide-react";
 import { PricingTable } from "@/components/pricing";
+import { LegalFooter } from "@/components/legal-footer";
 
 export const metadata = { title: "Pricing · Nexus Pulse" };
 
@@ -20,6 +21,11 @@ export default function PricingPage() {
       <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-white">Research the niche, write the story, post everywhere.</h1>
       <p className="mb-10 mt-3 max-w-2xl text-white/60">One plan replaces a scheduler, a script writer and a niche research tool. Start free; upgrade when it's paying for itself.</p>
       <PricingTable signedIn={false} />
+      <p className="mt-6 text-xs text-white/40">
+        Prices in USD. Paid plans renew automatically each month or year until cancelled; cancel any time from Plans &amp; Billing and keep your plan until the end of the period.
+        AI credits and post allowances reset on the 1st of each month.
+      </p>
+      <LegalFooter />
     </div>
   );
 }

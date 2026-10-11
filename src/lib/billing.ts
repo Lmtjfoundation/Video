@@ -4,25 +4,26 @@ import { gdb } from "./db";
 import { getUser, listUsers, saveUser, type User } from "./auth";
 import { PLANS, type PlanId } from "./plans";
 import { nowIso } from "./utils";
+import { saveIntegrations, stripePortalConfig, stripePriceId, stripeSecretKey } from "./integrations";
 
 /**
  * Stripe Billing over Stripe's REST API (no SDK needed).
- * Create one Product per paid plan in Stripe with a monthly and a yearly recurring Price, then set:
- *   STRIPE_PRICE_CREATOR_MONTHLY, STRIPE_PRICE_CREATOR_ANNUAL, STRIPE_PRICE_PRO_MONTHLY, …
+ * Configure it in Admin → App settings → Integrations → "Connect Stripe": paste a secret key and the app creates
+ * the products, monthly + yearly prices, the webhook and the customer-portal settings itself.
+ * Environment variables (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_<PLAN>_<MONTHLY|ANNUAL>) override.
  */
 const API = "https://api.stripe.com/v1";
-export const stripeReady = () => !!process.env.STRIPE_SECRET_KEY;
 export type Interval = "month" | "year";
 
-const envKey = (plan: PlanId, interval: Interval) => `STRIPE_PRICE_${plan.toUpperCase()}_${interval === "year" ? "ANNUAL" : "MONTHLY"}`;
-export const priceFor = (plan: PlanId, interval: Interval) => process.env[envKey(plan, interval)] ?? null;
+export const stripeReady = async () => !!(await stripeSecretKey());
+export const priceFor = async (plan: PlanId, interval: Interval) => (await stripePriceId(plan, interval)) || null;
 
-function planForPrice(priceId: string): { plan: PlanId; interval: Interval } | null {
-  for (const p of PLANS) for (const i of ["month", "year"] as Interval[]) if (priceFor(p.id, i) === priceId) return { plan: p.id, interval: i };
+async function planForPrice(priceId: string): Promise<{ plan: PlanId; interval: Interval } | null> {
+  for (const p of PLANS) for (const i of ["month", "year"] as Interval[]) if ((await priceFor(p.id, i)) === priceId) return { plan: p.id, interval: i };
   return null;
 }
 
-/** Flattens nested params into Stripe's form encoding: a[b][0][c]=v */
+/** Flattens nested params (objects and arrays) into Stripe's form encoding: a[b][0][c]=v */
 function form(obj: Record<string, unknown>, prefix = "", out = new URLSearchParams()) {
   for (const [k, v] of Object.entries(obj)) {
     if (v === undefined || v === null) continue;
@@ -33,10 +34,10 @@ function form(obj: Record<string, unknown>, prefix = "", out = new URLSearchPara
   return out;
 }
 
-async function stripe<T>(path: string, params: Record<string, unknown> = {}, method = "POST"): Promise<T> {
+async function stripeWith<T>(key: string, path: string, params: Record<string, unknown> = {}, method = "POST"): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     method,
-    headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" },
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/x-www-form-urlencoded" },
     body: method === "GET" ? undefined : form(params),
   });
   const data = (await res.json().catch(() => ({}))) as T & { error?: { message?: string } };
@@ -44,36 +45,178 @@ async function stripe<T>(path: string, params: Record<string, unknown> = {}, met
   return data;
 }
 
+async function stripe<T>(path: string, params: Record<string, unknown> = {}, method = "POST"): Promise<T> {
+  const key = await stripeSecretKey();
+  if (!key) throw new Error("Payments aren't set up yet. The admin connects Stripe in Admin → App settings.");
+  return stripeWith<T>(key, path, params, method);
+}
+
 export async function createCheckout(user: User, plan: PlanId, interval: Interval, origin: string) {
-  if (!stripeReady()) throw new Error("Payments aren't set up yet. Ask the admin to add Stripe keys.");
-  const price = priceFor(plan, interval);
-  if (!price) throw new Error(`No Stripe price is set for ${plan} (${interval}ly). Add ${envKey(plan, interval)}.`);
-  const s = await stripe<{ url: string }>("/checkout/sessions", {
+  if (!(await stripeReady())) throw new Error("Payments aren't set up yet. Ask the admin to connect Stripe.");
+  const price = await priceFor(plan, interval);
+  if (!price) throw new Error(`The ${plan} ${interval === "year" ? "yearly" : "monthly"} price isn't set up yet. The admin presses "Connect Stripe" in Admin → App settings.`);
+  const params = (withCustomer: boolean) => ({
     mode: "subscription",
     line_items: { 0: { price, quantity: 1 } },
     success_url: `${origin}/plans?checkout=success`,
     cancel_url: `${origin}/plans?checkout=cancelled`,
     client_reference_id: user.id,
-    ...(user.billing?.customerId ? { customer: user.billing.customerId } : { customer_email: user.email }),
+    ...(withCustomer && user.billing?.customerId ? { customer: user.billing.customerId } : { customer_email: user.email }),
     allow_promotion_codes: "true",
     metadata: { userId: user.id },
     subscription_data: { metadata: { userId: user.id } },
   });
-  return s.url;
+  try {
+    return (await stripe<{ url: string }>("/checkout/sessions", params(true))).url;
+  } catch (e) {
+    // A customer saved in test mode doesn't exist in live mode (or was deleted in Stripe): start fresh.
+    if (user.billing?.customerId && /No such customer/i.test((e as Error).message)) {
+      return (await stripe<{ url: string }>("/checkout/sessions", params(false))).url;
+    }
+    throw e;
+  }
 }
 
 export async function createPortal(user: User, origin: string) {
-  if (!stripeReady()) throw new Error("Payments aren't set up yet.");
+  if (!(await stripeReady())) throw new Error("Payments aren't set up yet.");
   if (!user.billing?.customerId) throw new Error("You don't have a paid subscription yet.");
-  const s = await stripe<{ url: string }>("/billing_portal/sessions", { customer: user.billing.customerId, return_url: `${origin}/plans` });
+  const configuration = await stripePortalConfig();
+  const s = await stripe<{ url: string }>("/billing_portal/sessions", {
+    customer: user.billing.customerId,
+    return_url: `${origin}/plans`,
+    ...(configuration ? { configuration } : {}),
+  });
   return s.url;
 }
 
 /** Cancels a subscription immediately (used when an account is deleted). */
 export async function cancelSubscription(subscriptionId: string) {
-  if (!stripeReady()) return;
+  if (!(await stripeReady())) return;
   await stripe(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {}, "DELETE");
 }
+
+/* ───────────── One-click setup ───────────── */
+
+interface StripeList<T> {
+  data: T[];
+}
+interface SProduct {
+  id: string;
+  metadata?: Record<string, string>;
+}
+interface SPrice {
+  id: string;
+  unit_amount: number | null;
+  currency: string;
+  recurring?: { interval: string } | null;
+}
+interface SHook {
+  id: string;
+  url: string;
+  secret?: string;
+}
+interface SPortal {
+  id: string;
+  metadata?: Record<string, string>;
+}
+
+/**
+ * Creates (or reuses) everything subscriptions need in the owner's Stripe account:
+ * one product per paid plan, a monthly and a yearly USD price each, a webhook pointed at this app (its signing
+ * secret is captured on creation) and a customer-portal configuration that allows plan changes, card updates,
+ * invoices and cancel-at-period-end. Safe to run again: existing Nexus Pulse products/prices are reused.
+ */
+export async function setupStripeBilling(secretKey: string, appUrl: string) {
+  const sk = secretKey.trim();
+  if (!/^(sk|rk)_(live|test)_[A-Za-z0-9]+/.test(sk)) throw new Error("That isn't a Stripe secret key. It starts with sk_live_ or sk_test_ (Stripe → Developers → API keys).");
+  if (!/^https:\/\//.test(appUrl)) throw new Error("APP_URL must be your public https address so Stripe can reach the webhook.");
+  const base = appUrl.replace(/\/$/, "");
+  const call = <T>(path: string, params?: Record<string, unknown>, method = "POST") => stripeWith<T>(sk, path, params ?? {}, method);
+  const mode = sk.includes("_live_") ? "live" : "test";
+
+  // Products + prices
+  const products = await call<StripeList<SProduct>>("/products?limit=100&active=true", undefined, "GET");
+  const stripePrices: Record<string, string> = {};
+  const stripeProducts: Record<string, string> = {};
+  const portalProducts: { product: string; prices: string[] }[] = [];
+  for (const p of PLANS.filter((x) => x.monthly > 0)) {
+    let prod = products.data.find((x) => x.metadata?.nexus_plan === p.id);
+    if (!prod) prod = await call<SProduct>("/products", { name: `Nexus Pulse ${p.name}`, description: p.blurb, metadata: { nexus_plan: p.id, app: "nexus-pulse" } });
+    stripeProducts[p.id] = prod.id;
+    const existing = await call<StripeList<SPrice>>(`/prices?product=${encodeURIComponent(prod.id)}&active=true&limit=100`, undefined, "GET");
+    const ids: string[] = [];
+    for (const interval of ["month", "year"] as Interval[]) {
+      const amount = Math.round((interval === "month" ? p.monthly : p.annual * 12) * 100);
+      let price = existing.data.find((x) => x.recurring?.interval === interval && x.unit_amount === amount && x.currency === "usd");
+      if (!price) {
+        price = await call<SPrice>("/prices", {
+          product: prod.id,
+          currency: "usd",
+          unit_amount: amount,
+          recurring: { interval },
+          nickname: `${p.name} ${interval === "month" ? "monthly" : "yearly"}`,
+          metadata: { nexus_plan: p.id, nexus_interval: interval },
+        });
+      }
+      stripePrices[`${p.id}_${interval}`] = price.id;
+      ids.push(price.id);
+    }
+    portalProducts.push({ product: prod.id, prices: ids });
+  }
+
+  // Webhook: recreate ours so the signing secret (only returned at creation) is captured.
+  const url = `${base}/api/stripe/webhook`;
+  const hooks = await call<StripeList<SHook>>("/webhook_endpoints?limit=100", undefined, "GET");
+  for (const h of hooks.data.filter((x) => x.url === url)) await call(`/webhook_endpoints/${h.id}`, {}, "DELETE");
+  const hook = await call<SHook>("/webhook_endpoints", {
+    url,
+    enabled_events: ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"],
+    description: "Nexus Pulse subscriptions",
+    metadata: { app: "nexus-pulse" },
+  });
+  if (!hook.secret) throw new Error("Stripe didn't return the webhook signing secret. Try again.");
+
+  // Customer portal: plan switching between the three paid plans (monthly/yearly), cards, invoices, cancel.
+  const portalParams = {
+    business_profile: {
+      headline: "Manage your Nexus Pulse subscription",
+      privacy_policy_url: `${base}/privacy`,
+      terms_of_service_url: `${base}/terms`,
+    },
+    default_return_url: `${base}/plans`,
+    features: {
+      invoice_history: { enabled: true },
+      payment_method_update: { enabled: true },
+      customer_update: { enabled: true, allowed_updates: ["email", "name"] },
+      subscription_cancel: { enabled: true, mode: "at_period_end" },
+      subscription_update: { enabled: true, default_allowed_updates: ["price"], proration_behavior: "create_prorations", products: portalProducts },
+    },
+    metadata: { app: "nexus-pulse" },
+  };
+  const portals = await call<StripeList<SPortal>>("/billing_portal/configurations?active=true&limit=100", undefined, "GET");
+  const mine = portals.data.find((x) => x.metadata?.app === "nexus-pulse");
+  const portal = mine
+    ? await call<SPortal>(`/billing_portal/configurations/${mine.id}`, portalParams)
+    : await call<SPortal>("/billing_portal/configurations", portalParams);
+
+  await saveIntegrations({
+    stripeSecretKey: sk,
+    stripeWebhookSecret: hook.secret,
+    stripeWebhookId: hook.id,
+    stripePortalConfig: portal.id,
+    stripePrices,
+    stripeProducts,
+    stripeMode: mode,
+  });
+  return { mode, prices: Object.keys(stripePrices).length, webhook: url, portal: portal.id };
+}
+
+/** Removes the saved Stripe settings (the products stay in Stripe). */
+export async function disconnectStripe() {
+  await saveIntegrations({ stripeSecretKey: "", stripeWebhookSecret: "", stripeWebhookId: "", stripePortalConfig: "", stripePrices: null, stripeProducts: null, stripeMode: "" });
+}
+
+/* ───────────── Webhooks ───────────── */
 
 /** Verifies the Stripe-Signature header (HMAC-SHA256 over "timestamp.payload"), 5-minute tolerance. */
 export function verifyStripeSignature(payload: string, header: string | null, secret: string, toleranceSec = 300) {
@@ -96,8 +239,10 @@ interface StripeSub {
   id: string;
   customer: string;
   status: string;
+  cancel_at_period_end?: boolean;
+  cancel_at?: number | null;
   current_period_end?: number;
-  items?: { data?: { price?: { id: string }; current_period_end?: number }[] };
+  items?: { data?: { price?: { id: string; metadata?: Record<string, string>; recurring?: { interval?: string } | null }; current_period_end?: number }[] };
   metadata?: { userId?: string };
 }
 
@@ -126,7 +271,12 @@ export async function handleStripeEvent(evt: { id: string; type: string; data: {
     const u = await userForSub(sub);
     if (u) {
       const item = sub.items?.data?.[0];
-      const mapped = item?.price?.id ? planForPrice(item.price.id) : null;
+      let mapped = item?.price?.id ? await planForPrice(item.price.id) : null;
+      // Fallback: prices created by "Connect Stripe" carry their plan in metadata (covers older/replaced prices).
+      const metaPlan = item?.price?.metadata?.nexus_plan;
+      if (!mapped && metaPlan && PLANS.some((p) => p.id === metaPlan && p.monthly > 0)) {
+        mapped = { plan: metaPlan as PlanId, interval: item?.price?.recurring?.interval === "year" ? "year" : "month" };
+      }
       const end = item?.current_period_end ?? sub.current_period_end;
       u.billing = {
         ...(u.billing ?? {}),
@@ -135,6 +285,7 @@ export async function handleStripeEvent(evt: { id: string; type: string; data: {
         status: sub.status,
         interval: mapped?.interval,
         currentPeriodEnd: end ? new Date(end * 1000).toISOString() : undefined,
+        cancelAtPeriodEnd: !!(sub.cancel_at_period_end || sub.cancel_at),
       };
       if (evt.type === "customer.subscription.deleted" || !ACTIVE.includes(sub.status)) u.plan = "free";
       else if (mapped) u.plan = mapped.plan;

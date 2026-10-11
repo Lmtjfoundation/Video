@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, CircleDollarSign, KeyRound, Pencil, RotateCcw, Search, ShieldCheck, Users, X } from "lucide-react";
+import { Bot, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Trash2, Users, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { PLANS, type PlanId } from "@/lib/plans";
@@ -42,8 +42,30 @@ interface Stats {
   awaitingReview: number;
 }
 interface AppSettingsPayload {
-  settings: { allowSignups: boolean; requireApprovalForNewUsers: boolean; supportEmail: string };
-  env: { stripe: boolean; webhook: boolean; storage: string; llm: boolean; appUrl: string; cron: boolean };
+  settings: { allowSignups: boolean; requireApprovalForNewUsers: boolean; supportEmail: string; legalName: string; legalJurisdiction: string };
+  env: {
+    stripe: boolean;
+    webhook: boolean;
+    storage: string;
+    dataDir: boolean;
+    llm: boolean;
+    voice: boolean;
+    stock: boolean;
+    email: boolean;
+    appUrl: string;
+    cron: boolean;
+    scheduler: boolean;
+    encryption: boolean;
+  };
+}
+type KeyState = { set: boolean; source?: "server" | "app"; preview?: string };
+interface IntegrationStatus {
+  anthropic: KeyState;
+  elevenlabs: KeyState & { voiceId: string };
+  pexels: KeyState;
+  email: KeyState & { from: string };
+  stripe: KeyState & { mode: "live" | "test" | null; prices: number; pricesNeeded: number; webhook: boolean; portal: boolean };
+  updatedAt: string | null;
 }
 
 const TABS = [
@@ -61,6 +83,9 @@ export default function AdminPage() {
   const loadStats = useCallback(() => api<Stats>("/api/admin/stats").then(setStats).catch(() => {}), []);
   useEffect(() => {
     loadStats();
+    const want = new URLSearchParams(window.location.search).get("tab");
+    const match = TABS.find((t) => t.key === want);
+    if (match) setTab(match.key);
   }, [loadStats]);
 
   if (status && status.me.user.role !== "admin") {
@@ -313,9 +338,10 @@ function UsersTab({ onChange }: { onChange: () => void }) {
 function AppSettingsTab() {
   const toast = useApp((s) => s.toast);
   const [data, setData] = useState<AppSettingsPayload | null>(null);
+  const load = useCallback(() => api<AppSettingsPayload>("/api/admin/settings").then(setData).catch(() => {}), []);
   useEffect(() => {
-    api<AppSettingsPayload>("/api/admin/settings").then(setData).catch(() => {});
-  }, []);
+    load();
+  }, [load]);
   if (!data) return <div className="glass h-64 animate-pulse" />;
   const s = data.settings;
   async function save(patch: Partial<AppSettingsPayload["settings"]>) {
@@ -327,24 +353,41 @@ function AppSettingsTab() {
       toast((e as Error).message, "error");
     }
   }
+  const env = data.env;
   const health: [string, boolean, string][] = [
-    ["Claude API key", data.env.llm, "ANTHROPIC_API_KEY"],
-    ["Public app URL", !!data.env.appUrl, "APP_URL"],
-    ["Scheduler secret", data.env.cron, "CRON_SECRET"],
-    ["Stripe payments", data.env.stripe, "STRIPE_SECRET_KEY + price IDs"],
-    ["Stripe webhook", data.env.webhook, "STRIPE_WEBHOOK_SECRET"],
-    ["Database", data.env.storage === "supabase", data.env.storage === "supabase" ? "Supabase" : "Local file — use Supabase in production"],
+    ["Claude (AI writing)", env.llm, "Add the key in Integrations"],
+    ["Voiceover (ElevenLabs)", env.voice, "Optional — add in Integrations"],
+    ["Stock footage (Pexels)", env.stock, "Optional — add in Integrations"],
+    ["Subscriptions (Stripe)", env.stripe && env.webhook, env.stripe ? "Press Connect Stripe again" : "Connect Stripe in Integrations"],
+    ["Password-reset email", env.email, "Optional — add Resend in Integrations"],
+    ["Support email (legal pages)", !!s.supportEmail, "Add it in Sign-ups and approval"],
+    ["Public app URL", !!env.appUrl, "Set APP_URL on the server"],
+    ["Scheduler", env.cron || env.scheduler, "INTERNAL_SCHEDULER=1 or CRON_SECRET"],
+    ["Encryption key", env.encryption, "Set ENCRYPTION_KEY on the server"],
+    ["Database", env.storage === "supabase" || env.dataDir, env.storage === "supabase" ? "Supabase" : "Mount a volume and set DATA_DIR"],
   ];
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      <IntegrationsCard onChange={load} />
       <Card>
         <CardHeader title="Sign-ups and approval" />
         <div className="grid gap-3 p-5">
           <Row title="Allow new sign-ups" desc="Turn off to make the app invite-only." control={<Switch checked={s.allowSignups} onChange={(v) => save({ allowSignups: v })} label="Allow sign-ups" />} />
           <Row title="New users need approval" desc="Their scheduled posts wait in Content review until you approve them." control={<Switch checked={s.requireApprovalForNewUsers} onChange={(v) => save({ requireApprovalForNewUsers: v })} label="Require approval for new users" />} />
-          <Field label="Support email" hint="shown to users">
-            <Input defaultValue={s.supportEmail} onBlur={(e) => e.target.value !== s.supportEmail && save({ supportEmail: e.target.value })} placeholder="support@yourdomain.com" />
+          <Field label="Support email" hint="shown to users and on the legal pages">
+            <Input type="email" defaultValue={s.supportEmail} onBlur={(e) => e.target.value !== s.supportEmail && save({ supportEmail: e.target.value })} placeholder="support@yourdomain.com" />
           </Field>
+          <Field label="Business name" hint="shown on Terms and Privacy">
+            <Input defaultValue={s.legalName} onBlur={(e) => e.target.value !== s.legalName && save({ legalName: e.target.value })} placeholder="Nexus Pulse" />
+          </Field>
+          <Field label="Governing law" hint="used in the Terms">
+            <Input defaultValue={s.legalJurisdiction} onBlur={(e) => e.target.value !== s.legalJurisdiction && save({ legalJurisdiction: e.target.value })} placeholder="the State of Texas, USA" />
+          </Field>
+          <p className="text-xs text-white/45">
+            Public pages: <a className="text-mint-300 hover:underline" href="/terms" target="_blank">Terms</a> ·{" "}
+            <a className="text-mint-300 hover:underline" href="/privacy" target="_blank">Privacy</a> ·{" "}
+            <a className="text-mint-300 hover:underline" href="/data-deletion" target="_blank">Data deletion</a> — use these links in Stripe and in the X, Meta, Google, LinkedIn and TikTok developer portals.
+          </p>
         </div>
       </Card>
       <Card>
@@ -354,7 +397,7 @@ function AppSettingsTab() {
             <li key={label} className="flex items-center gap-3 px-5 py-3 text-sm">
               <span className={cn("h-2 w-2 rounded-full", ok ? "bg-mint-400" : "bg-gold-400")} />
               <span className="text-white/85">{label}</span>
-              <span className="ml-auto text-xs text-white/45">{ok ? "Ready" : hint}</span>
+              <span className={cn("ml-auto text-right text-xs", ok ? "text-mint-300/80" : "text-white/45")}>{ok ? "Ready" : hint}</span>
             </li>
           ))}
         </ul>
@@ -374,3 +417,319 @@ function Row({ title, desc, control }: { title: string; desc: string; control: R
     </div>
   );
 }
+
+/* ───────────── Integrations: paste keys in the app (stored encrypted on the server) ───────────── */
+
+type TestResult = { ok: boolean; message: string };
+
+function IntegrationsCard({ onChange }: { onChange: () => void }) {
+  const toast = useApp((s) => s.toast);
+  const [st, setSt] = useState<IntegrationStatus | null>(null);
+  const [vals, setVals] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  const [results, setResults] = useState<Record<string, TestResult>>({});
+
+  const load = useCallback(
+    () => api<IntegrationStatus>("/api/admin/integrations").then(setSt).catch((e: Error) => toast(e.message, "error")),
+    [toast],
+  );
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const set = (k: string) => (e: { target: { value: string } }) => setVals((v) => ({ ...v, [k]: e.target.value }));
+
+  async function run<T>(id: string, fn: () => Promise<T>, done?: (r: T) => void) {
+    setBusy(id);
+    try {
+      const r = await fn();
+      done?.(r);
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function save(fields: string[], label: string, test?: "anthropic" | "elevenlabs" | "pexels" | "email") {
+    const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
+    if (!Object.keys(patch).length) return toast("Paste the key first.", "error");
+    run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
+      setSt(next);
+      setVals((v) => {
+        const c = { ...v };
+        fields.forEach((f) => delete c[f]);
+        return c;
+      });
+      toast(`${label} saved`, "success");
+      onChange();
+      if (test) await check(test);
+    });
+  }
+
+  function remove(field: string, label: string) {
+    if (!confirm(`Remove the saved ${label} key?`)) return;
+    run(`rm:${field}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { [field]: "" } }), (next) => {
+      setSt(next);
+      toast(`${label} key removed`, "success");
+      onChange();
+    });
+  }
+
+  async function check(which: "anthropic" | "elevenlabs" | "pexels" | "stripe" | "email") {
+    await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
+      setResults((x) => ({ ...x, [which]: r })),
+    );
+  }
+
+  function connectStripe() {
+    const secretKey = (vals.stripeSecretKey ?? "").trim();
+    if (!secretKey && !st?.stripe.set) return toast("Paste your Stripe secret key first.", "error");
+    run(
+      "stripe",
+      () => api<{ mode: string; prices: number; status: IntegrationStatus; warning?: string }>("/api/admin/integrations", { body: { action: "stripe-connect", secretKey } }),
+      (r) => {
+        setSt(r.status);
+        setVals((v) => ({ ...v, stripeSecretKey: "" }));
+        toast(`Stripe connected in ${r.mode.toUpperCase()} mode — ${r.prices} prices, webhook and customer portal ready.`, "success");
+        if (r.warning) toast(r.warning, "error");
+        onChange();
+      },
+    );
+  }
+
+  function disconnectStripe() {
+    if (!confirm("Disconnect Stripe? New checkouts stop working until you connect again. Your products and existing subscriptions stay in Stripe.")) return;
+    run("stripe-off", () => api<IntegrationStatus>("/api/admin/integrations", { body: { action: "stripe-disconnect" } }), (next) => {
+      setSt(next);
+      toast("Stripe disconnected", "success");
+      onChange();
+    });
+  }
+
+  if (!st) return <div className="glass h-72 animate-pulse lg:col-span-2" />;
+  const s = st.stripe;
+  const stripeComplete = s.set && s.prices === s.pricesNeeded && s.webhook;
+
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader
+        title="Integrations"
+        subtitle="Paste your service keys here. They're encrypted on the server and never shown again — only the first and last characters."
+        icon={<KeyRound className="h-4 w-4" />}
+      />
+      <div className="grid gap-4 p-5 md:grid-cols-2">
+        <Service
+          icon={<Bot className="h-4 w-4" />}
+          title="Claude — AI writing"
+          desc="Writes niches, posts, scripts, video plans and replies. Required."
+          link={{ href: "https://console.anthropic.com/settings/keys", label: "Get a key" }}
+          state={st.anthropic}
+          result={results.anthropic}
+        >
+          {st.anthropic.set && st.anthropic.source === "server" ? (
+            <ServerNote />
+          ) : (
+            <Input type="password" autoComplete="off" spellCheck={false} placeholder="sk-ant-…" value={vals.anthropicKey ?? ""} onChange={set("anthropicKey")} />
+          )}
+          <Actions>
+            {st.anthropic.source !== "server" && (
+              <Button size="sm" variant="primary" loading={busy === "save:Claude"} onClick={() => save(["anthropicKey"], "Claude", "anthropic")}>Save</Button>
+            )}
+            <Button size="sm" loading={busy === "test:anthropic"} disabled={!st.anthropic.set} onClick={() => check("anthropic")}>Test</Button>
+            {st.anthropic.set && st.anthropic.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:anthropicKey"} onClick={() => remove("anthropicKey", "Claude")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Mic className="h-4 w-4" />}
+          title="ElevenLabs — voiceover"
+          desc="Narrates rendered videos. Optional: without it videos render with captions and music only."
+          link={{ href: "https://elevenlabs.io/app/settings/api-keys", label: "Get a key" }}
+          state={st.elevenlabs}
+          result={results.elevenlabs}
+        >
+          {st.elevenlabs.set && st.elevenlabs.source === "server" ? (
+            <ServerNote />
+          ) : (
+            <Input type="password" autoComplete="off" spellCheck={false} placeholder="ElevenLabs API key" value={vals.elevenlabsKey ?? ""} onChange={set("elevenlabsKey")} />
+          )}
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={st.elevenlabs.voiceId ? `Voice ID: ${st.elevenlabs.voiceId}` : "Voice ID (optional — default narrator)"}
+            value={vals.elevenlabsVoiceId ?? ""}
+            onChange={set("elevenlabsVoiceId")}
+          />
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:ElevenLabs"} onClick={() => save(["elevenlabsKey", "elevenlabsVoiceId"], "ElevenLabs", "elevenlabs")}>Save</Button>
+            <Button size="sm" loading={busy === "test:elevenlabs"} disabled={!st.elevenlabs.set} onClick={() => check("elevenlabs")}>Test</Button>
+            {st.elevenlabs.set && st.elevenlabs.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:elevenlabsKey"} onClick={() => remove("elevenlabsKey", "ElevenLabs")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Film className="h-4 w-4" />}
+          title="Pexels — stock footage"
+          desc="Free HD clips for video scenes. Optional: without it scenes use your uploads or animated gradients."
+          link={{ href: "https://www.pexels.com/api/new/", label: "Get a free key" }}
+          state={st.pexels}
+          result={results.pexels}
+        >
+          {st.pexels.set && st.pexels.source === "server" ? (
+            <ServerNote />
+          ) : (
+            <Input type="password" autoComplete="off" spellCheck={false} placeholder="Pexels API key" value={vals.pexelsKey ?? ""} onChange={set("pexelsKey")} />
+          )}
+          <Actions>
+            {st.pexels.source !== "server" && (
+              <Button size="sm" variant="primary" loading={busy === "save:Pexels"} onClick={() => save(["pexelsKey"], "Pexels", "pexels")}>Save</Button>
+            )}
+            <Button size="sm" loading={busy === "test:pexels"} disabled={!st.pexels.set} onClick={() => check("pexels")}>Test</Button>
+            {st.pexels.set && st.pexels.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:pexelsKey"} onClick={() => remove("pexelsKey", "Pexels")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Mail className="h-4 w-4" />}
+          title="Email — password resets"
+          desc="Sends “Forgot password?” links through Resend (free tier: 3,000 emails a month). Needs a domain you verify in Resend."
+          link={{ href: "https://resend.com/api-keys", label: "Get a key" }}
+          state={st.email}
+          result={results.email}
+        >
+          {st.email.set && st.email.source === "server" ? (
+            <ServerNote />
+          ) : (
+            <Input type="password" autoComplete="off" spellCheck={false} placeholder="re_…" value={vals.resendKey ?? ""} onChange={set("resendKey")} />
+          )}
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={st.email.from ? `From: ${st.email.from}` : "From, e.g. Nexus Pulse <support@yourdomain.com>"}
+            value={vals.emailFrom ?? ""}
+            onChange={set("emailFrom")}
+          />
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Email"} onClick={() => save(["resendKey", "emailFrom"], "Email", "email")}>Save &amp; send test</Button>
+            <Button size="sm" loading={busy === "test:email"} disabled={!st.email.set || !st.email.from} onClick={() => check("email")}>Send test</Button>
+            {st.email.set && st.email.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:resendKey"} onClick={() => remove("resendKey", "Resend")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<CreditCard className="h-4 w-4" />}
+          title="Stripe — subscriptions"
+          desc="One click creates your 3 paid plans (monthly + yearly), the payment webhook and the customer billing portal in your Stripe account."
+          link={{ href: "https://dashboard.stripe.com/apikeys", label: "API keys" }}
+          state={s}
+          result={results.stripe}
+          extra={
+            s.set ? (
+              <div className="flex flex-wrap gap-1.5">
+                <Badge tone={s.mode === "live" ? "mint" : "gold"}>{s.mode === "live" ? "LIVE — real payments" : "TEST mode — test cards only"}</Badge>
+                <Badge tone={s.prices === s.pricesNeeded ? "mint" : "gold"}>{s.prices}/{s.pricesNeeded} prices</Badge>
+                <Badge tone={s.webhook ? "mint" : "gold"}>{s.webhook ? "Webhook ✓" : "No webhook"}</Badge>
+                <Badge tone={s.portal ? "mint" : "neutral"}>{s.portal ? "Portal ✓" : "Default portal"}</Badge>
+              </div>
+            ) : null
+          }
+        >
+          {s.set && s.source === "server" ? (
+            <ServerNote />
+          ) : (
+            <Input
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={s.set ? "Paste a new key to switch (e.g. sk_live_…)" : "sk_test_… or sk_live_…"}
+              value={vals.stripeSecretKey ?? ""}
+              onChange={set("stripeSecretKey")}
+            />
+          )}
+          <Actions>
+            <Button size="sm" variant={stripeComplete ? "secondary" : "gold"} loading={busy === "stripe"} onClick={connectStripe}>
+              {s.set ? <RefreshCw className="h-3.5 w-3.5" /> : <CircleDollarSign className="h-3.5 w-3.5" />}
+              {s.set ? (vals.stripeSecretKey ? "Switch key & sync plans" : "Re-sync plans") : "Connect Stripe & create plans"}
+            </Button>
+            <Button size="sm" loading={busy === "test:stripe"} disabled={!s.set} onClick={() => check("stripe")}>Test</Button>
+            {s.set && s.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "stripe-off"} onClick={disconnectStripe}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+          {s.mode === "test" && (
+            <p className="text-[11px] leading-relaxed text-white/45">
+              Test mode: pay with card 4242 4242 4242 4242, any future date, any CVC. To take real money, activate your Stripe account, then paste your <b className="text-white/70">sk_live_</b> key here and press the button again.
+            </p>
+          )}
+        </Service>
+      </div>
+    </Card>
+  );
+}
+
+function Service({
+  icon,
+  title,
+  desc,
+  link,
+  state,
+  result,
+  extra,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  link: { href: string; label: string };
+  state: KeyState;
+  result?: TestResult;
+  extra?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="grid content-start gap-2.5 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.06]">
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/80">{icon}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-white">{title}</p>
+            {state.set ? (
+              <Badge tone="mint">
+                <Check className="h-3 w-3" /> {state.source === "server" ? "Set on server" : "Connected"} · {state.preview}
+              </Badge>
+            ) : (
+              <Badge tone="neutral">Not connected</Badge>
+            )}
+          </div>
+          <p className="mt-0.5 text-xs leading-relaxed text-white/50">{desc}</p>
+        </div>
+        <a href={link.href} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 text-[11px] text-mint-300 hover:underline">
+          {link.label} <ExternalLink className="h-3 w-3" />
+        </a>
+      </div>
+      {extra}
+      {children}
+      {result && (
+        <p className={cn("rounded-lg px-3 py-2 text-xs", result.ok ? "bg-mint-400/10 text-mint-200" : "bg-red-500/10 text-red-200")}>
+          {result.ok ? "✓ " : "✕ "}
+          {result.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const Actions = ({ children }: { children: React.ReactNode }) => <div className="flex flex-wrap items-center gap-2">{children}</div>;
+
+const ServerNote = () => (
+  <p className="rounded-lg bg-white/[0.04] px-3 py-2 text-xs text-white/55">This key is set in the server's environment variables, which take priority. Change it there.</p>
+);

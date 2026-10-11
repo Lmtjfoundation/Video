@@ -7,6 +7,7 @@ import { signedUrl } from "@/lib/media";
 import { enqueueRender, ffmpegAvailable } from "@/lib/render";
 import type { MediaItem } from "@/lib/types";
 import { nowIso } from "@/lib/utils";
+import { elevenlabsKey, pexelsKey } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
 
@@ -35,5 +36,5 @@ export const GET = authed(async (req, user) => {
     const m = await db().get<MediaItem>("media", post.render.mediaId);
     if (m) url = signedUrl(user.id, m.id, 6 * 3600);
   }
-  return ok({ render: post.render ?? null, url, voice: !!process.env.ELEVENLABS_API_KEY, stock: !!process.env.PEXELS_API_KEY });
+  return ok({ render: post.render ?? null, url, voice: !!(await elevenlabsKey()), stock: !!(await pexelsKey()) });
 });

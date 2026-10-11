@@ -7,6 +7,7 @@ import { asUser, db } from "./db";
 import { readFile, storeFile } from "./media";
 import { log, savePost } from "./repo";
 import { refundCredits } from "./auth";
+import { elevenlabsKey, elevenlabsVoice, pexelsKey } from "./integrations";
 import type { MediaItem, Post, VideoScene } from "./types";
 import { nowIso } from "./utils";
 
@@ -75,8 +76,8 @@ async function duration(file: string) {
 /* ───────────── Voice ───────────── */
 
 async function tts(text: string, file: string) {
-  const key = process.env.ELEVENLABS_API_KEY!;
-  const voice = process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE;
+  const key = await elevenlabsKey();
+  const voice = (await elevenlabsVoice()) || DEFAULT_VOICE;
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_128`, {
     method: "POST",
     headers: { "xi-api-key": key, "Content-Type": "application/json", Accept: "audio/mpeg" },
@@ -98,7 +99,7 @@ const cleanQuery = (visual: string) =>
     .slice(0, 80);
 
 async function pexelsClip(query: string, portrait: boolean, file: string): Promise<boolean> {
-  const key = process.env.PEXELS_API_KEY;
+  const key = await pexelsKey();
   if (!key || !query) return false;
   try {
     const res = await fetch(
@@ -260,7 +261,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       mediaFiles.push({ kind: m.kind, file: f });
     }
 
-    const voice = !!process.env.ELEVENLABS_API_KEY;
+    const voice = !!(await elevenlabsKey());
     const jobs: SceneJob[] = [];
     const scenes = plan.scenes.filter((s) => s.narration.trim() || s.onScreen.trim());
     if (!scenes.length) throw new Error("This plan has no scenes to render.");

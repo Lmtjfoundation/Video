@@ -40,7 +40,8 @@ export function PricingTable({ currentPlan, signedIn, hasSubscription }: { curre
 
   async function choose(planId: string) {
     if (!signedIn) {
-      window.location.href = "/signup";
+      // Carry the chosen plan through sign-up so checkout opens right after the account is created.
+      window.location.href = planId === "free" ? "/signup" : `/signup?plan=${encodeURIComponent(planId)}&interval=${cycle}`;
       return;
     }
     setBusy(planId);

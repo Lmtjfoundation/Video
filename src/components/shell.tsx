@@ -38,7 +38,7 @@ const NAV: NavItem[] = [
 ];
 /** Bottom bar on phones: the five things people do most. */
 const MOBILE_TABS = ["/", "/stories", "/studio", "/calendar", "/engage"];
-const BARE_ROUTES = ["/login", "/signup", "/pricing", "/offline"];
+const BARE_ROUTES = ["/login", "/signup", "/pricing", "/offline", "/terms", "/privacy", "/data-deletion", "/forgot", "/reset"];
 
 function Logo({ compact }: { compact?: boolean }) {
   return (

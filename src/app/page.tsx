@@ -25,11 +25,11 @@ export default function Dashboard() {
   const connected = credentials.filter((c) => c.connected).length;
   const setup = isAdmin
     ? [
-        { ok: env.llm, label: "Claude API key", hint: "ANTHROPIC_API_KEY in .env.local" },
-        { ok: env.encryption, label: "Encryption key", hint: "ENCRYPTION_KEY — run npm run gen:key" },
+        { ok: env.llm, label: "Claude API key", hint: "Admin → App settings → Integrations", href: "/admin?tab=settings" },
+        { ok: env.encryption, label: "Encryption key", hint: "ENCRYPTION_KEY on the server — run npm run gen:key" },
         { ok: env.appUrl, label: "Public app URL", hint: "APP_URL — needed for linking and uploads" },
-        { ok: env.cron, label: "Scheduler secret", hint: "CRON_SECRET + a cron caller (see README)" },
-        { ok: env.stripe, label: "Payments", hint: "Stripe keys — see Admin → App settings" },
+        { ok: env.cron, label: "Scheduler", hint: "INTERNAL_SCHEDULER=1 or CRON_SECRET + a cron caller" },
+        { ok: env.stripe, label: "Payments", hint: "Admin → App settings → Connect Stripe", href: "/admin?tab=settings" },
       ]
     : [
         { ok: connected > 0, label: "Link a social account", hint: "Settings → Accounts" },
@@ -106,7 +106,12 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 text-[13px] font-medium text-white">
                   <span className={cn("h-1.5 w-1.5 rounded-full", s.ok ? "bg-mint-400" : "bg-white/30")} /> {s.label}
                 </div>
-                {!s.ok && <p className="mt-1 text-[11px] text-white/45">{s.hint}</p>}
+                {!s.ok &&
+                  ("href" in s && s.href ? (
+                    <Link href={s.href} className="mt-1 block text-[11px] text-mint-300 hover:underline">{s.hint} →</Link>
+                  ) : (
+                    <p className="mt-1 text-[11px] text-white/45">{s.hint}</p>
+                  ))}
               </div>
             ))}
           </div>

@@ -5,7 +5,7 @@ import type { CredentialStatus, LogEntry, Post, Settings } from "./types";
 import type { Plan } from "./plans";
 
 export interface Me {
-  user: { id: string; email: string; name: string; role: "admin" | "user"; status: string; plan: string; requireApproval: boolean; usage: { period: string; credits: number; posts: number }; billing?: { status?: string; interval?: string; currentPeriodEnd?: string; customerId?: string; subscriptionId?: string } };
+  user: { id: string; email: string; name: string; role: "admin" | "user"; status: string; plan: string; requireApproval: boolean; usage: { period: string; credits: number; posts: number }; billing?: { status?: string; interval?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; customerId?: string; subscriptionId?: string } };
   plan: Plan;
   creditsLeft: number;
   postsLeft: number | null;

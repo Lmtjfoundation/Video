@@ -8,6 +8,11 @@ const PUBLIC = [
   "/login",
   "/signup",
   "/pricing",
+  "/terms",
+  "/privacy",
+  "/data-deletion",
+  "/forgot",
+  "/reset",
   "/api/auth/",
   "/api/cron/",
   "/api/stripe/",
@@ -27,6 +32,12 @@ export function middleware(req: NextRequest) {
   if (req.cookies.get("np_session")?.value) return NextResponse.next();
   if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Please sign in." }, { status: 401 });
   const url = req.nextUrl.clone();
+  if (pathname === "/") {
+    // Signed-out visitors land on the public pricing page (the marketing home).
+    url.pathname = "/pricing";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
   url.pathname = "/login";
   url.search = `?next=${encodeURIComponent(pathname + search)}`;
   return NextResponse.redirect(url);

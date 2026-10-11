@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Activity, BookOpenText, Compass, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/client";
 import { Button, Field, Input } from "./ui";
+import { LegalFooter } from "./legal-footer";
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [email, setEmail] = useState("");
@@ -12,19 +13,28 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [next, setNext] = useState("/");
+  const [setupCode, setSetupCode] = useState("");
+  const [owner, setOwner] = useState<{ ownerNeeded: boolean; codeRequired: boolean } | null>(null);
+  const [afterSignup, setAfterSignup] = useState("/?welcome=1");
 
   useEffect(() => {
-    const n = new URLSearchParams(window.location.search).get("next");
+    const q = new URLSearchParams(window.location.search);
+    const n = q.get("next");
     if (n && n.startsWith("/") && !n.startsWith("//")) setNext(n);
-  }, []);
+    const plan = q.get("plan");
+    if (plan && ["creator", "pro", "unlimited"].includes(plan)) {
+      setAfterSignup(`/plans?plan=${plan}&interval=${q.get("interval") === "year" ? "year" : "month"}`);
+    }
+    if (mode === "signup") api<{ ownerNeeded: boolean; codeRequired: boolean }>("/api/auth/setup-status").then(setOwner).catch(() => {});
+  }, [mode]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      await api(mode === "login" ? "/api/auth/login" : "/api/auth/signup", { body: { email, password, name } });
-      window.location.href = mode === "signup" ? "/?welcome=1" : next;
+      await api(mode === "login" ? "/api/auth/login" : "/api/auth/signup", { body: { email, password, name, setupCode: setupCode || undefined } });
+      window.location.href = mode === "signup" ? afterSignup : next;
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
@@ -55,8 +65,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
       <section className="flex items-center justify-center px-5 py-12">
         <form onSubmit={submit} className="glass w-full max-w-sm p-7" noValidate>
-          <h2 className="text-xl font-semibold text-white">{mode === "login" ? "Sign in" : "Create your account"}</h2>
-          <p className="mt-1 text-sm text-white/50">{mode === "login" ? "Welcome back." : "Free plan, no card needed."}</p>
+          <h2 className="text-xl font-semibold text-white">{mode === "login" ? "Sign in" : owner?.ownerNeeded ? "Create the owner account" : "Create your account"}</h2>
+          <p className="mt-1 text-sm text-white/50">{mode === "login" ? "Welcome back." : owner?.ownerNeeded ? "The first account becomes the admin, on the Unlimited plan." : "Free plan, no card needed."}</p>
           <div className="mt-6 grid gap-4">
             {mode === "signup" && (
               <Field label="Name">
@@ -69,6 +79,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             <Field label="Password" hint={mode === "signup" ? "10+ characters, include a number" : undefined}>
               <Input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} required value={password} onChange={(e) => setPassword(e.target.value)} />
             </Field>
+            {mode === "signup" && owner?.codeRequired && (
+              <Field label="Owner setup code" hint="from your deployment settings">
+                <Input id="setup-code" autoComplete="off" value={setupCode} onChange={(e) => setSetupCode(e.target.value)} placeholder="e.g. NP-XXXX-XXXX" />
+              </Field>
+            )}
             {error && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-200 ring-1 ring-red-400/25">{error}</p>}
             <Button type="submit" variant="primary" size="lg" loading={busy} disabled={!email || !password}>
               {mode === "login" ? "Sign in" : "Create account"}
@@ -81,8 +96,19 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <>Already have an account? <Link className="text-mint-300 hover:underline" href="/login">Sign in</Link></>
             )}
           </p>
-          {mode === "login" && <p className="mt-3 text-center text-xs text-white/35">Forgot your password? Ask your workspace admin to reset it.</p>}
+          {mode === "login" && (
+            <p className="mt-3 text-center text-xs text-white/40">
+              <Link href="/forgot" className="hover:text-white/70">Forgot your password?</Link>
+            </p>
+          )}
+          {mode === "signup" && (
+            <p className="mt-3 text-center text-xs leading-relaxed text-white/40">
+              By creating an account you agree to the <Link href="/terms" className="underline hover:text-white/70">Terms</Link> and{" "}
+              <Link href="/privacy" className="underline hover:text-white/70">Privacy Policy</Link>.
+            </p>
+          )}
           <p className="mt-3 text-center text-xs text-white/35"><Link href="/pricing" className="hover:text-white/60">See plans and pricing</Link></p>
+          <LegalFooter className="mt-6 justify-center" />
         </form>
       </section>
     </div>

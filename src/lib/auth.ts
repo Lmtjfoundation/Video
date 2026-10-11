@@ -26,6 +26,8 @@ export interface User {
     status?: string;
     interval?: "month" | "year";
     currentPeriodEnd?: string;
+    /** true when the customer cancelled: the plan stays active until currentPeriodEnd, then drops to Free. */
+    cancelAtPeriodEnd?: boolean;
   };
   createdAt: string;
   lastLoginAt?: string;
@@ -93,15 +95,31 @@ export async function saveUser(u: User) {
   return u;
 }
 
+/** Constant-time check of the owner setup code (only when SETUP_CODE is set on the server). */
+export function ownerCodeOk(code?: string) {
+  const want = process.env.SETUP_CODE;
+  if (!want) return true;
+  const got = String(code ?? "").trim();
+  if (got.length !== want.length) return false;
+  let diff = 0;
+  for (let i = 0; i < want.length; i++) diff |= got.charCodeAt(i) ^ want.charCodeAt(i);
+  return diff === 0;
+}
+export async function ownerNeeded() {
+  return (await listUsers()).length === 0;
+}
+
 const adminEmails = () => (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
 
-export async function createUser(input: { email: string; password: string; name?: string }) {
+export async function createUser(input: { email: string; password: string; name?: string; setupCode?: string }) {
   const email = input.email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AuthError("Enter a valid email address.", 400);
   const bad = validatePassword(input.password);
   if (bad) throw new AuthError(bad, 400);
   if (await findUserByEmail(email)) throw new AuthError("An account with this email already exists. Sign in instead.", 409);
   const isFirst = (await listUsers()).length === 0;
+  // The owner (first) account needs the server's SETUP_CODE, so nobody else can claim a freshly deployed site.
+  if (isFirst && !ownerCodeOk(input.setupCode)) throw new AuthError("Enter the owner setup code to create the first (admin) account.", 403);
   const settings = await getAppSettings();
   if (!isFirst && !settings.allowSignups && !adminEmails().includes(email)) throw new AuthError("New sign-ups are closed right now.", 403);
 
@@ -168,6 +186,48 @@ export async function destroyAllSessions(userId: string) {
   await gdb().removeMany("sessions", mine.map((s) => s.id));
 }
 
+/* Password reset: single-use token emailed to the account address; only its hash is stored, valid for 1 hour. */
+const RESET_TTL_MS = 60 * 60_000;
+const RESEND_GAP_MS = 2 * 60_000;
+
+/**
+ * Creates a reset token for an active account. Returns null for unknown or suspended emails, or when a link was sent
+ * less than 2 minutes ago (callers answer the same way either way, so accounts can't be discovered).
+ */
+export async function createPasswordReset(emailIn: string): Promise<{ token: string; user: User } | null> {
+  const email = emailIn.trim().toLowerCase();
+  const user = await findUserByEmail(email);
+  if (!user || user.status !== "active") return null;
+  const gate = await gdb().get<{ id: string; value: { at: number } }>("kv", `forgot_${sha(email)}`);
+  if (gate && Date.now() - gate.value.at < RESEND_GAP_MS) return null;
+  const token = randomBytes(32).toString("base64url");
+  await gdb().upsertMany("kv", [
+    { id: `reset_${sha(token)}`, value: { userId: user.id, expiresAt: Date.now() + RESET_TTL_MS } },
+    { id: `forgot_${sha(email)}`, value: { at: Date.now() } },
+  ]);
+  return { token, user };
+}
+
+/** Sets a new password from a reset token, signs out every other device and returns a fresh session. */
+export async function resetPassword(token: string, password: string) {
+  const bad = validatePassword(password ?? "");
+  if (bad) throw new AuthError(bad, 400);
+  const id = `reset_${sha(String(token ?? ""))}`;
+  const row = await gdb().get<{ id: string; value: { userId: string; expiresAt: number } }>("kv", id);
+  if (!row || row.value.expiresAt < Date.now()) {
+    if (row) await gdb().remove("kv", id);
+    throw new AuthError("This reset link has expired or was already used. Request a new one.", 400);
+  }
+  const user = await getUser(row.value.userId);
+  await gdb().remove("kv", id); // single use
+  if (!user || user.status !== "active") throw new AuthError("This account can't be reset. Contact support.", 403);
+  user.passwordHash = await hashPassword(password);
+  await saveUser(user);
+  await destroyAllSessions(user.id);
+  await gdb().remove("kv", `login_${sha(user.email)}`);
+  return { user, token: await createSession(user.id) };
+}
+
 export function readCookie(req: Request, name: string) {
   const raw = req.headers.get("cookie") ?? "";
   for (const part of raw.split(/;\s*/)) {
@@ -209,8 +269,19 @@ export interface AppSettings {
   allowSignups: boolean;
   requireApprovalForNewUsers: boolean;
   supportEmail: string;
+  /** Business name shown on the Terms and Privacy pages (defaults to "Nexus Pulse"). */
+  legalName: string;
+  /** Governing law shown in the Terms (defaults to the State of Texas, USA). */
+  legalJurisdiction: string;
 }
-const DEFAULT_APP: AppSettings = { id: "app_settings", allowSignups: true, requireApprovalForNewUsers: false, supportEmail: "" };
+const DEFAULT_APP: AppSettings = {
+  id: "app_settings",
+  allowSignups: true,
+  requireApprovalForNewUsers: false,
+  supportEmail: "",
+  legalName: "",
+  legalJurisdiction: "",
+};
 export async function getAppSettings(): Promise<AppSettings> {
   const row = await gdb().get<{ id: string; value: Partial<AppSettings> }>("kv", "app_settings");
   return { ...DEFAULT_APP, ...(row?.value ?? {}) };

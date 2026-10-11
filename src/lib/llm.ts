@@ -1,5 +1,6 @@
 import "server-only";
 import { sleep } from "./utils";
+import { anthropicKey } from "./integrations";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 
@@ -21,14 +22,14 @@ interface CallOpts {
   model?: string;
 }
 
-export function llmConfigured() {
-  return !!process.env.ANTHROPIC_API_KEY;
+export async function llmConfigured() {
+  return !!(await anthropicKey());
 }
 
 /** Calls the Claude Messages API with retries on rate limits / overload. */
 export async function claude({ system, user, maxTokens = 2500, temperature = 0.85, images, model: modelOverride }: CallOpts): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new LLMError("ANTHROPIC_API_KEY is not set. Add it to .env.local and restart.");
+  const apiKey = await anthropicKey();
+  if (!apiKey) throw new LLMError("Claude isn't connected yet. The admin adds the Claude API key in Admin → App settings → Integrations.");
   const model = modelOverride || process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
   const content = images?.length
     ? [...images.map((i) => ({ type: "image", source: { type: "base64", media_type: i.mediaType, data: i.base64 } })), { type: "text", text: user }]
