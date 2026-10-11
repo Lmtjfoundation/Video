@@ -44,7 +44,7 @@ const pk = (owner: string, id: string) => `${owner}::${id}`;
 class SupabaseBackend implements Backend {
   constructor(private sb: SupabaseClient) {}
 
-  async all<T extends Row>(table: Table, owner: string | null, limit: number) {
+  async all<T extends Row>(table: Table, owner: string | null, limit: number): Promise<{ owner: string; row: T }[]> {
     let q = this.sb.from(table).select("owner,data").order("updated_at", { ascending: false }).limit(limit);
     if (owner) q = q.eq("owner", owner);
     const { data, error } = await q;
@@ -52,10 +52,10 @@ class SupabaseBackend implements Backend {
     return (data ?? []).map((r: { owner: string; data: T }) => ({ owner: r.owner, row: r.data }));
   }
 
-  async get<T extends Row>(table: Table, owner: string, id: string) {
+  async get<T extends Row>(table: Table, owner: string, id: string): Promise<T | null> {
     const { data, error } = await this.sb.from(table).select("data").eq("id", pk(owner, id)).maybeSingle();
     if (error) throw new Error(`Supabase ${table}: ${error.message}`);
-    return (data?.data as T) ?? null;
+    return (data?.data as T | undefined) ?? null;
   }
 
   async upsertMany<T extends Row>(table: Table, owner: string, rows: T[]) {
@@ -120,7 +120,7 @@ class LocalBackend implements Backend {
     for (const [k] of mine.slice(max)) delete t[k];
   }
 
-  async all<T extends Row>(table: Table, owner: string | null, limit: number) {
+  async all<T extends Row>(table: Table, owner: string | null, limit: number): Promise<{ owner: string; row: T }[]> {
     const t = (await this.load())[table] ?? {};
     return Object.values(t)
       .filter((e) => !owner || e.owner === owner)
@@ -129,7 +129,7 @@ class LocalBackend implements Backend {
       .map((e) => ({ owner: e.owner, row: structuredClone(e.row) as T }));
   }
 
-  async get<T extends Row>(table: Table, owner: string, id: string) {
+  async get<T extends Row>(table: Table, owner: string, id: string): Promise<T | null> {
     const e = (await this.load())[table]?.[pk(owner, id)];
     return e ? (structuredClone(e.row) as T) : null;
   }
