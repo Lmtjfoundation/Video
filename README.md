@@ -189,7 +189,7 @@ Railway runs the app as an always-on server, so the built-in scheduler posts on 
 2. Add a **Volume** to the service, mounted at `/data`. This keeps your database and uploads when the app redeploys.
 3. In the service's **Variables**, add:
    - `SETUP_CODE` — a secret phrase; the first sign-up must enter it to become the owner
-   - `APP_URL` — your Railway URL, e.g. `https://nexus-pulse-production.up.railway.app` (Settings → Networking → Generate Domain)
+   - `APP_URL` — your Railway URL, e.g. `https://nexus-pulse.up.railway.app` (Settings → Networking → Generate Domain; you can rename the subdomain there)
    - `ENCRYPTION_KEY` — run `npm run gen:key` (or any 32+ random characters)
    - `CRON_SECRET` — any long random string
    - `INTERNAL_SCHEDULER` = `1`

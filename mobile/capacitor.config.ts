@@ -2,9 +2,9 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 /**
  * The native app is a secure shell around your hosted Nexus Pulse (same login, same data).
- * Set APP_URL to your live https address before running `npx cap sync`.
+ * Defaults to the live site; set APP_URL to use a different (e.g. custom) domain before `npx cap sync`.
  */
-const APP_URL = process.env.APP_URL ?? "https://your-app-domain.com";
+const APP_URL = process.env.APP_URL ?? "https://nexus-pulse.up.railway.app";
 
 const config: CapacitorConfig = {
   appId: "com.nexuspulse.app",

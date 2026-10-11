@@ -17,7 +17,7 @@ You need a Mac with Xcode for iOS, and Android Studio for Android.
 ```bash
 cd mobile
 npm install
-export APP_URL=https://your-live-domain.com   # your deployed Nexus Pulse
+export APP_URL=https://nexus-pulse.up.railway.app   # your deployed Nexus Pulse (or your custom domain)
 npx cap add ios
 npx cap add android
 npm run assets        # generates every icon and splash size from assets/icon.png
