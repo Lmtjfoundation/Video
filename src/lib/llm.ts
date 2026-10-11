@@ -1,10 +1,22 @@
 import "server-only";
 import { sleep } from "./utils";
 import { anthropicHeaders, anthropicKey, anthropicWorkspaceHint } from "./integrations";
+import { recordLlmHealth } from "./llm-health";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 
-export class LLMError extends Error {}
+/**
+ * `message` is safe for any subscriber. `ownerMessage` (setup, billing or API details) is shown to admins instead.
+ */
+export class LLMError extends Error {
+  ownerMessage?: string;
+  constructor(message: string, ownerMessage?: string) {
+    super(message);
+    this.ownerMessage = ownerMessage;
+  }
+}
+
+const UNAVAILABLE = "AI writing is temporarily unavailable. Please try again in a little while.";
 
 export interface ImageInput {
   mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif";
@@ -29,7 +41,11 @@ export async function llmConfigured() {
 /** Calls the Claude Messages API with retries on rate limits / overload. */
 export async function claude({ system, user, maxTokens = 2500, temperature = 0.85, images, model: modelOverride }: CallOpts): Promise<string> {
   const apiKey = await anthropicKey();
-  if (!apiKey) throw new LLMError("Claude isn't connected yet. The admin adds the Claude API key in Admin → App settings → Integrations.");
+  if (!apiKey) {
+    const owner = "Claude isn't connected yet. Add the Claude API key in Admin → App settings → Integrations.";
+    await recordLlmHealth(false, owner);
+    throw new LLMError(UNAVAILABLE, owner);
+  }
   const model = modelOverride || process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
   const content = images?.length
     ? [...images.map((i) => ({ type: "image", source: { type: "base64", media_type: i.mediaType, data: i.base64 } })), { type: "text", text: user }]
@@ -51,6 +67,7 @@ export async function claude({ system, user, maxTokens = 2500, temperature = 0.8
     });
 
     if (res.ok) {
+      await recordLlmHealth(true);
       const json = (await res.json()) as { content?: { type: string; text?: string }[] };
       const text = (json.content ?? [])
         .filter((b) => b.type === "text")
@@ -62,7 +79,11 @@ export async function claude({ system, user, maxTokens = 2500, temperature = 0.8
 
     const errText = await res.text();
     const hint = anthropicWorkspaceHint(res.status, errText);
-    if (hint) throw new LLMError(hint);
+    if (hint || res.status === 401 || res.status === 403) {
+      const owner = hint ?? `Claude rejected the API key (${res.status}). Check it in Admin → App settings → Integrations.`;
+      await recordLlmHealth(false, owner);
+      throw new LLMError(UNAVAILABLE, owner);
+    }
     lastErr = `${res.status} ${errText.slice(0, 400)}`;
     if (res.status === 429 || res.status === 529 || res.status >= 500) {
       const retryAfter = Number(res.headers.get("retry-after"));
@@ -71,7 +92,7 @@ export async function claude({ system, user, maxTokens = 2500, temperature = 0.8
     }
     break;
   }
-  throw new LLMError(`Claude API error: ${lastErr}`);
+  throw new LLMError("AI writing failed this time. Please try again.", `Claude API error: ${lastErr}`);
 }
 
 /** Extracts and parses the first JSON object/array in a model response. */

@@ -7,7 +7,7 @@ import type { CredentialStatus, Offer, Pillar, Platform, Settings } from "@/lib/
 import { PILLARS, PLATFORMS, REPLY_MODES } from "@/lib/types";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import { OAUTH } from "@/lib/oauth-config";
-import { SETUP_GUIDES } from "@/lib/setup-guides";
+import { COPY_LABELS, SETUP_GUIDES, type CopyKey } from "@/lib/setup-guides";
 import { copyToClipboard } from "@/lib/client";
 import { MODE_LABEL, PILLAR_LABEL, cn, uid } from "@/lib/utils";
 import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, PlatformChip, Select, Switch, Textarea } from "@/components/ui";
@@ -543,7 +543,14 @@ function SetupWizard({ platform, origin, onSaved }: { platform: Platform; origin
   const [secret, setSecret] = useState("");
   const [saving, setSaving] = useState(false);
   const redirect = `${origin}/api/connect/${platform}/callback`;
-  const values = { redirect, site: origin, scopes: o.scopes.join(o.scopeSeparator === "," ? "," : " ") };
+  const values: Record<CopyKey, string> = {
+    redirect,
+    site: origin,
+    scopes: o.scopes.join(o.scopeSeparator === "," ? "," : " "),
+    privacy: `${origin}/privacy`,
+    terms: `${origin}/terms`,
+    deletion: `${origin}/data-deletion`,
+  };
   const finished = Object.values(done).filter(Boolean).length;
 
   async function save() {
@@ -593,7 +600,14 @@ function SetupWizard({ platform, origin, onSaved }: { platform: Platform; origin
             </button>
             <div className="min-w-0 flex-1 text-[13px] leading-relaxed text-white/80">
               {st.text}
-              {st.copy && <CopyBox value={values[st.copy]} />}
+              {typeof st.copy === "string" && <CopyBox value={values[st.copy]} />}
+              {Array.isArray(st.copy) &&
+                st.copy.map((k) => (
+                  <div key={k} className="mt-2">
+                    <p className="text-[11px] uppercase tracking-wide text-white/40">{COPY_LABELS[k]}</p>
+                    <CopyBox value={values[k]} />
+                  </div>
+                ))}
               {st.note && <p className="mt-1 text-xs text-gold-300/90">{st.note}</p>}
               {st.link && (
                 <a href={st.link.href} target="_blank" rel="noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-xs text-mint-300 hover:underline">

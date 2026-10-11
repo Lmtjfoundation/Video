@@ -18,7 +18,7 @@ export const POST = authed(async (req, user) => {
   const estimate = platforms.length * s.postsPerDay * CREDIT_COST.post;
   await spendCredits(user.id, estimate);
   try {
-    const { created, errors } = await fillDay(date, platforms, s, topic?.slice(0, 300), user.requireApproval ? "pending_review" : "scheduled");
+    const { created, errors } = await fillDay(date, platforms, s, topic?.slice(0, 300), user.requireApproval ? "pending_review" : "scheduled", user.role === "admin");
     await refundCredits(user.id, estimate - created.length * CREDIT_COST.post);
     return ok({ created: created.length, errors, pendingReview: user.requireApproval });
   } catch (e) {

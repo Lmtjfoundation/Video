@@ -88,9 +88,11 @@ export default function CalendarPage() {
         created += r.created;
         errors.push(...r.errors);
         await load();
+        // AI writing is down (no credits, key or workspace problem): stop instead of retrying every day.
+        if (!r.created && r.errors.some((m) => /temporarily unavailable|out of credits|Claude|workspace/i.test(m))) break;
       } catch (e) {
         errors.push((e as Error).message);
-        if (/ANTHROPIC_API_KEY|platform|credit/i.test((e as Error).message)) break;
+        if (/ANTHROPIC_API_KEY|platform|credit|temporarily unavailable|Claude|workspace/i.test((e as Error).message)) break;
       }
     }
     setFill(null);

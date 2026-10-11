@@ -284,12 +284,21 @@ const DEFAULT_APP: AppSettings = {
 };
 export async function getAppSettings(): Promise<AppSettings> {
   const row = await gdb().get<{ id: string; value: Partial<AppSettings> }>("kv", "app_settings");
-  return { ...DEFAULT_APP, ...(row?.value ?? {}) };
+  const s = { ...DEFAULT_APP, ...(row?.value ?? {}) };
+  // Server variables fill in anything not set in Admin → App settings.
+  return {
+    ...s,
+    supportEmail: s.supportEmail || process.env.SUPPORT_EMAIL || "",
+    legalName: s.legalName || process.env.LEGAL_NAME || "",
+    legalJurisdiction: s.legalJurisdiction || process.env.LEGAL_JURISDICTION || "",
+  };
 }
 export async function saveAppSettings(patch: Partial<AppSettings>) {
-  const next = { ...(await getAppSettings()), ...patch, id: "app_settings" as const };
+  // Merge into what's stored (not the env-filled view), so server variables stay a fallback.
+  const row = await gdb().get<{ id: string; value: Partial<AppSettings> }>("kv", "app_settings");
+  const next = { ...DEFAULT_APP, ...(row?.value ?? {}), ...patch, id: "app_settings" as const };
   await gdb().upsert("kv", { id: "app_settings", value: next });
-  return next;
+  return getAppSettings();
 }
 
 /* Quotas */

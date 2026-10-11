@@ -1,5 +1,5 @@
 import "server-only";
-import { claudeJson } from "./llm";
+import { claudeJson, LLMError } from "./llm";
 import { PERSONALITY_LOCK } from "./personality";
 import { generatePosts } from "./generate";
 import { listPosts, log, savePosts, saveSettings } from "./repo";
@@ -33,7 +33,14 @@ export function slotsFor(platform: Platform, s: Settings) {
  * Fills one local calendar day with posts for each platform, only in free future slots.
  * Called once per day by the "Fill my week" flow so each request stays short.
  */
-export async function fillDay(date: string, platforms: Platform[], s: Settings, topic?: string, status: "scheduled" | "pending_review" = "scheduled") {
+export async function fillDay(
+  date: string,
+  platforms: Platform[],
+  s: Settings,
+  topic?: string,
+  status: "scheduled" | "pending_review" = "scheduled",
+  ownerDetail = false,
+) {
   const existing = (await listPosts()).filter((p) => p.scheduledAt && ["scheduled", "pending_review", "published", "copy_ready", "publishing"].includes(p.status));
   const now = Date.now();
   const created: Post[] = [];
@@ -59,7 +66,8 @@ export async function fillDay(date: string, platforms: Platform[], s: Settings, 
         });
         created.push(...posts);
       } catch (e) {
-        errors.push(`${PLATFORM_SPECS[platform].name}: ${(e as Error).message}`);
+        const msg = ownerDetail && e instanceof LLMError && e.ownerMessage ? e.ownerMessage : (e as Error).message;
+        errors.push(`${PLATFORM_SPECS[platform].name}: ${msg}`);
       }
     }),
   );

@@ -2,6 +2,7 @@ import { authed, ok } from "@/lib/http-api";
 import { credentialStatuses, getSettings, listLogs, listPosts, listReplies } from "@/lib/repo";
 import { llmConfigured } from "@/lib/llm";
 import { stripeReady } from "@/lib/billing";
+import { getLlmHealth } from "@/lib/llm-health";
 import { storageMode } from "@/lib/db";
 import { localParts } from "@/lib/time";
 import { kvGet } from "@/lib/repo";
@@ -27,7 +28,7 @@ export const GET = authed(async (_req, user) => {
   const weekPosts = upcoming.filter((p) => new Date(p.scheduledAt!).getTime() < weekAhead);
 
   const plan = planById(user.plan);
-  const [llm, stripe] = await Promise.all([llmConfigured(), stripeReady()]);
+  const [llm, stripe, llmHealth] = await Promise.all([llmConfigured(), stripeReady(), user.role === "admin" ? getLlmHealth() : Promise.resolve(null)]);
   return ok({
     me: {
       user: publicUser(user),
@@ -44,6 +45,7 @@ export const GET = authed(async (_req, user) => {
       stripe,
       appUrl: !!process.env.APP_URL,
     },
+    llmHealth,
     credentials: creds,
     cooldowns: cooldowns ?? {},
     stats: {

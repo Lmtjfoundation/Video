@@ -29,6 +29,8 @@ export async function register() {
   };
 
   console.log(`[scheduler] built-in scheduler on: publishing every ${minutes} min`);
+  // One-time: finish Stripe setup when only STRIPE_SECRET_KEY was provided on the server.
+  if (process.env.STRIPE_SECRET_KEY) setTimeout(() => hit("/api/cron/stripe-setup"), 20_000);
   setTimeout(loop, 30_000); // let the server finish starting
   setInterval(loop, minutes * 60_000);
 }

@@ -15,6 +15,8 @@ export interface StatusPayload {
   me: Me;
   settings: Settings;
   env: { llm: boolean; storage: "local" | "supabase"; encryption: boolean; cron: boolean; stripe: boolean; appUrl: boolean };
+  /** Admins only: whether Claude is working app-wide right now (null until the first AI call or test). */
+  llmHealth?: { ok: boolean; message?: string; at: string } | null;
   credentials: CredentialStatus[];
   cooldowns: Record<string, number>;
   stats: {

@@ -2,6 +2,7 @@ import "server-only";
 import { gdb } from "./db";
 import { decrypt, encrypt } from "./crypto";
 import { nowIso } from "./utils";
+import { recordLlmHealth } from "./llm-health";
 
 /**
  * App-wide service keys the owner pastes in Admin → App settings → Integrations.
@@ -150,15 +151,22 @@ export async function testIntegration(which: "anthropic" | "elevenlabs" | "pexel
           headers: { ...headers, "content-type": "application/json" },
           body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: "user", content: "Hi" }] }),
         });
-        if (gen.ok) return { ok: true, message: `Claude works — key, workspace and billing all OK${where}.` };
+        if (gen.ok) {
+          await recordLlmHealth(true);
+          return { ok: true, message: `Claude works — key, workspace and billing all OK${where}.` };
+        }
         const gtext = await gen.text();
         const ghint = anthropicWorkspaceHint(gen.status, gtext);
-        return { ok: false, message: ghint ?? `The key is valid${where}, but a test reply failed (${gen.status}): ${gtext.slice(0, 160)}` };
+        const gmsg = ghint ?? `The key is valid${where}, but a test reply failed (${gen.status}): ${gtext.slice(0, 160)}`;
+        await recordLlmHealth(false, gmsg);
+        return { ok: false, message: gmsg };
       }
       const text = await res.text();
       const hint = anthropicWorkspaceHint(res.status, text);
-      if (hint) return { ok: false, message: hint };
-      return { ok: false, message: res.status === 401 ? "Claude rejected this key (401). Copy it again from the Claude Console → API keys." : `Claude answered ${res.status}: ${text.slice(0, 160)}` };
+      const msg =
+        hint ?? (res.status === 401 ? "Claude rejected this key (401). Copy it again from the Claude Console → API keys." : `Claude answered ${res.status}: ${text.slice(0, 160)}`);
+      await recordLlmHealth(false, msg);
+      return { ok: false, message: msg };
     }
     if (which === "elevenlabs") {
       const key = await elevenlabsKey();

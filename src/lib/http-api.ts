@@ -7,12 +7,13 @@ import { AuthError, QuotaError, userFromRequest, type User } from "./auth";
 export const ok = <T>(data: T, init?: number) => NextResponse.json(data, { status: init ?? 200 });
 export const fail = (message: string, status = 400) => NextResponse.json({ error: message }, { status });
 
-function toResponse(e: unknown) {
+function toResponse(e: unknown, user?: User | null) {
   const err = e as Error;
   if (err instanceof AuthError) return fail(err.message, err.status);
   if (err instanceof QuotaError) return fail(err.message, 402);
-  console.error("[nexus:api]", err);
-  if (err instanceof LLMError) return fail(err.message, 502);
+  console.error("[nexus:api]", err instanceof LLMError && err.ownerMessage ? `${err.message} | ${err.ownerMessage}` : err);
+  // Subscribers get a plain message; the owner sees the real cause (credits, key, workspace…).
+  if (err instanceof LLMError) return fail(user?.role === "admin" && err.ownerMessage ? err.ownerMessage : err.message, 502);
   return fail(err?.message || "Unexpected error", 500);
 }
 
@@ -35,13 +36,15 @@ type Ctx = { params: Promise<Record<string, string>> };
  */
 export function authed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Response>, opts: { admin?: boolean } = {}) {
   return async (req: Request, ctx: Ctx) => {
+    let user: User | null = null;
     try {
-      const user = await userFromRequest(req);
+      user = await userFromRequest(req);
       if (!user) return fail("Please sign in.", 401);
       if (opts.admin && user.role !== "admin") return fail("Admins only.", 403);
-      return await asUser(user.id, () => fn(req, user, ctx));
+      const u = user;
+      return await asUser(u.id, () => fn(req, u, ctx));
     } catch (e) {
-      return toResponse(e);
+      return toResponse(e, user);
     }
   };
 }
