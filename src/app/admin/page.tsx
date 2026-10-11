@@ -58,9 +58,9 @@ interface AppSettingsPayload {
     encryption: boolean;
   };
 }
-type KeyState = { set: boolean; source?: "server" | "app"; preview?: string };
+type KeyState = { set: boolean; source?: "server" | "app"; preview?: string; serverFallback?: boolean };
 interface IntegrationStatus {
-  anthropic: KeyState;
+  anthropic: KeyState & { workspaceId: string };
   elevenlabs: KeyState & { voiceId: string };
   pexels: KeyState;
   email: KeyState & { from: string };
@@ -453,7 +453,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
 
   function save(fields: string[], label: string, test?: "anthropic" | "elevenlabs" | "pexels" | "email") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
-    if (!Object.keys(patch).length) return toast("Paste the key first.", "error");
+    if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
       setSt(next);
       setVals((v) => {
@@ -468,11 +468,18 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
   }
 
   function remove(field: string, label: string) {
-    if (!confirm(`Remove the saved ${label} key?`)) return;
+    if (!confirm(`Remove the ${label} key saved in the app? If the server has its own key, the app goes back to using that one.`)) return;
     run(`rm:${field}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { [field]: "" } }), (next) => {
       setSt(next);
       toast(`${label} key removed`, "success");
       onChange();
+    });
+  }
+
+  function clearWorkspace() {
+    run("rm:anthropicWorkspaceId", () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { anthropicWorkspaceId: "" } }), (next) => {
+      setSt(next);
+      toast("Workspace ID cleared", "success");
     });
   }
 
@@ -487,12 +494,11 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     if (!secretKey && !st?.stripe.set) return toast("Paste your Stripe secret key first.", "error");
     run(
       "stripe",
-      () => api<{ mode: string; prices: number; status: IntegrationStatus; warning?: string }>("/api/admin/integrations", { body: { action: "stripe-connect", secretKey } }),
+      () => api<{ mode: string; prices: number; status: IntegrationStatus }>("/api/admin/integrations", { body: { action: "stripe-connect", secretKey } }),
       (r) => {
         setSt(r.status);
         setVals((v) => ({ ...v, stripeSecretKey: "" }));
         toast(`Stripe connected in ${r.mode.toUpperCase()} mode — ${r.prices} prices, webhook and customer portal ready.`, "success");
-        if (r.warning) toast(r.warning, "error");
         onChange();
       },
     );
@@ -527,18 +533,23 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           state={st.anthropic}
           result={results.anthropic}
         >
-          {st.anthropic.set && st.anthropic.source === "server" ? (
-            <ServerNote />
-          ) : (
-            <Input type="password" autoComplete="off" spellCheck={false} placeholder="sk-ant-…" value={vals.anthropicKey ?? ""} onChange={set("anthropicKey")} />
-          )}
+          {st.anthropic.source === "server" && <ServerNote />}
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="sk-ant-…" value={vals.anthropicKey ?? ""} onChange={set("anthropicKey")} />
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={st.anthropic.workspaceId ? `Workspace: ${st.anthropic.workspaceId}` : "Workspace ID (only if Test asks for it) — wrkspc_…"}
+            value={vals.anthropicWorkspaceId ?? ""}
+            onChange={set("anthropicWorkspaceId")}
+          />
           <Actions>
-            {st.anthropic.source !== "server" && (
-              <Button size="sm" variant="primary" loading={busy === "save:Claude"} onClick={() => save(["anthropicKey"], "Claude", "anthropic")}>Save</Button>
-            )}
+            <Button size="sm" variant="primary" loading={busy === "save:Claude"} onClick={() => save(["anthropicKey", "anthropicWorkspaceId"], "Claude", "anthropic")}>Save</Button>
             <Button size="sm" loading={busy === "test:anthropic"} disabled={!st.anthropic.set} onClick={() => check("anthropic")}>Test</Button>
             {st.anthropic.set && st.anthropic.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:anthropicKey"} onClick={() => remove("anthropicKey", "Claude")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+            {st.anthropic.workspaceId && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:anthropicWorkspaceId"} onClick={clearWorkspace}>Clear workspace</Button>
             )}
           </Actions>
         </Service>
@@ -551,11 +562,8 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           state={st.elevenlabs}
           result={results.elevenlabs}
         >
-          {st.elevenlabs.set && st.elevenlabs.source === "server" ? (
-            <ServerNote />
-          ) : (
-            <Input type="password" autoComplete="off" spellCheck={false} placeholder="ElevenLabs API key" value={vals.elevenlabsKey ?? ""} onChange={set("elevenlabsKey")} />
-          )}
+          {st.elevenlabs.source === "server" && <ServerNote />}
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="ElevenLabs API key" value={vals.elevenlabsKey ?? ""} onChange={set("elevenlabsKey")} />
           <Input
             autoComplete="off"
             spellCheck={false}
@@ -580,15 +588,10 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           state={st.pexels}
           result={results.pexels}
         >
-          {st.pexels.set && st.pexels.source === "server" ? (
-            <ServerNote />
-          ) : (
-            <Input type="password" autoComplete="off" spellCheck={false} placeholder="Pexels API key" value={vals.pexelsKey ?? ""} onChange={set("pexelsKey")} />
-          )}
+          {st.pexels.source === "server" && <ServerNote />}
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="Pexels API key" value={vals.pexelsKey ?? ""} onChange={set("pexelsKey")} />
           <Actions>
-            {st.pexels.source !== "server" && (
-              <Button size="sm" variant="primary" loading={busy === "save:Pexels"} onClick={() => save(["pexelsKey"], "Pexels", "pexels")}>Save</Button>
-            )}
+            <Button size="sm" variant="primary" loading={busy === "save:Pexels"} onClick={() => save(["pexelsKey"], "Pexels", "pexels")}>Save</Button>
             <Button size="sm" loading={busy === "test:pexels"} disabled={!st.pexels.set} onClick={() => check("pexels")}>Test</Button>
             {st.pexels.set && st.pexels.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:pexelsKey"} onClick={() => remove("pexelsKey", "Pexels")}><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -604,11 +607,8 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           state={st.email}
           result={results.email}
         >
-          {st.email.set && st.email.source === "server" ? (
-            <ServerNote />
-          ) : (
-            <Input type="password" autoComplete="off" spellCheck={false} placeholder="re_…" value={vals.resendKey ?? ""} onChange={set("resendKey")} />
-          )}
+          {st.email.source === "server" && <ServerNote />}
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="re_…" value={vals.resendKey ?? ""} onChange={set("resendKey")} />
           <Input
             autoComplete="off"
             spellCheck={false}
@@ -643,10 +643,8 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             ) : null
           }
         >
-          {s.set && s.source === "server" ? (
-            <ServerNote />
-          ) : (
-            <Input
+          {s.source === "server" && <ServerNote />}
+          <Input
               type="password"
               autoComplete="off"
               spellCheck={false}
@@ -654,7 +652,6 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
               value={vals.stripeSecretKey ?? ""}
               onChange={set("stripeSecretKey")}
             />
-          )}
           <Actions>
             <Button size="sm" variant={stripeComplete ? "secondary" : "gold"} loading={busy === "stripe"} onClick={connectStripe}>
               {s.set ? <RefreshCw className="h-3.5 w-3.5" /> : <CircleDollarSign className="h-3.5 w-3.5" />}
@@ -731,5 +728,5 @@ function Service({
 const Actions = ({ children }: { children: React.ReactNode }) => <div className="flex flex-wrap items-center gap-2">{children}</div>;
 
 const ServerNote = () => (
-  <p className="rounded-lg bg-white/[0.04] px-3 py-2 text-xs text-white/55">This key is set in the server's environment variables, which take priority. Change it there.</p>
+  <p className="rounded-lg bg-white/[0.04] px-3 py-2 text-xs text-white/55">Using the key set on the server. Paste a key here to replace it — a key saved here takes priority.</p>
 );

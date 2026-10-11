@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 export const GET = authed(async () => ok(await integrationStatus()), { admin: true });
 
 const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
-  anthropicKey: { re: /^sk-ant-[A-Za-z0-9_-]{20,}$/, msg: "A Claude API key starts with sk-ant- (console.anthropic.com → API keys)." },
+  anthropicKey: { re: /^sk-ant-[A-Za-z0-9_-]{20,}$/, msg: "A Claude API key starts with sk-ant- (Claude Console → API keys)." },
+  anthropicWorkspaceId: { re: /^wrkspc_[A-Za-z0-9]{6,}$/, msg: "A workspace ID starts with wrkspc_ (Claude Console → Settings → Workspaces → ID column)." },
   elevenlabsKey: { re: /^[A-Za-z0-9_-]{20,}$/, msg: "That doesn't look like an ElevenLabs API key (elevenlabs.io → Developers → API keys)." },
   elevenlabsVoiceId: { re: /^[A-Za-z0-9]{10,40}$/, msg: "A voice ID is a short code of letters and numbers (ElevenLabs → Voices → ID)." },
   pexelsKey: { re: /^[A-Za-z0-9]{20,}$/, msg: "That doesn't look like a Pexels API key (pexels.com/api)." },
@@ -68,12 +69,7 @@ export const POST = authed(async (req, user) => {
     const origin = appOrigin(req);
     if (!origin.startsWith("https://")) return fail("Stripe needs the app's public https address. Set APP_URL on the server, then try again.");
     const result = await setupStripeBilling(key, origin);
-    const envOverride = !!process.env.STRIPE_WEBHOOK_SECRET;
-    return ok({
-      ...result,
-      status: await integrationStatus(),
-      warning: envOverride ? "STRIPE_WEBHOOK_SECRET is set on the server and overrides the new webhook secret. Remove that variable so payments sync." : undefined,
-    });
+    return ok({ ...result, status: await integrationStatus() });
   }
   if (b.action === "stripe-disconnect") {
     await disconnectStripe();

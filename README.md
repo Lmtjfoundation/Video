@@ -94,7 +94,7 @@ Admin → App settings → **Integrations** stores service keys encrypted on the
 | Resend | "Forgot password?" emails | optional (needs a domain verified in Resend) |
 | Stripe | subscriptions | to charge money |
 
-A key set as an environment variable (e.g. `ANTHROPIC_API_KEY`) always wins over the one saved in the app.
+Environment variables (e.g. `ANTHROPIC_API_KEY`) work as defaults: a key saved in the app takes priority, so you can always replace a key from the app. Personal Claude keys that aren't tied to one workspace also need the workspace ID (Claude Console → Settings → Workspaces → ID, starts with `wrkspc_`) — there's a field for it, or set `ANTHROPIC_WORKSPACE_ID`.
 
 ### Payments (Stripe) — one click
 
@@ -107,7 +107,7 @@ A key set as an environment variable (e.g. `ANTHROPIC_API_KEY`) always wins over
 
 Test card in test mode: `4242 4242 4242 4242`, any future date, any CVC.
 
-Prefer environment variables? `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and `STRIPE_PRICE_<PLAN>_<MONTHLY|ANNUAL>` still work and override the in-app values.
+Prefer environment variables? `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and `STRIPE_PRICE_<PLAN>_<MONTHLY|ANNUAL>` still work as defaults; values saved by "Connect Stripe" take priority.
 
 Until Stripe is set up, paid plans show "Coming soon" and you can assign plans by hand in Admin → Users.
 

@@ -1,6 +1,6 @@
 import "server-only";
 import { sleep } from "./utils";
-import { anthropicKey } from "./integrations";
+import { anthropicHeaders, anthropicKey, anthropicWorkspaceHint } from "./integrations";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 
@@ -35,15 +35,12 @@ export async function claude({ system, user, maxTokens = 2500, temperature = 0.8
     ? [...images.map((i) => ({ type: "image", source: { type: "base64", media_type: i.mediaType, data: i.base64 } })), { type: "text", text: user }]
     : user;
 
+  const headers = { ...(await anthropicHeaders(apiKey)), "content-type": "application/json" };
   let lastErr = "";
   for (let attempt = 0; attempt < 4; attempt++) {
     const res = await fetch(API_URL, {
       method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
+      headers,
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
@@ -63,7 +60,10 @@ export async function claude({ system, user, maxTokens = 2500, temperature = 0.8
       return text;
     }
 
-    lastErr = `${res.status} ${(await res.text()).slice(0, 400)}`;
+    const errText = await res.text();
+    const hint = anthropicWorkspaceHint(res.status, errText);
+    if (hint) throw new LLMError(hint);
+    lastErr = `${res.status} ${errText.slice(0, 400)}`;
     if (res.status === 429 || res.status === 529 || res.status >= 500) {
       const retryAfter = Number(res.headers.get("retry-after"));
       await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1500 * 2 ** attempt);
