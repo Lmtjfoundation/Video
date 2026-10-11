@@ -1,5 +1,5 @@
 import "server-only";
-import { ADAPTERS } from "./platforms/adapters";
+import { ADAPTERS, type VideoFile } from "./platforms/adapters";
 import { freshCredential } from "./platforms/auth";
 import { AuthError, CopyReadyError, RateLimitError } from "./platforms/http";
 import { renderPost } from "./compose";
@@ -12,7 +12,20 @@ import { finalizePost } from "./generate";
 import { describeFlag, historyFlags } from "./compliance";
 import { usePostAllowance } from "./auth";
 import { currentUserId } from "./db";
-import { firstImageUrl } from "./media";
+import { firstImageUrl, readFile, signedUrl } from "./media";
+import { db } from "./db";
+import type { MediaItem } from "./types";
+
+/** The newest video attached to a post (rendered first), loaded for upload. */
+async function videoFor(userId: string, post: Post): Promise<VideoFile | null> {
+  for (const id of post.mediaIds ?? []) {
+    const m = await db().get<MediaItem>("media", id);
+    if (m?.kind !== "video") continue;
+    const bytes = await readFile(m);
+    return { bytes, url: signedUrl(userId, m.id, 2 * 86400), mime: m.type === "video/quicktime" ? "video/quicktime" : "video/mp4", size: bytes.length };
+  }
+  return null;
+}
 
 const STALE_MS = 12 * 3600_000;
 const MAX_PER_RUN = 6;
@@ -53,12 +66,17 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
     return { outcome: "failed", message: post.error };
   }
 
+  // Video posts need a finished file: the rendered MP4 or one the user attached.
+  let video: VideoFile | undefined;
   if (post.kind === "video") {
-    post.status = "copy_ready";
-    post.error = "Video post: make the video from this plan (or upload the finished file), then post it from the platform's app. Automatic video upload isn't available yet.";
-    await savePost(post);
-    await log("info", "post", `Copy-ready: ${post.error}`, { platform: post.platform, postId: post.id });
-    return { outcome: "copy_ready", message: post.error };
+    const found = userId ? await videoFor(userId, post) : null;
+    if (!found) {
+      post.status = "copy_ready";
+      post.error = "Render the video first (press Render video), or attach a finished MP4 from the Media Library.";
+      await savePost(post);
+      return { outcome: "copy_ready", message: post.error };
+    }
+    video = found;
   }
 
   if (userId) {
@@ -94,7 +112,7 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
   await savePost(post);
   try {
     const texts = renderPost(post, settings);
-    const res = await adapter.publish(post, texts, cred);
+    const res = await adapter.publish(post, texts, cred, video);
     post.status = "published";
     post.publishedAt = nowIso();
     post.externalId = res.externalId;

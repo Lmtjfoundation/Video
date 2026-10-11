@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { CalendarClock, Check, ChevronDown, CircleDollarSign, Copy, ExternalLink, Pencil, Repeat2, Send, ShieldAlert, Trash2, Undo2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CalendarClock, Check, ChevronDown, CircleDollarSign, Clapperboard, Copy, ExternalLink, Pencil, Repeat2, Send, ShieldAlert, Trash2, Undo2 } from "lucide-react";
 import { describeFlag } from "@/lib/compliance";
 import { RepurposeDialog } from "./repurpose-dialog";
 import type { Post, Settings } from "@/lib/types";
@@ -8,6 +8,7 @@ import { api, copyToClipboard, fmtDateTime } from "@/lib/client";
 import { copyText, renderPost } from "@/lib/compose";
 import { NICHES } from "@/lib/niches";
 import { VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
+import { CREDIT_COST } from "@/lib/plans";
 import type { VideoPlan } from "@/lib/types";
 import { localParts, addDays } from "@/lib/time";
 import { useApp } from "@/lib/store";
@@ -134,7 +135,10 @@ export function PostCard({
               </div>
             </div>
           ) : post.kind === "video" && post.video ? (
-            <VideoPlanView plan={post.video} caption={renderPost(post, settings).join("\n")} />
+            <div className="grid gap-4">
+              <RenderPanel post={post} locked={locked} onChange={onChange} />
+              <VideoPlanView plan={post.video} caption={renderPost(post, settings).join("\n")} />
+            </div>
           ) : (
             <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-ink-950/60 p-4 font-sans text-[13.5px] leading-relaxed text-white/80 ring-1 ring-white/[0.05]">
               {copyText(post, settings)}
@@ -315,6 +319,92 @@ function VideoPlanView({ plan, caption }: { plan: VideoPlan; caption: string }) 
         <p className="mb-1 text-sm font-medium text-white">Caption</p>
         <pre className="whitespace-pre-wrap break-words rounded-xl bg-ink-950/60 p-3 font-sans text-[13px] text-white/80 ring-1 ring-white/[0.05]">{caption}</pre>
       </div>
+    </div>
+  );
+}
+
+type RenderInfo = { render: Post["render"] | null; url: string | null; voice: boolean; stock: boolean };
+
+/** Render the plan into an MP4 on the server, show progress, then preview the finished video. */
+function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; onChange: (p: Post | null) => void }) {
+  const toast = useApp((s) => s.toast);
+  const [info, setInfo] = useState<RenderInfo | null>(null);
+  const [starting, setStarting] = useState(false);
+  const status = info?.render?.status ?? post.render?.status;
+  const active = status === "queued" || status === "rendering";
+  const cost = post.video?.length === "long" ? CREDIT_COST.renderLong : CREDIT_COST.renderShort;
+
+  useEffect(() => {
+    let stop = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = async () => {
+      try {
+        const r = await api<RenderInfo>(`/api/video/render?id=${encodeURIComponent(post.id)}`);
+        if (stop) return;
+        setInfo(r);
+        const s = r.render?.status;
+        if (s === "queued" || s === "rendering") timer = setTimeout(tick, 3000);
+        else if (s === "done" && post.render?.status !== "done") {
+          const fresh = (await api<Post[]>("/api/posts")).find((p) => p.id === post.id);
+          if (fresh && !stop) onChange(fresh);
+        }
+      } catch {
+        /* ignore polling errors */
+      }
+    };
+    tick();
+    return () => {
+      stop = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.id, active]);
+
+  async function start() {
+    setStarting(true);
+    try {
+      const p = await api<Post>("/api/video/render", { body: { id: post.id } });
+      setInfo((i) => ({ ...(i ?? { url: null, voice: false, stock: false }), render: p.render }));
+      onChange(p);
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  const r = info?.render ?? post.render;
+  return (
+    <div className="grid gap-3 rounded-xl bg-violet-400/[0.05] p-4 ring-1 ring-violet-300/20">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium text-white">Finished video</p>
+          <p className="text-xs text-white/50">
+            {info ? `${info.voice ? "AI voiceover" : "Captions only (add an ElevenLabs key for voiceover)"} · ${info.stock ? "stock footage" : "your media or animated backgrounds"} · burned-in captions` : "Voiceover, visuals and captions, rendered on the server."}
+          </p>
+        </div>
+        {!locked && !active && (
+          <Button size="sm" variant={status === "done" ? "secondary" : "primary"} loading={starting} onClick={start}>
+            <Clapperboard className="h-3.5 w-3.5" /> {status === "done" ? "Re-render" : "Render video"} · {cost} credits
+          </Button>
+        )}
+      </div>
+      {active && (
+        <div>
+          <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="h-full rounded-full bg-gradient-to-r from-violet-400 to-mint-400 transition-all" style={{ width: `${Math.max(4, r?.progress ?? 0)}%` }} />
+          </div>
+          <p className="mt-1.5 text-xs text-white/55">{r?.message ?? "Working…"} · {r?.progress ?? 0}%</p>
+        </div>
+      )}
+      {status === "failed" && <p className="text-xs text-red-300">Render failed: {r?.message}</p>}
+      {status === "done" && info?.url && (
+        <div className="grid gap-2">
+          <video src={info.url} controls playsInline preload="metadata" className={cn("max-h-[520px] rounded-lg bg-black ring-1 ring-white/10", post.video?.length === "long" ? "w-full" : "mx-auto aspect-[9/16]")} />
+          <p className="text-xs text-white/50">{r?.message} · attached to this post — Post now or schedule it and it uploads automatically.</p>
+          <a href={info.url} download className="text-xs text-sky-300 hover:underline">Download MP4</a>
+        </div>
+      )}
     </div>
   );
 }

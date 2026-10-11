@@ -137,6 +137,24 @@ Then flip **Autopilot posting** (and, if you want it, **Auto-engagement**) on in
 
 ---
 
+## Video posts: render and auto-upload
+
+1. **Generate → Video post** writes a production plan (scenes, narration, on-screen text, visuals).
+2. **Render video** turns the plan into a finished MP4 on your server (1080×1920 for Shorts/Reels/TikTok, 1920×1080 for YouTube long-form):
+   - Voiceover: ElevenLabs text-to-speech per scene when `ELEVENLABS_API_KEY` is set; otherwise captions-only.
+   - Visuals per scene: your attached images/clips (Ken Burns motion), else Pexels stock footage matched to the scene (`PEXELS_API_KEY`), else animated gradients.
+   - Captions: on-screen headline + word-group captions burned in.
+   - Needs ffmpeg on the server — on Railway set `RAILPACK_DEPLOY_APT_PACKAGES=ffmpeg`.
+3. **Post now / schedule** uploads the MP4 automatically:
+   | Platform | How | Notes |
+   |---|---|---|
+   | X | Media upload API (chunked) → post with video | Needs `media.write` scope — reconnect X after updating |
+   | Facebook Page | Page video upload by URL | |
+   | Instagram | Reels container → publish | Reels 3 s–15 min |
+   | LinkedIn | Videos API → post with video | |
+   | YouTube | Resumable upload (Shorts for vertical) | Needs `youtube.upload` — reconnect YouTube. Apps that haven't passed Google's API audit have uploads locked to private. |
+   | TikTok | Upload to the creator's TikTok inbox (drafts) | The creator taps Post in TikTok. Public direct posting needs TikTok's app audit. |
+
 ## Go live on Railway (recommended: one always-on server)
 
 Railway runs the app as an always-on server, so the built-in scheduler posts on time without extra cron services.

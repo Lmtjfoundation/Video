@@ -1,12 +1,20 @@
 import "server-only";
 import type { Credential, Platform, Post } from "../types";
-import { CopyReadyError, request } from "./http";
+import { AuthError, CopyReadyError, request } from "./http";
 import { sleep } from "../utils";
 
 export interface PublishResult {
   externalId: string;
   externalIds: string[];
   url?: string;
+}
+
+/** A finished video to upload: bytes for direct uploads, a public signed URL for platforms that fetch it. */
+export interface VideoFile {
+  bytes: Buffer;
+  url: string;
+  mime: string;
+  size: number;
 }
 
 export interface RawComment {
@@ -22,7 +30,7 @@ export interface Adapter {
   platform: Platform;
   /** Whether autopilot can publish this post here (string = reason it can't). */
   publishable(post: Post): true | string;
-  publish(post: Post, texts: string[], cred: Credential): Promise<PublishResult>;
+  publish(post: Post, texts: string[], cred: Credential, video?: VideoFile): Promise<PublishResult>;
   engageable: boolean;
   fetchComments(cred: Credential, postExternalIds: string[]): Promise<RawComment[]>;
   reply(cred: Credential, target: { commentExternalId: string; postExternalId: string }, text: string): Promise<string>;
@@ -37,13 +45,50 @@ const need = (c: Credential, field: keyof Credential, msg: string) => {
 /* ───────────────────────────── X (Twitter) API v2 ───────────────────────────── */
 const X_API = "https://api.x.com/2";
 
+/** X API v2 chunked media upload (initialize → append → finalize → status). Needs the media.write scope. */
+async function xUploadVideo(cred: Credential, v: VideoFile): Promise<string> {
+  const init = await request<{ data: { id: string } }>(`${X_API}/media/upload/initialize`, {
+    method: "POST",
+    headers: { ...bearer(cred), "Content-Type": "application/json" },
+    body: JSON.stringify({ media_type: v.mime, total_bytes: v.size, media_category: "tweet_video" }),
+    label: "X video upload (initialize)",
+  });
+  const id = init.data.data.id;
+  const CHUNK = 4 * 1024 * 1024;
+  for (let i = 0, off = 0; off < v.size; i++, off += CHUNK) {
+    const fd = new FormData();
+    fd.append("segment_index", String(i));
+    fd.append("media", new Blob([new Uint8Array(v.bytes.subarray(off, Math.min(off + CHUNK, v.size)))], { type: "application/octet-stream" }), "chunk");
+    await request(`${X_API}/media/upload/${id}/append`, { method: "POST", headers: bearer(cred), body: fd, label: "X video upload (append)" });
+  }
+  type Info = { state: string; check_after_secs?: number; error?: { message?: string } };
+  const fin = await request<{ data?: { processing_info?: Info } }>(`${X_API}/media/upload/${id}/finalize`, {
+    method: "POST",
+    headers: bearer(cred),
+    label: "X video upload (finalize)",
+  });
+  let info = fin.data.data?.processing_info;
+  for (let k = 0; info && info.state !== "succeeded" && k < 60; k++) {
+    if (info.state === "failed") throw new Error(`X couldn't process the video: ${info.error?.message ?? "unknown error"}`);
+    await sleep(Math.min(15, info.check_after_secs ?? 3) * 1000);
+    const st = await request<{ data?: { processing_info?: Info } }>(`${X_API}/media/upload?command=STATUS&media_id=${id}`, {
+      headers: bearer(cred),
+      label: "X video upload (status)",
+    });
+    info = st.data.data?.processing_info;
+  }
+  return id;
+}
+
 const x: Adapter = {
   platform: "x",
   publishable: () => true,
-  async publish(_post, texts, cred) {
+  async publish(_post, texts, cred, video) {
     const ids: string[] = [];
+    const mediaId = video ? await xUploadVideo(cred, video) : null;
     for (const text of texts) {
       const body: Record<string, unknown> = { text };
+      if (mediaId && !ids.length) body.media = { media_ids: [mediaId] };
       if (ids.length) body.reply = { in_reply_to_tweet_id: ids[ids.length - 1] };
       const { data } = await request<{ data: { id: string } }>(`${X_API}/tweets`, {
         method: "POST",
@@ -100,8 +145,18 @@ const fbGraph = () => `https://graph.facebook.com/${process.env.FACEBOOK_GRAPH_V
 const facebook: Adapter = {
   platform: "facebook",
   publishable: () => true,
-  async publish(_post, texts, cred) {
+  async publish(_post, texts, cred, video) {
     const pageId = need(cred, "accountId", "Facebook Page ID is missing — connect Facebook again.");
+    if (video) {
+      // Graph API video upload by URL: Facebook fetches the file from the signed link.
+      const { data } = await request<{ id: string }>(`${fbGraph().replace("graph.facebook.com", "graph-video.facebook.com")}/${pageId}/videos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ file_url: video.url, description: texts.join("\n\n"), access_token: cred.accessToken! }),
+        label: "Facebook Page video",
+      });
+      return { externalId: data.id, externalIds: [data.id], url: `https://www.facebook.com/${pageId}/videos/${data.id}` };
+    }
     const { data } = await request<{ id: string }>(`${fbGraph()}/${pageId}/feed`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -148,11 +203,45 @@ function linkedinVersion() {
 /** LinkedIn "little text" format reserves these characters. */
 const liEscape = (s: string) => s.replace(/[\\|{}@\[\]()<>#*_~]/g, (c) => `\\${c}`);
 
+/** LinkedIn Videos API: initializeUpload → PUT each part → finalizeUpload → wait until AVAILABLE. */
+async function linkedinUploadVideo(cred: Credential, owner: string, v: VideoFile): Promise<string> {
+  const headers = { ...bearer(cred), "Content-Type": "application/json", "LinkedIn-Version": linkedinVersion(), "X-Restli-Protocol-Version": "2.0.0" };
+  const init = await request<{ value: { video: string; uploadToken?: string; uploadInstructions: { uploadUrl: string; firstByte: number; lastByte: number }[] } }>(
+    "https://api.linkedin.com/rest/videos?action=initializeUpload",
+    { method: "POST", headers, body: JSON.stringify({ initializeUploadRequest: { owner, fileSizeBytes: v.size, uploadCaptions: false, uploadThumbnail: false } }), label: "LinkedIn video (initialize)" },
+  );
+  const { video, uploadToken, uploadInstructions } = init.data.value;
+  const etags: string[] = [];
+  for (const part of uploadInstructions) {
+    const res = await request(part.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: new Uint8Array(v.bytes.subarray(part.firstByte, part.lastByte + 1)),
+      label: "LinkedIn video (upload part)",
+    });
+    etags.push((res.headers.get("etag") ?? "").replace(/"/g, ""));
+  }
+  await request("https://api.linkedin.com/rest/videos?action=finalizeUpload", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ finalizeUploadRequest: { video, uploadToken: uploadToken ?? "", uploadedPartIds: etags } }),
+    label: "LinkedIn video (finalize)",
+  });
+  for (let i = 0; i < 40; i++) {
+    const st = await request<{ status?: string }>(`https://api.linkedin.com/rest/videos/${encodeURIComponent(video)}`, { headers, label: "LinkedIn video (status)" });
+    if (st.data.status === "AVAILABLE") return video;
+    if (st.data.status === "PROCESSING_FAILED") throw new Error("LinkedIn couldn't process the video.");
+    await sleep(6000);
+  }
+  throw new Error("LinkedIn is still processing the video — it will retry shortly.");
+}
+
 const linkedin: Adapter = {
   platform: "linkedin",
   publishable: () => true,
-  async publish(_post, texts, cred) {
+  async publish(post, texts, cred, video) {
     const author = need(cred, "accountId", "LinkedIn author URN (urn:li:person:… or urn:li:organization:…) is missing.");
+    const media = video ? { id: await linkedinUploadVideo(cred, author, video), title: (post.video?.titles[0] ?? post.hook).slice(0, 200) } : null;
     const { headers } = await request(`https://api.linkedin.com/rest/posts`, {
       method: "POST",
       headers: {
@@ -166,6 +255,7 @@ const linkedin: Adapter = {
         commentary: liEscape(texts.join("\n\n")),
         visibility: "PUBLIC",
         distribution: { feedDistribution: "MAIN_FEED", targetEntities: [], thirdPartyDistributionChannels: [] },
+        ...(media ? { content: { media } } : {}),
         lifecycleState: "PUBLISHED",
         isReshareDisabledByAuthor: false,
       }),
@@ -190,12 +280,35 @@ const graph = () =>
 const instagram: Adapter = {
   platform: "instagram",
   publishable: (post) =>
-    post.imageUrl && /^https:\/\//.test(post.imageUrl)
+    post.kind === "video" || (post.imageUrl && /^https:\/\//.test(post.imageUrl))
       ? true
       : "Instagram requires a public https image URL — add one to the post, or post it manually.",
-  async publish(post, texts, cred) {
+  async publish(post, texts, cred, video) {
     const ig = need(cred, "accountId", "Instagram Business/Creator user ID is missing.");
     const token = cred.accessToken!;
+    if (video) {
+      // Reels: create a container from the public video URL, wait for processing, then publish.
+      const box = await request<{ id: string }>(
+        `${graph()}/${ig}/media?` + new URLSearchParams({ media_type: "REELS", video_url: video.url, caption: texts.join("\n\n"), share_to_feed: "true", access_token: token }),
+        { method: "POST", label: "Instagram Reel container" },
+      );
+      let ready = false;
+      for (let i = 0; i < 30 && !ready; i++) {
+        await sleep(10_000);
+        const { data } = await request<{ status_code?: string }>(`${graph()}/${box.data.id}?fields=status_code&access_token=${encodeURIComponent(token)}`, { label: "Instagram Reel status" });
+        if (data.status_code === "FINISHED") ready = true;
+        else if (data.status_code === "ERROR" || data.status_code === "EXPIRED") throw new Error("Instagram couldn't process the video (check length 3 s–15 min, MP4/H.264).");
+      }
+      if (!ready) throw new Error("Instagram is still processing the Reel — it will retry shortly.");
+      const pub = await request<{ id: string }>(`${graph()}/${ig}/media_publish?` + new URLSearchParams({ creation_id: box.data.id, access_token: token }), { method: "POST", label: "Instagram publish Reel" });
+      let url: string | undefined;
+      try {
+        url = (await request<{ permalink?: string }>(`${graph()}/${pub.data.id}?fields=permalink&access_token=${encodeURIComponent(token)}`, { label: "Instagram permalink" })).data.permalink;
+      } catch {
+        /* optional */
+      }
+      return { externalId: pub.data.id, externalIds: [pub.data.id], url };
+    }
     const create = await request<{ id: string }>(
       `${graph()}/${ig}/media?` +
         new URLSearchParams({ image_url: post.imageUrl!, caption: texts.join("\n\n"), access_token: token }),
@@ -256,9 +369,40 @@ const YT = "https://www.googleapis.com/youtube/v3";
 
 const youtube: Adapter = {
   platform: "youtube",
-  publishable: () => "YouTube video upload isn't automated — the script is ready to record and post.",
-  async publish() {
-    throw new CopyReadyError("YouTube publishing is copy-ready in this version.");
+  publishable: (post) => (post.kind === "video" ? true : "YouTube needs a video — create a Video post and render it."),
+  async publish(post, texts, cred, video) {
+    if (!video) throw new CopyReadyError("YouTube needs a rendered video file.");
+    const vertical = post.video?.length !== "long";
+    const title = (post.video?.titles[0] ?? post.hook).replace(/[<>]/g, "").slice(0, 100);
+    const description = [texts.join("\n\n"), vertical ? "#Shorts" : ""].filter(Boolean).join("\n\n").replace(/[<>]/g, "").slice(0, 4900);
+    // Resumable upload: create the session with metadata, then send the bytes to the returned Location.
+    const start = await fetch("https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status", {
+      method: "POST",
+      headers: {
+        ...bearer(cred),
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Length": String(video.size),
+        "X-Upload-Content-Type": video.mime,
+      },
+      body: JSON.stringify({
+        snippet: { title, description, tags: post.hashtags.slice(0, 15), categoryId: process.env.YOUTUBE_CATEGORY_ID || "27" },
+        status: { privacyStatus: process.env.YOUTUBE_PRIVACY || "public", selfDeclaredMadeForKids: false },
+      }),
+    });
+    const location = start.headers.get("location");
+    if (!start.ok || !location) {
+      const t = (await start.text()).slice(0, 300);
+      if (start.status === 401 || start.status === 403) throw new AuthError(`YouTube upload: ${start.status} ${t}`);
+      throw new Error(`YouTube upload start failed: ${start.status} ${t}`);
+    }
+    const { data } = await request<{ id: string }>(location, {
+      method: "PUT",
+      headers: { "Content-Type": video.mime, "Content-Length": String(video.size) },
+      body: new Uint8Array(video.bytes),
+      label: "YouTube upload",
+    });
+    const url = vertical ? `https://www.youtube.com/shorts/${data.id}` : `https://www.youtube.com/watch?v=${data.id}`;
+    return { externalId: data.id, externalIds: [data.id], url };
   },
   engageable: true,
   async fetchComments(cred) {
@@ -296,9 +440,34 @@ const youtube: Adapter = {
 /* ───────────────────────────── TikTok ───────────────────────────── */
 const tiktok: Adapter = {
   platform: "tiktok",
-  publishable: () => "TikTok direct posting needs an audited Content Posting API app — script is copy-ready.",
-  async publish() {
-    throw new CopyReadyError("TikTok publishing is copy-ready.");
+  publishable: (post) => (post.kind === "video" ? true : "TikTok needs a video — create a Video post and render it."),
+  async publish(_post, _texts, cred, video) {
+    if (!video) throw new CopyReadyError("TikTok needs a rendered video file.");
+    // Upload to the creator's TikTok inbox (drafts). Direct public posting needs TikTok's app audit.
+    const MB = 1024 * 1024;
+    const chunk = video.size <= 64 * MB ? video.size : 10 * MB;
+    const total = video.size <= 64 * MB ? 1 : Math.floor(video.size / chunk);
+    const init = await request<{ data: { publish_id: string; upload_url: string }; error?: { code: string; message: string } }>(
+      "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/",
+      {
+        method: "POST",
+        headers: { ...bearer(cred), "Content-Type": "application/json; charset=UTF-8" },
+        body: JSON.stringify({ source_info: { source: "FILE_UPLOAD", video_size: video.size, chunk_size: chunk, total_chunk_count: total } }),
+        label: "TikTok upload (init)",
+      },
+    );
+    if (init.data.error && init.data.error.code !== "ok") throw new Error(`TikTok: ${init.data.error.message}`);
+    for (let i = 0; i < total; i++) {
+      const first = i * chunk;
+      const last = i === total - 1 ? video.size - 1 : first + chunk - 1; // the last chunk takes the remainder
+      await request(init.data.data.upload_url, {
+        method: "PUT",
+        headers: { "Content-Type": video.mime, "Content-Length": String(last - first + 1), "Content-Range": `bytes ${first}-${last}/${video.size}` },
+        body: new Uint8Array(video.bytes.subarray(first, last + 1)),
+        label: "TikTok upload (chunk)",
+      });
+    }
+    return { externalId: init.data.data.publish_id, externalIds: [init.data.data.publish_id], url: undefined };
   },
   engageable: false,
   async fetchComments() {

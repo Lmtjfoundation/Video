@@ -59,6 +59,8 @@ export interface Post {
   /** "video" posts carry a full production plan in `video` */
   kind?: "text" | "video";
   video?: VideoPlan;
+  /** Server-side video render progress for video posts */
+  render?: { status: "queued" | "rendering" | "done" | "failed"; progress: number; message?: string; mediaId?: string; updatedAt: string };
   status: PostStatus;
   scheduledAt?: string;
   publishedAt?: string;
@@ -182,6 +184,9 @@ export interface MediaItem {
   kind: "image" | "video";
   storagePath: string;
   createdAt: string;
+  /** True for MP4s the app rendered from a video plan */
+  rendered?: boolean;
+  durationSec?: number;
 }
 
 export interface Story {
