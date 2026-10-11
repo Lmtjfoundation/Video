@@ -7,7 +7,7 @@ import type { Plan } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { Badge, Button, Card, CardHeader } from "./ui";
 
-interface PlansPayload {
+export interface PlansPayload {
   plans: (Plan & { checkout: { month: boolean; year: boolean } })[];
   credits: { action: string; credits: number; label: string }[];
   payments: boolean;
@@ -26,8 +26,19 @@ const COMPETITORS: [string, number][] = [
   ["AutoShorts Daily", 39],
 ];
 
-export function PricingTable({ currentPlan, signedIn, hasSubscription }: { currentPlan?: string; signedIn: boolean; hasSubscription?: boolean }) {
-  const [data, setData] = useState<PlansPayload | null>(null);
+export function PricingTable({
+  currentPlan,
+  signedIn,
+  hasSubscription,
+  initial,
+}: {
+  currentPlan?: string;
+  signedIn: boolean;
+  hasSubscription?: boolean;
+  /** Server-rendered plans (public pricing page), so plans show without waiting for JavaScript. */
+  initial?: PlansPayload;
+}) {
+  const [data, setData] = useState<PlansPayload | null>(initial ?? null);
   const [cycle, setCycle] = useState<"month" | "year">("month");
   const [busy, setBusy] = useState<string | null>(null);
   const [native, setNative] = useState(false);
@@ -35,8 +46,9 @@ export function PricingTable({ currentPlan, signedIn, hasSubscription }: { curre
 
   useEffect(() => {
     setNative(inNativeApp());
+    if (initial) return;
     fetch("/api/plans").then((r) => r.json()).then(setData).catch(() => setError("Couldn't load plans."));
-  }, []);
+  }, [initial]);
 
   async function choose(planId: string) {
     if (!signedIn) {
