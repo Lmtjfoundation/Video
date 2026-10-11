@@ -103,7 +103,10 @@ interface StripeList<T> {
 interface SProduct {
   id: string;
   metadata?: Record<string, string>;
+  statement_descriptor?: string | null;
 }
+/** What subscribers see on their card statement for these plans (max 22 characters, letters required). */
+const STATEMENT_DESCRIPTOR = "NEXUS PULSE";
 interface SPrice {
   id: string;
   unit_amount: number | null;
@@ -141,7 +144,16 @@ export async function setupStripeBilling(secretKey: string, appUrl: string) {
   const portalProducts: { product: string; prices: string[] }[] = [];
   for (const p of PLANS.filter((x) => x.monthly > 0)) {
     let prod = products.data.find((x) => x.metadata?.nexus_plan === p.id);
-    if (!prod) prod = await call<SProduct>("/products", { name: `Nexus Pulse ${p.name}`, description: p.blurb, metadata: { nexus_plan: p.id, app: "nexus-pulse" } });
+    if (!prod) {
+      prod = await call<SProduct>("/products", {
+        name: `Nexus Pulse ${p.name}`,
+        description: p.blurb,
+        statement_descriptor: STATEMENT_DESCRIPTOR,
+        metadata: { nexus_plan: p.id, app: "nexus-pulse" },
+      });
+    } else if (prod.statement_descriptor !== STATEMENT_DESCRIPTOR) {
+      prod = await call<SProduct>(`/products/${prod.id}`, { statement_descriptor: STATEMENT_DESCRIPTOR });
+    }
     stripeProducts[p.id] = prod.id;
     const existing = await call<StripeList<SPrice>>(`/prices?product=${encodeURIComponent(prod.id)}&active=true&limit=100`, undefined, "GET");
     const ids: string[] = [];
