@@ -157,6 +157,8 @@ export interface Settings {
   timezone: string;
   postsPerDay: number;
   platforms: Record<Platform, boolean>;
+  /** Set once Instagram and TikTok were switched on for this account (they started off by default). */
+  platformsV2?: boolean;
   slots: Record<Platform, string[]>;
   quietHours: { enabled: boolean; start: string; end: string };
   limits: Record<Platform, PlatformLimits>;
@@ -286,7 +288,7 @@ export interface VideoScene {
 export interface VideoPlan {
   niche: string;
   style: "true" | "funny" | "explainer" | "countdown" | "fiction";
-  length: "s30" | "s60" | "s90" | "long";
+  length: "s30" | "s60" | "s90" | "m3" | "long";
   topic?: string;
   titles: string[];
   thumbnail: { text?: string; prompt?: string };

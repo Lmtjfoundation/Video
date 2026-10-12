@@ -14,6 +14,7 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   anthropicWorkspaceId: { re: /^wrkspc_[A-Za-z0-9]{6,}$/, msg: "A workspace ID starts with wrkspc_ (Claude Console → Settings → Workspaces → ID column)." },
   elevenlabsKey: { re: /^[A-Za-z0-9_-]{20,}$/, msg: "That doesn't look like an ElevenLabs API key (elevenlabs.io → Developers → API keys)." },
   elevenlabsVoiceId: { re: /^[A-Za-z0-9]{10,40}$/, msg: "A voice ID is a short code of letters and numbers (ElevenLabs → Voices → ID)." },
+  pixabayKey: { re: /^[A-Za-z0-9-]{20,}$/, msg: "That doesn't look like a Pixabay API key. Sign in at pixabay.com/api/docs and copy the value in the \"key\" row (numbers, a dash, then letters and numbers)." },
   pexelsKey: { re: /^[A-Za-z0-9]{20,}$/, msg: "That doesn't look like a Pexels API key (pexels.com/api)." },
   resendKey: { re: /^re_[A-Za-z0-9_]{10,}$/, msg: "A Resend API key starts with re_ (resend.com → API Keys)." },
 };
@@ -39,7 +40,7 @@ export const PUT = authed(async (req) => {
   return ok(await integrationStatus());
 }, { admin: true });
 
-/** Actions: { action: "test", which } (which = anthropic | elevenlabs | pexels | stripe | email) · { action: "stripe-connect", secretKey? } · { action: "stripe-disconnect" } */
+/** Actions: { action: "test", which } (which = anthropic | elevenlabs | pixabay | pexels | stripe | email) · { action: "stripe-connect", secretKey? } · { action: "stripe-disconnect" } */
 export const POST = authed(async (req, user) => {
   const b = await body<{ action?: string; which?: string; secretKey?: string }>(req);
   if (b.action === "test" && b.which === "email") {
@@ -59,8 +60,8 @@ export const POST = authed(async (req, user) => {
     }
   }
   if (b.action === "test") {
-    const which = b.which as "anthropic" | "elevenlabs" | "pexels" | "stripe";
-    if (!["anthropic", "elevenlabs", "pexels", "stripe"].includes(which)) return fail("Unknown integration.");
+    const which = b.which as "anthropic" | "elevenlabs" | "pixabay" | "pexels" | "stripe";
+    if (!["anthropic", "elevenlabs", "pixabay", "pexels", "stripe"].includes(which)) return fail("Unknown integration.");
     const r = await testIntegration(which);
     console.log(`[integrations] test ${which}: ${r.ok ? "ok" : "failed"} — ${r.message}`);
     return ok(r);

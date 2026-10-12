@@ -98,8 +98,10 @@ export const planById = (id: string | undefined) => PLANS.find((p) => p.id === i
 export const CREDIT_COST = {
   post: 1,
   videoShort: 2,
+  videoMid: 4,
   videoLong: 6,
   renderShort: 3,
+  renderMid: 6,
   renderLong: 10,
   maximize: 2,
   replies: 1,
@@ -115,8 +117,10 @@ export type CreditAction = keyof typeof CREDIT_COST;
 export const CREDIT_LABEL: Record<CreditAction, string> = {
   post: "Write a text post",
   videoShort: "Video post plan — short (each)",
+  videoMid: "Video post plan — 3 minutes (each)",
   videoLong: "Video post plan — long-form (each)",
   renderShort: "Render a short video (voice, visuals, captions)",
+  renderMid: "Render a 3-minute video",
   renderLong: "Render a long-form video",
   maximize: "Maximize money rewrite",
   replies: "Draft a batch of up to 10 replies",

@@ -7,8 +7,7 @@ import type { Post, Settings } from "@/lib/types";
 import { api, copyToClipboard, fmtDateTime } from "@/lib/client";
 import { copyText, renderPost } from "@/lib/compose";
 import { NICHES } from "@/lib/niches";
-import { VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
-import { CREDIT_COST } from "@/lib/plans";
+import { videoCredits, VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
 import type { VideoPlan } from "@/lib/types";
 import { localParts, addDays } from "@/lib/time";
 import { useApp } from "@/lib/store";
@@ -332,7 +331,7 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
   const [starting, setStarting] = useState(false);
   const status = info?.render?.status ?? post.render?.status;
   const active = status === "queued" || status === "rendering";
-  const cost = post.video?.length === "long" ? CREDIT_COST.renderLong : CREDIT_COST.renderShort;
+  const cost = videoCredits(post.video?.length, "render");
 
   useEffect(() => {
     let stop = false;

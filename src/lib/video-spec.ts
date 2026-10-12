@@ -1,12 +1,30 @@
 import type { Platform, VideoPlan } from "./types";
+import { CREDIT_COST } from "./plans";
 
-/** Video post options shared by the UI and the generator. */
-export const VIDEO_LENGTHS: Record<VideoPlan["length"], { label: string; words: string; scenes: string; long: boolean }> = {
-  s30: { label: "Short · 25–35 seconds", words: "65–90 words", scenes: "8–11", long: false },
-  s60: { label: "Short · 45–58 seconds", words: "120–150 words", scenes: "12–16", long: false },
-  s90: { label: "61–90 seconds (TikTok only pays over 1 minute)", words: "170–230 words", scenes: "16–22", long: false },
-  long: { label: "Long-form · 8–10 minutes (YouTube)", words: "1,200–1,500 words", scenes: "40–60", long: true },
+type LengthTier = "short" | "mid" | "long";
+
+/** Video post options shared by the UI and the generator. `long` = 16:9 landscape; everything else is 9:16. */
+export const VIDEO_LENGTHS: Record<VideoPlan["length"], { label: string; words: string; scenes: string; long: boolean; tier: LengthTier }> = {
+  s30: { label: "Short · 25–35 seconds", words: "65–90 words", scenes: "8–11", long: false, tier: "short" },
+  s60: { label: "Short · 45–58 seconds", words: "120–150 words", scenes: "12–16", long: false, tier: "short" },
+  s90: { label: "61–90 seconds (TikTok only pays over 1 minute)", words: "170–230 words", scenes: "16–22", long: false, tier: "short" },
+  m3: { label: "3 minutes · vertical (TikTok, Reels, Shorts)", words: "430–480 words", scenes: "36–48", long: false, tier: "mid" },
+  long: { label: "Long-form · 8–10 minutes (YouTube)", words: "1,200–1,500 words", scenes: "40–60", long: true, tier: "long" },
 };
+
+/** Which lengths each platform accepts. X caps standard accounts at 2 min 20 s; long-form is YouTube only. */
+export function lengthAllowed(length: VideoPlan["length"], platform: Platform) {
+  if (length === "long") return platform === "youtube";
+  if (length === "m3") return platform !== "x";
+  return true;
+}
+
+/** Credits for writing a video plan or rendering it, by length. */
+export function videoCredits(length: VideoPlan["length"] | undefined, action: "plan" | "render") {
+  const tier = VIDEO_LENGTHS[length ?? "s60"]?.tier ?? "short";
+  if (action === "plan") return tier === "long" ? CREDIT_COST.videoLong : tier === "mid" ? CREDIT_COST.videoMid : CREDIT_COST.videoShort;
+  return tier === "long" ? CREDIT_COST.renderLong : tier === "mid" ? CREDIT_COST.renderMid : CREDIT_COST.renderShort;
+}
 
 export const VIDEO_STYLES: Record<VideoPlan["style"], string> = {
   true: "True story",

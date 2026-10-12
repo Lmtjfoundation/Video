@@ -50,7 +50,7 @@ export async function generateVideoPosts(o: VideoOptions, settings: Settings): P
 PLATFORM: ${VIDEO_TARGET[o.platform]}.
 NICHE: ${n ? `${n.name} (measured YouTube median RPM $${n.rpm}; formats that work: ${n.formats})` : "highest-earning fit for the topic"}.
 STYLE: ${VIDEO_STYLES[o.style]}. ${STYLE_RULES[o.style]}
-LENGTH: ${fmt.label}; narration totals ${fmt.words} across ${fmt.scenes} scenes${fmt.long ? "; re-hook every 30–60 seconds and build to a payoff" : "; a new visual every 2–4 seconds"}.
+LENGTH: ${fmt.label}; narration totals ${fmt.words} across ${fmt.scenes} scenes${fmt.long ? "; re-hook every 30–60 seconds and build to a payoff" : fmt.tier === "mid" ? "; vertical 9:16; a new visual every 3–5 seconds; re-hook every 30–45 seconds with a new question or reveal, and save the biggest payoff for the last 20 seconds" : "; a new visual every 2–4 seconds"}.
 ${o.topic ? `TOPIC: ${o.topic}` : "TOPIC: choose the most attention-grabbing, high-earning, documented story for this niche."}
 ${QUALITY_BAR}
 PRODUCTION CRAFT:
@@ -68,7 +68,7 @@ Reply with ONLY JSON:
   const res = await claudeJson<{ videos?: RawVideo[] }>({
     system: "You are a top faceless-video producer and scriptwriter. You only use documented facts, you never pad, and every line earns its place.",
     user,
-    maxTokens: (fmt.long ? 9000 : 3500) * o.count,
+    maxTokens: (fmt.long ? 9000 : fmt.tier === "mid" ? 6500 : 3500) * o.count,
     temperature: 0.7,
   });
   const list = (res.videos ?? []).filter((v) => Array.isArray(v?.scenes) && v.scenes!.length).slice(0, o.count);

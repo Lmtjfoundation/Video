@@ -12,7 +12,7 @@ import { FORMAT_LABEL, PILLAR_LABEL, cn } from "@/lib/utils";
 import { Button, Card, CardHeader, Empty, Field, Input, PageHeader, Select, Switch, Textarea } from "@/components/ui";
 import { PostCard } from "@/components/post-card";
 import { NICHES } from "@/lib/niches";
-import { VIDEO_LENGTHS, VIDEO_STYLES, VIDEO_TARGET } from "@/lib/video-spec";
+import { lengthAllowed, videoCredits, VIDEO_LENGTHS, VIDEO_STYLES, VIDEO_TARGET } from "@/lib/video-spec";
 import type { VideoPlan } from "@/lib/types";
 
 const FILTERS: { key: PostStatus | "all" | "video"; label: string }[] = [
@@ -52,9 +52,9 @@ export default function Studio() {
   const [filter, setFilter] = useState<PostStatus | "all" | "video">("all");
   const inFilter = (p: Post, f: PostStatus | "all" | "video") => f === "all" || (f === "video" ? p.kind === "video" : p.status === f);
   useEffect(() => {
-    if (vLen === "long" && platform !== "youtube") setVLen("s60");
+    if (!lengthAllowed(vLen, platform)) setVLen("s60");
   }, [platform, vLen]);
-  const videoCost = count * (VIDEO_LENGTHS[vLen].long ? CREDIT_COST.videoLong : CREDIT_COST.videoShort);
+  const videoCost = count * videoCredits(vLen, "plan");
   const [sort, setSort] = useState<"new" | "money">("new");
 
   const load = useCallback(async () => {
@@ -172,7 +172,7 @@ export default function Studio() {
                 </div>
                 <Field label="Length">
                   <Select value={vLen} onChange={(e) => setVLen(e.target.value as VideoPlan["length"])}>
-                    {Object.entries(VIDEO_LENGTHS).filter(([k]) => k !== "long" || platform === "youtube").map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                    {Object.entries(VIDEO_LENGTHS).filter(([k]) => lengthAllowed(k as VideoPlan["length"], platform)).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                   </Select>
                 </Field>
               </>

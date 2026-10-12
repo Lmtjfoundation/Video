@@ -62,6 +62,7 @@ type KeyState = { set: boolean; source?: "server" | "app"; preview?: string; ser
 interface IntegrationStatus {
   anthropic: KeyState & { workspaceId: string };
   elevenlabs: KeyState & { voiceId: string };
+  pixabay: KeyState;
   pexels: KeyState;
   email: KeyState & { from: string };
   stripe: KeyState & { mode: "live" | "test" | null; prices: number; pricesNeeded: number; webhook: boolean; portal: boolean };
@@ -357,7 +358,7 @@ function AppSettingsTab() {
   const health: [string, boolean, string][] = [
     ["Claude (AI writing)", env.llm, "Add the key in Integrations"],
     ["Voiceover (ElevenLabs)", env.voice, "Optional — add in Integrations"],
-    ["Stock footage (Pexels)", env.stock, "Optional — add in Integrations"],
+    ["Stock footage (Pixabay)", env.stock, "Optional — add in Integrations"],
     ["Subscriptions (Stripe)", env.stripe && env.webhook, env.stripe ? "Press Connect Stripe again" : "Connect Stripe in Integrations"],
     ["Password-reset email", env.email, "Optional — add Resend in Integrations"],
     ["Support email (legal pages)", !!s.supportEmail, "Add it in Sign-ups and approval"],
@@ -451,7 +452,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "elevenlabs" | "pexels" | "email") {
+  function save(fields: string[], label: string, test?: "anthropic" | "elevenlabs" | "pixabay" | "pexels" | "email") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -483,7 +484,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "elevenlabs" | "pexels" | "stripe" | "email") {
+  async function check(which: "anthropic" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -582,19 +583,25 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
 
         <Service
           icon={<Film className="h-4 w-4" />}
-          title="Pexels — stock footage"
-          desc="Free HD clips for video scenes. Optional: without it scenes use your uploads or animated gradients."
-          link={{ href: "https://www.pexels.com/api/new/", label: "Get a free key" }}
-          state={st.pexels}
-          result={results.pexels}
+          title="Pixabay — stock footage"
+          desc="Free HD video clips matched to each scene. Optional: without it scenes use your uploads or animated backgrounds."
+          link={{ href: "https://pixabay.com/api/docs/", label: "Get a free key" }}
+          state={st.pixabay}
+          result={results.pixabay}
         >
-          {st.pexels.source === "server" && <ServerNote />}
-          <Input type="password" autoComplete="off" spellCheck={false} placeholder="Pexels API key" value={vals.pexelsKey ?? ""} onChange={set("pexelsKey")} />
+          {st.pixabay.source === "server" && <ServerNote />}
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="Pixabay API key (numbers-letters)" value={vals.pixabayKey ?? ""} onChange={set("pixabayKey")} />
+          <p className="text-[11px] leading-relaxed text-white/45">
+            Sign in at pixabay.com, open the API docs page, and copy the value shown in the <b className="text-white/70">key</b> row of the parameters table.
+          </p>
           <Actions>
-            <Button size="sm" variant="primary" loading={busy === "save:Pexels"} onClick={() => save(["pexelsKey"], "Pexels", "pexels")}>Save</Button>
-            <Button size="sm" loading={busy === "test:pexels"} disabled={!st.pexels.set} onClick={() => check("pexels")}>Test</Button>
+            <Button size="sm" variant="primary" loading={busy === "save:Pixabay"} onClick={() => save(["pixabayKey"], "Pixabay", "pixabay")}>Save</Button>
+            <Button size="sm" loading={busy === "test:pixabay"} disabled={!st.pixabay.set} onClick={() => check("pixabay")}>Test</Button>
+            {st.pixabay.set && st.pixabay.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:pixabayKey"} onClick={() => remove("pixabayKey", "Pixabay")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
             {st.pexels.set && st.pexels.source === "app" && (
-              <Button size="sm" variant="ghost" loading={busy === "rm:pexelsKey"} onClick={() => remove("pexelsKey", "Pexels")}><Trash2 className="h-3.5 w-3.5" /></Button>
+              <Button size="sm" variant="ghost" loading={busy === "rm:pexelsKey"} onClick={() => remove("pexelsKey", "Pexels")}>Remove old Pexels key</Button>
             )}
           </Actions>
         </Service>

@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   requireReplyApproval: true,
   timezone: "America/Chicago",
   postsPerDay: 3,
-  platforms: { x: true, facebook: false, linkedin: true, instagram: false, youtube: false, tiktok: false },
+  platforms: { x: true, facebook: false, linkedin: true, instagram: true, youtube: false, tiktok: true },
   slots: {
     x: ["08:30", "12:15", "18:45"],
     facebook: ["09:00", "13:00", "19:00"],
@@ -62,10 +62,17 @@ export const DEFAULT_SETTINGS: Settings = {
 export function mergeSettings(stored: Partial<Settings> | null | undefined): Settings {
   const s = stored ?? {};
   const d = DEFAULT_SETTINGS;
+  const platforms = { ...d.platforms, ...(s.platforms ?? {}) };
+  // One-time: Instagram and TikTok used to start switched off; turn them on for existing accounts once.
+  if (!s.platformsV2) {
+    platforms.instagram = true;
+    platforms.tiktok = true;
+  }
   return {
     ...d,
     ...s,
-    platforms: { ...d.platforms, ...(s.platforms ?? {}) },
+    platformsV2: true,
+    platforms,
     slots: { ...d.slots, ...(s.slots ?? {}) },
     quietHours: { ...d.quietHours, ...(s.quietHours ?? {}) },
     limits: Object.fromEntries(PLATFORMS.map((p) => [p, { ...d.limits[p], ...(s.limits?.[p] ?? {}) }])) as Settings["limits"],

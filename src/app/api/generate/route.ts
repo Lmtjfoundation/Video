@@ -7,7 +7,7 @@ import { clamp } from "@/lib/utils";
 import { withCredits } from "@/lib/credits";
 import { CREDIT_COST } from "@/lib/plans";
 import { generateVideoPosts } from "@/lib/video";
-import { VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
+import { lengthAllowed, videoCredits, VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
 import type { VideoPlan } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -21,11 +21,13 @@ export const POST = authed(async (req: Request) => {
 
   if (b.kind === "video") {
     const length = b.length && b.length in VIDEO_LENGTHS ? b.length : "s60";
-    if (length === "long" && b.platform !== "youtube") return fail("Long-form videos are for YouTube. Pick a short length for this platform.");
+    if (!lengthAllowed(length, b.platform)) {
+      return fail(length === "long" ? "Long-form videos are for YouTube. Pick a shorter length for this platform." : "X allows videos up to 2 minutes 20 seconds. Pick a shorter length for X.");
+    }
     const style = b.style && b.style in VIDEO_STYLES ? b.style : "true";
     const n = clamp(Number(b.count) || 1, 1, 3);
     const mediaIds = Array.isArray(b.mediaIds) ? b.mediaIds.slice(0, 10) : undefined;
-    const videos = await withCredits(n * (VIDEO_LENGTHS[length].long ? CREDIT_COST.videoLong : CREDIT_COST.videoShort), () =>
+    const videos = await withCredits(n * videoCredits(length, "plan"), () =>
       generateVideoPosts({ platform: b.platform, count: n, niche: String(b.niche ?? "edu"), style, length, topic: b.topic?.slice(0, 500), mediaIds }, s),
     );
     await savePosts(videos);

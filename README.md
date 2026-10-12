@@ -90,7 +90,7 @@ Admin → App settings → **Integrations** stores service keys encrypted on the
 |---|---|---|
 | Claude (Anthropic) | niches, posts, scripts, video plans, replies | yes |
 | ElevenLabs | voiceover on rendered videos | optional |
-| Pexels | stock footage for video scenes | optional |
+| Pixabay (or Pexels) | stock footage for video scenes | optional |
 | Resend | "Forgot password?" emails | optional (needs a domain verified in Resend) |
 | Stripe | subscriptions | to charge money |
 
@@ -168,7 +168,7 @@ Then flip **Autopilot posting** (and, if you want it, **Auto-engagement**) on in
 1. **Generate → Video post** writes a production plan (scenes, narration, on-screen text, visuals).
 2. **Render video** turns the plan into a finished MP4 on your server (1080×1920 for Shorts/Reels/TikTok, 1920×1080 for YouTube long-form):
    - Voiceover: ElevenLabs text-to-speech per scene when `ELEVENLABS_API_KEY` is set; otherwise captions-only.
-   - Visuals per scene: your attached images/clips (Ken Burns motion), else Pexels stock footage matched to the scene (`PEXELS_API_KEY`), else animated gradients.
+   - Visuals per scene: your attached images/clips (Ken Burns motion), else Pixabay stock footage matched to the scene (`PIXABAY_API_KEY`, Pexels as a second source), else animated gradients.
    - Captions: on-screen headline + word-group captions burned in.
    - Needs ffmpeg on the server — on Railway set `RAILPACK_DEPLOY_APT_PACKAGES=ffmpeg`.
 3. **Post now / schedule** uploads the MP4 automatically:

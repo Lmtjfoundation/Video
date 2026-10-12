@@ -16,6 +16,9 @@ export interface Integrations {
   anthropicWorkspaceId?: string;
   elevenlabsKey?: string;
   elevenlabsVoiceId?: string;
+  /** Pixabay (https://pixabay.com/api/docs/) — free stock video, the main footage source. */
+  pixabayKey?: string;
+  /** Pexels — optional second footage source. */
   pexelsKey?: string;
   stripeSecretKey?: string;
   stripeWebhookSecret?: string;
@@ -89,6 +92,9 @@ export function anthropicWorkspaceHint(status: number, body: string) {
 }
 export const elevenlabsKey = () => pick("elevenlabsKey", "ELEVENLABS_API_KEY");
 export const elevenlabsVoice = () => pick("elevenlabsVoiceId", "ELEVENLABS_VOICE_ID");
+export const pixabayKey = () => pick("pixabayKey", "PIXABAY_API_KEY");
+/** True when any stock-footage source is connected. */
+export const stockReady = async () => !!((await pixabayKey()) || (await pexelsKey()));
 export const pexelsKey = () => pick("pexelsKey", "PEXELS_API_KEY");
 /** Pexels sits behind a firewall that rejects anonymous HTTP clients, so identify the app. */
 export const pexelsHeaders = (key: string) => ({
@@ -124,6 +130,7 @@ export async function integrationStatus() {
   return {
     anthropic: { ...entry("ANTHROPIC_API_KEY", i.anthropicKey), workspaceId: i.anthropicWorkspaceId || process.env.ANTHROPIC_WORKSPACE_ID || "" },
     elevenlabs: { ...entry("ELEVENLABS_API_KEY", i.elevenlabsKey), voiceId: i.elevenlabsVoiceId || process.env.ELEVENLABS_VOICE_ID || "" },
+    pixabay: entry("PIXABAY_API_KEY", i.pixabayKey),
     pexels: entry("PEXELS_API_KEY", i.pexelsKey),
     email: { ...entry("RESEND_API_KEY", i.resendKey), from: i.emailFrom || process.env.EMAIL_FROM || "" },
     stripe: {
@@ -139,7 +146,7 @@ export async function integrationStatus() {
 }
 
 /** Live checks for the admin "Test" buttons. Only the Claude test spends anything: one tiny reply (a tiny fraction of a cent) to confirm billing works. */
-export async function testIntegration(which: "anthropic" | "elevenlabs" | "pexels" | "stripe"): Promise<{ ok: boolean; message: string }> {
+export async function testIntegration(which: "anthropic" | "elevenlabs" | "pixabay" | "pexels" | "stripe"): Promise<{ ok: boolean; message: string }> {
   try {
     if (which === "anthropic") {
       const key = await anthropicKey();
@@ -182,6 +189,24 @@ export async function testIntegration(which: "anthropic" | "elevenlabs" | "pexel
       const s = (await res.json()) as { tier?: string; character_count?: number; character_limit?: number };
       const left = s.character_limit != null && s.character_count != null ? (s.character_limit - s.character_count).toLocaleString() : "?";
       return { ok: true, message: `ElevenLabs works · plan ${s.tier ?? "?"} · ${left} voice characters left this period.` };
+    }
+    if (which === "pixabay") {
+      const key = await pixabayKey();
+      if (!key) return { ok: false, message: "No Pixabay key saved yet." };
+      const res = await fetch(`https://pixabay.com/api/videos/?${new URLSearchParams({ key, q: "ocean waves", per_page: "3", safesearch: "true" })}`, {
+        headers: { Accept: "application/json", "User-Agent": pexelsHeaders("")["User-Agent"] },
+      });
+      if (res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { totalHits?: number };
+        return { ok: true, message: `Pixabay stock footage works (${(d.totalHits ?? 0).toLocaleString()} test clips found).` };
+      }
+      const body = (await res.text()).replace(/\s+/g, " ").slice(0, 200);
+      console.warn(`[integrations] Pixabay test failed: ${res.status} ${body}`);
+      if (res.status === 400 || res.status === 401 || res.status === 403) {
+        return { ok: false, message: `Pixabay didn't accept this key (${res.status}). Sign in at pixabay.com/api/docs — your key is shown in the "key" row of the parameters table. Copy just that value.` };
+      }
+      if (res.status === 429) return { ok: false, message: "Pixabay's limit of 100 requests a minute was reached. Wait a minute and press Test again." };
+      return { ok: false, message: `Pixabay answered ${res.status}: ${body.slice(0, 120)}` };
     }
     if (which === "pexels") {
       const key = await pexelsKey();

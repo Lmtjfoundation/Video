@@ -7,7 +7,7 @@ import { asUser, db } from "./db";
 import { readFile, storeFile } from "./media";
 import { log, savePost } from "./repo";
 import { refundCredits } from "./auth";
-import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey } from "./integrations";
+import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey, pixabayKey } from "./integrations";
 import type { MediaItem, Post, VideoScene } from "./types";
 import { nowIso } from "./utils";
 
@@ -15,8 +15,8 @@ import { nowIso } from "./utils";
  * Turns a video plan into a finished MP4 on the server with ffmpeg:
  *  - Voiceover: ElevenLabs text-to-speech per scene (ELEVENLABS_API_KEY). Without a key the video is a
  *    "text story" — captions carry the narration and each scene is timed to a natural reading pace.
- *  - Visuals per scene, in order of preference: the user's attached images/clips, Pexels stock footage
- *    matching the scene's visual note (PEXELS_API_KEY), or a moving brand gradient.
+ *  - Visuals per scene, in order of preference: the user's attached images/clips, Pixabay (or Pexels) stock
+ *    footage matching the scene's visual note, or a moving brand gradient.
  *  - On-screen text (top) and word-group captions (bottom), burned in with a bundled font.
  * Output: 1080×1920 vertical (Shorts/Reels/TikTok) or 1920×1080 for YouTube long-form, H.264 + AAC, saved to
  * the user's Media Library and attached to the post.
@@ -97,6 +97,50 @@ const cleanQuery = (visual: string) =>
     .split(/[,.;—-]/)[0]
     .trim()
     .slice(0, 80);
+
+/* Pixabay asks apps to cache API responses for 24 hours (and keep under 100 requests a minute). */
+type PixabayHit = { videos: Record<"large" | "medium" | "small" | "tiny", { url: string; width: number; height: number; size: number }> };
+const pixabayCache = new Map<string, { at: number; hits: PixabayHit[] }>();
+
+async function pixabayClip(query: string, portrait: boolean, file: string): Promise<boolean> {
+  const key = await pixabayKey();
+  if (!key || !query) return false;
+  try {
+    const q = query.slice(0, 100);
+    let hits = pixabayCache.get(q.toLowerCase());
+    if (!hits || Date.now() - hits.at > 24 * 3600_000) {
+      const res = await fetch(`https://pixabay.com/api/videos/?${new URLSearchParams({ key, q, per_page: "10", safesearch: "true", video_type: "film" })}`, {
+        headers: { Accept: "application/json", "User-Agent": pexelsHeaders("")["User-Agent"] },
+      });
+      if (!res.ok) {
+        console.warn(`[render] Pixabay search failed: ${res.status} ${(await res.text()).replace(/\s+/g, " ").slice(0, 160)}`);
+        return false;
+      }
+      hits = { at: Date.now(), hits: (((await res.json()) as { hits?: PixabayHit[] }).hits ?? []) };
+      pixabayCache.set(q.toLowerCase(), hits);
+    }
+    // Vertical clips first for 9:16 videos; otherwise the sharpest file that stays a reasonable download.
+    const ordered = [...hits.hits].sort((a, b) => {
+      const va = a.videos.medium.height > a.videos.medium.width ? 1 : 0;
+      const vb = b.videos.medium.height > b.videos.medium.width ? 1 : 0;
+      return portrait ? vb - va : va - vb;
+    });
+    for (const h of ordered) {
+      const sizes = portrait ? [h.videos.large, h.videos.medium, h.videos.small] : [h.videos.medium, h.videos.large, h.videos.small];
+      const pick = sizes.find((v) => v?.url && v.size > 0 && v.size < 60 * 1024 * 1024) ?? sizes.find((v) => v?.url);
+      if (!pick) continue;
+      const dl = await fetch(pick.url, { headers: { "User-Agent": pexelsHeaders("")["User-Agent"] } });
+      if (!dl.ok) continue;
+      const bytes = Buffer.from(await dl.arrayBuffer());
+      if (bytes.length > 80 * 1024 * 1024) continue;
+      await fs.writeFile(file, bytes);
+      return true;
+    }
+  } catch (e) {
+    console.warn(`[render] Pixabay clip failed: ${(e as Error).message}`);
+  }
+  return false;
+}
 
 async function pexelsClip(query: string, portrait: boolean, file: string): Promise<boolean> {
   const key = await pexelsKey();
@@ -280,7 +324,8 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       if (mediaFiles.length) visual = mediaFiles[i % mediaFiles.length];
       else {
         const clip = path.join(dir, `stock${i}.mp4`);
-        visual = (await pexelsClip(cleanQuery(scene.visual), !long, clip))
+        const q = cleanQuery(scene.visual);
+        visual = (await pixabayClip(q, !long, clip)) || (await pexelsClip(q, !long, clip))
           ? { kind: "video", file: clip }
           : { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] };
       }

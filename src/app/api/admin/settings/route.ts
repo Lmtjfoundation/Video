@@ -3,7 +3,7 @@ import { getAppSettings, saveAppSettings, type AppSettings } from "@/lib/auth";
 import { stripeReady } from "@/lib/billing";
 import { storageMode } from "@/lib/db";
 import { llmConfigured } from "@/lib/llm";
-import { elevenlabsKey, pexelsKey, stripeWebhookSecret } from "@/lib/integrations";
+import { elevenlabsKey, stockReady, stripeWebhookSecret } from "@/lib/integrations";
 import { emailReady } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export const GET = authed(async () => {
     stripeWebhookSecret().then(Boolean),
     llmConfigured(),
     elevenlabsKey().then(Boolean),
-    pexelsKey().then(Boolean),
+    stockReady(),
     emailReady(),
   ]);
   return ok({

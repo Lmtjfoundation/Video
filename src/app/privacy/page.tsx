@@ -38,7 +38,7 @@ export default async function PrivacyPage() {
       <ul>
         <li><strong>Anthropic (Claude API)</strong> — prompts containing your niche, settings and drafts, to generate text.</li>
         <li><strong>ElevenLabs</strong> — script text, to create voiceovers, when voiceover is used.</li>
-        <li><strong>Pexels</strong> — search keywords, to find stock footage. No personal information is sent.</li>
+        <li><strong>Pixabay and Pexels</strong> — search keywords, to find stock footage. No personal information is sent.</li>
         <li><strong>Stripe</strong> — payment and subscription processing.</li>
         <li><strong>Our hosting and database providers</strong> — to store and serve the app and your data.</li>
         <li><strong>The social platforms you connect</strong> — the content you publish and the requests made on your behalf.</li>
