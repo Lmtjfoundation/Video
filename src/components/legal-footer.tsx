@@ -10,6 +10,7 @@ export function LegalFooter({ className = "mt-14" }: { className?: string }) {
       <Link href="/terms#refunds" className="hover:text-white/70">Refunds</Link>
       <Link href="/data-deletion" className="hover:text-white/70">Data deletion</Link>
       <Link href="/pricing" className="hover:text-white/70">Pricing</Link>
+      <a href="https://www.pexels.com" target="_blank" rel="noreferrer" className="ml-auto hover:text-white/70">Stock footage by Pexels</a>
     </footer>
   );
 }
