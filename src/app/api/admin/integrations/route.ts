@@ -24,7 +24,8 @@ export const PUT = authed(async (req) => {
   const patch: Partial<Record<keyof Integrations, string>> = {};
   for (const [field, rule] of Object.entries(KEY_RULES)) {
     if (!(field in b)) continue;
-    const v = typeof b[field] === "string" ? (b[field] as string).trim() : "";
+    // Forgive common paste extras: surrounding quotes, a leading label like "Authorization:" or "Bearer".
+    const v = typeof b[field] === "string" ? (b[field] as string).trim().replace(/^["'`]+|["'`]+$/g, "").replace(/^(authorization\s*:\s*|bearer\s+)/i, "").trim() : "";
     if (v && !rule.re.test(v)) return fail(rule.msg);
     patch[field as keyof Integrations] = v;
   }
@@ -60,7 +61,9 @@ export const POST = authed(async (req, user) => {
   if (b.action === "test") {
     const which = b.which as "anthropic" | "elevenlabs" | "pexels" | "stripe";
     if (!["anthropic", "elevenlabs", "pexels", "stripe"].includes(which)) return fail("Unknown integration.");
-    return ok(await testIntegration(which));
+    const r = await testIntegration(which);
+    console.log(`[integrations] test ${which}: ${r.ok ? "ok" : "failed"} — ${r.message}`);
+    return ok(r);
   }
   if (b.action === "stripe-connect") {
     const key = (b.secretKey ?? "").trim() || (await stripeSecretKey());

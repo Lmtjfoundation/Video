@@ -7,7 +7,7 @@ import { asUser, db } from "./db";
 import { readFile, storeFile } from "./media";
 import { log, savePost } from "./repo";
 import { refundCredits } from "./auth";
-import { elevenlabsKey, elevenlabsVoice, pexelsKey } from "./integrations";
+import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey } from "./integrations";
 import type { MediaItem, Post, VideoScene } from "./types";
 import { nowIso } from "./utils";
 
@@ -104,9 +104,12 @@ async function pexelsClip(query: string, portrait: boolean, file: string): Promi
   try {
     const res = await fetch(
       `https://api.pexels.com/videos/search?${new URLSearchParams({ query, orientation: portrait ? "portrait" : "landscape", size: "medium", per_page: "5" })}`,
-      { headers: { Authorization: key } },
+      { headers: pexelsHeaders(key) },
     );
-    if (!res.ok) return false;
+    if (!res.ok) {
+      console.warn(`[render] Pexels search failed: ${res.status} ${(await res.text()).replace(/\s+/g, " ").slice(0, 160)}`);
+      return false;
+    }
     const data = (await res.json()) as { videos?: { video_files: { link: string; width: number; height: number; file_type: string }[] }[] };
     const want = portrait ? 1080 : 1920;
     for (const v of data.videos ?? []) {
@@ -115,7 +118,7 @@ async function pexelsClip(query: string, portrait: boolean, file: string): Promi
         .sort((a, b) => Math.abs((portrait ? a.width : a.width) - want) - Math.abs((portrait ? b.width : b.width) - want));
       const pick = files[0];
       if (!pick) continue;
-      const dl = await fetch(pick.link);
+      const dl = await fetch(pick.link, { headers: { "User-Agent": pexelsHeaders(key)["User-Agent"] } });
       if (!dl.ok) continue;
       const bytes = Buffer.from(await dl.arrayBuffer());
       if (bytes.length > 80 * 1024 * 1024) continue;

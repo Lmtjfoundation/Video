@@ -90,6 +90,12 @@ export function anthropicWorkspaceHint(status: number, body: string) {
 export const elevenlabsKey = () => pick("elevenlabsKey", "ELEVENLABS_API_KEY");
 export const elevenlabsVoice = () => pick("elevenlabsVoiceId", "ELEVENLABS_VOICE_ID");
 export const pexelsKey = () => pick("pexelsKey", "PEXELS_API_KEY");
+/** Pexels sits behind a firewall that rejects anonymous HTTP clients, so identify the app. */
+export const pexelsHeaders = (key: string) => ({
+  Authorization: key,
+  Accept: "application/json",
+  "User-Agent": `NexusPulse/1.0 (+${(process.env.APP_URL || "https://nexus-pulse.up.railway.app").replace(/\/$/, "")})`,
+});
 export const stripeSecretKey = () => pick("stripeSecretKey", "STRIPE_SECRET_KEY");
 export const stripeWebhookSecret = () => pick("stripeWebhookSecret", "STRIPE_WEBHOOK_SECRET");
 export const stripePortalConfig = () => pick("stripePortalConfig", "STRIPE_PORTAL_CONFIGURATION");
@@ -180,8 +186,17 @@ export async function testIntegration(which: "anthropic" | "elevenlabs" | "pexel
     if (which === "pexels") {
       const key = await pexelsKey();
       if (!key) return { ok: false, message: "No Pexels key saved yet." };
-      const res = await fetch("https://api.pexels.com/videos/search?query=ocean&per_page=1", { headers: { Authorization: key } });
-      return res.ok ? { ok: true, message: "Pexels stock footage works." } : { ok: false, message: `Pexels answered ${res.status}.` };
+      const res = await fetch("https://api.pexels.com/videos/search?query=ocean&per_page=1", { headers: pexelsHeaders(key) });
+      if (res.ok) return { ok: true, message: "Pexels stock footage works." };
+      const body = (await res.text()).replace(/\s+/g, " ").slice(0, 200);
+      console.warn(`[integrations] Pexels test failed: ${res.status} ${body}`);
+      if (/error code: 10\d\d|cloudflare|<html/i.test(body)) {
+        return { ok: false, message: `Pexels' firewall blocked the request from the server (${res.status}). Press Test again in a minute; if it keeps failing, tell your developer the code: ${body.slice(0, 60)}` };
+      }
+      if (res.status === 401 || res.status === 403) {
+        return { ok: false, message: `Pexels didn't accept this key (${res.status}). On pexels.com/api, copy the key shown under "Your API Key" (one long line of letters and numbers) and paste it again.` };
+      }
+      return { ok: false, message: `Pexels answered ${res.status}: ${body.slice(0, 120)}` };
     }
     const key = await stripeSecretKey();
     if (!key) return { ok: false, message: "No Stripe key saved yet." };
