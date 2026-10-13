@@ -43,6 +43,10 @@ export const PLATFORM_RULES: Record<Platform, string[]> = {
     "Label AI-generated content that shows realistic scenes or people.",
     "Creator Rewards only pays for original videos over 1 minute.",
   ],
+  webhook: [
+    "The app that receives the webhook is subject to its own platform rules; check them in that app.",
+    "Posts sent here are checked by the same safety filter as every other platform.",
+  ],
 };
 
 const norm = (s: string) => s.toLowerCase().replace(/https?:\/\/\S+/g, "").replace(/[^a-z0-9]+/g, " ").trim();

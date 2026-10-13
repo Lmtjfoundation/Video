@@ -1,7 +1,7 @@
 import { authed, body, fail, ok } from "@/lib/http-api";
 import { db } from "@/lib/db";
 import { requireFeature, withCredits } from "@/lib/credits";
-import { CREDIT_COST, planById } from "@/lib/plans";
+import { DEFAULT_PREMIUM_MODEL, planById, storyCredits } from "@/lib/plans";
 import { writeStory, type StoryInput } from "@/lib/stories";
 import { NICHES, STORY_FORMATS } from "@/lib/niches";
 import { log } from "@/lib/repo";
@@ -20,9 +20,10 @@ export const POST = authed(async (req, user) => {
   if (b.niche !== "custom" && !NICHES.some((n) => n.id === b.niche)) return fail("Choose a niche.");
   const long = b.format === "long";
   if (long) requireFeature(user, "longStories", "Long story scripts");
-  const premium = long && planById(user.plan).features.priorityModel && !!process.env.ANTHROPIC_PREMIUM_MODEL;
-  // The strongest model costs about twice as much, so it uses twice the credits.
-  const cost = long ? CREDIT_COST.storyLong * (premium ? 2 : 1) : CREDIT_COST.storyShort;
+  const plan = planById(user.plan);
+  const premium = long && plan.features.priorityModel;
+  // The strongest model costs more to run, so long scripts on Pro and Unlimited use twice the credits.
+  const cost = storyCredits(plan, long);
   const input: StoryInput = {
     niche: b.niche,
     customNiche: b.customNiche?.slice(0, 120),
@@ -34,7 +35,7 @@ export const POST = authed(async (req, user) => {
     sources: (b.sources ?? []).slice(0, 10).map((x) => ({ name: String(x.name).slice(0, 120), text: String(x.text).slice(0, 60_000) })),
     mediaIds: (b.mediaIds ?? []).slice(0, 3),
   };
-  const story = await withCredits(cost, () => writeStory(input, { model: premium ? process.env.ANTHROPIC_PREMIUM_MODEL : undefined }));
+  const story = await withCredits(cost, () => writeStory(input, { model: premium ? process.env.ANTHROPIC_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL : undefined }));
   await log("info", "generate", `Story script: “${story.out.titles?.[0]?.title ?? story.topic}” (${STORY_FORMATS[story.format].label})`);
   return ok(story);
 });

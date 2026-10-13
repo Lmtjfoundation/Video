@@ -6,7 +6,7 @@ import { api } from "@/lib/client";
 import type { CredentialStatus, Offer, Pillar, Platform, Settings } from "@/lib/types";
 import { PILLARS, PLATFORMS, REPLY_MODES } from "@/lib/types";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
-import { OAUTH } from "@/lib/oauth-config";
+import { OAUTH, type OAuthPlatform } from "@/lib/oauth-config";
 import { COPY_LABELS, SETUP_GUIDES, type CopyKey } from "@/lib/setup-guides";
 import { copyToClipboard } from "@/lib/client";
 import { MODE_LABEL, PILLAR_LABEL, cn, uid } from "@/lib/utils";
@@ -48,6 +48,10 @@ const CRED_FIELDS: Record<Platform, { key: "accessToken" | "refreshToken" | "acc
     { key: "accountId", label: "Channel ID", placeholder: "UC…" },
   ],
   tiktok: [{ key: "accessToken", label: "Access token (optional — publishing is copy-ready)", secret: true }],
+  webhook: [
+    { key: "accessToken", label: "Webhook URL", secret: true, placeholder: "https://hooks.zapier.com/… or your Make / n8n / Slack / Discord URL" },
+    { key: "refreshToken", label: "Signing secret (optional)", secret: true, placeholder: "lets your receiver verify posts came from Nexus Pulse" },
+  ],
 };
 
 export default function SettingsPage() {
@@ -428,6 +432,58 @@ function Accounts({ settings, setSettings, statuses }: { settings: Settings; set
       <div className="grid gap-5 lg:grid-cols-2">
         {PLATFORMS.map((p) => {
           const spec = PLATFORM_SPECS[p];
+          if (p === "webhook") {
+            const st = statuses.find((x) => x.platform === p) ?? { platform: p, connected: false, fields: [], oauthReady: false };
+            return (
+              <Card key={p}>
+                <CardHeader
+                  title={<span className="flex items-center gap-2"><PlatformChip platform={p} /> {spec.name}</span>}
+                  subtitle={st.connected ? <span className="text-mint-300">Connected</span> : "Not connected"}
+                  action={<Switch checked={settings.platforms[p]} onChange={(v) => setSettings({ ...settings.platforms, [p]: v })} label={`Use ${spec.name}`} />}
+                />
+                <div className="grid gap-3 p-5">
+                  <p className="text-[13px] leading-relaxed text-white/65">
+                    Works with any app that can receive a webhook: Zapier, Make, n8n, Slack, Discord, Buffer or Notion automations, or your own server. Create a “catch webhook” in that tool, paste its URL here, and every post you schedule for this connection is sent there as JSON.
+                  </p>
+                  {CRED_FIELDS.webhook.map((f) => (
+                    <Field key={f.key} label={f.label} hint={st.fields.includes(f.key) ? <Badge tone="mint">stored</Badge> : undefined}>
+                      <Input
+                        type="password"
+                        autoComplete="off"
+                        value={forms[p]?.[f.key] ?? ""}
+                        onChange={(e) => setForms({ ...forms, [p]: { ...(forms[p] ?? {}), [f.key]: e.target.value } })}
+                        placeholder={st.fields.includes(f.key) ? "•••••••• (leave blank to keep)" : f.placeholder}
+                      />
+                    </Field>
+                  ))}
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="primary" loading={busy === p} onClick={() => saveCred(p)}><KeyRound className="h-3.5 w-3.5" /> Save connection</Button>
+                    {st.connected && (
+                      <>
+                        <Button size="sm" variant="secondary" loading={busy === "webhook-test"} onClick={async () => {
+                          setBusy("webhook-test");
+                          try {
+                            await api("/api/webhook-test", { body: {} });
+                            toast("Test message sent. Check your app.", "success");
+                          } catch (e) {
+                            toast((e as Error).message, "error");
+                          } finally {
+                            setBusy(null);
+                          }
+                        }}>Send test message</Button>
+                        <Button size="sm" variant="danger" onClick={() => disconnect(p)}>{confirmOff === p ? "Confirm disconnect" : "Disconnect"}</Button>
+                      </>
+                    )}
+                  </div>
+                  <div className="grid gap-1 text-[12px]">
+                    <p className="text-white/60"><span className="text-white/85">Sends:</span> {spec.publish}</p>
+                    <p className="text-white/60"><span className="text-white/85">Security:</span> https addresses only. Internal addresses are blocked. With a signing secret, each request carries an HMAC signature (X-Nexus-Signature) over “timestamp.body”.</p>
+                  </div>
+                  <p className="text-[11px] text-white/35">The switch above turns this connection on or off for posting. Press “Save changes” at the top after changing it.</p>
+                </div>
+              </Card>
+            );
+          }
           const o = OAUTH[p];
           const st = statuses.find((x) => x.platform === p) ?? { platform: p, connected: false, fields: [], oauthReady: false };
           const note = st.connected ? expiryNote(st) : null;
@@ -533,7 +589,7 @@ function CopyBox({ value }: { value: string }) {
 }
 
 /** One-time owner setup: guided steps, then paste the app ID and secret — no file editing. */
-function SetupWizard({ platform, origin, onSaved }: { platform: Platform; origin: string; onSaved: () => void }) {
+function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; origin: string; onSaved: () => void }) {
   const toast = useApp((x) => x.toast);
   const g = SETUP_GUIDES[platform];
   const o = OAUTH[platform];

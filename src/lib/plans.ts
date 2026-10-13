@@ -70,11 +70,11 @@ export const PLANS: Plan[] = [
     credits: 1_200,
     postsPerMonth: 1_500,
     maxPostsPerDay: 6,
-    maxPlatforms: 6,
+    maxPlatforms: 7,
     storageMb: 10_000,
     popular: true,
-    features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: false },
-    highlights: ["1,200 AI credits a month", "1,500 posts a month, up to 6 a day", "All 6 platforms", "Automatic comment replies", "8–10 minute story scripts", "10 GB uploads"],
+    features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true },
+    highlights: ["1,200 AI credits a month", "1,500 posts a month, up to 6 a day", "All 6 platforms + any app via webhook", "Automatic comment replies", "8–10 minute scripts on our strongest model", "10 GB uploads"],
   },
   {
     id: "unlimited",
@@ -85,12 +85,21 @@ export const PLANS: Plan[] = [
     credits: 3_500,
     postsPerMonth: null,
     maxPostsPerDay: null,
-    maxPlatforms: 6,
+    maxPlatforms: 7,
     storageMb: 50_000,
     features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true },
-    highlights: ["Unlimited posts — you choose posts per day", "3,500 AI credits a month", "All 6 platforms", "Everything in Pro", "Strongest model for long scripts", "50 GB uploads"],
+    highlights: ["Unlimited posts — you choose posts per day", "3,500 AI credits a month", "All 6 platforms + any app via webhook", "Everything in Pro", "Strongest model for long scripts", "50 GB uploads"],
   },
 ];
+
+/** Strongest model, used for long story scripts on plans with `priorityModel` (Pro and Unlimited). */
+export const DEFAULT_PREMIUM_MODEL = "claude-opus-5-5";
+
+/** Credits for a story script. The strongest model costs more to run, so it uses twice the credits. One rule for server and UI. */
+export function storyCredits(plan: Plan, long: boolean): number {
+  if (!long) return CREDIT_COST.storyShort;
+  return CREDIT_COST.storyLong * (plan.features.priorityModel ? 2 : 1);
+}
 
 export const planById = (id: string | undefined) => PLANS.find((p) => p.id === id) ?? PLANS[0];
 

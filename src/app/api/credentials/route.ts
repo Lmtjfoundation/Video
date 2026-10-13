@@ -2,6 +2,7 @@ import { body, fail, authed, ok } from "@/lib/http-api";
 import { credentialStatuses, deleteCredential, getCredential, log, saveCredential } from "@/lib/repo";
 import type { Credential, Platform } from "@/lib/types";
 import { PLATFORMS } from "@/lib/types";
+import { webhookUrlProblem } from "@/lib/platforms/webhook-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,12 @@ export const POST = authed(async (req: Request) => {
     const v = fields[k];
     if (typeof v === "string" && v.trim()) merged[k] = v.trim();
   });
+  if (platform === "webhook") {
+    if (!merged.accessToken) return fail("Paste your webhook URL.");
+    const problem = webhookUrlProblem(merged.accessToken);
+    if (problem) return fail(problem);
+    merged.method = "manual";
+  }
   if (!merged.accessToken) return fail("An access token is required.");
   await saveCredential(platform, merged);
   await log("info", "system", `Credentials updated for ${platform}`, { platform });

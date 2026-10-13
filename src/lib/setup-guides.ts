@@ -31,7 +31,7 @@ export interface SetupGuide {
   review: string;
 }
 
-export const SETUP_GUIDES: Record<Platform, SetupGuide> = {
+export const SETUP_GUIDES: Record<Exclude<Platform, "webhook">, SetupGuide> = {
   x: {
     minutes: "10 minutes",
     needs: "An X account. Posting at volume needs a paid X API plan.",

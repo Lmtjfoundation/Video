@@ -41,6 +41,7 @@ export const VIDEO_TARGET: Record<Platform, string> = {
   instagram: "Instagram Reel, vertical 9:16",
   youtube: "YouTube Short, vertical 9:16 (long-form: 16:9)",
   tiktok: "TikTok, vertical 9:16",
+  webhook: "Any app via webhook: text and links; attach finished video files in the receiving app",
 };
 
 /** Plain-text production plan for copy/export. */

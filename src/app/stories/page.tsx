@@ -5,7 +5,7 @@ import { BookOpenText, Copy, Download, FileText, Lock, Repeat2, Send, Trash2, Up
 import { useApp } from "@/lib/store";
 import { api, copyToClipboard } from "@/lib/client";
 import { NICHES, STORY_FORMATS, STORY_TYPES } from "@/lib/niches";
-import { CREDIT_COST } from "@/lib/plans";
+import { CREDIT_COST, storyCredits } from "@/lib/plans";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import type { MediaItem, Platform, Story } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -79,7 +79,7 @@ export default function StoryStudio() {
 
   const long = f.format === "long";
   const longLocked = long && !plan?.features.longStories;
-  const cost = long ? CREDIT_COST.storyLong * (plan?.features.priorityModel ? 2 : 1) : CREDIT_COST.storyShort;
+  const cost = plan ? storyCredits(plan, long) : long ? CREDIT_COST.storyLong : CREDIT_COST.storyShort;
   const st = stories.find((s) => s.id === current) ?? null;
 
   async function addFiles(files: FileList | null) {

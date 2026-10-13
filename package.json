@@ -9,28 +9,33 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "worker": "node scripts/worker.mjs",
-    "gen:key": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\""
+    "gen:key": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test"
   },
   "dependencies": {
-    "next": "^15.5.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "zustand": "^5.0.8",
     "@supabase/supabase-js": "^2.57.0",
-    "lucide-react": "^0.544.0",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.6.0",
-    "class-variance-authority": "^0.7.1",
-    "server-only": "^0.0.1",
-    "typescript": "^5.9.2",
     "@types/node": "^22.18.0",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
-    "tailwindcss": "^3.4.17",
+    "autoprefixer": "^10.4.21",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.544.0",
+    "next": "^15.5.0",
     "postcss": "^8.5.6",
-    "autoprefixer": "^10.4.21"
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.2",
+    "zustand": "^5.0.8"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.7"
   }
 }

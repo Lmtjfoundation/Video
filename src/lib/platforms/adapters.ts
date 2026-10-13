@@ -2,6 +2,7 @@ import "server-only";
 import type { Credential, Platform, Post } from "../types";
 import { AuthError, CopyReadyError, request } from "./http";
 import { sleep } from "../utils";
+import { postWebhook } from "./webhook-send";
 
 export interface PublishResult {
   externalId: string;
@@ -478,4 +479,45 @@ const tiktok: Adapter = {
   },
 };
 
-export const ADAPTERS: Record<Platform, Adapter> = { x, facebook, linkedin, instagram, youtube, tiktok };
+/* ───────────────────────────── Any app (webhook) ───────────────────────────── */
+/** Sends each post as JSON to a URL the customer owns (Zapier, Make, n8n, Slack, Discord, their own server). */
+const webhook: Adapter = {
+  platform: "webhook",
+  publishable: (post) => (post.kind === "video" ? "Video files can't be sent through a webhook. Download the video and post it in your app." : true),
+  async publish(post, texts, cred) {
+    const url = need(cred, "accessToken", "Add your webhook URL in Settings → Accounts.");
+    const res = await postWebhook(
+      url,
+      {
+        event: "post.publish",
+        id: post.id,
+        platform: post.platform,
+        format: post.format,
+        pillar: post.pillar,
+        topic: post.topic ?? null,
+        hook: post.hook,
+        body: post.body,
+        parts: post.parts,
+        hashtags: post.hashtags,
+        cta: post.cta ?? null,
+        imageUrl: post.imageUrl ?? null,
+        text: texts.join("\n\n"),
+        texts,
+        scheduledAt: post.scheduledAt ?? null,
+        sentAt: new Date().toISOString(),
+      },
+      cred.refreshToken, // optional signing secret
+    );
+    // "Published" here means the receiving tool accepted it; what it does next is up to that tool.
+    return { externalId: `webhook:${res.status}:${post.id}`, externalIds: [`webhook:${res.status}:${post.id}`], url: undefined };
+  },
+  engageable: false,
+  async fetchComments() {
+    throw new CopyReadyError("A webhook only sends posts out; it can't read comments.");
+  },
+  async reply() {
+    throw new CopyReadyError("A webhook only sends posts out; it can't send replies.");
+  },
+};
+
+export const ADAPTERS: Record<Platform, Adapter> = { x, facebook, linkedin, instagram, youtube, tiktok, webhook };

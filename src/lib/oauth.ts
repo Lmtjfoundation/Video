@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, randomBytes } from "crypto";
 import { db } from "./db";
-import { FB_VERSION, OAUTH } from "./oauth-config";
+import { FB_VERSION, OAUTH, isOAuthPlatform } from "./oauth-config";
 import { getAppKeys } from "./app-keys";
 import { saveFacebookPages } from "./facebook-pages";
 import { request } from "./platforms/http";
@@ -31,6 +31,7 @@ export const redirectUriFor = (origin: string, platform: Platform) => `${origin}
 
 /** Step 1: build the platform's sign-in URL and remember the state (and PKCE verifier) for 10 minutes. */
 export async function startAuth(platform: Platform, origin: string) {
+  if (!isOAuthPlatform(platform)) throw new Error("This connection doesn't use a sign-in page. Paste its URL in Settings → Accounts instead.");
   const keys = await getAppKeys(platform);
   if (!keys) throw new Error(`${OAUTH[platform].label} linking isn't set up yet. Open Settings → Accounts and follow the setup steps on the ${OAUTH[platform].label} card.`);
   const p = OAUTH[platform];
@@ -63,6 +64,7 @@ export async function finishAuth(platform: Platform, code: string, state: string
   if (!pending || pending.platform !== platform) throw new Error("This sign-in link is invalid or was already used. Start again from Settings.");
   if (Date.now() - pending.createdAt > STATE_TTL_MS) throw new Error("The sign-in took longer than 10 minutes. Start again from Settings.");
 
+  if (!isOAuthPlatform(platform)) throw new Error("This connection doesn't use a sign-in page.");
   const p = OAUTH[platform];
   const keys = await getAppKeys(platform);
   if (!keys) throw new Error(`${p.label} app keys were removed. Add them again in Settings → Accounts.`);

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { userFromRequest } from "@/lib/auth";
 import { asUser } from "@/lib/db";
 import { appOrigin, finishAuth } from "@/lib/oauth";
-import { OAUTH } from "@/lib/oauth-config";
+import { OAUTH, isOAuthPlatform } from "@/lib/oauth-config";
 import { log, saveCredential } from "@/lib/repo";
 import { listFacebookPages } from "@/lib/facebook-pages";
 import type { Platform } from "@/lib/types";
@@ -22,8 +22,8 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
   const url = new URL(req.url);
   const origin = appOrigin(req);
   const back = (q: Record<string, string>) => NextResponse.redirect(`${origin}/settings?${new URLSearchParams({ tab: "accounts", ...q })}`);
-  if (!PLATFORMS.includes(platform as Platform)) return back({ error: "Unknown platform." });
-  const p = platform as Platform;
+  if (!PLATFORMS.includes(platform as Platform) || !isOAuthPlatform(platform)) return back({ error: "Unknown platform." });
+  const p = platform;
   const label = OAUTH[p].label;
 
   const denied = url.searchParams.get("error");

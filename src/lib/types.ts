@@ -1,4 +1,4 @@
-export const PLATFORMS = ["x", "facebook", "linkedin", "instagram", "youtube", "tiktok"] as const;
+export const PLATFORMS = ["x", "facebook", "linkedin", "instagram", "youtube", "tiktok", "webhook"] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
 export const PILLARS = ["ai_leverage", "high_agency", "wealth_systems", "relationships", "longevity"] as const;

@@ -23,7 +23,11 @@ export interface OAuthProvider {
 
 export const FB_VERSION = process.env.FACEBOOK_GRAPH_VERSION || "v25.0";
 
-export const OAUTH: Record<Platform, OAuthProvider> = {
+/** Platforms with a "Connect with …" sign-in. The webhook connector has none: the user pastes a URL instead. */
+export type OAuthPlatform = Exclude<Platform, "webhook">;
+export const isOAuthPlatform = (p: string): p is OAuthPlatform => p in OAUTH;
+
+export const OAUTH: Record<OAuthPlatform, OAuthProvider> = {
   x: {
     label: "X",
     authorizeUrl: "https://x.com/i/oauth2/authorize",

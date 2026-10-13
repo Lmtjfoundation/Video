@@ -96,4 +96,17 @@ export const PLATFORM_SPECS: Record<Platform, PlatformSpec> = {
     writingRules:
       "Video script 20–45 seconds: pattern-interrupt hook in the first second, on-screen text plus spoken lines in parts, conversational. Caption short with 3–5 hashtags.",
   },
+  webhook: {
+    name: "Any app (webhook)",
+    short: "↗",
+    chip: "bg-violet-400/15 text-violet-200 ring-violet-300/30",
+    maxChars: 3000,
+    maxHashtags: 5,
+    recommendedHashtags: "2–3",
+    formats: ["short", "caption", "carousel"],
+    publish: "Sends each post as JSON to a webhook URL you choose (Zapier, Make, n8n, Slack, Discord, your own server). That tool then posts it to whatever app you use.",
+    engage: "Not available: a webhook only sends posts out.",
+    writingRules:
+      "General-purpose post up to 3,000 characters, plain text, short paragraphs, a hook in the first line. 2–3 hashtags at the end. Carousels: slide-by-slide text in parts.",
+  },
 };

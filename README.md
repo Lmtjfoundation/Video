@@ -34,10 +34,20 @@ Built with Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn-style compo
 | **Instagram** | ✅ Image posts | ✅ | Requires a Business or Creator account linked to the Graph API. Each post needs a **public https image URL**; text-only posts aren't possible on Instagram. |
 | **YouTube** | ❌ copy-ready scripts | ✅ | Video upload isn't automated in this version, and Community posts have no API. Comment replies use the Data API v3 (watch your daily quota). |
 | **TikTok** | ❌ copy-ready | ❌ | Direct posting needs an **audited** Content Posting API app; unaudited apps can only post privately. There is no general comment API. |
+| **Any app (webhook)** | ✅ JSON to your URL | ❌ | Paste a webhook URL from Zapier, Make, n8n, Slack, Discord or your own server (Settings → Accounts). https only, internal addresses blocked, optional HMAC signature (`X-Nexus-Signature`, signed over `timestamp.body`). Text posts only. "Published" means the receiver accepted it. |
 
 Platform terms and tiers change. Check each developer portal before relying on a feature.
 
 ---
+
+## Development and tests
+
+```bash
+npm run check     # typecheck + unit tests
+npm run build     # production build
+```
+
+GitHub Actions runs the same checks plus a build on every push and pull request. Launch steps, store submission and copy live in `docs/` (`LAUNCH_CHECKLIST.md`, `STORE_LISTING.md`, `MARKETING.md`); logo files are in `brand/`.
 
 ## Setup
 
@@ -58,7 +68,7 @@ npm run gen:key        # paste the output into ENCRYPTION_KEY
 | `ENCRYPTION_KEY` | ✅ | Encrypts platform tokens at rest (AES-256-GCM) |
 | `APP_URL` | ✅ | Public address of the app (linking, uploads, Stripe return links) |
 | `ADMIN_EMAILS` | | Comma-separated emails that always get admin. Otherwise the first sign-up is admin |
-| `ANTHROPIC_PREMIUM_MODEL` | | Stronger model for long scripts on Unlimited (2× credits) |
+| `ANTHROPIC_PREMIUM_MODEL` | | Stronger model for long scripts on Pro and Unlimited (2× credits). Defaults to `claude-opus-5-5` |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*` | to charge | See "Payments" below |
 | `CRON_SECRET` | ✅ in production | Protects `/api/cron/*` |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | for serverless | Without these, data is stored in `./.data/db.json` |

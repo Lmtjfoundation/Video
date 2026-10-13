@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   requireReplyApproval: true,
   timezone: "America/Chicago",
   postsPerDay: 3,
-  platforms: { x: true, facebook: false, linkedin: true, instagram: true, youtube: false, tiktok: true },
+  platforms: { x: true, facebook: false, linkedin: true, instagram: true, youtube: false, tiktok: true, webhook: false },
   slots: {
     x: ["08:30", "12:15", "18:45"],
     facebook: ["09:00", "13:00", "19:00"],
@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
     instagram: ["11:00", "14:00", "19:30"],
     youtube: ["12:00", "15:00", "18:00"],
     tiktok: ["12:00", "17:00", "20:30"],
+    webhook: ["09:00", "13:00", "18:00"],
   },
   quietHours: { enabled: true, start: "23:30", end: "06:30" },
   limits: {
@@ -32,6 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
     instagram: { postsPerDay: 4, repliesPerHour: 15, repliesPerDay: 80, minGapSec: 75 },
     youtube: { postsPerDay: 2, repliesPerHour: 15, repliesPerDay: 80, minGapSec: 75 },
     tiktok: { postsPerDay: 3, repliesPerHour: 10, repliesPerDay: 50, minGapSec: 90 },
+    webhook: { postsPerDay: 6, repliesPerHour: 0, repliesPerDay: 0, minGapSec: 30 },
   },
   audience: {
     x: { followers: 1000, reachRate: 0.12 },
@@ -40,6 +42,7 @@ export const DEFAULT_SETTINGS: Settings = {
     instagram: { followers: 1000, reachRate: 0.2 },
     youtube: { followers: 1000, reachRate: 0.1 },
     tiktok: { followers: 1000, reachRate: 0.4 },
+    webhook: { followers: 1000, reachRate: 0.1 },
   },
   rpmUsd: 3,
   affiliateCtr: 0.006,

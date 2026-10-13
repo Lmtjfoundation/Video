@@ -1,7 +1,7 @@
 import "server-only";
 import { gdb } from "./db";
 import { decrypt, encrypt } from "./crypto";
-import { OAUTH } from "./oauth-config";
+import { OAUTH, isOAuthPlatform } from "./oauth-config";
 import type { Platform } from "./types";
 
 /**
@@ -18,6 +18,7 @@ export interface AppKeys {
 const key = (p: Platform) => `appkeys_${p}`;
 
 export async function getAppKeys(platform: Platform): Promise<AppKeys | null> {
+  if (!isOAuthPlatform(platform)) return null;
   const e = OAUTH[platform].env;
   const envId = process.env[e.id];
   const envSecret = process.env[e.secret];
