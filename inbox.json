@@ -1,0 +1,759 @@
+{
+  "version": 1,
+  "batches": [
+    {
+      "id": "2026-10-13",
+      "createdAt": "2026-10-13T12:15:00-05:00",
+      "items": [
+        {
+          "id": "2026-10-13-01",
+          "type": "post",
+          "platform": "x",
+          "pillar": "wealth_systems",
+          "format": "short",
+          "topic": "Savings rate beats returns in the first decade",
+          "hook": "In your first decade of investing, your savings rate matters more than your returns.",
+          "body": "Illustration: $500/mo for 10 yrs at 7% ≈ $86.5K.\nAt 8%: ≈ $91.5K.\n$1,000/mo at 7%: ≈ $173K.\n\nThe extra 1% adds $5K. The extra $500 adds $86.5K.",
+          "parts": [],
+          "hashtags": [],
+          "moneyAngle": "High-save finance content that drives follows from a personal-finance audience advertisers pay for."
+        },
+        {
+          "id": "2026-10-13-02",
+          "type": "post",
+          "platform": "x",
+          "pillar": "ai_leverage",
+          "format": "thread",
+          "topic": "Mata v. Avianca: using AI for research without fake facts",
+          "hook": "In 2023, two New York lawyers filed a brief citing court cases that didn't exist.",
+          "body": "How to use AI for research without becoming the next cautionary tale.",
+          "parts": [
+            "In 2023, two New York lawyers filed a brief citing six court cases that didn't exist. ChatGPT had invented them, quotes and all.\n\nHere's how to use AI for research without becoming the next cautionary tale:",
+            "The case was Mata v. Avianca. In June 2023, Judge P. Kevin Castel fined the lawyers and their firm $5,000.\n\nThe bigger cost: their names became the standard example of what not to do.",
+            "Why it happens: a chatbot predicts plausible text. A case citation is just a pattern: names, volume, court, year.\n\nA model can produce a perfect-looking pattern with nothing behind it.",
+            "Rule 1: Use AI for structure, not facts.\n\nOutlines, first drafts, counterarguments, questions you forgot to ask. Those stay useful even when they're imperfect.",
+            "Rule 2: Every fact that leaves your desk gets checked against a primary source.\n\nNot a second chatbot. The court record, the study, the filing.",
+            "Rule 3: Ask the tool where a claim came from.\n\nIf it can't point to a source you can open and read, treat the claim as a draft, not a fact.",
+            "The takeaway: AI makes you faster at producing words. It doesn't make any of them true.\n\nYour name is still on the work."
+          ],
+          "hashtags": [
+            "AI"
+          ],
+          "cta": "Bookmark this for the next time a chatbot sounds very sure of itself.",
+          "moneyAngle": "AI-productivity threads get saved and shared, building an audience that software and tools advertisers target."
+        },
+        {
+          "id": "2026-10-13-03",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "high_agency",
+          "format": "short",
+          "topic": "The premortem decision technique",
+          "hook": "Before your next big decision, assume it already failed.",
+          "body": "That's the premortem, a technique psychologist Gary Klein described in Harvard Business Review in 2007.\n\nHow it works: before a project starts, the team imagines it's a year later and the project has failed badly. Everyone takes a few minutes to write down why. Then you go around the room and fix the biggest risks while they're still cheap.\n\nWhy it beats the usual \"any concerns?\" question: asking for concerns invites polite silence. Declaring failure as a fact gives people permission to name what they already suspect.\n\nKlein cites 1989 research by Deborah Mitchell, Jay Russo and Nancy Pennington: imagining that an outcome has already happened increased people's ability to correctly identify reasons for it by 30%.\n\nTry it this week:\n1. Pick one decision with real stakes.\n2. Write: \"It's six months from now. This failed. Why?\"\n3. List five reasons in five minutes.\n4. Fix the top two before you start.",
+          "parts": [],
+          "hashtags": [
+            "decisionmaking",
+            "leadership",
+            "productivity"
+          ],
+          "cta": "Which decision would you run this on first?",
+          "moneyAngle": "Practical leadership content earns saves and follows from professionals, the audience business-tool advertisers pay most for."
+        },
+        {
+          "id": "2026-10-13-04",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "ai_leverage",
+          "format": "carousel",
+          "topic": "Which jobs to hand AI and which to keep",
+          "hook": "5 jobs to hand AI this week, and 3 to keep for yourself.",
+          "body": "Most people try AI like a search engine, get a confident wrong answer, and decide it's overrated. It's much better at some jobs than others. Here's the split worth using.",
+          "parts": [
+            "Hand off: first drafts. A rough version in 30 seconds beats a blank page. It types; you edit.",
+            "Hand off: summaries of long documents and meeting notes. Ask for decisions, owners and deadlines, then skim the original once.",
+            "Hand off: counterarguments. Ask \"What would a smart skeptic say about this plan?\" It's quick at finding holes you're too close to see.",
+            "Hand off: reformatting. Notes to email, email to bullet points, bullet points to a slide outline.",
+            "Hand off: spreadsheet formulas. Describe what you want in plain English, then test the formula on a few rows you can check by hand.",
+            "Keep: facts that go out under your name. Models can state false things fluently. Verify against the source.",
+            "Keep: judgment calls about people. Hiring, feedback, hard conversations. AI can help you prepare; the decision is yours.",
+            "Keep: anything confidential your company hasn't approved for AI tools. Check the policy before you paste."
+          ],
+          "hashtags": [
+            "AI",
+            "productivity",
+            "futureofwork"
+          ],
+          "cta": "Which of the five would save you the most time this week?",
+          "moneyAngle": "AI workflow carousels are highly saved on LinkedIn and attract software and productivity sponsors."
+        },
+        {
+          "id": "2026-10-13-05",
+          "type": "post",
+          "platform": "facebook",
+          "pillar": "relationships",
+          "format": "short",
+          "topic": "Perpetual money conflicts in couples (Gottman)",
+          "hook": "Most couples aren't really fighting about money. They're fighting about what money means.",
+          "body": "Relationship researcher John Gottman found that about 69% of conflicts between couples are \"perpetual\": they come from lasting differences in personality or values, and they never fully go away.\n\nMoney is a classic one. For one person, a full savings account means safety. For the other, money sitting there is life not being lived. Neither is wrong. They're running different scripts.\n\nCouples who do well don't erase those differences. They manage them, with less heat and more structure. A few structures that help:\n\n• A monthly money date. Same day, 30 minutes, no surprises saved up for it.\n• A yours/mine/ours split: shared bills from a joint account, plus personal money nobody has to justify.\n• A spending number that triggers a talk first. Pick it together, before you need it.\n\nThe goal isn't agreeing on everything. It's having the same argument less often.",
+          "parts": [],
+          "hashtags": [
+            "relationships",
+            "money"
+          ],
+          "cta": "What's one money habit you and your partner see differently?",
+          "moneyAngle": "Relationship-and-money posts drive comments and shares, which grows Page reach for monetized Reels and posts."
+        },
+        {
+          "id": "2026-10-13-06",
+          "type": "post",
+          "platform": "instagram",
+          "pillar": "longevity",
+          "format": "carousel",
+          "topic": "Light walking after meals",
+          "hook": "The cheapest health habit there is takes 2 minutes and needs no gym.",
+          "body": "A 2022 review in the journal Sports Medicine pooled seven studies and found that light walking after a meal, even for 2–5 minutes, lowered blood sugar and insulin compared with sitting. Standing helped blood sugar a little; walking helped more.\n\nNo equipment. No membership. Stand up after you eat and move.\n\nGeneral information, not medical advice. If you manage blood sugar for a health condition, ask your doctor what's right for you.",
+          "parts": [
+            "A 2-minute habit with real research behind it.",
+            "After a meal, your blood sugar rises, then falls.",
+            "A 2022 review of 7 studies (Sports Medicine) found light walking after eating, even 2–5 minutes, lowered blood sugar and insulin compared with sitting.",
+            "Standing up helped blood sugar a little. Walking helped more.",
+            "Timing: the authors suggest moving within 60–90 minutes after eating.",
+            "Make it automatic: walk to the mailbox and back after dinner, take calls on your feet, do the dishes before you sit down.",
+            "Small habit, compounding return. Save this for after your next meal."
+          ],
+          "hashtags": [
+            "healthyhabits",
+            "walking",
+            "longevity",
+            "wellness"
+          ],
+          "cta": "Save this and try it after dinner tonight.",
+          "moneyAngle": "Saveable health-habit carousels grow reach and fit wellness brand partnerships."
+        },
+        {
+          "id": "2026-10-13-07",
+          "type": "video",
+          "platform": "tiktok",
+          "niche": "finance",
+          "style": "funny",
+          "length": "s90",
+          "topic": "Bitcoin Pizza Day: 10,000 BTC for two pizzas",
+          "titles": [
+            "He Paid 10,000 Bitcoin for Two Pizzas",
+            "The $1 Billion Pizza Order",
+            "The Most Expensive Lunch in History"
+          ],
+          "hook": "In 2010, a man paid for two pizzas with money that would later be worth a billion dollars.",
+          "caption": "May 22, 2010: 10,000 bitcoin for two pizzas. Worth about $41 then. Worth $1 billion once bitcoin crossed $100,000. Not investment advice, just the most expensive lunch in history.",
+          "hashtags": [
+            "bitcoin",
+            "history",
+            "money",
+            "opportunitycost",
+            "didyouknow"
+          ],
+          "cta": "Follow for true money stories with a lesson inside.",
+          "thumbnail": {
+            "text": "2 PIZZAS. $1 BILLION.",
+            "prompt": "Two closed pizza boxes on a kitchen counter next to a glowing gold coin with no logo, dramatic warm light, shallow depth of field, vertical 9:16, empty space at the top for text"
+          },
+          "voice": "Dry, deadpan documentary narrator, about 155 words per minute. Half-second pause before \"about 41 dollars\" and before \"one billion dollars\".",
+          "music": "Light lo-fi beat under the setup; cuts out completely on \"one billion dollars\"; returns softer for the lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:07",
+              "narration": "In 2010, a man paid for two pizzas with money that would later be worth a billion dollars.",
+              "onScreen": "2 pizzas = $1 billion?",
+              "visual": "Two pizza boxes on a counter, slow-motion steam rising, cinematic close-up",
+              "motion": "Fast push-in",
+              "sfx": "Cash register ding"
+            },
+            {
+              "time": "0:07–0:10",
+              "narration": "His name was Laszlo Hanyecz, a programmer in Florida.",
+              "onScreen": "Florida, 2010",
+              "visual": "Glowing old CRT monitor in a dark home office, 2010 era, no visible brand",
+              "motion": "Slow pan right",
+              "sfx": "Keyboard clacks"
+            },
+            {
+              "time": "0:10–0:17",
+              "narration": "He was one of the earliest bitcoin miners, back when a coin was worth almost nothing.",
+              "onScreen": "1 coin ≈ almost nothing",
+              "visual": "Abstract green code scrolling on a dark screen",
+              "motion": "Zoom out",
+              "sfx": "Low digital hum"
+            },
+            {
+              "time": "0:17–0:24",
+              "narration": "On May 18th, he posted an offer on a bitcoin forum: ten thousand bitcoin for two large pizzas.",
+              "onScreen": "10,000 BTC for 2 pizzas",
+              "visual": "Retro web forum page with a typed message appearing, generic design",
+              "motion": "Typewriter text reveal",
+              "sfx": "Typing sound"
+            },
+            {
+              "time": "0:24–0:26",
+              "narration": "Four days later, someone took the deal.",
+              "onScreen": "May 22, 2010",
+              "visual": "Calendar page flipping to May 22",
+              "motion": "Snap zoom",
+              "sfx": "Paper flip"
+            },
+            {
+              "time": "0:26–0:32",
+              "narration": "A nineteen-year-old who went by \"jercos\" ordered two Papa John's pizzas and had them delivered.",
+              "onScreen": "Order placed.",
+              "visual": "Delivery driver's hand handing over two plain pizza boxes at a front door, night",
+              "motion": "Handheld follow shot",
+              "sfx": "Doorbell"
+            },
+            {
+              "time": "0:32–0:37",
+              "narration": "At the time, those ten thousand bitcoin were worth about 41 dollars.",
+              "onScreen": "Value then: about $41",
+              "visual": "Two crumpled twenty-dollar bills and a single dollar on a table",
+              "motion": "Slow push-in",
+              "sfx": ""
+            },
+            {
+              "time": "0:37–0:40",
+              "narration": "The teenager made a small profit. Fair deal.",
+              "onScreen": "Fair deal.",
+              "visual": "Hands lifting a cheesy pizza slice, close-up",
+              "motion": "Slow motion",
+              "sfx": "Satisfied crunch"
+            },
+            {
+              "time": "0:40–0:43",
+              "narration": "Then bitcoin's price did something nobody expected.",
+              "onScreen": "Then…",
+              "visual": "Price chart line starting flat and slowly bending upward, dark background",
+              "motion": "Line draws in",
+              "sfx": "Rising tone"
+            },
+            {
+              "time": "0:43–0:48",
+              "narration": "In December 2024, bitcoin crossed one hundred thousand dollars per coin for the first time.",
+              "onScreen": "$100,000 per coin",
+              "visual": "Price chart line shooting steeply upward with sparks",
+              "motion": "Speed ramp up",
+              "sfx": "Whoosh"
+            },
+            {
+              "time": "0:48–0:52",
+              "narration": "At that price, those two pizzas cost one billion dollars.",
+              "onScreen": "$1,000,000,000",
+              "visual": "Single pizza box alone on a pedestal under a spotlight in a dark room",
+              "motion": "Hard cut, hold still",
+              "sfx": "Silence, then a single bass hit"
+            },
+            {
+              "time": "0:52–0:55",
+              "narration": "May 22nd is now Bitcoin Pizza Day.",
+              "onScreen": "Bitcoin Pizza Day",
+              "visual": "Party table with several pizza boxes and paper decorations, warm light",
+              "motion": "Slow pan across table",
+              "sfx": "Party horn"
+            },
+            {
+              "time": "0:55–1:02",
+              "narration": "But Hanyecz wasn't being careless. He has said he wanted to show bitcoin could actually buy something.",
+              "onScreen": "Proof it could buy something",
+              "visual": "Hand sliding a gold coin with no logo across a counter in exchange for a pizza box",
+              "motion": "Close-up track",
+              "sfx": "Coin slide"
+            },
+            {
+              "time": "1:02–1:08",
+              "narration": "A currency nobody spends is just a number on a screen. Someone had to go first.",
+              "onScreen": "Someone had to go first",
+              "visual": "Single footprint in fresh snow, top-down view",
+              "motion": "Slow crane up",
+              "sfx": "Soft wind"
+            },
+            {
+              "time": "1:08–1:11",
+              "narration": "And in interviews, he's said he doesn't regret it.",
+              "onScreen": "No regrets",
+              "visual": "Person from behind eating pizza on a couch, face not visible, relaxed",
+              "motion": "Static wide shot",
+              "sfx": ""
+            },
+            {
+              "time": "1:11–1:19",
+              "narration": "The real lesson isn't \"never spend.\" It's that every purchase has a hidden price: what that money could have become.",
+              "onScreen": "Every purchase has a hidden price",
+              "visual": "Price tag on a pizza box flipping over to reveal a question mark",
+              "motion": "Flip transition",
+              "sfx": "Paper flip"
+            },
+            {
+              "time": "1:19–1:24",
+              "narration": "Economists call it opportunity cost. His just came with a lot more zeros.",
+              "onScreen": "Opportunity cost",
+              "visual": "Zeros multiplying across the screen in clean white type on black",
+              "motion": "Text pop",
+              "sfx": "Pop pop pop"
+            },
+            {
+              "time": "1:24–1:28",
+              "narration": "Next time you order lunch, remember the priciest one ever.",
+              "onScreen": "The priciest lunch ever",
+              "visual": "Pizza box lid closing in slow motion, warm light",
+              "motion": "Slow motion close",
+              "sfx": "Box thud"
+            }
+          ],
+          "loopLine": "Next time you order lunch, remember the priciest one ever.",
+          "factCheck": [
+            "Laszlo Hanyecz posted the offer on the Bitcointalk forum on May 18, 2010",
+            "The trade completed on May 22, 2010: 10,000 BTC for two large Papa John's pizzas",
+            "The seller was Jeremy Sturdivant (forum name \"jercos\"), age 19 at the time (CoinDesk)",
+            "Value at the time: about $41 (CoinDesk)",
+            "Bitcoin first crossed $100,000 per coin in early December 2024",
+            "Hanyecz has said in interviews that he doesn't regret the trade and wanted to show bitcoin could be used to buy things"
+          ],
+          "moneyAngle": "Finance stories carry high advertiser demand, and a runtime over one minute qualifies for TikTok's creator rewards."
+        },
+        {
+          "id": "2026-10-13-08",
+          "type": "video",
+          "platform": "instagram",
+          "niche": "finance",
+          "style": "explainer",
+          "length": "s60",
+          "topic": "Save More Tomorrow: committing future raises to savings",
+          "titles": [
+            "The Savings Plan You Never Feel",
+            "How to Save 4x More Without a Smaller Paycheck",
+            "Save More Tomorrow, Explained"
+          ],
+          "hook": "Two economists got people saving almost four times more, without cutting anything today.",
+          "caption": "Save More Tomorrow: commit part of each future raise to savings before you ever see it. At the first company that tried it, participants' average savings rate went from 3.5% to 13.6% in 40 months (Thaler & Benartzi, 2004). Educational, not personal advice.",
+          "hashtags": [
+            "personalfinance",
+            "saving",
+            "behavioraleconomics",
+            "money",
+            "financialliteracy"
+          ],
+          "cta": "Save this for your next raise.",
+          "thumbnail": {
+            "text": "SAVE 4X MORE",
+            "prompt": "Paycheck envelope splitting into two neat stacks of cash, one labeled savings, clean bright studio light, vertical 9:16, empty space at top for text"
+          },
+          "voice": "Clear, confident explainer voice, about 155 words per minute; brief pause before \"3.5% to 13.6%\".",
+          "music": "Upbeat minimal electronic beat; drops to half volume during the three reasons.",
+          "scenes": [
+            {
+              "time": "0:00–0:05",
+              "narration": "Two economists got people saving almost four times more, without cutting anything today.",
+              "onScreen": "Almost 4x more saved",
+              "visual": "Piggy bank growing larger in quick stop-motion steps",
+              "motion": "Snap zoom",
+              "sfx": "Coin clink"
+            },
+            {
+              "time": "0:05–0:09",
+              "narration": "Richard Thaler and Shlomo Benartzi called it Save More Tomorrow.",
+              "onScreen": "Save More Tomorrow",
+              "visual": "Calendar with tomorrow's date circled in pen",
+              "motion": "Slow push-in",
+              "sfx": "Pen scribble"
+            },
+            {
+              "time": "0:09–0:12",
+              "narration": "The problem: people hate seeing their paycheck shrink.",
+              "onScreen": "Nobody likes a smaller paycheck",
+              "visual": "Hand opening a paycheck envelope, disappointed shrug, face not visible",
+              "motion": "Handheld close-up",
+              "sfx": "Paper tear"
+            },
+            {
+              "time": "0:12–0:15",
+              "narration": "So the plan didn't touch today's pay.",
+              "onScreen": "Today's pay: untouched",
+              "visual": "Paycheck stub with a green check mark appearing",
+              "motion": "Pop-in graphic",
+              "sfx": "Soft ding"
+            },
+            {
+              "time": "0:15–0:20",
+              "narration": "Workers agreed in advance to send part of each future raise to savings.",
+              "onScreen": "Future raises → savings",
+              "visual": "Animated arrow moving from a rising salary bar into a savings jar",
+              "motion": "Animated arrow",
+              "sfx": "Whoosh"
+            },
+            {
+              "time": "0:20–0:24",
+              "narration": "Take-home pay never went down. It just grew a little slower.",
+              "onScreen": "Paycheck never shrinks",
+              "visual": "Bar chart where each bar is slightly taller than the last",
+              "motion": "Bars grow in",
+              "sfx": ""
+            },
+            {
+              "time": "0:24–0:30",
+              "narration": "At the first company, those who joined went from saving 3.5% to 13.6% in 40 months.",
+              "onScreen": "3.5% → 13.6%",
+              "visual": "Large animated number counting up from 3.5 to 13.6 percent",
+              "motion": "Number count-up",
+              "sfx": "Rising tick sounds"
+            },
+            {
+              "time": "0:30–0:33",
+              "narration": "They published the results in 2004.",
+              "onScreen": "Published 2004",
+              "visual": "Stack of academic journals on a wooden desk",
+              "motion": "Slow tilt down",
+              "sfx": "Page turn"
+            },
+            {
+              "time": "0:33–0:35",
+              "narration": "It turns three bad habits into help.",
+              "onScreen": "3 bugs → 3 features",
+              "visual": "Three red warning icons flipping to green check marks",
+              "motion": "Flip transition",
+              "sfx": "Click click click"
+            },
+            {
+              "time": "0:35–0:39",
+              "narration": "We put things off, so the cost comes later.",
+              "onScreen": "We procrastinate",
+              "visual": "Snooze button being pressed on an alarm clock",
+              "motion": "Quick cut",
+              "sfx": "Alarm snooze click"
+            },
+            {
+              "time": "0:39–0:43",
+              "narration": "We hate losses, so you never see a smaller check.",
+              "onScreen": "We hate losses",
+              "visual": "Hand gripping a wallet tightly",
+              "motion": "Slow push-in",
+              "sfx": ""
+            },
+            {
+              "time": "0:43–0:47",
+              "narration": "We rarely change defaults, so once it's set, it keeps going.",
+              "onScreen": "We stick to defaults",
+              "visual": "Settings toggle switching on and staying on",
+              "motion": "Toggle animation",
+              "sfx": "Switch click"
+            },
+            {
+              "time": "0:47–0:53",
+              "narration": "Your move: at your next raise, send part to savings before it hits your account.",
+              "onScreen": "Next raise: split it",
+              "visual": "Phone screen showing a generic banking app transferring money to savings, no brand",
+              "motion": "Screen-record style zoom",
+              "sfx": "Notification ping"
+            },
+            {
+              "time": "0:53–0:57",
+              "narration": "Because the best savings plan is the one you never feel.",
+              "onScreen": "The plan you never feel",
+              "visual": "Person walking away from camera on a sunny street, relaxed, face not visible",
+              "motion": "Slow dolly back",
+              "sfx": "Beat resolves"
+            }
+          ],
+          "loopLine": "Because the best savings plan is the one you never feel.",
+          "factCheck": [
+            "Save More Tomorrow was designed by economists Richard Thaler and Shlomo Benartzi",
+            "Published in the Journal of Political Economy in 2004",
+            "First implementation: participants' average saving rates rose from 3.5% to 13.6% over 40 months",
+            "The design uses procrastination, loss aversion and inertia (defaults) in savers' favor"
+          ],
+          "moneyAngle": "Personal-finance Reels attract high-paying finance advertisers and drive saves and shares."
+        },
+        {
+          "id": "2026-10-13-09",
+          "type": "video",
+          "platform": "youtube",
+          "niche": "edu",
+          "style": "explainer",
+          "length": "s60",
+          "topic": "Implementation intentions (if-then plans)",
+          "titles": [
+            "The One Sentence That Makes You Follow Through",
+            "If-Then Plans: The Science of Following Through",
+            "Stop Relying on Motivation. Use This Instead."
+          ],
+          "hook": "One sentence makes you more likely to follow through on a goal.",
+          "caption": "If-then plans (\"implementation intentions\"): a 2006 analysis of 94 studies by Gollwitzer and Sheeran found a medium-to-large effect on reaching goals. Write yours in the comments.",
+          "hashtags": [
+            "psychology",
+            "habits",
+            "productivity"
+          ],
+          "cta": "Write your if-then sentence in the comments.",
+          "thumbnail": {
+            "text": "IF ___ THEN ___",
+            "prompt": "Notebook page with a handwritten if-then sentence, pen resting on it, warm desk lamp light, vertical 9:16, empty space at top for text"
+          },
+          "voice": "Calm, confident teacher voice, about 155 words per minute; slow down on the example sentence.",
+          "music": "Soft focus beat; brief silence after \"94 studies\".",
+          "scenes": [
+            {
+              "time": "0:00–0:05",
+              "narration": "One sentence makes you more likely to follow through on a goal.",
+              "onScreen": "One sentence. Real results.",
+              "visual": "Hand writing a single sentence on a blank notebook page",
+              "motion": "Top-down push-in",
+              "sfx": "Pen scratch"
+            },
+            {
+              "time": "0:05–0:07",
+              "narration": "It's called an if-then plan.",
+              "onScreen": "If ___, then ___",
+              "visual": "Two puzzle pieces labeled IF and THEN clicking together",
+              "motion": "Snap together",
+              "sfx": "Click"
+            },
+            {
+              "time": "0:07–0:10",
+              "narration": "Psychologist Peter Gollwitzer named it an implementation intention.",
+              "onScreen": "Implementation intention",
+              "visual": "Library shelves with psychology books, soft light",
+              "motion": "Slow pan",
+              "sfx": ""
+            },
+            {
+              "time": "0:10–0:12",
+              "narration": "Instead of \"I'll exercise more,\" you write:",
+              "onScreen": "\"I'll exercise more\" ✗",
+              "visual": "Sticky note reading I'll exercise more being crumpled",
+              "motion": "Crumple and toss",
+              "sfx": "Paper crumple"
+            },
+            {
+              "time": "0:12–0:18",
+              "narration": "\"If it's 7 a.m. on a weekday, then I put on my running shoes.\"",
+              "onScreen": "If 7 a.m., then shoes",
+              "visual": "Running shoes by a door with morning light, alarm clock showing 7:00",
+              "motion": "Slow push-in",
+              "sfx": "Morning birds"
+            },
+            {
+              "time": "0:18–0:23",
+              "narration": "In 2006, Gollwitzer and Paschal Sheeran analyzed 94 studies of this technique.",
+              "onScreen": "94 studies",
+              "visual": "Stack of research papers fanning out across a desk",
+              "motion": "Fan-out animation",
+              "sfx": "Paper shuffle"
+            },
+            {
+              "time": "0:23–0:26",
+              "narration": "If-then plans had a medium-to-large effect on actually reaching goals.",
+              "onScreen": "Medium-to-large effect",
+              "visual": "Bar graph with one bar rising clearly above another",
+              "motion": "Bar grows",
+              "sfx": "Rising tone"
+            },
+            {
+              "time": "0:26–0:29",
+              "narration": "Why? A vague goal waits for motivation.",
+              "onScreen": "Vague goals wait",
+              "visual": "Person sitting on a couch scrolling a phone, face not visible",
+              "motion": "Static shot",
+              "sfx": "Clock ticking"
+            },
+            {
+              "time": "0:29–0:34",
+              "narration": "An if-then plan hands the decision to a cue you'll definitely hit.",
+              "onScreen": "Cues don't wait",
+              "visual": "Domino tapped and starting a chain reaction",
+              "motion": "Slow motion",
+              "sfx": "Domino clicks"
+            },
+            {
+              "time": "0:34–0:38",
+              "narration": "The cue shows up, you act, and you skip the debate.",
+              "onScreen": "Skip the debate",
+              "visual": "Door swinging open onto a bright morning street",
+              "motion": "Push through door",
+              "sfx": "Door creak"
+            },
+            {
+              "time": "0:38–0:45",
+              "narration": "It works on distractions too: if I reach for my phone, then it goes in another room.",
+              "onScreen": "Phone → another room",
+              "visual": "Phone placed in a drawer and the drawer sliding shut",
+              "motion": "Close-up",
+              "sfx": "Drawer slide"
+            },
+            {
+              "time": "0:45–0:50",
+              "narration": "Pick one goal. Make the \"if\" a time, a place, or something you already do.",
+              "onScreen": "Time. Place. Habit.",
+              "visual": "Three icons appearing: a clock, a map pin, a coffee cup",
+              "motion": "Icon pops",
+              "sfx": "Pop pop pop"
+            },
+            {
+              "time": "0:50–0:55",
+              "narration": "Write the sentence once, then let the cue do the work.",
+              "onScreen": "Let the cue work",
+              "visual": "Notebook closing with the sentence visible on the cover sticky note",
+              "motion": "Slow close",
+              "sfx": "Book close"
+            },
+            {
+              "time": "0:55–0:58",
+              "narration": "Because the right sentence beats waiting for motivation.",
+              "onScreen": "Sentence > motivation",
+              "visual": "Hand underlining the if-then sentence twice",
+              "motion": "Push-in",
+              "sfx": "Pen underline"
+            }
+          ],
+          "loopLine": "Because the right sentence beats waiting for motivation.",
+          "factCheck": [
+            "Peter Gollwitzer introduced the term \"implementation intentions\"",
+            "Gollwitzer and Sheeran's 2006 meta-analysis covered 94 independent tests",
+            "The meta-analysis found a medium-to-large effect on goal attainment (d = 0.65)"
+          ],
+          "moneyAngle": "Self-improvement explainers are evergreen on YouTube Shorts and feed a channel that can grow into long-form ad revenue."
+        },
+        {
+          "id": "2026-10-13-10",
+          "type": "video",
+          "platform": "facebook",
+          "niche": "tech",
+          "style": "true",
+          "length": "s60",
+          "topic": "ELIZA and the ELIZA effect",
+          "titles": [
+            "The 1960s Chatbot People Confided In",
+            "Why We Trust Machines That Talk Back",
+            "The ELIZA Effect, Explained"
+          ],
+          "hook": "In the 1960s, a program felt so real its creator's secretary asked him to leave the room.",
+          "caption": "ELIZA, built by MIT's Joseph Weizenbaum in the 1960s, only matched patterns, yet people confided in it anyway. The lesson still applies to every chatbot: fluent isn't the same as correct.",
+          "hashtags": [
+            "AI",
+            "history",
+            "technology"
+          ],
+          "cta": "Follow for the true stories behind the tech you use every day.",
+          "thumbnail": {
+            "text": "SHE TRUSTED IT",
+            "prompt": "Vintage 1960s computer terminal glowing green text in a dim office, empty chair in front of it, cinematic, vertical 9:16, empty space at top for text"
+          },
+          "voice": "Measured documentary narrator, about 155 words per minute; quiet pause after \"leave the room\".",
+          "music": "Retro synth pad, slow and slightly eerie; lifts gently for the takeaway.",
+          "scenes": [
+            {
+              "time": "0:00–0:07",
+              "narration": "In the 1960s, a program felt so real its creator's secretary asked him to leave the room.",
+              "onScreen": "\"Please leave the room.\"",
+              "visual": "Vintage computer terminal with green text in a dim 1960s office",
+              "motion": "Slow push-in",
+              "sfx": "Terminal beep"
+            },
+            {
+              "time": "0:07–0:10",
+              "narration": "The program was ELIZA, written by MIT professor Joseph Weizenbaum.",
+              "onScreen": "ELIZA · MIT · 1966",
+              "visual": "Old university hallway with wood doors, 1960s feel, no people",
+              "motion": "Slow dolly forward",
+              "sfx": "Footsteps echo"
+            },
+            {
+              "time": "0:10–0:15",
+              "narration": "It played a therapist, mostly turning your words back into questions.",
+              "onScreen": "Simple tricks",
+              "visual": "Green text on a black screen echoing a sentence back as a question",
+              "motion": "Text types on",
+              "sfx": "Typing"
+            },
+            {
+              "time": "0:15–0:18",
+              "narration": "It didn't understand a single word. It matched patterns.",
+              "onScreen": "Zero understanding",
+              "visual": "Puzzle pieces fitting by shape only, close-up",
+              "motion": "Snap fit",
+              "sfx": "Click"
+            },
+            {
+              "time": "0:18–0:26",
+              "narration": "He wrote that his secretary had watched him build it for months, yet still asked for privacy with it.",
+              "onScreen": "She knew. She still confided.",
+              "visual": "Empty office chair facing a glowing terminal, door slightly open",
+              "motion": "Slow pan to door",
+              "sfx": "Door closing softly"
+            },
+            {
+              "time": "0:26–0:31",
+              "narration": "People knew it was a program, and they opened up to it anyway.",
+              "onScreen": "They opened up anyway",
+              "visual": "Hands resting on a vintage keyboard, hesitating",
+              "motion": "Close-up",
+              "sfx": "Single key press"
+            },
+            {
+              "time": "0:31–0:36",
+              "narration": "It unsettled him so much that he became one of AI's sharpest early critics.",
+              "onScreen": "Its creator became a critic",
+              "visual": "Stack of typed manuscript pages on a desk under a lamp",
+              "motion": "Slow tilt",
+              "sfx": "Paper rustle"
+            },
+            {
+              "time": "0:36–0:39",
+              "narration": "The reaction now has a name: the ELIZA effect.",
+              "onScreen": "The ELIZA effect",
+              "visual": "Bold white title text appearing on a black background",
+              "motion": "Text slam",
+              "sfx": "Bass hit"
+            },
+            {
+              "time": "0:39–0:43",
+              "narration": "We read understanding into anything that talks back fluently.",
+              "onScreen": "Fluent feels smart",
+              "visual": "Modern phone screen with a chat bubble interface, generic design",
+              "motion": "Push-in",
+              "sfx": "Message whoosh"
+            },
+            {
+              "time": "0:43–0:47",
+              "narration": "Today's chatbots are far smarter. They can still be confidently wrong.",
+              "onScreen": "Fluent ≠ correct",
+              "visual": "Chat bubble with a red underline appearing beneath one sentence",
+              "motion": "Underline wipe",
+              "sfx": "Error buzz"
+            },
+            {
+              "time": "0:47–0:52",
+              "narration": "So treat a smooth answer as style, not proof. Check anything that matters.",
+              "onScreen": "Check what matters",
+              "visual": "Magnifying glass moving over printed text",
+              "motion": "Slow track",
+              "sfx": ""
+            },
+            {
+              "time": "0:52–0:57",
+              "narration": "Because a smooth talker was fooling people back in the 1960s too.",
+              "onScreen": "Smooth talk, 1960s too",
+              "visual": "Vintage terminal screen fading to black",
+              "motion": "Fade out",
+              "sfx": "Terminal beep"
+            }
+          ],
+          "loopLine": "Because a smooth talker was fooling people back in the 1960s too.",
+          "factCheck": [
+            "ELIZA was created by Joseph Weizenbaum at MIT and described in a 1966 paper",
+            "Its best-known script, DOCTOR, imitated a Rogerian psychotherapist by reflecting users' statements back as questions",
+            "Weizenbaum wrote in Computer Power and Human Reason (1976) that his secretary, who had watched him work on the program for months, asked him to leave the room so she could talk to it",
+            "Weizenbaum became a prominent critic of over-trusting computers",
+            "The term \"ELIZA effect\" describes people attributing understanding to computer programs"
+          ],
+          "moneyAngle": "Tech-history Reels earn broad reach on Facebook and attract technology and software advertisers."
+        }
+      ]
+    }
+  ]
+}
