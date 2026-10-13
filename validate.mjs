@@ -37,10 +37,13 @@ batches.forEach((b, bi) => {
   if (bi > 0 && b.id >= batches[bi - 1].id) err(where, "batches must be newest first");
   if (!Array.isArray(b.items)) return err(where, '"items" must be an array');
   if (bi === 0 && b.items.length !== 10) err(where, `the newest batch needs 10 items (found ${b.items.length})`);
+  if (b.bank !== undefined && !Array.isArray(b.bank)) err(where, '"bank" must be an array');
+  if (bi === 0 && (b.bank ?? []).length !== 8) err(where, `the newest batch needs 8 bank pieces (found ${(b.bank ?? []).length})`);
 
-  b.items.forEach((it, ii) => {
-    const w = `${it.id ?? `${where} item ${ii + 1}`}`;
-    if (!new RegExp(`^${b.id}-\\d{2}$`).test(it.id ?? "")) err(w, `id must be ${b.id}-NN`);
+  const all = [...b.items.map((it) => [it, ""]), ...(Array.isArray(b.bank) ? b.bank : []).map((it) => [it, "B"])];
+  all.forEach(([it, prefix], ii) => {
+    const w = `${it.id ?? `${where} piece ${ii + 1}`}`;
+    if (!new RegExp(`^${b.id}-${prefix}\\d{2}$`).test(it.id ?? "")) err(w, `id must be ${b.id}-${prefix}NN`);
     if (seen.has(it.id)) err(w, "duplicate id");
     seen.add(it.id);
     if (!PLATFORMS.includes(it.platform)) err(w, `platform must be one of ${PLATFORMS.join(", ")}`);
@@ -98,4 +101,4 @@ if (errors.length) {
   console.error(`\n${errors.length} problem${errors.length === 1 ? "" : "s"} — fix and run again.`);
   process.exit(1);
 }
-console.log(`OK — ${batches.length} batch${batches.length === 1 ? "" : "es"}, ${seen.size} items.`);
+console.log(`OK — ${batches.length} batch${batches.length === 1 ? "" : "es"}, ${seen.size} pieces (drafts + bank).`);
