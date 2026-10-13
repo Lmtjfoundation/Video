@@ -6,6 +6,7 @@ import { fmtDateTime, timeAgo } from "@/lib/client";
 import { Badge, Button, Card, CardHeader, Empty, PageHeader, PlatformChip, ScoreRing, Stat, Switch } from "@/components/ui";
 import { cn, usd } from "@/lib/utils";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
+import { StarterButton } from "@/components/starter-button";
 
 export default function Dashboard() {
   const { status, updateSettings } = useApp();
@@ -188,7 +189,12 @@ export default function Dashboard() {
               icon={<CalendarDays className="h-6 w-6" />}
               title="Nothing scheduled"
               body="Fill your week in one click — the agent writes and schedules 3 posts a day per platform."
-              action={<Link href="/calendar"><Button variant="primary">Open calendar <ArrowRight className="h-4 w-4" /></Button></Link>}
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Link href="/calendar"><Button variant="primary">Open calendar <ArrowRight className="h-4 w-4" /></Button></Link>
+                  <StarterButton size="md" label="See ready-made posts" goTo="/studio" />
+                </div>
+              }
             />
           )}
         </Card>

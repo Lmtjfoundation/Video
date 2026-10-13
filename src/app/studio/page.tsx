@@ -11,6 +11,7 @@ import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import { FORMAT_LABEL, PILLAR_LABEL, cn } from "@/lib/utils";
 import { Button, Card, CardHeader, Empty, Field, Input, PageHeader, Select, Switch, Textarea } from "@/components/ui";
 import { PostCard } from "@/components/post-card";
+import { StarterButton } from "@/components/starter-button";
 import { NICHES } from "@/lib/niches";
 import { lengthAllowed, videoCredits, VIDEO_LENGTHS, VIDEO_STYLES, VIDEO_TARGET } from "@/lib/video-spec";
 import type { VideoPlan } from "@/lib/types";
@@ -109,6 +110,7 @@ export default function Studio() {
         subtitle="Generate on-voice posts, score their money potential, and push them to the calendar."
         actions={
           <div className="flex flex-wrap gap-2">
+            <StarterButton onDone={load} variant="primary" />
             <Button size="sm" onClick={() => setImportOpen(true)}><FileUp className="h-3.5 w-3.5" /> Import CSV</Button>
             {(["csv", "md", "json"] as const).map((f) => (
               <a key={f} href={`/api/export?type=posts&format=${f}`}>
@@ -284,7 +286,12 @@ export default function Studio() {
           </div>
           {!shown.length && !busy && (
             <Card>
-              <Empty icon={<Sparkles className="h-6 w-6" />} title="No posts here yet" body="Pick a platform and hit Generate. Drafts stay private until you schedule or post them." />
+              <Empty
+                icon={<Sparkles className="h-6 w-6" />}
+                title="No posts here yet"
+                body="Pick a platform and hit Generate, or add ready-made posts: hand-written true stories plus two finished video plans you can render. They use no credits. Drafts stay private until you schedule or post them."
+                action={<StarterButton onDone={load} variant="primary" size="md" />}
+              />
             </Card>
           )}
         </div>
