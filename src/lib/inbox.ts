@@ -15,6 +15,9 @@ import { PLATFORMS } from "./types";
  * separate GitHub branch. Every 15 minutes the app reads that file and imports anything new as drafts
  * in the owner's account. No Claude API key or API credits are involved on the app's side.
  *
+ * Each batch can also carry a `bank`: extra finished pieces that are NOT shown as drafts. They are kept in
+ * reserve, and when Claude's API can't write (no credits), the Generate button hands them out instead.
+ *
  * CONTENT_INBOX_URL   — raw JSON URL (defaults to the nexus-pulse-content branch below)
  * CONTENT_INBOX_OWNER — email of the account that receives the drafts (defaults to the first admin)
  * CONTENT_INBOX=off   — turns the importer off
@@ -22,7 +25,17 @@ import { PLATFORMS } from "./types";
 export const DEFAULT_INBOX_URL = "https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-content/inbox.json";
 
 const DONE_KEY = "inbox_imported";
+const BANK_KEY = "inbox_bank";
 const MAX_PER_RUN = 60;
+const BANK_MAX = 80;
+
+interface BankEntry {
+  id: string;
+  platform: Platform;
+  type: "post" | "video";
+  addedAt: string;
+  item: InboxPost;
+}
 
 interface InboxPost {
   id?: unknown;
@@ -52,11 +65,12 @@ interface InboxPost {
 }
 
 interface Inbox {
-  batches?: { id?: unknown; items?: unknown }[];
+  batches?: { id?: unknown; items?: unknown; bank?: unknown }[];
 }
 
 export interface InboxResult {
   imported: number;
+  banked?: number;
   skipped: number;
   errors: string[];
   owner?: string;
@@ -158,10 +172,12 @@ export async function importInbox(): Promise<InboxResult> {
   }
 
   const items: InboxPost[] = [];
+  const bankItems: InboxPost[] = [];
   for (const b of Array.isArray(inbox?.batches) ? inbox.batches : []) {
     if (Array.isArray(b?.items)) for (const it of b.items) if (it && typeof it === "object") items.push(it as InboxPost);
+    if (Array.isArray(b?.bank)) for (const it of b.bank) if (it && typeof it === "object") bankItems.push(it as InboxPost);
   }
-  if (!items.length) return { imported: 0, skipped: 0, errors: [], note: "Inbox is empty." };
+  if (!items.length && !bankItems.length) return { imported: 0, skipped: 0, errors: [], note: "Inbox is empty." };
 
   const owner = await ownerAccount();
   if (!owner) return { imported: 0, skipped: 0, errors: ["No active admin account to import into."] };
@@ -169,11 +185,31 @@ export async function importInbox(): Promise<InboxResult> {
   return asUser(owner.id, async () => {
     const done = new Set((await kvGet<string[]>(DONE_KEY)) ?? []);
     const fresh = items.filter((it) => str(it.id, 120) && !done.has(str(it.id, 120))).slice(0, MAX_PER_RUN);
-    if (!fresh.length) return { imported: 0, skipped: 0, errors: [], owner: owner.email };
+    const freshBank = bankItems.filter((it) => str(it.id, 120) && !done.has(str(it.id, 120))).slice(0, MAX_PER_RUN);
+    if (!fresh.length && !freshBank.length) return { imported: 0, skipped: 0, errors: [], owner: owner.email };
 
     const settings = await getSettings();
     const posts: Post[] = [];
     const errors: string[] = [];
+
+    // Reserve pieces: check they build, then keep the raw item for the Generate button.
+    let banked = 0;
+    if (freshBank.length) {
+      const bank = (await kvGet<BankEntry[]>(BANK_KEY)) ?? [];
+      for (const it of freshBank) {
+        const id = str(it.id, 120);
+        try {
+          buildPost(it, settings); // validation only
+          bank.push({ id, platform: asPlatform(it.platform)!, type: it.type === "video" ? "video" : "post", addedAt: new Date().toISOString(), item: it });
+          banked++;
+        } catch (e) {
+          errors.push(`${id}: ${(e as Error).message}`);
+        }
+        done.add(id);
+      }
+      await kvSet(BANK_KEY, bank.slice(-BANK_MAX));
+    }
+
     for (const it of fresh) {
       const id = str(it.id, 120);
       try {
@@ -187,8 +223,46 @@ export async function importInbox(): Promise<InboxResult> {
     await kvSet(DONE_KEY, [...done].slice(-3000));
     const videos = posts.filter((p) => p.kind === "video").length;
     await log(errors.length ? "warn" : "info", "generate",
-      `Imported ${posts.length} draft${posts.length === 1 ? "" : "s"} written by Claude (${posts.length - videos} posts, ${videos} video plans)${errors.length ? `; ${errors.length} skipped` : ""}`,
+      `Imported ${posts.length} draft${posts.length === 1 ? "" : "s"} written by Claude (${posts.length - videos} posts, ${videos} video plans)` +
+        `${banked ? `; ${banked} more kept in reserve for the Generate button` : ""}${errors.length ? `; ${errors.length} skipped` : ""}`,
       { errors: errors.slice(0, 20) });
-    return { imported: posts.length, skipped: errors.length, errors, owner: owner.email };
+    return { imported: posts.length, banked, skipped: errors.length, errors, owner: owner.email };
   });
+}
+
+/** How many reserve pieces are left, per platform and kind. Runs in the current user's scope. */
+export async function bankCounts() {
+  const bank = (await kvGet<BankEntry[]>(BANK_KEY)) ?? [];
+  const counts: Partial<Record<Platform, { text: number; video: number }>> = {};
+  for (const e of bank) {
+    const c = (counts[e.platform] ??= { text: 0, video: 0 });
+    if (e.type === "video") c.video++;
+    else c.text++;
+  }
+  return counts;
+}
+
+/**
+ * Takes up to `count` reserve pieces for a platform (newest first) and turns them into drafts.
+ * Runs in the current user's scope, so only the account that receives the daily batch has a bank.
+ */
+export async function takeFromBank(platform: Platform, kind: "text" | "video", count: number, settings: Settings): Promise<Post[]> {
+  const bank = (await kvGet<BankEntry[]>(BANK_KEY)) ?? [];
+  const want = kind === "video" ? "video" : "post";
+  const picked: BankEntry[] = [];
+  for (let i = bank.length - 1; i >= 0 && picked.length < count; i--) {
+    if (bank[i].platform === platform && bank[i].type === want) picked.push(bank[i]);
+  }
+  if (!picked.length) return [];
+  const posts: Post[] = [];
+  for (const e of picked) {
+    try {
+      posts.push(buildPost(e.item, settings));
+    } catch {
+      /* skip a piece that no longer builds */
+    }
+  }
+  const used = new Set(picked.map((e) => e.id));
+  await kvSet(BANK_KEY, bank.filter((e) => !used.has(e.id)));
+  return posts;
 }
