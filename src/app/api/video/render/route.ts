@@ -3,7 +3,7 @@ import { getPost, savePost } from "@/lib/repo";
 import { spendCredits } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { signedUrl } from "@/lib/media";
-import { enqueueRender, ffmpegAvailable } from "@/lib/render";
+import { enqueueRender, ffmpegAvailable, releaseOrphanedRender } from "@/lib/render";
 import type { MediaItem } from "@/lib/types";
 import { nowIso } from "@/lib/utils";
 import { elevenlabsKey, stockReady } from "@/lib/integrations";
@@ -16,11 +16,12 @@ export const POST = authed(async (req, user) => {
   const { id } = await body<{ id: string }>(req);
   const post = await getPost(id);
   if (!post || post.kind !== "video" || !post.video) return fail("Video post not found.", 404);
+  await releaseOrphanedRender(user.id, post);
   if (post.render && (post.render.status === "queued" || post.render.status === "rendering")) return ok(post);
   if (!(await ffmpegAvailable())) return fail("Video rendering isn't switched on for this server yet (ffmpeg missing). Ask the admin to add it.", 503);
   const credits = videoCredits(post.video.length, "render");
   await spendCredits(user.id, credits);
-  post.render = { status: "queued", progress: 0, message: "Waiting to render…", updatedAt: nowIso() };
+  post.render = { status: "queued", progress: 0, message: "Waiting to render…", credits, updatedAt: nowIso() };
   await savePost(post);
   enqueueRender(user.id, post.id, credits);
   return ok(post);
@@ -31,6 +32,7 @@ export const GET = authed(async (req, user) => {
   const id = new URL(req.url).searchParams.get("id") ?? "";
   const post = await getPost(id);
   if (!post) return fail("Post not found.", 404);
+  await releaseOrphanedRender(user.id, post);
   let url: string | null = null;
   if (post.render?.mediaId) {
     const m = await db().get<MediaItem>("media", post.render.mediaId);

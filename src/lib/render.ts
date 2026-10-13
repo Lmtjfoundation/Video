@@ -23,6 +23,11 @@ import { nowIso } from "./utils";
  */
 
 const FPS = 30;
+/**
+ * ffmpeg sizes its thread pools from the host's core count, which in a container can be dozens of cores and
+ * several GB of frame buffers — enough to get killed on a 1 GB server. Pin it to the CPUs we actually have.
+ */
+const THREADS = String(Math.max(1, Math.min(8, Number(process.env.RENDER_THREADS) || 2)));
 const FONT = path.join(process.cwd(), "assets", "fonts", "Poppins-Bold.ttf");
 const DEFAULT_VOICE = "JBFqnCBsd6RMkjVDRZzb"; // ElevenLabs premade narrator voice; override with ELEVENLABS_VOICE_ID
 const GRADIENTS: [string, string][] = [
@@ -33,11 +38,38 @@ const GRADIENTS: [string, string][] = [
 ];
 
 let queue: Promise<unknown> = Promise.resolve();
+/** Posts this server process is rendering or has waiting in its queue. */
+const inFlight = new Set<string>();
 
 /** Renders one video at a time so a burst of requests can't starve the web server of CPU. */
 export function enqueueRender(userId: string, postId: string, credits = 0) {
-  queue = queue.then(() => asUser(userId, () => renderVideoPost(userId, postId, credits)).catch(() => {}));
+  inFlight.add(postId);
+  queue = queue.then(() =>
+    asUser(userId, () => renderVideoPost(userId, postId, credits))
+      .catch(() => {})
+      .finally(() => inFlight.delete(postId)),
+  );
   return queue;
+}
+
+/**
+ * A post still marked "queued"/"rendering" that this process isn't working on was cut off by a server restart
+ * (a redeploy or crash). Mark it failed and refund its credits so the user can simply render again instead of
+ * watching a progress bar that never moves. Returns true when it released one.
+ */
+export async function releaseOrphanedRender(userId: string, post: Post): Promise<boolean> {
+  const r = post.render;
+  if (!r || (r.status !== "queued" && r.status !== "rendering") || inFlight.has(post.id)) return false;
+  if (Date.now() - Date.parse(r.updatedAt) < 30_000) return false; // just being started
+  post.render = {
+    status: "failed",
+    progress: 0,
+    message: `The server restarted while this video was being made, so it stopped.${r.credits ? " Your credits were refunded." : ""} Press Render video to try again.`,
+    updatedAt: nowIso(),
+  };
+  await savePost(post);
+  if (r.credits) await refundCredits(userId, r.credits);
+  return true;
 }
 
 function run(cmd: string, args: string[], timeoutMs = 10 * 60_000): Promise<string> {
@@ -45,16 +77,22 @@ function run(cmd: string, args: string[], timeoutMs = 10 * 60_000): Promise<stri
     const p = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
     let out = "";
     let err = "";
-    const t = setTimeout(() => p.kill("SIGKILL"), timeoutMs);
+    let timedOut = false;
+    const t = setTimeout(() => {
+      timedOut = true;
+      p.kill("SIGKILL");
+    }, timeoutMs);
     p.stdout.on("data", (d) => (out += d));
     p.stderr.on("data", (d) => (err = (err + d).slice(-4000)));
     p.on("error", (e) => {
       clearTimeout(t);
       reject(e);
     });
-    p.on("close", (code) => {
+    p.on("close", (code, signal) => {
       clearTimeout(t);
-      code === 0 ? resolve(out) : reject(new Error(`${cmd} failed (${code}): ${err.slice(-600)}`));
+      if (code === 0) return resolve(out);
+      const why = timedOut ? "timed out" : signal ? `killed by ${signal}` : `exit ${code}`;
+      reject(new Error(`${cmd} failed (${why}): ${err.slice(-600)}`));
     });
   });
 }
@@ -126,7 +164,7 @@ async function pixabayClip(query: string, portrait: boolean, file: string): Prom
       return portrait ? vb - va : va - vb;
     });
     for (const h of ordered) {
-      const sizes = portrait ? [h.videos.large, h.videos.medium, h.videos.small] : [h.videos.medium, h.videos.large, h.videos.small];
+      const sizes = [h.videos.medium, h.videos.small, h.videos.large];
       const pick = sizes.find((v) => v?.url && v.size > 0 && v.size < 60 * 1024 * 1024) ?? sizes.find((v) => v?.url);
       if (!pick) continue;
       const dl = await fetch(pick.url, { headers: { "User-Agent": pexelsHeaders("")["User-Agent"] } });
@@ -224,13 +262,15 @@ interface SceneJob {
 async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H: number): Promise<string> {
   const out = path.join(dir, `seg${String(i).padStart(3, "0")}.mp4`);
   const F = Math.max(1, Math.round(job.dur * FPS));
-  const args: string[] = ["-hide_banner", "-y"];
+  const args: string[] = ["-hide_banner", "-y", "-filter_complex_threads", THREADS];
 
-  // Inputs: [0] visual, [1] audio
+  // Inputs: [0] visual, [1] audio (decoder threads capped per input)
+  args.push("-threads", THREADS);
   const vis = job.visual;
   if (vis.kind === "gradient") args.push("-f", "lavfi", "-t", job.dur.toFixed(3), "-i", `gradients=s=${W}x${H}:c0=${vis.colors[0]}:c1=${vis.colors[1]}:speed=0.015:r=${FPS}`);
   else if (vis.kind === "image") args.push("-i", vis.file);
   else args.push("-stream_loop", "-1", "-t", job.dur.toFixed(3), "-i", vis.file);
+  args.push("-threads", THREADS);
   if (job.audio) args.push("-i", job.audio);
   else args.push("-f", "lavfi", "-t", job.dur.toFixed(3), "-i", "anullsrc=r=44100:cl=stereo");
 
@@ -239,7 +279,7 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
     // Slow Ken Burns push-in, alternating direction per scene.
     const zin = i % 2 === 0;
     const z = zin ? `1+0.12*on/${F}` : `1.12-0.12*on/${F}`;
-    v = `[0:v]scale=${W * 2}:${H * 2}:force_original_aspect_ratio=increase,crop=${W * 2}:${H * 2},zoompan=z='${z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${F}:s=${W}x${H}:fps=${FPS}`;
+    v = `[0:v]scale=${Math.round(W * 1.5)}:${Math.round(H * 1.5)}:force_original_aspect_ratio=increase,crop=${Math.round(W * 1.5)}:${Math.round(H * 1.5)},zoompan=z='${z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${F}:s=${W}x${H}:fps=${FPS}`;
   } else if (job.visual.kind === "video") {
     v = `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},fps=${FPS}`;
   } else {
@@ -269,7 +309,7 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
     "-filter_complex", `${v};[1:a]aresample=44100,apad,atrim=0:${job.dur.toFixed(3)}[a]`,
     "-map", "[v]", "-map", "[a]",
     "-frames:v", String(F),
-    "-c:v", "libx264", "-preset", process.env.RENDER_PRESET || "veryfast", "-crf", "20", "-r", String(FPS), "-pix_fmt", "yuv420p",
+    "-c:v", "libx264", "-preset", process.env.RENDER_PRESET || "veryfast", "-crf", "20", "-r", String(FPS), "-pix_fmt", "yuv420p", "-threads", THREADS,
     "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-ac", "2",
     out,
   );
@@ -278,6 +318,22 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
 }
 
 /* ───────────── Main ───────────── */
+
+/** Plain-language render errors (the raw ffmpeg output goes to the server log). */
+function friendlyRenderError(raw: string) {
+  if (/failed \(timed out\)/i.test(raw)) {
+    return "Making the video took too long and was stopped. Try a shorter length, or press Render video again.";
+  }
+  if (/failed \((null|killed by SIG\w+)\)|Cannot allocate memory|out of memory/i.test(raw)) {
+    return "The server ran out of memory while making this video. Press Render video again; if it keeps happening, the video's images or clips are too large.";
+  }
+  if (/Voiceover failed/i.test(raw)) return raw.slice(0, 300);
+  if (/ffmpeg/i.test(raw) && /No such file|Invalid data|could not find codec|Decoder/i.test(raw)) {
+    return "One of the attached images or clips couldn't be read. Remove it or attach a JPG, PNG or MP4 instead, then press Render video again.";
+  }
+  if (/^ffmpeg failed/i.test(raw)) return "Making the video failed on the server. Press Render video again; if it repeats, tell your developer (details are in the server log).";
+  return raw.slice(0, 300);
+}
 
 async function setRender(post: Post, patch: Partial<NonNullable<Post["render"]>>) {
   post.render = { status: "rendering", progress: 0, ...(post.render ?? {}), ...patch, updatedAt: nowIso() };
@@ -335,7 +391,16 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
 
     const segs: string[] = [];
     for (const [i, job] of jobs.entries()) {
-      segs.push(await renderSegment(job, i, dir, W, H));
+      try {
+        segs.push(await renderSegment(job, i, dir, W, H));
+      } catch (e) {
+        // A visual that ffmpeg can't handle (e.g. an iPhone HEIC photo or a damaged clip) shouldn't sink the whole
+        // video: redo this scene on an animated background and keep going.
+        if (job.visual.kind === "gradient") throw e;
+        console.warn(`[render] scene ${i + 1} visual failed, using a background instead: ${(e as Error).message.slice(0, 200)}`);
+        job.visual = { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] };
+        segs.push(await renderSegment(job, i, dir, W, H));
+      }
       await setRender(post, { progress: Math.round(40 + (55 * (i + 1)) / jobs.length), message: `Rendering scene ${i + 1} of ${jobs.length}…` });
     }
 
@@ -357,7 +422,8 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     await savePost(fresh);
     await log("info", "generate", `Video rendered (${item.durationSec}s) — “${post.hook.slice(0, 60)}”`, { platform: post.platform, postId });
   } catch (e) {
-    const msg = (e as Error).message.slice(0, 400);
+    const msg = friendlyRenderError((e as Error).message);
+    console.error(`[render] failed for ${postId}: ${(e as Error).message.slice(0, 600)}`);
     const fresh = (await db().get<Post>("posts", postId)) ?? post;
     fresh.render = { status: "failed", progress: 0, message: msg, updatedAt: nowIso() };
     await savePost(fresh);

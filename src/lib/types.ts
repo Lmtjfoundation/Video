@@ -62,7 +62,7 @@ export interface Post {
   kind?: "text" | "video";
   video?: VideoPlan;
   /** Server-side video render progress for video posts */
-  render?: { status: "queued" | "rendering" | "done" | "failed"; progress: number; message?: string; mediaId?: string; updatedAt: string };
+  render?: { status: "queued" | "rendering" | "done" | "failed"; progress: number; message?: string; mediaId?: string; credits?: number; updatedAt: string };
   status: PostStatus;
   scheduledAt?: string;
   publishedAt?: string;
