@@ -74,6 +74,7 @@ export function PostCard({
             <Badge>{post.kind === "video" ? NICHES.find((n) => n.id === post.video?.niche)?.name ?? "Video" : PILLAR_LABEL[post.pillar]}</Badge>
             <Badge tone="violet">{post.kind === "video" ? "🎬 Video" : FORMAT_LABEL[post.format]}</Badge>
             {offer && <Badge tone="gold"><CircleDollarSign className="h-3 w-3" />{offer.name}</Badge>}
+            {post.source === "claude-batch" && <Badge tone="sky">Daily batch</Badge>}
             {post.mature && <Badge tone="red">18+</Badge>}
             {post.mediaIds?.length ? <Badge tone="sky">{post.mediaIds.length} media</Badge> : null}
             {post.scheduledAt && <span className="ml-1 text-xs text-white/45">{fmtDateTime(post.scheduledAt, tz)}</span>}

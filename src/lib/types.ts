@@ -54,6 +54,8 @@ export interface Post {
   mediaIds?: string[];
   /** Mature (18+) post — X only, never auto-published */
   mature?: boolean;
+  /** "claude-batch" when Claude wrote it in a scheduled cloud session and the app imported it */
+  source?: "claude-batch";
   /** Admin's note when a post is rejected or edited in review */
   reviewNote?: string;
   /** "video" posts carry a full production plan in `video` */

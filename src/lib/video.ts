@@ -16,7 +16,7 @@ const STYLE_RULES: Record<VideoPlan["style"], string> = {
   fiction: 'FICTION: an original story, labeled "Fiction" in the caption; never presented as real; no real private people.',
 };
 
-interface RawVideo {
+export interface RawVideo {
   titles?: string[];
   hook?: string;
   caption?: string;

@@ -59,7 +59,7 @@ export function complianceFlags(post: Post, settings: Settings): string[] {
   const text = [post.hook, post.body, ...post.parts].join("\n");
   if (post.platform === "instagram" && /https?:\/\//.test(text)) f.push("warn:instagram_links_not_clickable");
   if (/\b(comment|type)\s+(yes|amen|1)\b|\btag\s+\d+\s+friends\b|\blike if\b/i.test(text)) f.push("warn:engagement_bait");
-  if (post.platform === "tiktok" && post.format === "video_script") f.push("warn:tiktok_rewards_need_over_1_minute");
+  if (post.platform === "tiktok" && post.format === "video_script" && !["s90", "m3"].includes(post.video?.length ?? "")) f.push("warn:tiktok_rewards_need_over_1_minute");
   return f;
 }
 

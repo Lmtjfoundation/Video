@@ -11,7 +11,7 @@ import type { Format, Pillar, Platform, Post, Settings } from "./types";
 import { FORMATS, PILLARS } from "./types";
 import { nowIso, uid } from "./utils";
 
-interface Draft {
+export interface Draft {
   pillar: string;
   format: string;
   topic?: string;
@@ -62,7 +62,7 @@ export function pickPillars(n: number, mix: Record<Pillar, number>, seed = 0): P
   return out;
 }
 
-function toPost(d: Draft, platform: Platform, settings: Settings, base?: Partial<Post>): Post {
+export function toPost(d: Draft, platform: Platform, settings: Settings, base?: Partial<Post>): Post {
   const spec = PLATFORM_SPECS[platform];
   const pillar = (PILLARS as readonly string[]).includes(d.pillar) ? (d.pillar as Pillar) : base?.pillar ?? "wealth_systems";
   let format = (FORMATS as readonly string[]).includes(d.format) ? (d.format as Format) : base?.format ?? spec.formats[0];

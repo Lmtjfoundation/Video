@@ -24,6 +24,8 @@ export async function register() {
   };
 
   const loop = async () => {
+    // Import Claude-written drafts first, so a batch is in the account before publishing runs.
+    if (tick % 3 === 0) await hit("/api/cron/inbox");
     await hit("/api/cron/publish");
     if (tick++ % 3 === 0) await hit("/api/cron/engage");
   };

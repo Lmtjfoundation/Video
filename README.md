@@ -198,6 +198,17 @@ Railway runs the app as an always-on server, so the built-in scheduler posts on 
 4. Deploy. Open the URL, sign up with the setup code, add your Claude key and connect Stripe in **Admin → App settings**, then go to **Settings → Accounts** and use the Setup Wizard for each platform.
 5. Each platform's redirect URL is shown in the wizard: `APP_URL/api/connect/<platform>/callback`.
 
+## Daily batch from Claude (content inbox)
+
+Drafts can also arrive without any Claude API credits. A scheduled Claude cloud session writes a batch of
+posts and video plans each day to `inbox.json` on the `nexus-pulse-content` branch of this repo (see
+`BRIEF.md` on that branch). Every 15 minutes the built-in scheduler calls `/api/cron/inbox`, which imports
+new items as **drafts** in the owner's account, tagged "Daily batch". Nothing is published without review.
+
+- `CONTENT_INBOX_URL`: raw URL of the inbox file (default: the `nexus-pulse-content` branch of Lmtjfoundation/Video)
+- `CONTENT_INBOX_OWNER`: email of the account that receives the drafts (default: the first admin)
+- `CONTENT_INBOX=off`: turns the importer off
+
 ## Mobile app
 
 - **Installable now:** on a phone, open your app's address and choose *Add to Home Screen* (iPhone) or *Install app* (Android). It runs full-screen with a bottom tab bar.
