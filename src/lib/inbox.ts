@@ -302,20 +302,31 @@ export async function importInbox(): Promise<InboxResult> {
     const posts: Post[] = [];
     const errors: string[] = [];
 
-    // Series episodes: last episode first, so Episode 1 is the newest entry and opens first in Story Studio.
+    // Series episodes. When a series gets new episodes, every episode of it in the inbox is saved again from the
+    // last to the first, so Story Studio always lists the series in order with Episode 1 on top.
     let storiesAdded = 0;
-    const ordered = [...freshEpisodes].sort((a, b) => num(b.episode, 0, 999, 0) - num(a.episode, 0, 999, 0));
-    for (const ep of ordered) {
-      const id = str(ep.id, 120);
-      try {
-        const e = episodeParts(ep);
-        await db().upsert("stories", episodeStory(e, id));
-        storiesAdded++;
-        posts.push(...episodePosts(e, settings));
-      } catch (err) {
-        errors.push(`${id}: ${(err as Error).message}`);
+    if (freshEpisodes.length) {
+      const freshIds = new Set(freshEpisodes.map((ep) => str(ep.id, 120)));
+      const names = new Set(freshEpisodes.map((ep) => str(ep.name, 80)));
+      const ordered = episodes
+        .filter((ep) => str(ep.id, 120) && names.has(str(ep.name, 80)) && (freshIds.has(str(ep.id, 120)) || done.has(str(ep.id, 120))))
+        .sort((a, b) => num(b.season, 0, 99, 1) - num(a.season, 0, 99, 1) || num(b.episode, 0, 999, 0) - num(a.episode, 0, 999, 0))
+        .slice(0, 60);
+      for (const ep of ordered) {
+        const id = str(ep.id, 120);
+        const isNew = freshIds.has(id);
+        try {
+          const e = episodeParts(ep);
+          await db().upsert("stories", episodeStory(e, id));
+          if (isNew) {
+            storiesAdded++;
+            posts.push(...episodePosts(e, settings));
+          }
+        } catch (err) {
+          if (isNew) errors.push(`${id}: ${(err as Error).message}`);
+        }
+        if (isNew) done.add(id); // a broken episode is skipped once, not retried every 15 minutes
       }
-      done.add(id);
     }
 
     // Reserve pieces: check they build, then keep the raw item for the Generate button.

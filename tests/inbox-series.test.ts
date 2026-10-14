@@ -86,6 +86,20 @@ describe("content inbox: series episodes", () => {
     expect(again.imported).toBe(0);
   });
 
+  it("keeps the series in episode order when later episodes arrive", async () => {
+    const inbox = { batches: [], series: [episode(1), episode(2), episode(3)] };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(inbox), { status: 200 })));
+    const { importInbox } = await import("@/lib/inbox");
+    const res = await importInbox();
+    expect(res.stories).toBe(1);
+    expect(res.imported).toBe(2);
+    const { asUser, db } = await import("@/lib/db");
+    await asUser(owner.id, async () => {
+      const stories = await db().all<import("@/lib/types").Story>("stories", 50);
+      expect(stories.map((x) => x.series?.episode)).toEqual([1, 2, 3]);
+    });
+  });
+
   it("only trusts https MP4 links on the inbox host", async () => {
     const { trustedVideoUrl } = await import("@/lib/media");
     expect(trustedVideoUrl(VIDEO)).toBe(VIDEO);
