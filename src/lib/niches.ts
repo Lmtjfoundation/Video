@@ -54,6 +54,7 @@ export const STORY_FORMATS = {
   short: { label: "YouTube Short · 45–58 s", words: "120–150 words", scenes: "6–9", platform: "youtube" as const, note: "Loop the last line into the first." },
   tiktok: { label: "TikTok · 61–90 s", words: "170–230 words", scenes: "8–12", platform: "tiktok" as const, note: "Must run over 1 minute to earn from Creator Rewards." },
   long: { label: "YouTube long-form · 8–10 min", words: "1,200–1,500 words", scenes: "14–20", platform: "youtube" as const, note: "Re-hook every 30–60 seconds; mid-roll friendly beats." },
+  episode: { label: "Series episode · about 3 min (Reels, TikTok, Shorts)", words: "430–480 words", scenes: "8–12", platform: "instagram" as const, note: "Open cold on the most dramatic moment, keep one story thread per episode, and end on a cliffhanger that sets up the next one." },
 };
 
 export const STORY_TYPES = {

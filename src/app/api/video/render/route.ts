@@ -38,5 +38,6 @@ export const GET = authed(async (req, user) => {
     const m = await db().get<MediaItem>("media", post.render.mediaId);
     if (m) url = signedUrl(user.id, m.id, 6 * 3600);
   }
+  if (!url && post.videoUrl) url = `/api/media/remote?u=${encodeURIComponent(post.videoUrl)}`;
   return ok({ render: post.render ?? null, url, voice: !!(await elevenlabsKey()), stock: await stockReady() });
 });

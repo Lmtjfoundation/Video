@@ -219,6 +219,13 @@ new items as **drafts** in the owner's account, tagged "Daily batch". Nothing is
 - `CONTENT_INBOX_OWNER`: email of the account that receives the drafts (default: the first admin)
 - `CONTENT_INBOX=off`: turns the importer off
 
+**Story series.** The inbox can also carry a top-level `series` array of finished, voiced episodes (for example
+*The Settlement*). Each episode's script goes to **Story Studio** (format "Series episode", labeled fiction, with
+an in-app player), and Instagram and Facebook **video drafts** are created with the finished MP4 attached. The
+video stays on GitHub until you publish; then it is stored once in the Media Library (the server keeps at least
+150 MB free) and uploaded like any rendered video. Only https `.mp4` links on `raw.githubusercontent.com` (or the
+inbox's own host) are accepted.
+
 ## Mobile app
 
 - **Installable now:** on a phone, open your app's address and choose *Add to Home Screen* (iPhone) or *Install app* (Android). It runs full-screen with a bottom tab bar.

@@ -69,6 +69,72 @@ export async function deleteFile(item: MediaItem) {
 }
 
 export const listMedia = () => db().all<MediaItem>("media", 5000);
+
+/* Finished videos hosted outside the app (Claude's content inbox keeps episodes on GitHub). */
+
+/** Returns the URL when it is an https MP4 on a host the app trusts, otherwise null. */
+export function trustedVideoUrl(u: unknown): string | null {
+  if (typeof u !== "string" || !u.trim()) return null;
+  try {
+    const url = new URL(u.trim());
+    const hosts = ["raw.githubusercontent.com"];
+    try {
+      if (process.env.CONTENT_INBOX_URL) hosts.push(new URL(process.env.CONTENT_INBOX_URL).host);
+    } catch {
+      /* ignore a malformed inbox URL */
+    }
+    if (url.protocol !== "https:" || !hosts.includes(url.host) || !/\.mp4$/i.test(url.pathname)) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+/** Refuses to fill the server's disk: keeps at least 150 MB free for the database and renders. */
+async function ensureSpace(need: number) {
+  const dir = process.env.DATA_DIR || path.join(process.cwd(), ".data");
+  let free: number | null = null;
+  try {
+    await fs.mkdir(dir, { recursive: true });
+    const st = await fs.statfs(dir);
+    free = st.bavail * st.bsize;
+  } catch {
+    free = null; // statfs unsupported: don't block
+  }
+  if (free !== null && free - need < 150 * 1024 * 1024) {
+    throw new Error("The server's storage is almost full, so the video wasn't saved. Delete old videos in the Media Library or add storage.");
+  }
+}
+
+/**
+ * Downloads a remote MP4 into the Media Library once and returns it. Every post that uses the same URL
+ * (e.g. the Instagram and Facebook drafts of one episode) shares the stored copy.
+ */
+export async function remoteVideoMedia(owner: string, rawUrl: string): Promise<MediaItem> {
+  const url = trustedVideoUrl(rawUrl);
+  if (!url) throw new Error("That video link isn't from a trusted host.");
+  const existing = (await listMedia()).find((m) => m.kind === "video" && m.sourceUrl === url);
+  if (existing) return existing;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 180_000);
+  let bytes: Buffer;
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
+    if (!res.ok) throw new Error(`Couldn't download the video (HTTP ${res.status}).`);
+    const len = Number(res.headers.get("content-length") ?? 0);
+    if (len > MAX_FILE_BYTES) throw new Error("The video is over 100 MB.");
+    bytes = Buffer.from(await res.arrayBuffer());
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!supa()) await ensureSpace(bytes.length);
+  const name = decodeURIComponent(url.split("/").pop() || "video.mp4");
+  const item = await storeFile(owner, { name, type: "video/mp4", bytes });
+  item.sourceUrl = url;
+  item.rendered = true;
+  await db().upsert("media", item);
+  return item;
+}
 export const usedBytes = async () => (await listMedia()).reduce((s, m) => s + m.size, 0);
 
 /* Signed public links (HMAC with the app's encryption key). */

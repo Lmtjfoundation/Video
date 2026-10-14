@@ -1,12 +1,14 @@
 import "server-only";
-import { asUser } from "./db";
+import { asUser, db } from "./db";
 import { listUsers, type User } from "./auth";
 import { toPost, type Draft } from "./generate";
 import { videoPost, type RawVideo } from "./video";
 import { NICHES } from "./niches";
 import { getSettings, kvGet, kvSet, log, savePosts } from "./repo";
+import { trustedVideoUrl } from "./media";
+import { nowIso } from "./utils";
 import { lengthAllowed, VIDEO_LENGTHS, VIDEO_STYLES } from "./video-spec";
-import type { Platform, Post, Settings, VideoPlan } from "./types";
+import type { Platform, Post, Settings, Story, VideoPlan } from "./types";
 import { PLATFORMS } from "./types";
 
 /**
@@ -66,11 +68,117 @@ interface InboxPost {
 
 interface Inbox {
   batches?: { id?: unknown; items?: unknown; bank?: unknown }[];
+  /** Finished episodes of a story series: the script goes to Story Studio, the voiced video to drafts. */
+  series?: unknown;
+}
+
+/** One finished episode of a series (e.g. "The Settlement"), voiced and rendered by Claude. */
+interface SeriesEpisode {
+  id?: unknown;
+  name?: unknown;
+  season?: unknown;
+  episode?: unknown;
+  title?: unknown;
+  logline?: unknown;
+  nextTime?: unknown;
+  videoUrl?: unknown;
+  durationSec?: unknown;
+  caption?: unknown;
+  hashtags?: unknown;
+  platforms?: unknown;
+  /** Script, scene by scene: heading ("INT. KITCHEN — NIGHT"), start time in the video, and the scene text */
+  scenes?: unknown;
+}
+
+const SERIES_MAX_PER_RUN = 20;
+const num = (v: unknown, lo: number, hi: number, dflt: number) => (typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.round(v))) : dflt);
+const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, "0")}`;
+
+function episodeParts(ep: SeriesEpisode) {
+  const name = str(ep.name, 80);
+  const title = str(ep.title, 120);
+  const n = num(ep.episode, 1, 999, 0);
+  if (!name || !title || !n) throw new Error("episode needs a name, title and number");
+  const scenes = (Array.isArray(ep.scenes) ? ep.scenes : [])
+    .filter((x) => x && typeof x === "object")
+    .slice(0, 60)
+    .map((x) => {
+      const o = x as Record<string, unknown>;
+      return { heading: str(o.heading, 160), time: str(o.time, 12), text: typeof o.text === "string" ? o.text.trim().slice(0, 8000) : "" };
+    })
+    .filter((x) => x.text || x.heading);
+  if (!scenes.length) throw new Error("episode has no scenes");
+  const videoUrl = trustedVideoUrl(ep.videoUrl);
+  if (ep.videoUrl && !videoUrl) throw new Error("episode videoUrl must be an https .mp4 on raw.githubusercontent.com");
+  return {
+    name, title, n, scenes, videoUrl,
+    season: num(ep.season, 1, 99, 1),
+    logline: str(ep.logline, 400),
+    nextTime: str(ep.nextTime, 400),
+    durationSec: num(ep.durationSec, 1, 3600, 0),
+    caption: str(ep.caption, 2200),
+    hashtags: strList(ep.hashtags, 10, 60).map((h) => h.replace(/^#/, "")),
+    platforms: strList(ep.platforms, 6, 20).map(asPlatform).filter((p): p is Platform => !!p && p !== "x" && p !== "webhook"),
+  };
+}
+
+const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+
+function episodeStory(e: ReturnType<typeof episodeParts>, id: string): Story {
+  const full = `${e.name} · Episode ${e.n}: ${e.title}`;
+  return {
+    id: `story_${slugify(id)}`,
+    createdAt: nowIso(),
+    niche: "Drama series",
+    format: "episode",
+    type: "fiction",
+    topic: `${e.name} — Season ${e.season}, Episode ${e.n}`,
+    sources: [],
+    series: { name: e.name, season: e.season, episode: e.n },
+    videoUrl: e.videoUrl ?? undefined,
+    out: {
+      titles: [{ title: full, why: e.logline }],
+      hook: e.logline,
+      scenes: e.scenes.map((s) => ({ time: s.time, heading: s.heading, narration: s.text })),
+      ending: e.nextTime ? `Next time: ${e.nextTime}` : undefined,
+      cta: "Follow so you don't miss the next episode.",
+      description: e.caption,
+      tags: e.hashtags,
+      thumbnailText: [`EPISODE ${e.n}`, e.title.toUpperCase()],
+      runtimeSec: e.durationSec || undefined,
+    },
+  };
+}
+
+function episodePosts(e: ReturnType<typeof episodeParts>, settings: Settings): Post[] {
+  if (!e.videoUrl) return [];
+  const raw: RawVideo = {
+    titles: [`${e.name} · Episode ${e.n}: ${e.title}`],
+    hook: e.logline,
+    caption: e.caption,
+    hashtags: e.hashtags,
+    thumbnail: { text: `EPISODE ${e.n}`, prompt: "" },
+    voice: "Full AI voice cast with a narrator (already in the video)",
+    music: "Original score (already in the video)",
+    scenes: e.scenes.map((s) => ({ time: s.time, narration: s.heading || s.text.split("\n")[0], onScreen: "", visual: "", motion: "", sfx: "" })),
+    loopLine: e.nextTime,
+    factCheck: [],
+    moneyAngle: "",
+  };
+  return (e.platforms.length ? e.platforms : (["instagram", "facebook"] as Platform[])).map((platform) => {
+    const length: VideoPlan["length"] = lengthAllowed("m3", platform) ? "m3" : "s90";
+    const post = videoPost(raw, { platform, niche: "ent", style: "fiction", length, topic: `${e.name} S${e.season}E${e.n}` }, settings);
+    post.source = "claude-batch";
+    post.videoUrl = e.videoUrl!;
+    post.render = { status: "done", progress: 100, message: `Voiced episode${e.durationSec ? ` · ${mmss(e.durationSec)}` : ""}`, credits: 0, updatedAt: nowIso() };
+    return post;
+  });
 }
 
 export interface InboxResult {
   imported: number;
   banked?: number;
+  stories?: number;
   skipped: number;
   errors: string[];
   owner?: string;
@@ -177,7 +285,8 @@ export async function importInbox(): Promise<InboxResult> {
     if (Array.isArray(b?.items)) for (const it of b.items) if (it && typeof it === "object") items.push(it as InboxPost);
     if (Array.isArray(b?.bank)) for (const it of b.bank) if (it && typeof it === "object") bankItems.push(it as InboxPost);
   }
-  if (!items.length && !bankItems.length) return { imported: 0, skipped: 0, errors: [], note: "Inbox is empty." };
+  const episodes: SeriesEpisode[] = Array.isArray(inbox?.series) ? (inbox.series as unknown[]).filter((x): x is SeriesEpisode => !!x && typeof x === "object") : [];
+  if (!items.length && !bankItems.length && !episodes.length) return { imported: 0, skipped: 0, errors: [], note: "Inbox is empty." };
 
   const owner = await ownerAccount();
   if (!owner) return { imported: 0, skipped: 0, errors: ["No active admin account to import into."] };
@@ -186,11 +295,28 @@ export async function importInbox(): Promise<InboxResult> {
     const done = new Set((await kvGet<string[]>(DONE_KEY)) ?? []);
     const fresh = items.filter((it) => str(it.id, 120) && !done.has(str(it.id, 120))).slice(0, MAX_PER_RUN);
     const freshBank = bankItems.filter((it) => str(it.id, 120) && !done.has(str(it.id, 120))).slice(0, MAX_PER_RUN);
-    if (!fresh.length && !freshBank.length) return { imported: 0, skipped: 0, errors: [], owner: owner.email };
+    const freshEpisodes = episodes.filter((ep) => str(ep.id, 120) && !done.has(str(ep.id, 120))).slice(0, SERIES_MAX_PER_RUN);
+    if (!fresh.length && !freshBank.length && !freshEpisodes.length) return { imported: 0, skipped: 0, errors: [], owner: owner.email };
 
     const settings = await getSettings();
     const posts: Post[] = [];
     const errors: string[] = [];
+
+    // Series episodes: last episode first, so Episode 1 is the newest entry and opens first in Story Studio.
+    let storiesAdded = 0;
+    const ordered = [...freshEpisodes].sort((a, b) => num(b.episode, 0, 999, 0) - num(a.episode, 0, 999, 0));
+    for (const ep of ordered) {
+      const id = str(ep.id, 120);
+      try {
+        const e = episodeParts(ep);
+        await db().upsert("stories", episodeStory(e, id));
+        storiesAdded++;
+        posts.push(...episodePosts(e, settings));
+      } catch (err) {
+        errors.push(`${id}: ${(err as Error).message}`);
+      }
+      done.add(id);
+    }
 
     // Reserve pieces: check they build, then keep the raw item for the Generate button.
     let banked = 0;
@@ -223,10 +349,11 @@ export async function importInbox(): Promise<InboxResult> {
     await kvSet(DONE_KEY, [...done].slice(-3000));
     const videos = posts.filter((p) => p.kind === "video").length;
     await log(errors.length ? "warn" : "info", "generate",
-      `Imported ${posts.length} draft${posts.length === 1 ? "" : "s"} written by Claude (${posts.length - videos} posts, ${videos} video plans)` +
+      `Imported ${posts.length} draft${posts.length === 1 ? "" : "s"} written by Claude (${posts.length - videos} posts, ${videos} videos)` +
+        `${storiesAdded ? `; ${storiesAdded} series episode${storiesAdded === 1 ? "" : "s"} added to Story Studio` : ""}` +
         `${banked ? `; ${banked} more kept in reserve for the Generate button` : ""}${errors.length ? `; ${errors.length} skipped` : ""}`,
       { errors: errors.slice(0, 20) });
-    return { imported: posts.length, banked, skipped: errors.length, errors, owner: owner.email };
+    return { imported: posts.length, banked, stories: storiesAdded, skipped: errors.length, errors, owner: owner.email };
   });
 }
 

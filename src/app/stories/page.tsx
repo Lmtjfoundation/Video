@@ -28,7 +28,7 @@ function storyMarkdown(st: Story) {
     `## Hook\n${o.hook ?? ""}`,
     "",
     "## Scenes",
-    ...o.scenes.map((s) => `[${s.time ?? ""}] ${s.narration}\n  On screen: ${s.onScreen ?? "—"}\n  Visual: ${s.visual ?? "—"}\n  Audio: ${s.audio ?? "—"}`),
+    ...o.scenes.map((s) => (s.heading ? `[${s.time ?? ""}] ${s.heading}\n${s.narration}` : `[${s.time ?? ""}] ${s.narration}\n  On screen: ${s.onScreen ?? "—"}\n  Visual: ${s.visual ?? "—"}\n  Audio: ${s.audio ?? "—"}`)),
     "",
     `## Ending\n${o.ending ?? ""}`,
     `\n## CTA\n${o.cta ?? ""}`,
@@ -260,6 +260,13 @@ function StoryView({ st, onPost, onRepurpose, onDelete }: { st: Story; onPost: (
     <Card>
       <CardHeader title={o.titles?.[0]?.title ?? st.topic} subtitle={`${st.niche} · ${STORY_FORMATS[st.format].label} · ${STORY_TYPES[st.type]}${o.runtimeSec ? ` · ~${o.runtimeSec}s` : ""}${o.label ? ` · ${o.label}` : ""}`} />
       <div className="grid gap-5 p-5">
+        {st.videoUrl && (
+          <div className="grid gap-2">
+            <p className="label">Watch the episode</p>
+            <video src={`/api/media/remote?u=${encodeURIComponent(st.videoUrl)}`} controls playsInline preload="metadata" className="mx-auto aspect-[9/16] max-h-[560px] rounded-lg bg-black ring-1 ring-white/10" />
+            <p className="text-center text-xs text-white/45">Voiced by an AI cast with a narrator · the Instagram and Facebook drafts with this video are in your post queue.</p>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="primary" onClick={async () => toast((await copyToClipboard(narration)) ? "Voiceover copied" : "Copy blocked", "success")}><Copy className="h-3.5 w-3.5" /> Copy voiceover</Button>
           <Button size="sm" onClick={async () => toast((await copyToClipboard(storyMarkdown(st))) ? "Script copied" : "Copy blocked", "success")}><Copy className="h-3.5 w-3.5" /> Copy full script</Button>
@@ -283,7 +290,8 @@ function StoryView({ st, onPost, onRepurpose, onDelete }: { st: Story; onPost: (
               <div key={i} className="grid grid-cols-[52px_1fr] gap-3 rounded-xl bg-ink-900/70 p-3 ring-1 ring-white/[0.06]">
                 <span className="pt-0.5 font-mono text-xs text-mint-300">{s.time ?? i + 1}</span>
                 <div className="min-w-0">
-                  <p className="text-[14px] leading-relaxed text-white/90">{s.narration}</p>
+                  {s.heading && <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gold-300/90">{s.heading}</p>}
+                  <p className="whitespace-pre-line text-[14px] leading-relaxed text-white/90">{s.narration}</p>
                   <div className="mt-2 grid gap-1 text-xs text-white/50">
                     {s.onScreen && <span><b className="text-white/70">On screen</b> {s.onScreen}</span>}
                     {s.visual && <span><b className="text-white/70">Visual</b> {s.visual}</span>}

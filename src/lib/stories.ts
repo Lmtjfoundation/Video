@@ -134,7 +134,7 @@ export function storyText(st: Story) {
     `## Hook\n${o.hook ?? ""}`,
     "",
     "## Scenes",
-    ...o.scenes.map((s) => `[${s.time ?? ""}] ${s.narration}\n  On screen: ${s.onScreen ?? "—"}\n  Visual: ${s.visual ?? "—"}\n  Audio: ${s.audio ?? "—"}`),
+    ...o.scenes.map((s) => (s.heading ? `[${s.time ?? ""}] ${s.heading}\n${s.narration}` : `[${s.time ?? ""}] ${s.narration}\n  On screen: ${s.onScreen ?? "—"}\n  Visual: ${s.visual ?? "—"}\n  Audio: ${s.audio ?? "—"}`)),
     "",
     `## Ending\n${o.ending ?? ""}`,
     `\n## CTA\n${o.cta ?? ""}`,

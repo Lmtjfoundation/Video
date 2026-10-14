@@ -12,7 +12,7 @@ import { finalizePost } from "./generate";
 import { describeFlag, historyFlags } from "./compliance";
 import { usePostAllowance } from "./auth";
 import { currentUserId } from "./db";
-import { firstImageUrl, readFile, signedUrl } from "./media";
+import { firstImageUrl, readFile, remoteVideoMedia, signedUrl, trustedVideoUrl } from "./media";
 import { db } from "./db";
 import type { MediaItem } from "./types";
 
@@ -23,6 +23,14 @@ async function videoFor(userId: string, post: Post): Promise<VideoFile | null> {
     if (m?.kind !== "video") continue;
     const bytes = await readFile(m);
     return { bytes, url: signedUrl(userId, m.id, 2 * 86400), mime: m.type === "video/quicktime" ? "video/quicktime" : "video/mp4", size: bytes.length };
+  }
+  // A finished video hosted elsewhere (an episode from Claude's content inbox): store it once, then attach it.
+  if (post.videoUrl && trustedVideoUrl(post.videoUrl)) {
+    const m = await remoteVideoMedia(userId, post.videoUrl);
+    post.mediaIds = [m.id, ...(post.mediaIds ?? []).filter((x) => x !== m.id)];
+    await savePost(post);
+    const bytes = await readFile(m);
+    return { bytes, url: signedUrl(userId, m.id, 2 * 86400), mime: "video/mp4", size: bytes.length };
   }
   return null;
 }
@@ -69,7 +77,15 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
   // Video posts need a finished file: the rendered MP4 or one the user attached.
   let video: VideoFile | undefined;
   if (post.kind === "video") {
-    const found = userId ? await videoFor(userId, post) : null;
+    let found: VideoFile | null = null;
+    try {
+      found = userId ? await videoFor(userId, post) : null;
+    } catch (e) {
+      post.status = "copy_ready";
+      post.error = `${(e as Error).message} Press Post now to try again, or download the video and post it in the app.`;
+      await savePost(post);
+      return { outcome: "copy_ready", message: post.error };
+    }
     if (!found) {
       post.status = "copy_ready";
       post.error = "Render the video first (press Render video), or attach a finished MP4 from the Media Library.";

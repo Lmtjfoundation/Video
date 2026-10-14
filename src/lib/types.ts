@@ -50,6 +50,8 @@ export interface Post {
   offerId?: string | null;
   moneyAngle?: string;
   imageUrl?: string;
+  /** A finished MP4 hosted outside the app (e.g. an episode from Claude's content inbox). Used when no video is attached. */
+  videoUrl?: string;
   /** Uploaded media attached to this post (Media library ids) */
   mediaIds?: string[];
   /** Mature (18+) post — X only, never auto-published */
@@ -191,21 +193,27 @@ export interface MediaItem {
   /** True for MP4s the app rendered from a video plan */
   rendered?: boolean;
   durationSec?: number;
+  /** Where the file was downloaded from, so one remote video is stored once and shared by several posts */
+  sourceUrl?: string;
 }
 
 export interface Story {
   id: string;
   createdAt: string;
   niche: string;
-  format: "short" | "tiktok" | "long";
+  format: "short" | "tiktok" | "long" | "episode";
   type: "true" | "funny" | "explainer" | "fiction";
   topic: string;
   sources: string[];
+  /** Set for episodes of a series, e.g. imported from Claude's content inbox */
+  series?: { name: string; season: number; episode: number };
+  /** Finished, voiced video of this story when one exists */
+  videoUrl?: string;
   out: {
     label?: string;
     titles?: { title: string; why?: string }[];
     hook?: string;
-    scenes: { time?: string; narration: string; onScreen?: string; visual?: string; audio?: string }[];
+    scenes: { time?: string; heading?: string; narration: string; onScreen?: string; visual?: string; audio?: string }[];
     ending?: string;
     cta?: string;
     description?: string;

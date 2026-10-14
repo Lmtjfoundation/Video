@@ -333,6 +333,8 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
   const status = info?.render?.status ?? post.render?.status;
   const active = status === "queued" || status === "rendering";
   const cost = videoCredits(post.video?.length, "render");
+  // A finished episode delivered by Claude's content inbox: voices, music and captions are already in the file.
+  const finished = !!post.videoUrl && !post.render?.mediaId;
 
   useEffect(() => {
     let stop = false;
@@ -380,10 +382,12 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
         <div>
           <p className="text-sm font-medium text-white">Finished video</p>
           <p className="text-xs text-white/50">
-            {info ? `${info.voice ? "AI voiceover" : "Captions only (add an ElevenLabs key for voiceover)"} · ${info.stock ? "stock footage" : "your media or animated backgrounds"} · burned-in captions` : "Voiceover, visuals and captions, rendered on the server."}
+            {finished
+              ? "Finished episode from Claude: character voices, narration, music and captions are already in the video."
+              : info ? `${info.voice ? "AI voiceover" : "Captions only (add an ElevenLabs key for voiceover)"} · ${info.stock ? "stock footage" : "your media or animated backgrounds"} · burned-in captions` : "Voiceover, visuals and captions, rendered on the server."}
           </p>
         </div>
-        {!locked && !active && (
+        {!locked && !active && !finished && (
           <Button size="sm" variant={status === "done" ? "secondary" : "primary"} loading={starting} onClick={start}>
             <Clapperboard className="h-3.5 w-3.5" /> {status === "done" ? "Re-render" : "Render video"} · {cost} credits
           </Button>
