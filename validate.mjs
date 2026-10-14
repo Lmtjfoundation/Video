@@ -91,7 +91,20 @@ batches.forEach((b, bi) => {
       scenes.forEach((s, i) => {
         for (const k of ["time", "narration", "onScreen", "visual", "motion"]) if (!s[k]?.trim()) err(w, `scene ${i + 1} is missing ${k}`);
         if (s.onScreen && words(s.onScreen) > 6) err(w, `scene ${i + 1} on-screen text is over 6 words`);
+        if (bi === 0 && s.visual) {
+          const v = s.visual;
+          const stock = v.split(",")[0];
+          if (!/, BG: .+; CHARACTER: .+; ANIM: .+/.test(v)) err(w, `scene ${i + 1} visual must be "stock phrase, BG: …; CHARACTER: …; ANIM: …"`);
+          if (/[.;\-—"()]/.test(stock) || stock.length > 80 || !stock.trim()) err(w, `scene ${i + 1} stock phrase (before the first comma) needs plain words, no . ; - " ( ), max 80 characters`);
+          if (v.length > 800) err(w, `scene ${i + 1} visual is over 800 characters`);
+        }
+        if (bi === 0 && (s.motion ?? "").length > 300) err(w, `scene ${i + 1} motion is over 300 characters`);
       });
+      if (bi === 0) {
+        if (!it.artStyle?.trim()) err(w, "artStyle is required");
+        if (!it.angle2026?.trim()) err(w, "angle2026 is required");
+        if (!Array.isArray(it.cast) || !it.cast.length || it.cast.some((c) => !c?.name || !c?.role || !c?.look || !c?.voice)) err(w, "cast needs at least one { name, role, look, voice }");
+      }
     } else err(w, 'type must be "post" or "video"');
   });
 });

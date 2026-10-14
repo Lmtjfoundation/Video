@@ -23,7 +23,7 @@
 2026-10-14 | linkedin | Samsung's three ChatGPT leaks in 20 days (2023)
 2026-10-14 | facebook | Gottman's bids for connection: 86% vs 33%
 2026-10-14 | instagram | Isaac Newton and the South Sea Bubble (1720)
-2026-10-14 | tiktok | Knight Capital lost $440 million in 45 minutes (2012)
+2026-10-14 | tiktok | The Bybit hack: $1.5 billion stolen through a lying screen (Feb 2025)
 2026-10-14 | instagram | Leonard v. PepsiCo: the man who tried to buy a Harrier jet with Pepsi Points
 2026-10-14 | youtube | Amazon's scrapped AI recruiting tool that downgraded women (Reuters, 2018)
 2026-10-14 | facebook | Jerry Morris's London bus study: drivers vs conductors (1953)
@@ -33,5 +33,5 @@
 2026-10-14 | facebook | Harvard Study of Adult Development: relationships at 50, health at 80 (bank)
 2026-10-14 | instagram | Coca-Cola's 5-cent price, 1886–1959 (bank)
 2026-10-14 | tiktok | Charles Ponzi's postal coupon scheme (Boston, 1920) (bank)
-2026-10-14 | youtube | Microsoft's Tay chatbot taken offline within 16 hours (2016) (bank)
+2026-10-14 | youtube | Replit's AI agent deleted SaaStr's live database during a code freeze (July 2025) (bank)
 2026-10-14 | instagram | The chaotic 1904 St. Louis Olympic marathon (bank)

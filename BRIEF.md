@@ -165,9 +165,10 @@ Prefer evergreen facts over prices or figures that change (if you mention a pric
 - Every idea is a specific, real, documented event, person or mechanism with its date or place —
   never a vague theme or a generic listicle.
 - 0–2 s: spoken hook + matching visual hook + on-screen text. No intro, no greeting, no logo.
-- Every scene: `narration` (what is said), `onScreen` (≤ 6 words), `visual` (a stock-footage
-  search phrase or a detailed cinematic prompt — no real person's likeness, no logos), `motion`
-  (camera move or edit), `sfx` (a sound effect, or empty).
+- Every scene: `narration` (what is said), `onScreen` (≤ 6 words), `visual` (stock search
+  phrase + animated background + character + animation, in the format under "Look, characters
+  and 2026"; no real person's likeness, no logos), `motion` (camera move, transition and caption
+  animation), `sfx` (a sound effect, or empty).
 - A new visual every 2–4 seconds. Open a curiosity loop early and pay it off at the end.
 - Keep each scene's narration to about 5–12 words so the picture keeps changing.
 - Short videos end on a `loopLine` that flows back into the hook. One specific CTA, never
@@ -177,6 +178,71 @@ Prefer evergreen facts over prices or figures that change (if you mention a pric
 - Lengths: `s60` = 120–150 words of narration across 12–16 scenes; `s90` = 170–230 words across
   16–22 scenes. Scene `time` values run continuously from `0:00`.
 - Niche ids for videos: `finance`, `edu`, `tech`, `health`, `lifestyle` (pick the one that fits).
+
+## Look, characters and 2026 (every video)
+
+The owner wants videos that look like 2026, not like a slideshow of stock clips: animated
+characters, animated backgrounds and bold motion graphics, telling stories that feel current.
+
+### Owner cast (the owner edits this list; use it word for word)
+
+Add characters here in plain words: name, role, look, outfit, personality, voice. When this list
+has entries, use them as the recurring cast in every video and copy their descriptions word for
+word into `cast`. When it is empty, use the autopilot cast below.
+
+- *(empty: add your characters here)*
+
+### Autopilot cast (used when the owner cast is empty)
+
+- **Nova (host)**: an original stylized 3D-animated host, late 20s, warm brown skin, short curly
+  hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint
+  wrist display. Dry, curious, quick. Voice: warm, crisp, confident, a hint of a smile. Nova
+  appears on camera for the 2026 tie-in and the lesson; she never claims to be a real person.
+- **Story cast**: for each video, invent original stylized 3D stand-ins for the people in the
+  story, built only from documented facts (era, place, job, what they did). Never a real
+  person's likeness, face or name on a character design; label them by role ("the trader",
+  "the 21-year-old"). No logos or real brand packaging.
+
+### Art direction
+
+- Pick one `artStyle` per video and keep it consistent: stylized 3D animation (soft, glossy,
+  cinematic light), 2.5D parallax, retro-cartoon, glitch-pop or newsreel 3D, matched to the
+  story's era. Brand accents: mint `#1CD28B` / `#8CF9CB` on near-black `#07080B`.
+- Every scene has an animated background (parallax city, drifting particles, light sweeps,
+  animated maps, moving charts, UI panels): never a flat colour.
+- Motion graphics carry the numbers: counters that spin, charts that draw, glass UI cards,
+  kinetic captions that pop word by word.
+- Rotate styles across a batch; no two videos in a batch use the same `artStyle`.
+
+### How to write `visual` (the app reads it in two parts)
+
+The app searches stock footage with the text **before the first comma** (it also cuts at `.`,
+`;` and `-`, max 80 characters), and falls back to an animated brand gradient. So every scene's
+`visual` is:
+
+`<plain stock search phrase, no hyphens>, BG: <animated background>; CHARACTER: <who is on screen and what they do, or "none">; ANIM: <animation and graphics>`
+
+Example: `Trading floor monitors flashing red, BG: dark glossy trading floor with red light sweeps; CHARACTER: the trader, stylized 3D, gripping a desk; ANIM: loss counter spins up, screen glitch`
+
+`motion` names the camera move plus the transition and caption animation (≤ 300 characters).
+
+### 2026 and up to date
+
+- At least one of the four daily videos (and one of the three bank videos) is a documented story
+  from 2025 or 2026, verified with web search on the day. The rest can be classic true stories.
+- Every video has one spoken 2026 tie-in line near the end that connects the story to how people
+  live, work, invest or use AI in 2026. It is framing, not a statistic; any number in it must be
+  verified like every other fact.
+- Put that line in `angle2026` as well, so the owner can see it at a glance.
+
+### Extra video fields (newest batch)
+
+- `artStyle`: one sentence naming the style, palette and caption look.
+- `cast`: list of `{ "name", "role", "look", "voice" }` for everyone who appears on screen.
+- `angle2026`: the 2026 tie-in line.
+
+The app keeps only the standard fields, so the look must also live inside each scene's `visual`
+and `motion`, and the cast's voices inside `voice`.
 
 ## Posting through Metricool
 
@@ -241,11 +307,14 @@ on her social accounts without each platform's developer app.
           "voice": "narrator direction",
           "music": "music direction",
           "scenes": [
-            { "time": "0:00–0:03", "narration": "…", "onScreen": "…", "visual": "…", "motion": "…", "sfx": "…" }
+            { "time": "0:00–0:03", "narration": "…", "onScreen": "…", "visual": "stock phrase, BG: …; CHARACTER: …; ANIM: …", "motion": "…", "sfx": "…" }
           ],
           "loopLine": "last line that loops into the hook",
           "factCheck": ["claim to verify"],
-          "moneyAngle": "how this video earns"
+          "moneyAngle": "how this video earns",
+          "artStyle": "one sentence: style, palette, caption look",
+          "cast": [{ "name": "Nova", "role": "host", "look": "…", "voice": "…" }],
+          "angle2026": "the spoken 2026 tie-in line"
         }
       ],
       "bank": [
