@@ -2,6 +2,1487 @@
   "version": 1,
   "batches": [
     {
+      "id": "2026-10-14",
+      "createdAt": "2026-10-14T05:49:00-05:00",
+      "items": [
+        {
+          "id": "2026-10-14-01",
+          "type": "post",
+          "platform": "x",
+          "pillar": "wealth_systems",
+          "format": "short",
+          "topic": "Bogle's Folly: the first index fund raised $11.3M (1976)",
+          "hook": "August 1976. Wall Street laughed at a fund that refused to pick stocks.",
+          "body": "Jack Bogle hoped to raise up to $150M. He got $11.3M. Critics called it \"Bogle's Folly.\"\n\nIt became Vanguard's S&P 500 index fund.",
+          "parts": [],
+          "hashtags": [
+            "investing"
+          ],
+          "cta": "Lesson: cheap and boring can win. Check your fund's fees.",
+          "moneyAngle": "Builds trust with beginner investors who later buy index-investing guides and newsletters."
+        },
+        {
+          "id": "2026-10-14-02",
+          "type": "post",
+          "platform": "x",
+          "pillar": "ai_leverage",
+          "format": "thread",
+          "topic": "Moffatt v. Air Canada: the airline that blamed its own chatbot",
+          "hook": "November 2022. Jake Moffatt's grandmother had just died. He asked Air Canada's chatbot about bereavement fares. The answer was wrong.",
+          "body": "",
+          "parts": [
+            "November 2022. Jake Moffatt's grandmother had just died.\n\nHe asked Air Canada's website chatbot about bereavement fares.\n\nThe bot answered confidently. The answer was wrong.\n\nThen the airline tried a defense nobody saw coming:",
+            "The chatbot told him he could buy a regular ticket now and apply for the bereavement discount within 90 days of the ticket being issued.\n\nSo he flew. Then he applied.",
+            "Air Canada said no. Its real policy didn't allow retroactive bereavement claims.\n\nThe bot had even linked to that policy page. Its own words contradicted it.",
+            "At the tribunal, Air Canada argued the chatbot was \"a separate legal entity that is responsible for its own actions.\"\n\nTribunal member Christopher Rivers: \"This is a remarkable submission.\"",
+            "Feb 14, 2024: the BC Civil Resolution Tribunal ruled for Moffatt.\n\nA company is responsible for all the information on its website. The chatbot is part of the website.\n\nAward: CA$812.02, including $650.88 in damages.",
+            "The twist: the money was tiny. The precedent wasn't.\n\nIf you put AI in front of customers, its answers are your answers.\n\nTakeaway: test every customer-facing bot like it's signing contracts in your name. Legally, it might be."
+          ],
+          "hashtags": [
+            "AI"
+          ],
+          "cta": "Repost this to whoever is launching your company's chatbot.",
+          "moneyAngle": "Positions the account as the practical voice on AI risk, feeding AI-workflow consulting and templates."
+        },
+        {
+          "id": "2026-10-14-03",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "high_agency",
+          "format": "short",
+          "topic": "Kodak invented the digital camera in 1975 and buried it",
+          "hook": "December 1975. A Kodak engineer named Steven Sasson built the first self-contained digital camera. It weighed about 8 pounds and needed 23 seconds to save one black-and-white photo.",
+          "body": "The image was 100 by 100 pixels. 0.01 megapixels. Stored on a cassette tape.\n\nHe showed it inside Kodak. As Sasson later recalled in a 2008 interview, the reaction was: \"that's cute — but don't tell anyone about it.\"\n\nThat reaction makes sense if you sell film. Film was the business. A camera with no film threatened the thing paying everyone's salary.\n\nKodak didn't miss digital because it was clueless. Kodak invented it. It missed digital because the new thing competed with the old thing's profits.\n\nJanuary 19, 2012: Eastman Kodak filed for Chapter 11 bankruptcy.\n\nThe same pattern shows up in careers. The skill that pays you best today is the one you're least likely to question.\n\nOne practical check: write down the work that earns you the most right now. Then ask, \"If a tool made this 10x cheaper, what would I sell instead?\" If you can't answer yet, that's your next project.",
+          "parts": [],
+          "hashtags": [
+            "innovation",
+            "careers",
+            "leadership"
+          ],
+          "cta": "What's the \"film\" in your industry right now?",
+          "moneyAngle": "High-share career story that grows the LinkedIn audience for coaching and career-leverage offers."
+        },
+        {
+          "id": "2026-10-14-04",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "ai_leverage",
+          "format": "carousel",
+          "topic": "Samsung's three ChatGPT leaks in 20 days (2023)",
+          "hook": "Samsung engineers made three AI mistakes in 20 days. Then the company banned the tools.",
+          "body": "Samsung engineers made three AI mistakes in 20 days. Then the company banned the tools.\n\nIn spring 2023, according to The Economist Korea, Samsung semiconductor staff pasted confidential material into ChatGPT on three separate occasions within about 20 days. In early May, Samsung temporarily banned generative AI tools on company devices.\n\nNobody was trying to leak anything. They were trying to work faster. That's the lesson.\n\nThe 3-question paste check is in the slides.",
+          "parts": [
+            "3 leaks in 20 days. Nobody meant to leak anything.",
+            "Leak 1: An engineer pasted source code into ChatGPT to look for a bug fix.",
+            "Leak 2: Another pasted code for a chip-defect test sequence and asked for optimization.",
+            "Leak 3: A recorded meeting was transcribed and fed in to produce minutes.",
+            "May 2023: Samsung temporarily banned generative AI tools on company devices, as reported by Bloomberg.",
+            "The real problem wasn't AI. It was nobody knowing where the text goes after you hit enter.",
+            "Before you paste, ask: 1) Would I email this to a stranger? 2) Does our AI policy cover this tool? 3) Can I strip names, numbers and code first?",
+            "Approved enterprise tools for sensitive work. Public chatbots for public problems."
+          ],
+          "hashtags": [
+            "AI",
+            "cybersecurity",
+            "productivity"
+          ],
+          "cta": "Send this to whoever owns your team's AI policy.",
+          "moneyAngle": "Lead magnet for an AI-usage policy template or workshop for teams."
+        },
+        {
+          "id": "2026-10-14-05",
+          "type": "post",
+          "platform": "facebook",
+          "pillar": "relationships",
+          "format": "short",
+          "topic": "Gottman's bids for connection: 86% vs 33%",
+          "hook": "Your partner says, \"Look at that bird.\" What you do next matters more than you'd think.",
+          "body": "Psychologist John Gottman studied newlywed couples in his lab and checked back six years later. He watched for tiny moments he called \"bids\": a comment, a sigh, a small request for attention.\n\nYou can turn toward a bid (\"Oh, where?\"), ignore it, or turn against it (\"I'm busy\").\n\nThe couples still married six years later had turned toward each other's bids 86% of the time.\n\nThe couples who divorced? 33%.\n\nNot the anniversaries. Not the grand gestures. The bird.\n\nThis week, try one thing: when your partner points at something, look up and answer before you go back to your phone. Three seconds. That's the stuff relationships are quietly built on.\n\nWhat's one small bid your partner makes that you sometimes miss?",
+          "parts": [],
+          "hashtags": [
+            "relationships"
+          ],
+          "cta": "Look up the next time they point at something.",
+          "moneyAngle": "Comment-driving relationship post that builds an engaged Facebook audience for later offers."
+        },
+        {
+          "id": "2026-10-14-06",
+          "type": "post",
+          "platform": "instagram",
+          "pillar": "wealth_systems",
+          "format": "carousel",
+          "topic": "Isaac Newton and the South Sea Bubble (1720)",
+          "hook": "The smartest man in England lost a fortune to FOMO.",
+          "body": "The smartest man in England lost a fortune to FOMO.\n\nIn 1720, Isaac Newton made money on South Sea Company stock, sold, watched everyone else keep getting richer, then bought back in near the top. He reportedly lost about £20,000.\n\nGenius doesn't protect you from crowd psychology. Rules do.\n\nSave this for the next time everyone you know is buying the same thing.",
+          "parts": [
+            "Isaac Newton. Gravity. Calculus. Warden, then Master, of the Royal Mint. And one terrible trade.",
+            "1720: South Sea Company stock is the hottest thing in London. About £128 a share in January.",
+            "Newton buys early, sells, and books a profit. Smart.",
+            "Then the price keeps climbing. Around £1,000 by early summer. The people around him are getting rich.",
+            "Newton buys back in. Near the top.",
+            "By December, shares are around £124. The bubble has burst.",
+            "He reportedly lost about £20,000, a fortune at the time. (Historians call the exact evidence inconclusive.)",
+            "That famous Newton line about \"the madness of people\"? There's no solid source for it. The loss is the real lesson.",
+            "Your rule: set your buy and sell rules before the crowd gets loud. Write them down. Follow them when it feels boring."
+          ],
+          "hashtags": [
+            "investing",
+            "moneylessons",
+            "history",
+            "fomo"
+          ],
+          "cta": "Save this before the next hype cycle.",
+          "moneyAngle": "Saveable money-psychology carousel that grows followers for investing-basics products."
+        },
+        {
+          "id": "2026-10-14-07",
+          "type": "video",
+          "platform": "tiktok",
+          "niche": "finance",
+          "style": "true",
+          "length": "s90",
+          "topic": "Knight Capital lost $440 million in 45 minutes (2012)",
+          "titles": [
+            "One Forgotten Switch Cost $440 Million in 45 Minutes",
+            "The Wall Street Firm Robbed by Its Own Code",
+            "How 7 of 8 Servers Nearly Killed a Trading Giant"
+          ],
+          "hook": "On August 1st, 2012, a Wall Street firm lost 440 million dollars.",
+          "caption": "Aug 1, 2012: Knight Capital lost about $440M in roughly 45 minutes. No hacker. Old code on one server woke up. Clean up what you forgot exists.",
+          "hashtags": [
+            "wallstreet",
+            "truestory",
+            "money",
+            "tech",
+            "finance"
+          ],
+          "cta": "Follow for true money disasters with a lesson inside.",
+          "thumbnail": {
+            "text": "$440M IN 45 MIN",
+            "prompt": "Dark trading floor at dawn, rows of monitors flashing red numbers, one server rack glowing ominously in the foreground, no logos, cinematic, vertical 9:16, space at top for text"
+          },
+          "voice": "Tense, controlled documentary narrator, about 150 words per minute. Short pause after \"To its own code.\" Speed up slightly from 9:30 onward.",
+          "music": "Low ticking pulse under the setup; rising synth tension from the market open; hard cut to silence on \"440 million\"; soft piano for the lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:05",
+              "narration": "On August 1st, 2012, a Wall Street firm lost 440 million dollars.",
+              "onScreen": "$440 million. 45 minutes.",
+              "visual": "Stock ticker board flashing red numbers, extreme close-up",
+              "motion": "Fast push-in",
+              "sfx": "Alarm beep"
+            },
+            {
+              "time": "0:05–0:10",
+              "narration": "Not to a hacker. Not to a thief. To its own code.",
+              "onScreen": "The thief? Its own code.",
+              "visual": "Lines of code scrolling on a dark monitor, red glow",
+              "motion": "Glitch cut",
+              "sfx": "Digital glitch"
+            },
+            {
+              "time": "0:10–0:14",
+              "narration": "Knight Capital was one of America's biggest stock trading firms.",
+              "onScreen": "Knight Capital, 2012",
+              "visual": "Wide shot of a busy trading floor with generic screens",
+              "motion": "Slow dolly forward",
+              "sfx": "Office murmur"
+            },
+            {
+              "time": "0:14–0:18",
+              "narration": "It had just rolled out new trading software to its servers.",
+              "onScreen": "New code. 8 servers.",
+              "visual": "Row of server racks with blinking lights in a data center",
+              "motion": "Pan right along racks",
+              "sfx": "Server hum"
+            },
+            {
+              "time": "0:18–0:23",
+              "narration": "A technician updated seven of the eight servers. One got missed.",
+              "onScreen": "7 of 8 updated",
+              "visual": "Eight server units lit green, one stays dark grey",
+              "motion": "Lights switch on one by one",
+              "sfx": "Click"
+            },
+            {
+              "time": "0:23–0:27",
+              "narration": "On that eighth server sat old code nobody used anymore.",
+              "onScreen": "Server 8: old code",
+              "visual": "Dusty server unit, single amber light blinking",
+              "motion": "Slow push-in",
+              "sfx": "Low drone"
+            },
+            {
+              "time": "0:27–0:31",
+              "narration": "A feature called Power Peg that hadn't been used in years.",
+              "onScreen": "Dead feature: Power Peg",
+              "visual": "Old folder labeled with a generic file icon on a screen",
+              "motion": "Zoom into screen",
+              "sfx": ""
+            },
+            {
+              "time": "0:31–0:36",
+              "narration": "The new software reused a flag that used to switch it on.",
+              "onScreen": "One reused switch",
+              "visual": "Close-up of a physical toggle switch flipping on",
+              "motion": "Macro snap",
+              "sfx": "Switch click"
+            },
+            {
+              "time": "0:36–0:38",
+              "narration": "At 9:30, the market opened.",
+              "onScreen": "9:30 a.m.",
+              "visual": "Clock hand hitting 9:30, sharp focus",
+              "motion": "Snap zoom",
+              "sfx": "Opening bell"
+            },
+            {
+              "time": "0:38–0:43",
+              "narration": "That one server started firing orders it was never meant to send.",
+              "onScreen": "Orders nobody asked for",
+              "visual": "Order lines flooding a screen faster and faster",
+              "motion": "Speed ramp",
+              "sfx": "Rapid typing clicks"
+            },
+            {
+              "time": "0:43–0:47",
+              "narration": "Buy high, sell low. Over and over. Millions of times.",
+              "onScreen": "Buy high. Sell low. Repeat.",
+              "visual": "Split screen of up arrow and down arrow flashing",
+              "motion": "Rapid alternating cuts",
+              "sfx": "Whoosh"
+            },
+            {
+              "time": "0:47–0:51",
+              "narration": "In about 45 minutes: four million executions in 154 stocks.",
+              "onScreen": "4M executions. 154 stocks.",
+              "visual": "Counter spinning rapidly upward on a dark display",
+              "motion": "Shake cam",
+              "sfx": "Ticking"
+            },
+            {
+              "time": "0:51–0:55",
+              "narration": "Engineers scrambled to find the problem while losses kept stacking.",
+              "onScreen": "Losses stacking",
+              "visual": "Hands pulling cables in a server room, red emergency light",
+              "motion": "Handheld shaky shot",
+              "sfx": "Heartbeat"
+            },
+            {
+              "time": "0:55–1:00",
+              "narration": "By the time it stopped, Knight was down about 440 million dollars.",
+              "onScreen": "Down ~$440 million",
+              "visual": "Single red number frozen on a monitor in an empty room",
+              "motion": "Hard stop, hold",
+              "sfx": ""
+            },
+            {
+              "time": "1:00–1:05",
+              "narration": "Its stock lost about three-quarters of its value in two days.",
+              "onScreen": "-75% in two days",
+              "visual": "Line chart plunging on a screen, generic design",
+              "motion": "Tilt down with the line",
+              "sfx": "Descending tone"
+            },
+            {
+              "time": "1:05–1:11",
+              "narration": "Investors rescued it with 400 million dollars. A year later, it merged with a rival.",
+              "onScreen": "$400M rescue. Then merged.",
+              "visual": "Briefcase on a boardroom table, overcast window light",
+              "motion": "Slow orbit",
+              "sfx": "Door close"
+            },
+            {
+              "time": "1:11–1:14",
+              "narration": "The SEC later fined Knight 12 million dollars.",
+              "onScreen": "SEC fine: $12 million",
+              "visual": "Official-looking document stamped with a generic seal",
+              "motion": "Stamp hits frame",
+              "sfx": "Stamp thud"
+            },
+            {
+              "time": "1:14–1:19",
+              "narration": "The lesson isn't really about trading. It's about the thing nobody deletes.",
+              "onScreen": "The thing nobody deletes",
+              "visual": "Cluttered desktop full of old folders",
+              "motion": "Slow zoom out",
+              "sfx": ""
+            },
+            {
+              "time": "1:19–1:24",
+              "narration": "Old code, old subscriptions, old passwords. Clean them up before they wake up.",
+              "onScreen": "Delete what you forgot",
+              "visual": "Hand dragging old files into a trash icon on a laptop",
+              "motion": "Over-the-shoulder push",
+              "sfx": "Paper crumple"
+            },
+            {
+              "time": "1:24–1:29",
+              "narration": "Because the most expensive code is the code you forgot was there.",
+              "onScreen": "Forgotten = expensive",
+              "visual": "Dark server room, one amber light blinking alone",
+              "motion": "Slow push-in to black",
+              "sfx": "Low drone"
+            }
+          ],
+          "loopLine": "Because the most expensive code is the code you forgot was there.",
+          "factCheck": [
+            "Knight Capital's trading incident happened on August 1, 2012.",
+            "Knight lost about $440 million pre-tax (the SEC order says more than $460 million in losses; reports differ).",
+            "The losses happened in about 45 minutes after the market opened at 9:30 a.m.",
+            "New code was deployed to 7 of 8 servers; the eighth still had old Power Peg code (SEC order, 2013).",
+            "The new software repurposed a flag that previously activated Power Peg (SEC order).",
+            "Power Peg had not been used for years before 2012 (SEC order).",
+            "About 4 million executions in 154 stocks resulted.",
+            "Knight's equity value fell about 75% over two days.",
+            "Investors provided about $400 million in rescue financing in early August 2012.",
+            "Knight merged with Getco; the deal closed July 1, 2013, forming KCG.",
+            "The SEC fined Knight $12 million in October 2013."
+          ],
+          "moneyAngle": "Over-60-second true story eligible for TikTok creator payouts; drives follows for the money-lessons series."
+        },
+        {
+          "id": "2026-10-14-08",
+          "type": "video",
+          "platform": "instagram",
+          "niche": "finance",
+          "style": "funny",
+          "length": "s60",
+          "topic": "Leonard v. PepsiCo: the man who tried to buy a Harrier jet with Pepsi Points",
+          "titles": [
+            "He Tried to Buy a Fighter Jet With Pepsi Points",
+            "The $700,008.50 Check Pepsi Sent Back",
+            "Pepsi Put a Jet in an Ad. He Took It Seriously."
+          ],
+          "hook": "In 1996, Pepsi aired a commercial offering a fighter jet.",
+          "caption": "1996: a Pepsi ad showed a Harrier jet for 7,000,000 Pepsi Points. A 21-year-old did the math and mailed a $700,008.50 check. A judge ruled in 1999. An ad is not a contract.",
+          "hashtags": [
+            "truestory",
+            "pepsi",
+            "marketing",
+            "contracts",
+            "funnyhistory"
+          ],
+          "cta": "Follow for more true stories you won't believe are real.",
+          "thumbnail": {
+            "text": "JET FOR $700K?",
+            "prompt": "Unbranded soda can standing on a runway in front of a generic military jump jet silhouette, golden hour, playful cinematic look, no logos, vertical 9:16, space at top for text"
+          },
+          "voice": "Deadpan, straight-faced narrator, about 155 words per minute. Let the numbers land with a beat of silence.",
+          "music": "Bouncy 90s commercial-style jingle under the setup; stops dead on \"Seven million points\"; returns as a slow, serious courtroom string for the ruling.",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "In 1996, Pepsi aired a commercial offering a fighter jet.",
+              "onScreen": "A soda ad. A fighter jet.",
+              "visual": "Retro 90s TV set playing a bright commercial, generic",
+              "motion": "Fast push-in",
+              "sfx": "TV static"
+            },
+            {
+              "time": "0:04–0:08",
+              "narration": "Collect Pepsi Points, the ad said, and win cool stuff.",
+              "onScreen": "Collect points. Win stuff.",
+              "visual": "Hands stacking unbranded soda cans",
+              "motion": "Quick stop-motion",
+              "sfx": "Can pop"
+            },
+            {
+              "time": "0:08–0:10",
+              "narration": "T-shirts. Sunglasses. A leather jacket.",
+              "onScreen": "T-shirt. Shades. Jacket.",
+              "visual": "Montage of t-shirt, sunglasses, leather jacket on white",
+              "motion": "Quick cuts on the beat",
+              "sfx": "Pop pop pop"
+            },
+            {
+              "time": "0:10–0:13",
+              "narration": "Then the finale: a Harrier jet. Seven million points.",
+              "onScreen": "Harrier jet: 7,000,000 points",
+              "visual": "Generic jump jet hovering over a schoolyard, cinematic",
+              "motion": "Low-angle tilt up",
+              "sfx": "Jet roar"
+            },
+            {
+              "time": "0:13–0:16",
+              "narration": "Most people laughed. John Leonard, 21, did the math.",
+              "onScreen": "He did the math.",
+              "visual": "Young man at a kitchen table with a calculator and notepad",
+              "motion": "Slow push-in",
+              "sfx": "Calculator beeps"
+            },
+            {
+              "time": "0:16–0:20",
+              "narration": "The rules let you buy extra points for 10 cents each.",
+              "onScreen": "Extra points: 10¢ each",
+              "visual": "Close-up of fine print on an order form, generic",
+              "motion": "Rack focus",
+              "sfx": ""
+            },
+            {
+              "time": "0:20–0:22",
+              "narration": "He lined up investors.",
+              "onScreen": "He found investors.",
+              "visual": "Two hands shaking over a table of paperwork",
+              "motion": "Handheld",
+              "sfx": ""
+            },
+            {
+              "time": "0:22–0:27",
+              "narration": "He mailed Pepsi 15 points and a check for 700,008 dollars and 50 cents.",
+              "onScreen": "$700,008.50 check",
+              "visual": "Check being slid into an envelope, unbranded",
+              "motion": "Macro close-up",
+              "sfx": "Envelope seal"
+            },
+            {
+              "time": "0:27–0:32",
+              "narration": "Pepsi sent the check back. The jet, they said, was a joke.",
+              "onScreen": "\"It was a joke.\"",
+              "visual": "Envelope landing back on a doormat",
+              "motion": "Overhead drop",
+              "sfx": "Thud"
+            },
+            {
+              "time": "0:32–0:34",
+              "narration": "It ended up in federal court.",
+              "onScreen": "To federal court",
+              "visual": "Courthouse columns, overcast sky",
+              "motion": "Slow tilt up",
+              "sfx": "Gavel tap"
+            },
+            {
+              "time": "0:34–0:37",
+              "narration": "In 1999, Judge Kimba Wood ruled for Pepsi.",
+              "onScreen": "1999: Pepsi wins",
+              "visual": "Gavel striking a sound block",
+              "motion": "Slow motion",
+              "sfx": "Gavel strike"
+            },
+            {
+              "time": "0:37–0:42",
+              "narration": "No objective person, she wrote, could think the ad really offered a jet.",
+              "onScreen": "\"No objective person...\"",
+              "visual": "Legal document with highlighted line, generic text",
+              "motion": "Pan across text",
+              "sfx": ""
+            },
+            {
+              "time": "0:42–0:46",
+              "narration": "Pepsi re-aired the ad anyway, with a new price: 700 million points.",
+              "onScreen": "New price: 700,000,000",
+              "visual": "Retro TV, number on screen changing 7 to 700",
+              "motion": "Number flip animation",
+              "sfx": "Cash register ding"
+            },
+            {
+              "time": "0:46–0:51",
+              "narration": "The lesson: an ad is not a contract. Read the actual terms.",
+              "onScreen": "Ads aren't contracts",
+              "visual": "Magnifying glass over the fine print of a form",
+              "motion": "Slow push-in",
+              "sfx": ""
+            },
+            {
+              "time": "0:51–0:56",
+              "narration": "Because in 1996, a soda company really did put a fighter jet on TV.",
+              "onScreen": "A jet. On a soda ad.",
+              "visual": "Jet silhouette fading into a TV screen",
+              "motion": "Match cut back to opening",
+              "sfx": "Jet roar"
+            }
+          ],
+          "loopLine": "Because in 1996, a soda company really did put a fighter jet on TV.",
+          "factCheck": [
+            "The Pepsi Stuff commercial aired in 1996 and showed a Harrier jet for 7,000,000 Pepsi Points.",
+            "The catalog included items such as T-shirts, sunglasses and a leather jacket.",
+            "John Leonard was 21 years old.",
+            "Pepsi Points could be purchased for 10 cents each.",
+            "Leonard raised money from investors.",
+            "Leonard sent 15 Pepsi Points and a check for $700,008.50.",
+            "PepsiCo returned the check, saying the jet was not a real offer and was meant to be humorous.",
+            "Judge Kimba Wood granted summary judgment for PepsiCo in August 1999 (Leonard v. PepsiCo, S.D.N.Y.).",
+            "The ruling said no objective person could reasonably conclude the commercial actually offered a Harrier jet.",
+            "Pepsi later changed the ad's jet price to 700,000,000 points."
+          ],
+          "moneyAngle": "Shareable funny-true Reel that grows reach for the money-and-contracts content series."
+        },
+        {
+          "id": "2026-10-14-09",
+          "type": "video",
+          "platform": "youtube",
+          "niche": "tech",
+          "style": "explainer",
+          "length": "s60",
+          "topic": "Amazon's scrapped AI recruiting tool that downgraded women (Reuters, 2018)",
+          "titles": [
+            "Amazon's Hiring AI Taught Itself to Downgrade Women",
+            "The AI That Penalized the Word \"Women's\"",
+            "Why Amazon Scrapped Its Secret Résumé Robot"
+          ],
+          "hook": "Amazon built an AI to pick the best résumés. It learned to downgrade women.",
+          "caption": "Reuters, Oct 2018: Amazon scrapped an experimental AI recruiting tool after it learned to penalize résumés with the word \"women's.\" AI learns the past. Check what it learned from.",
+          "hashtags": [
+            "AI",
+            "hiring",
+            "tech",
+            "bias",
+            "shorts"
+          ],
+          "cta": "Subscribe for AI stories that actually affect your job.",
+          "thumbnail": {
+            "text": "AI VS. \"WOMEN'S\"",
+            "prompt": "Stack of paper résumés on a desk with a glowing robotic hand stamping one with a low star rating, cool blue light, no logos, cinematic, vertical 9:16"
+          },
+          "voice": "Clear, curious explainer voice, about 150 words per minute. Emphasize \"women's\" both times.",
+          "music": "Minimal electronic pulse; a single low hit on \"downgrade women\"; gentle resolving synth for the lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:05",
+              "narration": "Amazon built an AI to pick the best résumés. It learned to downgrade women.",
+              "onScreen": "AI hiring. Built-in bias.",
+              "visual": "Robotic hand sorting paper résumés into two piles",
+              "motion": "Fast push-in",
+              "sfx": "Paper shuffle"
+            },
+            {
+              "time": "0:05–0:08",
+              "narration": "Reuters broke the story in October 2018.",
+              "onScreen": "Reuters, Oct 2018",
+              "visual": "Newspaper printing press rolling, generic",
+              "motion": "Pan right",
+              "sfx": "Press rumble"
+            },
+            {
+              "time": "0:08–0:10",
+              "narration": "The project started in 2014.",
+              "onScreen": "Started: 2014",
+              "visual": "Calendar page showing 2014",
+              "motion": "Snap zoom",
+              "sfx": "Page flip"
+            },
+            {
+              "time": "0:10–0:15",
+              "narration": "The goal: feed in résumés, get back a star rating, one to five.",
+              "onScreen": "Résumé in. Stars out.",
+              "visual": "Résumé sliding into a glowing machine, stars lighting up",
+              "motion": "Slow dolly",
+              "sfx": "Chime"
+            },
+            {
+              "time": "0:15–0:19",
+              "narration": "The AI learned from ten years of résumés sent to the company.",
+              "onScreen": "Trained on 10 years",
+              "visual": "Endless stack of paper files in an archive room",
+              "motion": "Slow zoom out",
+              "sfx": ""
+            },
+            {
+              "time": "0:19–0:22",
+              "narration": "Most of them came from men. Tech was male-dominated.",
+              "onScreen": "Mostly men",
+              "visual": "Silhouettes of job applicants in a line, mostly men",
+              "motion": "Side tracking shot",
+              "sfx": ""
+            },
+            {
+              "time": "0:22–0:27",
+              "narration": "So the model learned that pattern as if it were merit.",
+              "onScreen": "Pattern ≠ merit",
+              "visual": "Neural network graphic with one path glowing",
+              "motion": "Zoom into glowing path",
+              "sfx": "Digital hum"
+            },
+            {
+              "time": "0:27–0:31",
+              "narration": "It penalized résumés containing the word \"women's,\" like women's chess club captain.",
+              "onScreen": "Penalized: \"women's\"",
+              "visual": "Résumé line highlighted in red, chess piece beside it",
+              "motion": "Rack focus",
+              "sfx": "Error buzz"
+            },
+            {
+              "time": "0:31–0:34",
+              "narration": "It downgraded graduates of two all-women's colleges.",
+              "onScreen": "2 women's colleges: downgraded",
+              "visual": "Two generic campus gates, star ratings dropping",
+              "motion": "Split screen",
+              "sfx": "Descending tone"
+            },
+            {
+              "time": "0:34–0:36",
+              "narration": "Engineers edited it to ignore those terms.",
+              "onScreen": "Patched the terms",
+              "visual": "Developer typing on a laptop, code on screen",
+              "motion": "Over-the-shoulder",
+              "sfx": "Typing"
+            },
+            {
+              "time": "0:36–0:39",
+              "narration": "But it might find other ways to discriminate.",
+              "onScreen": "Other hidden signals?",
+              "visual": "Magnifying glass over lines of data",
+              "motion": "Slow pan",
+              "sfx": ""
+            },
+            {
+              "time": "0:39–0:43",
+              "narration": "Amazon disbanded the team by the start of 2017.",
+              "onScreen": "Team disbanded: 2017",
+              "visual": "Empty office desks with chairs pushed in",
+              "motion": "Slow pull back",
+              "sfx": "Door close"
+            },
+            {
+              "time": "0:43–0:46",
+              "narration": "Amazon said recruiters never used it to evaluate candidates.",
+              "onScreen": "Amazon: never used to evaluate",
+              "visual": "Corporate statement on paper, generic letterhead",
+              "motion": "Static hold",
+              "sfx": ""
+            },
+            {
+              "time": "0:46–0:51",
+              "narration": "The lesson: AI doesn't remove bias from history. It can automate it.",
+              "onScreen": "AI copies history",
+              "visual": "Old photo turning into digital pixels",
+              "motion": "Morph transition",
+              "sfx": "Whoosh"
+            },
+            {
+              "time": "0:51–0:55",
+              "narration": "So before you trust an AI's ranking, ask what it learned from.",
+              "onScreen": "Ask: trained on what?",
+              "visual": "Robotic hand pausing over the résumé stack",
+              "motion": "Match cut back to opening",
+              "sfx": "Paper shuffle"
+            }
+          ],
+          "loopLine": "So before you trust an AI's ranking, ask what it learned from.",
+          "factCheck": [
+            "Reuters (Jeffrey Dastin) reported the story on October 10, 2018.",
+            "Amazon's team began building the tool in 2014.",
+            "The tool rated candidates from one to five stars.",
+            "It was trained on about 10 years of résumés submitted to the company, mostly from men.",
+            "It penalized résumés that included the word \"women's,\" as in \"women's chess club captain.\"",
+            "It downgraded graduates of two all-women's colleges.",
+            "Amazon edited the programs to be neutral to those terms, but they could still find other ways to discriminate (Reuters).",
+            "Amazon disbanded the team by the start of 2017.",
+            "Amazon said the tool was never used by its recruiters to evaluate candidates (Reuters sources said recruiters looked at its recommendations but never relied solely on them)."
+          ],
+          "moneyAngle": "Evergreen AI Short that drives subscribers toward longer AI-at-work explainers."
+        },
+        {
+          "id": "2026-10-14-10",
+          "type": "video",
+          "platform": "facebook",
+          "niche": "health",
+          "style": "true",
+          "length": "s60",
+          "topic": "Jerry Morris's London bus study: drivers vs conductors (1953)",
+          "titles": [
+            "Two Men, One Bus: Who Got More Heart Disease?",
+            "The 1953 Bus Study That Started Exercise Science",
+            "Why London's Bus Conductors Had Healthier Hearts"
+          ],
+          "hook": "In postwar London, two men worked the same double-decker bus.",
+          "caption": "Jerry Morris, The Lancet, 1953: London bus conductors who climbed stairs all shift had less heart disease than the drivers who sat. Build movement into your day. For anything personal, talk to your doctor.",
+          "hashtags": [
+            "health",
+            "walking",
+            "history",
+            "heart",
+            "longevity"
+          ],
+          "cta": "Share this with the friend who always takes the elevator.",
+          "thumbnail": {
+            "text": "SITTER VS. CLIMBER",
+            "prompt": "Vintage red double-decker bus on a foggy 1950s London street, one figure seated at the wheel, another climbing the stairs, no logos, cinematic film grain, vertical 9:16"
+          },
+          "voice": "Warm, storytelling narrator with a slight sense of mystery, about 150 words per minute.",
+          "music": "Gentle vintage jazz under the setup; soft build as the result is revealed; warm resolve for the takeaway.",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "In postwar London, two men worked the same double-decker bus.",
+              "onScreen": "Same bus. Two jobs.",
+              "visual": "Vintage red double-decker bus on a foggy London street, 1950s style",
+              "motion": "Slow push-in",
+              "sfx": "Bus engine"
+            },
+            {
+              "time": "0:04–0:08",
+              "narration": "One sat and drove. The other climbed the stairs all shift.",
+              "onScreen": "Sitter vs. climber",
+              "visual": "Split screen: hands on a steering wheel, feet climbing bus stairs",
+              "motion": "Split-screen wipe",
+              "sfx": "Footsteps"
+            },
+            {
+              "time": "0:08–0:13",
+              "narration": "A doctor named Jerry Morris wanted to know who got more heart disease.",
+              "onScreen": "Who gets heart disease?",
+              "visual": "1950s doctor's desk with papers and a fountain pen",
+              "motion": "Slow pan",
+              "sfx": "Pen scratch"
+            },
+            {
+              "time": "0:13–0:17",
+              "narration": "He studied about 31,000 London transport workers, aged 35 to 64.",
+              "onScreen": "~31,000 workers",
+              "visual": "Grid of vintage worker silhouettes filling the frame",
+              "motion": "Grid fill animation",
+              "sfx": "Soft ticks"
+            },
+            {
+              "time": "0:17–0:19",
+              "narration": "Same buses. Same routes.",
+              "onScreen": "Same buses. Same routes.",
+              "visual": "Bus route map of London, vintage style",
+              "motion": "Zoom out",
+              "sfx": ""
+            },
+            {
+              "time": "0:19–0:21",
+              "narration": "The big difference: one sat, one moved.",
+              "onScreen": "Sat vs. moved",
+              "visual": "Driver's seat close-up, then a staircase",
+              "motion": "Match cut",
+              "sfx": ""
+            },
+            {
+              "time": "0:21–0:25",
+              "narration": "The drivers had more coronary heart disease than the conductors.",
+              "onScreen": "Drivers: more heart disease",
+              "visual": "Vintage bar chart drawing itself, drivers' bar taller",
+              "motion": "Bars grow",
+              "sfx": "Low hit"
+            },
+            {
+              "time": "0:25–0:29",
+              "narration": "And when conductors did get it, it tended to come later.",
+              "onScreen": "Conductors: later onset",
+              "visual": "Calendar pages turning slowly",
+              "motion": "Slow flip",
+              "sfx": "Page flip"
+            },
+            {
+              "time": "0:29–0:32",
+              "narration": "It was also less likely to kill them early.",
+              "onScreen": "Less often fatal early",
+              "visual": "Heartbeat line on an old monitor, steady rhythm",
+              "motion": "Slow track",
+              "sfx": "Heartbeat"
+            },
+            {
+              "time": "0:32–0:36",
+              "narration": "Morris saw a similar pattern in postmen versus desk clerks.",
+              "onScreen": "Postmen vs. desk clerks",
+              "visual": "Postman walking a street with a satchel, clerk at a desk",
+              "motion": "Split screen",
+              "sfx": "Footsteps"
+            },
+            {
+              "time": "0:36–0:40",
+              "narration": "Published in The Lancet in 1953, it helped launch modern exercise science.",
+              "onScreen": "The Lancet, 1953",
+              "visual": "Old medical journal pages, generic typography",
+              "motion": "Slow push-in",
+              "sfx": "Paper rustle"
+            },
+            {
+              "time": "0:40–0:45",
+              "narration": "The twist: the conductors weren't athletes. They just climbed stairs at work.",
+              "onScreen": "Not athletes. Just stairs.",
+              "visual": "Feet climbing narrow bus stairs, low angle",
+              "motion": "Handheld follow",
+              "sfx": "Footsteps"
+            },
+            {
+              "time": "0:45–0:49",
+              "narration": "You can copy that: stairs, walking calls, a walk after lunch.",
+              "onScreen": "Stairs. Walks. Daily.",
+              "visual": "Modern office worker taking the stairs, then walking outside",
+              "motion": "Quick cuts",
+              "sfx": "Upbeat whoosh"
+            },
+            {
+              "time": "0:49–0:51",
+              "narration": "Heart questions? Ask your doctor.",
+              "onScreen": "Ask your doctor",
+              "visual": "Stethoscope resting on a desk, soft light",
+              "motion": "Static hold",
+              "sfx": ""
+            },
+            {
+              "time": "0:51–0:55",
+              "narration": "Because the healthiest person on that bus wasn't the one sitting down.",
+              "onScreen": "Who stood up?",
+              "visual": "Same vintage bus pulling away into fog",
+              "motion": "Match cut back to opening",
+              "sfx": "Bus engine"
+            }
+          ],
+          "loopLine": "Because the healthiest person on that bus wasn't the one sitting down.",
+          "factCheck": [
+            "Jerry Morris and colleagues published \"Coronary heart-disease and physical activity of work\" in The Lancet in 1953.",
+            "The study covered about 31,000 male London Transport workers aged 35–64.",
+            "Bus drivers had higher rates of coronary heart disease than conductors (about 2.7 vs 1.9 per 1,000 per year).",
+            "Conductors' disease tended to appear later and was less often fatal early (early case fatality about 30% vs 50%).",
+            "The same paper found a similar pattern in postmen versus sedentary telephonists and clerks.",
+            "The study is widely credited with founding physical-activity epidemiology."
+          ],
+          "moneyAngle": "Shareable health-history Reel that builds the longevity audience on Facebook."
+        }
+      ],
+      "bank": [
+        {
+          "id": "2026-10-14-B01",
+          "type": "post",
+          "platform": "x",
+          "pillar": "high_agency",
+          "format": "short",
+          "topic": "The endowment effect: Cornell mug experiment (Kahneman, Knetsch & Thaler, 1990)",
+          "hook": "Hand someone a $6 mug and its value roughly doubles. In their head.",
+          "body": "Cornell, 1990: mug owners wanted about $5.25 to sell. Non-owners would pay about $2.25–$2.75.\n\nThat's the endowment effect.",
+          "parts": [],
+          "hashtags": [
+            "psychology"
+          ],
+          "cta": "Before keeping a stock or subscription, ask: would I buy it today?",
+          "moneyAngle": "Bias explainer that builds the decision-making audience for future courses."
+        },
+        {
+          "id": "2026-10-14-B02",
+          "type": "post",
+          "platform": "x",
+          "pillar": "wealth_systems",
+          "format": "thread",
+          "topic": "Nick Leeson, account 88888 and the collapse of Barings Bank (1995)",
+          "hook": "February 1995. A 233-year-old British bank collapsed because of one trader in Singapore.",
+          "body": "",
+          "parts": [
+            "February 1995. A 233-year-old British bank collapsed.\n\nBecause of one trader in Singapore, and one account number: 88888.",
+            "Nick Leeson ran Barings' futures trading in Singapore. He also had control over the back office that settled those trades.\n\nHe was effectively checking his own work.",
+            "His losses went into an error account numbered 88888.\n\nOn paper, Leeson looked like a star bringing in big profits. Head office kept trusting the numbers.",
+            "Jan 17, 1995: the Kobe earthquake hit Japan and the Nikkei fell hard.\n\nLeeson had huge bets on Japanese markets rising. Instead of stopping, he bet bigger.",
+            "Total losses: about £827 million, roughly $1.4 billion. Far more than Barings could cover.\n\nThe bank founded in 1762 went into administration on Feb 26, 1995.",
+            "Leeson fled Singapore and was arrested at Frankfurt airport. He was sentenced to 6.5 years in a Singapore prison.\n\nING bought Barings for £1.",
+            "Lesson for your own money: never be the only person checking your numbers.\n\nA partner who reads the statements. Alerts on every account. Rules you can't quietly override. Systems catch what willpower hides."
+          ],
+          "hashtags": [
+            "money"
+          ],
+          "cta": "Set one account alert today.",
+          "moneyAngle": "Dramatic finance thread that drives follows for money-systems content."
+        },
+        {
+          "id": "2026-10-14-B03",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "high_agency",
+          "format": "short",
+          "topic": "Xerox PARC let Steve Jobs in for a shot at pre-IPO Apple stock (1979)",
+          "hook": "In December 1979, Xerox let Steve Jobs into its research lab. The price: the right to buy about $1 million of Apple stock before the IPO.",
+          "body": "Xerox Development Corporation bought 100,000 pre-IPO Apple shares at $10.50 each. Part of the deal: Jobs and his team got a look at Xerox PARC.\n\nWhat they saw was the Alto: a computer with windows, icons and a mouse, built at PARC in the 1970s.\n\nXerox invented a big part of the modern personal computer. Apple turned the ideas into products people could buy: the Lisa in 1983 and the Macintosh in 1984.\n\nThe lesson isn't \"Xerox was dumb.\" PARC had brilliant people. The company's money machine was copiers, and the new idea didn't fit how it made money.\n\nInvention without distribution is a museum piece.\n\nThis matters in your own career. The best idea in the room rarely wins. The idea someone ships, sells and keeps improving does.\n\nOne practical move this week: pick one thing you've built or learned that's sitting in a drawer. A document, a process, a side project. Put it in front of one person who could use it.",
+          "parts": [],
+          "hashtags": [
+            "innovation",
+            "careers",
+            "productdevelopment"
+          ],
+          "cta": "What's sitting in your drawer that should be shipped?",
+          "moneyAngle": "Career-leverage story that builds authority with LinkedIn professionals."
+        },
+        {
+          "id": "2026-10-14-B04",
+          "type": "post",
+          "platform": "facebook",
+          "pillar": "relationships",
+          "format": "short",
+          "topic": "Harvard Study of Adult Development: relationships at 50, health at 80",
+          "hook": "In 1938, Harvard started following a group of young men. Some of the study's participants are still followed today, along with their children.",
+          "body": "It's the Harvard Study of Adult Development, one of the longest-running studies of adult life. It began with Harvard sophomores and later included young men from inner-city Boston.\n\nResearchers tracked careers, health, marriages and money for decades.\n\nThe current director, psychiatrist Robert Waldinger, summed up one finding in his TED talk:\n\n\"The people who were the most satisfied in their relationships at age 50 were the healthiest at age 80.\"\n\nNot the richest at 50. Not the most successful. The most satisfied in their relationships.\n\nThat's a quiet challenge to how most of us spend our calendars.\n\nOne small move this week: put one recurring thing on the calendar with someone you love. A Sunday walk. A Thursday phone call. Treat it like a meeting you can't cancel.\n\nWho's the person you keep meaning to call?",
+          "parts": [],
+          "hashtags": [
+            "relationships",
+            "happiness"
+          ],
+          "cta": "Call them today.",
+          "moneyAngle": "Emotional, shareable post that grows Facebook reach and community engagement."
+        },
+        {
+          "id": "2026-10-14-B05",
+          "type": "post",
+          "platform": "instagram",
+          "pillar": "wealth_systems",
+          "format": "carousel",
+          "topic": "Coca-Cola's 5-cent price, 1886–1959",
+          "hook": "Coca-Cola cost 5 cents for about 70 years.",
+          "body": "Coca-Cola cost 5 cents for about 70 years.\n\nFrom 1886 to 1959, the price of a Coke stayed at a nickel through two world wars and the Great Depression. One big reason: vending machines that could only take a single nickel.\n\nPrices today can't hide like that. So they shrink instead. Learn to read the unit price.\n\nSave this for your next grocery run.",
+          "parts": [
+            "1886: Coca-Cola goes on sale. Price: 5 cents.",
+            "1918: World War I ends. Still 5 cents.",
+            "1930s: Great Depression. Still 5 cents.",
+            "1945: World War II ends. Still 5 cents.",
+            "Why? Partly vending machines that only took one nickel. Changing the price meant changing the machines.",
+            "Coca-Cola reportedly even floated the idea of a 7.5-cent coin. It never happened.",
+            "By 1959, the nickel Coke was gone. Economists still study it as a famous case of \"sticky\" prices.",
+            "Today, when prices can't easily move, the package often shrinks instead.",
+            "Your move: compare price per ounce or per unit, not price per package."
+          ],
+          "hashtags": [
+            "moneytips",
+            "inflation",
+            "history",
+            "budgeting"
+          ],
+          "cta": "Check the unit price on your next grocery run.",
+          "moneyAngle": "Saveable money-history carousel that grows followers for budgeting resources."
+        },
+        {
+          "id": "2026-10-14-B06",
+          "type": "video",
+          "platform": "tiktok",
+          "niche": "finance",
+          "style": "true",
+          "length": "s90",
+          "topic": "Charles Ponzi's postal coupon scheme (Boston, 1920)",
+          "titles": [
+            "50% in 45 Days: The Original Ponzi Scheme",
+            "The Math That Exposed Charles Ponzi",
+            "He Needed 160 Million Coupons. Only 27,000 Existed."
+          ],
+          "hook": "In the summer of 1920, crowds in Boston lined up to hand a man their savings.",
+          "caption": "Boston, 1920: Charles Ponzi promised 50% in 45 days using postal reply coupons. Clarence Barron did the math: 160 million coupons needed, about 27,000 in circulation. Ask where the return comes from.",
+          "hashtags": [
+            "ponzi",
+            "truecrime",
+            "money",
+            "history",
+            "scams"
+          ],
+          "cta": "Follow so you can spot the next one.",
+          "thumbnail": {
+            "text": "50% IN 45 DAYS",
+            "prompt": "1920s Boston street, crowd in hats and coats lining up outside an office door, sepia film look, no logos or real faces, vertical 9:16, space at top for text"
+          },
+          "voice": "Old-newsreel tension, measured and confident, about 150 words per minute. Pause before \"27,000\".",
+          "music": "1920s ragtime piano for the boom; slows and detunes as the math arrives; quiet low strings for the collapse and lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:07",
+              "narration": "In the summer of 1920, crowds in Boston lined up to hand a man their savings.",
+              "onScreen": "Boston, 1920",
+              "visual": "Sepia crowd in hats lining up outside an office door",
+              "motion": "Slow push-in",
+              "sfx": "Crowd murmur"
+            },
+            {
+              "time": "0:07–0:10",
+              "narration": "His promise: 50 percent profit in 45 days.",
+              "onScreen": "50% in 45 days",
+              "visual": "Vintage handbill with bold typography, generic",
+              "motion": "Snap zoom",
+              "sfx": "Typewriter ding"
+            },
+            {
+              "time": "0:10–0:12",
+              "narration": "His name was Charles Ponzi.",
+              "onScreen": "Charles Ponzi",
+              "visual": "Silhouette of a man in a straw boater hat, backlit",
+              "motion": "Slow tilt up",
+              "sfx": ""
+            },
+            {
+              "time": "0:12–0:15",
+              "narration": "His story sounded clever: international reply coupons.",
+              "onScreen": "International reply coupons",
+              "visual": "Close-up of an old postal voucher, generic design",
+              "motion": "Macro pan",
+              "sfx": "Paper rustle"
+            },
+            {
+              "time": "0:15–0:20",
+              "narration": "Little postal vouchers you could buy cheaply in one country...",
+              "onScreen": "Buy cheap abroad...",
+              "visual": "Old European post office counter, sepia",
+              "motion": "Dolly left",
+              "sfx": "Coins clink"
+            },
+            {
+              "time": "0:20–0:23",
+              "narration": "and trade for stamps worth more in another.",
+              "onScreen": "...redeem high in the US",
+              "visual": "Sheets of vintage stamps on a desk",
+              "motion": "Dolly right",
+              "sfx": ""
+            },
+            {
+              "time": "0:23–0:27",
+              "narration": "Buy low abroad, redeem high in America. Pocket the difference.",
+              "onScreen": "Pocket the difference",
+              "visual": "Hands sliding coins across a wooden counter",
+              "motion": "Close-up",
+              "sfx": "Coins slide"
+            },
+            {
+              "time": "0:27–0:32",
+              "narration": "The price gap was real. It just couldn't work at that scale.",
+              "onScreen": "Real gap. No scale.",
+              "visual": "Tiny stack of coupons next to a huge pile of cash",
+              "motion": "Slow zoom out",
+              "sfx": ""
+            },
+            {
+              "time": "0:32–0:36",
+              "narration": "Early investors got paid. Fast. And they told everyone.",
+              "onScreen": "Early investors paid",
+              "visual": "1920s friends talking excitedly on a street corner",
+              "motion": "Handheld",
+              "sfx": "Laughter"
+            },
+            {
+              "time": "0:36–0:40",
+              "narration": "Money poured in from tens of thousands of people.",
+              "onScreen": "Tens of thousands invest",
+              "visual": "Cash piling up in office drawers, sepia",
+              "motion": "Speed ramp",
+              "sfx": "Cash register ring"
+            },
+            {
+              "time": "0:40–0:44",
+              "narration": "Then a financial journalist named Clarence Barron did the math.",
+              "onScreen": "Then someone did the math",
+              "visual": "Pencil scribbling arithmetic on a newspaper margin",
+              "motion": "Macro push",
+              "sfx": "Pencil scratch"
+            },
+            {
+              "time": "0:44–0:49",
+              "narration": "To back all that money, Ponzi would need 160 million coupons.",
+              "onScreen": "Needed: 160 million coupons",
+              "visual": "Number 160,000,000 typed out on paper",
+              "motion": "Type-on reveal",
+              "sfx": "Typewriter"
+            },
+            {
+              "time": "0:49–0:52",
+              "narration": "Only about 27,000 were actually circulating.",
+              "onScreen": "Existed: about 27,000",
+              "visual": "Number 27,000 typed below, tiny by comparison",
+              "motion": "Hard cut",
+              "sfx": "Single low note"
+            },
+            {
+              "time": "0:52–0:55",
+              "narration": "So where were the profits coming from?",
+              "onScreen": "So where's the profit?",
+              "visual": "Empty vault door slowly opening",
+              "motion": "Slow push-in",
+              "sfx": "Creak"
+            },
+            {
+              "time": "0:55–0:58",
+              "narration": "New investors' money, paid out to earlier ones.",
+              "onScreen": "New money pays old",
+              "visual": "Arrows of cash moving from a new line to an old line, diagram",
+              "motion": "Animated arrows",
+              "sfx": "Whoosh"
+            },
+            {
+              "time": "0:58–1:02",
+              "narration": "In August 1920, the Boston Post called him hopelessly insolvent.",
+              "onScreen": "\"Hopelessly insolvent\"",
+              "visual": "Vintage newspaper spinning to a stop, generic masthead",
+              "motion": "Spin and stop",
+              "sfx": "Press rumble"
+            },
+            {
+              "time": "1:02–1:06",
+              "narration": "He was arrested days later. The scheme collapsed.",
+              "onScreen": "Arrested. Collapsed.",
+              "visual": "Handcuffs on a desk beside scattered coupons",
+              "motion": "Slow push-in",
+              "sfx": "Handcuff click"
+            },
+            {
+              "time": "1:06–1:10",
+              "narration": "The Post's reporting won the 1921 Pulitzer Prize for Public Service.",
+              "onScreen": "Pulitzer, 1921",
+              "visual": "Old printing press with a golden light",
+              "motion": "Slow tilt",
+              "sfx": ""
+            },
+            {
+              "time": "1:10–1:15",
+              "narration": "Reports differ on the total. Millions of dollars, either way.",
+              "onScreen": "Millions lost",
+              "visual": "Empty office with papers blowing across the floor",
+              "motion": "Wide static shot",
+              "sfx": "Wind"
+            },
+            {
+              "time": "1:15–1:20",
+              "narration": "The test still works today: ask exactly where the return comes from.",
+              "onScreen": "Ask: where's the return from?",
+              "visual": "Modern phone showing an investment ad with a too-good number",
+              "motion": "Push-in",
+              "sfx": "Notification ping"
+            },
+            {
+              "time": "1:20–1:24",
+              "narration": "If the only answer is new money coming in, walk away.",
+              "onScreen": "New money only? Walk away.",
+              "visual": "Person closing a laptop and standing up",
+              "motion": "Over-the-shoulder",
+              "sfx": "Laptop close"
+            },
+            {
+              "time": "1:24–1:29",
+              "narration": "Because 50 percent in 45 days was never about the coupons.",
+              "onScreen": "It was never the coupons.",
+              "visual": "Sepia crowd outside the office door again",
+              "motion": "Match cut back to opening",
+              "sfx": "Crowd murmur"
+            }
+          ],
+          "loopLine": "Because 50 percent in 45 days was never about the coupons.",
+          "factCheck": [
+            "Charles Ponzi's scheme operated in Boston in 1920.",
+            "He promised a 50% return in 45 days (or 100% in 90 days).",
+            "The stated mechanism was arbitrage with international reply coupons.",
+            "Clarence Barron calculated that 160 million coupons would be needed, while only about 27,000 were in circulation.",
+            "Early investors were paid with money from later investors.",
+            "In early August 1920 the Boston Post reported Ponzi was hopelessly insolvent; he was arrested on August 12, 1920.",
+            "The Boston Post won the 1921 Pulitzer Prize for Public Service for its coverage.",
+            "Reports differ on the total amount taken and the number of investors (estimates range from about 17,000 to 30,000+ people and roughly $10–20 million).",
+            "Crowds lined up outside Ponzi's Boston office in summer 1920."
+          ],
+          "moneyAngle": "Over-60-second true-crime money story for TikTok payouts; builds the scam-awareness series."
+        },
+        {
+          "id": "2026-10-14-B07",
+          "type": "video",
+          "platform": "youtube",
+          "niche": "tech",
+          "style": "explainer",
+          "length": "s60",
+          "topic": "Microsoft's Tay chatbot taken offline within 16 hours (2016)",
+          "titles": [
+            "Microsoft's AI Lasted 16 Hours on Twitter",
+            "The Chatbot the Internet Ruined in One Day",
+            "What Tay Taught Us About AI in 16 Hours"
+          ],
+          "hook": "Microsoft launched an AI on Twitter. It lasted about 16 hours.",
+          "caption": "March 23, 2016: Microsoft launched Tay, a chatbot that learned from conversations. Within about 16 hours it was offline. AI becomes what it's fed.",
+          "hashtags": [
+            "AI",
+            "tech",
+            "chatbot",
+            "history",
+            "shorts"
+          ],
+          "cta": "Subscribe for the AI stories behind the headlines.",
+          "thumbnail": {
+            "text": "16 HOURS",
+            "prompt": "Friendly cartoon chatbot face on a phone screen cracking and glitching red, dark background, no logos, vertical 9:16, bold space for text"
+          },
+          "voice": "Fast, curious explainer voice with dry humor, about 150 words per minute.",
+          "music": "Bright, bubbly synth at launch that degrades into distorted glitch sounds; clean minimal pad for the lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:05",
+              "narration": "Microsoft launched an AI on Twitter. It lasted about 16 hours.",
+              "onScreen": "Launched. Gone in 16 hours.",
+              "visual": "Phone screen with a cheerful chatbot avatar, generic",
+              "motion": "Fast push-in",
+              "sfx": "Notification ping"
+            },
+            {
+              "time": "0:05–0:08",
+              "narration": "March 23rd, 2016. Its name was Tay.",
+              "onScreen": "March 23, 2016",
+              "visual": "Calendar flipping to March 23",
+              "motion": "Snap zoom",
+              "sfx": "Page flip"
+            },
+            {
+              "time": "0:08–0:12",
+              "narration": "Tay was designed to talk like a young American adult.",
+              "onScreen": "Built to chat casually",
+              "visual": "Chat bubbles popping up with emoji-free casual text",
+              "motion": "Bubbles animate in",
+              "sfx": "Pop"
+            },
+            {
+              "time": "0:12–0:17",
+              "narration": "The pitch: the more you chatted with Tay, the smarter it got.",
+              "onScreen": "\"Chat more, it gets smarter\"",
+              "visual": "Brain icon growing brighter with each message",
+              "motion": "Grow animation",
+              "sfx": "Rising chime"
+            },
+            {
+              "time": "0:17–0:19",
+              "narration": "That was the bug.",
+              "onScreen": "That was the bug.",
+              "visual": "Brain icon flickering",
+              "motion": "Glitch cut",
+              "sfx": "Glitch"
+            },
+            {
+              "time": "0:19–0:22",
+              "narration": "Users realized Tay learned from whatever they fed it.",
+              "onScreen": "It learned from anyone",
+              "visual": "Hundreds of chat bubbles converging on one avatar",
+              "motion": "Zoom out",
+              "sfx": "Crowd chatter"
+            },
+            {
+              "time": "0:22–0:26",
+              "narration": "So some users flooded it with offensive messages.",
+              "onScreen": "Flooded with garbage",
+              "visual": "Dark red message bubbles swarming the screen, blurred text",
+              "motion": "Speed ramp",
+              "sfx": "Static"
+            },
+            {
+              "time": "0:26–0:30",
+              "narration": "Within hours, Tay was repeating them back to the world.",
+              "onScreen": "Repeating it back",
+              "visual": "Avatar's speech bubbles turning red, text blurred",
+              "motion": "Glitch transitions",
+              "sfx": "Distorted beeps"
+            },
+            {
+              "time": "0:30–0:34",
+              "narration": "It posted more than 96,000 tweets in its short life.",
+              "onScreen": "96,000+ tweets",
+              "visual": "Counter spinning past 96,000",
+              "motion": "Counter spin",
+              "sfx": "Ticking"
+            },
+            {
+              "time": "0:34–0:37",
+              "narration": "Microsoft pulled Tay offline and apologized.",
+              "onScreen": "Offline. Apology.",
+              "visual": "Power button pressed, screen goes black",
+              "motion": "Hard cut to black",
+              "sfx": "Power down"
+            },
+            {
+              "time": "0:37–0:41",
+              "narration": "The model wasn't evil. It was a mirror with no filter.",
+              "onScreen": "A mirror. No filter.",
+              "visual": "Cracked mirror reflecting chat bubbles",
+              "motion": "Slow push-in",
+              "sfx": "Glass creak"
+            },
+            {
+              "time": "0:41–0:45",
+              "narration": "Every AI tool you use learned from somebody's data.",
+              "onScreen": "AI learns from data",
+              "visual": "Data streams flowing into a glowing core",
+              "motion": "Slow orbit",
+              "sfx": "Digital hum"
+            },
+            {
+              "time": "0:45–0:49",
+              "narration": "So check its output like you'd check a stranger's advice.",
+              "onScreen": "Check it like a stranger",
+              "visual": "Person reading a laptop screen with a skeptical look, back to camera",
+              "motion": "Over-the-shoulder",
+              "sfx": ""
+            },
+            {
+              "time": "0:49–0:54",
+              "narration": "Because Tay showed how fast an AI becomes whatever it's fed.",
+              "onScreen": "It becomes what it's fed",
+              "visual": "Cheerful chatbot avatar on a phone again",
+              "motion": "Match cut back to opening",
+              "sfx": "Notification ping"
+            }
+          ],
+          "loopLine": "Because Tay showed how fast an AI becomes whatever it's fed.",
+          "factCheck": [
+            "Microsoft launched the Tay chatbot on Twitter on March 23, 2016.",
+            "Tay was modeled on the speech of a young American (18–24-year-old) user.",
+            "Microsoft said Tay would get smarter the more people chatted with it.",
+            "Users fed Tay offensive content, which it repeated.",
+            "Tay was taken offline about 16 hours after launch.",
+            "Tay posted more than 96,000 tweets.",
+            "Microsoft apologized publicly afterward."
+          ],
+          "moneyAngle": "Evergreen AI-history Short that drives subscribers to the AI-literacy series."
+        },
+        {
+          "id": "2026-10-14-B08",
+          "type": "video",
+          "platform": "instagram",
+          "niche": "lifestyle",
+          "style": "funny",
+          "length": "s60",
+          "topic": "The chaotic 1904 St. Louis Olympic marathon",
+          "titles": [
+            "The Olympic Winner Ran on Rat Poison",
+            "The Marathon Where the 'Winner' Rode in a Car",
+            "1904: The Strangest Olympic Marathon Ever Run"
+          ],
+          "hook": "The 1904 Olympic marathon winner was fueled by rat poison.",
+          "caption": "St. Louis, 1904: one runner rode in a car, the winner was dosed with strychnine and brandy, another napped after eating rotten apples. A finish line doesn't prove the route was clean.",
+          "hashtags": [
+            "olympics",
+            "history",
+            "marathon",
+            "truestory",
+            "running"
+          ],
+          "cta": "Follow for more history that sounds made up but isn't.",
+          "thumbnail": {
+            "text": "RAT POISON GOLD",
+            "prompt": "Dusty 1904 dirt road with an exhausted marathon runner in vintage kit, early automobile kicking up dust behind him, sepia, no real faces, vertical 9:16"
+          },
+          "voice": "Straight-faced sports commentator energy, about 155 words per minute. Treat every absurd fact as completely normal.",
+          "music": "Jaunty early-1900s brass band; record-scratch stop on \"rat poison\" and on \"in a car\".",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "The 1904 Olympic marathon winner was fueled by rat poison.",
+              "onScreen": "Olympic gold. Rat poison.",
+              "visual": "Vintage gold medal spinning on a dusty table",
+              "motion": "Fast push-in",
+              "sfx": "Record scratch"
+            },
+            {
+              "time": "0:04–0:06",
+              "narration": "St. Louis, August 1904. About 90 degrees.",
+              "onScreen": "St. Louis, 1904. ~90°F",
+              "visual": "Sun blazing over a dusty dirt road, sepia",
+              "motion": "Heat-haze tilt",
+              "sfx": "Cicadas"
+            },
+            {
+              "time": "0:06–0:09",
+              "narration": "Thirty-two runners started. Only fourteen finished.",
+              "onScreen": "32 started. 14 finished.",
+              "visual": "Runners in vintage kit at a start line",
+              "motion": "Wide static",
+              "sfx": "Starter pistol"
+            },
+            {
+              "time": "0:09–0:12",
+              "narration": "First across the line: Fred Lorz. The crowd cheered.",
+              "onScreen": "First across: Fred Lorz",
+              "visual": "Crowd in straw hats cheering a finish line, sepia",
+              "motion": "Slow motion",
+              "sfx": "Cheering"
+            },
+            {
+              "time": "0:12–0:17",
+              "narration": "Then people noticed. He'd ridden in a car for around ten miles.",
+              "onScreen": "...he rode in a car.",
+              "visual": "Early 1900s automobile bouncing down a dirt road",
+              "motion": "Tracking shot",
+              "sfx": "Old car horn"
+            },
+            {
+              "time": "0:17–0:20",
+              "narration": "He was disqualified. He said it was a joke.",
+              "onScreen": "\"It was a joke.\"",
+              "visual": "Referee waving arms, vintage",
+              "motion": "Freeze frame",
+              "sfx": "Whistle"
+            },
+            {
+              "time": "0:20–0:23",
+              "narration": "The real winner, Thomas Hicks, had a different shortcut.",
+              "onScreen": "The real winner: Thomas Hicks",
+              "visual": "Exhausted runner shuffling down a dusty road",
+              "motion": "Handheld follow",
+              "sfx": "Heavy breathing"
+            },
+            {
+              "time": "0:23–0:28",
+              "narration": "His trainers gave him strychnine mixed with egg white and brandy.",
+              "onScreen": "Strychnine + egg + brandy",
+              "visual": "Vintage glass bottle and a raw egg on a table",
+              "motion": "Macro push",
+              "sfx": "Glass clink"
+            },
+            {
+              "time": "0:28–0:33",
+              "narration": "Back then, tiny doses were used as a stimulant. It's also a poison.",
+              "onScreen": "Stimulant. Also poison.",
+              "visual": "Old apothecary shelf with labeled bottles, generic",
+              "motion": "Slow pan",
+              "sfx": ""
+            },
+            {
+              "time": "0:33–0:37",
+              "narration": "He staggered across the finish in about three and a half hours.",
+              "onScreen": "~3.5 hours",
+              "visual": "Runner collapsing across a finish line, sepia",
+              "motion": "Slow motion",
+              "sfx": "Crowd gasp"
+            },
+            {
+              "time": "0:37–0:40",
+              "narration": "Meanwhile, Cuban runner Andarín Carvajal ate rotten apples mid-race,",
+              "onScreen": "Rotten apples. Mid-race.",
+              "visual": "Bruised apples on a tree beside the road",
+              "motion": "Push-in",
+              "sfx": "Crunch"
+            },
+            {
+              "time": "0:40–0:43",
+              "narration": "took a nap, and still finished fourth.",
+              "onScreen": "Napped. Still fourth.",
+              "visual": "Runner asleep under a tree beside the course",
+              "motion": "Slow zoom out",
+              "sfx": "Snore"
+            },
+            {
+              "time": "0:43–0:48",
+              "narration": "Twist: Lorz was banned, then reinstated, and won the 1905 Boston Marathon.",
+              "onScreen": "Then won Boston in 1905",
+              "visual": "Vintage newspaper headline spinning, generic",
+              "motion": "Spin and stop",
+              "sfx": "Brass sting"
+            },
+            {
+              "time": "0:48–0:52",
+              "narration": "The lesson: a finish line doesn't prove the route was clean.",
+              "onScreen": "Check the route",
+              "visual": "Dusty road stretching to the horizon",
+              "motion": "Slow push-in",
+              "sfx": ""
+            },
+            {
+              "time": "0:52–0:56",
+              "narration": "Which brings us back to the winner running on rat poison.",
+              "onScreen": "Running on rat poison",
+              "visual": "Gold medal spinning again",
+              "motion": "Match cut back to opening",
+              "sfx": "Record scratch"
+            }
+          ],
+          "loopLine": "Which brings us back to the winner running on rat poison.",
+          "factCheck": [
+            "The 1904 Olympic marathon was held in St. Louis in August 1904 (Aug 30) in heat of about 90°F.",
+            "32 runners started and 14 finished.",
+            "Fred Lorz crossed the line first after riding in a car for roughly 10–11 miles and was disqualified; he said it was a joke.",
+            "Lorz's ban was lifted and he won the 1905 Boston Marathon.",
+            "Thomas Hicks was given strychnine mixed with egg white and brandy by his trainers.",
+            "Strychnine was used as a stimulant in small doses at the time and is also used as rat poison.",
+            "Hicks won in 3:28:53.",
+            "Andarín Carvajal of Cuba ate rotten apples, took a nap and finished fourth."
+          ],
+          "moneyAngle": "Highly shareable funny-history Reel that grows reach on Instagram."
+        }
+      ]
+    },
+    {
       "id": "2026-10-13",
       "createdAt": "2026-10-13T12:15:00-05:00",
       "items": [
