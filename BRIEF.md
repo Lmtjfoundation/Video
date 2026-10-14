@@ -24,6 +24,8 @@ mode set in "Posting through Metricool" below.
    in `items` and the 8 in `bank`.
    Keep only the **7 newest batches**; delete older ones from the file (the app has already
    imported them; git history keeps them).
+   Leave the top-level `series` array exactly as it is (finished episodes of story series such as
+   *The Settlement*; the app imports them into Story Studio). Don't edit, reorder or delete it.
 4. Append one line per new piece (all 18) to `topics.txt`: `YYYY-MM-DD | platform | topic`.
 5. Run `node validate.mjs`. Fix every error it reports and run it again until it prints `OK`.
 6. Commit with the message `Batch YYYY-MM-DD (10 pieces + 8 bank)` and push to

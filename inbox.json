@@ -1378,5 +1378,67 @@
         }
       ]
     }
+  ],
+  "series": [
+    {
+      "id": "the-settlement-s1e01",
+      "name": "The Settlement",
+      "season": 1,
+      "episode": 1,
+      "title": "The Keys",
+      "logline": "Twelve years of marriage. He gave her every password and every key. Then at 2:07 AM he heard her whisper another man's name.",
+      "nextTime": "Marcus starts losing things. His keys. His dates. His mind?",
+      "videoUrl": "https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-content/media/the-settlement/voiced/ep01.mp4",
+      "durationSec": 173,
+      "caption": "THE SETTLEMENT · Episode 1: The Keys 🎬\n\nTwelve years of marriage. He gave her every password and every key. Then at 2:07 AM he heard her whisper another man's name.\n\nEpisode 2 is next. Follow so you don't miss it. 👀\n\nWhose side are you on? 👇\n\n(A fictional story. Any resemblance to real people is coincidental. Voices are AI.)",
+      "hashtags": [
+        "TheSettlement",
+        "storytime",
+        "drama",
+        "series",
+        "relationships"
+      ],
+      "platforms": [
+        "instagram",
+        "facebook"
+      ],
+      "scenes": [
+        {
+          "heading": "COLD OPEN. EXT. I-45 — NIGHT (ELEVEN MONTHS LATER)",
+          "time": "0:00",
+          "text": "Rain. A black Escalade idles under the overpass. Inside, TASHA counts nothing. She just smiles at her phone: a wire confirmation. $20,000,000.00.\n\nMARCUS (V.O.): They say a man can feel it when the ground's about to move. I didn't feel nothing. I was too busy holding the door open for her.\n\nTITLE CARD: THE SETTLEMENT"
+        },
+        {
+          "heading": "INT. GRANT HOUSE, PEARLAND — MORNING (ELEVEN MONTHS EARLIER)",
+          "time": "0:25",
+          "text": "Sunlight. Grits on the stove. MARCUS, work boots, Grant Air polo, kisses TASHA on the forehead.\n\nTASHA: Invoices for the Fulton job went out?\n\nMARCUS: You tell me. You the brains, I'm just the back.\n\nTASHA (laughing, fixing his collar): And don't you forget it. I got the bills, baby. Go make us some money.\n\nMARCUS (V.O.): Twelve years. I gave her the passwords, the checkbook, the keys to the trucks, the keys to my mama's house. I gave her the keys to me."
+        },
+        {
+          "heading": "INT. GRANT AIR VAN — MOVING — DAY",
+          "time": "0:51",
+          "text": "KEV rides shotgun, eating sunflower seeds.\n\nKEV: Bro, why the supplier calling ME talking 'bout your card got declined?\n\nMARCUS: Declined? We got forty-eight thousand in savings.\n\nKEV: Then somebody spending it, 'cause it ain't you. You still wearing them boots from '19.\n\nMARCUS: Tasha got it. It's a mix-up.\n\nKEV (spits a shell out the window): A mix-up. Aight."
+        },
+        {
+          "heading": "INT. GRANT HOUSE — KITCHEN — NIGHT",
+          "time": "1:14",
+          "text": "Marcus slides a bank statement across the island. Small withdrawals circled in red. Three hundred. Eight hundred. Five fifty.\n\nMARCUS: What's all this?\n\nTasha doesn't blink. She pours him a glass of wine.\n\nTASHA: That's your truck note, your daddy's headstone, and the AC unit you gave Sister Hattie for free. Remember? You told me to handle it.\n\nMARCUS: I... don't remember saying that.\n\nTASHA (soft, rubbing his back): You working sixty hours a week, Marcus. You not remembering right. That's why I got you.\n\nMARCUS (V.O.): And I believed her. 'Cause the alternative was believing my wife was a stranger."
+        },
+        {
+          "heading": "INT. BEDROOM — 2:07 A.M.",
+          "time": "1:52",
+          "text": "Marcus wakes. Her side of the bed is cold. A sliver of blue light under the door."
+        },
+        {
+          "heading": "INT. KITCHEN — CONTINUOUS",
+          "time": "1:59",
+          "text": "He stops in the hallway. Tasha, back turned, whispering into a cheap flip phone he's never seen.\n\nTASHA (low): No, he don't suspect a thing... Just a little longer, Dre. Then it's ours.\n\nShe snaps the phone shut. Marcus steps back into the dark before she turns.\n\nMARCUS (V.O.): Dre. Her cousin Dre. The one who only ever came around when he needed something."
+        },
+        {
+          "heading": "INT. BEDROOM — MOMENTS LATER",
+          "time": "2:23",
+          "text": "Marcus lies still, eyes open. Tasha slides into bed and drapes her arm across his chest.\n\nTASHA (whispering): Love you, baby.\n\nMARCUS (barely): Love you too.\n\nMARCUS (V.O.): That was the night I should've changed the locks. Instead, I went back to sleep next to the person holding all the keys.\n\nSMASH TO BLACK."
+        }
+      ]
+    }
   ]
 }
