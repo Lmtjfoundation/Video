@@ -27,7 +27,7 @@ function deckFor(it, n) {
     tag: d.tag ?? PILLAR_TAG[it.pillar] ?? "Nexus Pulse",
     handle: d.handle ?? (it.platform === "linkedin" ? "Nexus Pulse" : "@bino_da_producer"),
     lastCta: d.lastCta ?? (it.platform === "linkedin" ? "Share with your team ↓" : "Save this ↓"),
-    pdf: it.platform === "linkedin" ? "slides.pdf" : undefined,
+    pdf: "slides.pdf",
     ...pal, ...d, slides,
   };
 }

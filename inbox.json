@@ -957,9 +957,9 @@
           "length": "s60",
           "topic": "Amazon's scrapped AI recruiting tool that downgraded women (Reuters, 2018)",
           "titles": [
-            "Amazon's Hiring AI Taught Itself to Downgrade Women",
+            "Why Amazon Scrapped Its Secret Résumé Robot",
             "The AI That Penalized the Word \"Women's\"",
-            "Why Amazon Scrapped Its Secret Résumé Robot"
+            "Amazon's Hiring AI Taught Itself to Downgrade Women"
           ],
           "hook": "Amazon built an AI to pick the best résumés. It learned to downgrade women.",
           "caption": "Reuters, Oct 2018: Amazon scrapped an experimental AI recruiting tool after it learned to penalize résumés with the word \"women's.\" AI learns the past. Check what it learned from.",
@@ -1148,6 +1148,13 @@
               "scene": 12,
               "line": "Amazon disbanded the team by the start of 2017."
             }
+          },
+          "titleScores": {
+            "vidiq": [
+              92,
+              83,
+              79
+            ]
           }
         },
         {

@@ -305,6 +305,25 @@ on her social accounts without each platform's developer app.
    (`body`, then the hashtags with `#`) as text. Same timing and draft rules as step 4.
 6. Mention in your final line which posts went to Metricool, or why none did.
 
+## Connected tools (use them every run)
+
+These connectors are attached to the daily run. Use each one as described; if a tool is missing or
+errors, skip that step and say so in the final line. Never let a tool step change facts or wording.
+
+- **vidIQ (YouTube titles):** call `vidiq_balance`. If at least 20 credits remain, score the three
+  `titles` of that day's YouTube video with `vidiq_score_title` (`type: "short"`), reorder them best
+  first, and store `"titleScores": { "vidiq": [..] }` on the item. Costs 5 credits per title; skip
+  the step when credits are low. Never score more than one video per day.
+- **Canva (editable carousels):** after the push, for each daily carousel (04 and 06) call
+  `import-design-from-url` with
+  `https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-content/media/<item id>/slides.pdf`,
+  name `Nexus Pulse <date> · <topic>` and `intended_design_type: "instagram_post"`. Put the returned
+  edit links in the final line so the owner can tweak the slides in Canva.
+- **Adobe (Express, Photoshop, Acrobat):** connected with a full account, but not part of the daily
+  run. Use it only when the owner asks (for example, Express templates or photo fixes).
+- **ElevenLabs and HyperFrames (HeyGen):** not part of the daily run (they spend paid credits; the
+  HeyGen free plan allows only a few videos a month). The owner asks for rendered videos separately.
+
 ## Carousel slides
 
 Every carousel (daily 04 and 06, bank B05) gets designed slide images the owner can post as-is.
@@ -324,7 +343,8 @@ Every carousel (daily 04 and 06, bank B05) gets designed slide images the owner 
    only some data points are documented, chart only those and add a `note`. Never invent in-between
    values.
 2. Render: `npm --prefix tools install --no-audit --no-fund` then `node tools/render-slides.mjs`.
-   It writes `media/<item id>/slide-N.jpg` (1080x1350), `alt.json`, and `slides.pdf` for LinkedIn.
+   It writes `media/<item id>/slide-N.jpg` (1080x1350), `alt.json` and `slides.pdf` (used for Canva and
+   LinkedIn).
 3. Look at the rendered slides (open two or three of the JPGs) and fix anything that overflows or
    reads badly, then commit the `media/<item id>/` folders with the batch.
 
