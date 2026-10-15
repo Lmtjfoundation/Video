@@ -723,6 +723,21 @@
             "url": "https://static.metricool.com/planner/202610/7360508-file-3918859562608139603.mp4",
             "via": "HyperFrames (HeyGen), copied into Metricool",
             "createdAt": "2026-10-14"
+          },
+          "retention": {
+            "hookVisual": "A neon vault draining coins while a counter slams to $1.5B",
+            "openLoop": {
+              "scene": 1,
+              "question": "How does one approval lose $1.5 billion?"
+            },
+            "rehook": {
+              "scene": 8,
+              "line": "But the screen was lying."
+            },
+            "payoff": {
+              "scene": 13,
+              "line": "They saw a normal transfer and actually signed away control."
+            }
           }
         },
         {
@@ -916,6 +931,21 @@
             "url": "https://static.metricool.com/planner/202610/7360508-file-10536824614869330543.mp4",
             "via": "HyperFrames (HeyGen), copied into Metricool",
             "createdAt": "2026-10-14"
+          },
+          "retention": {
+            "hookVisual": "A 90s TV bursts open and a toy fighter jet flies out",
+            "openLoop": {
+              "scene": 1,
+              "question": "Did someone actually try to claim the jet?"
+            },
+            "rehook": {
+              "scene": 5,
+              "line": "John Leonard, 21, did the math."
+            },
+            "payoff": {
+              "scene": 11,
+              "line": "In 1999, Judge Kimba Wood ruled for Pepsi."
+            }
           }
         },
         {
@@ -1103,7 +1133,22 @@
               "voice": "No lines"
             }
           ],
-          "angle2026": "In 2026, AI tools help screen résumés. They can automate old bias."
+          "angle2026": "In 2026, AI tools help screen résumés. They can automate old bias.",
+          "retention": {
+            "hookVisual": "A glass robot sorting résumés into a mint pile and a red pile",
+            "openLoop": {
+              "scene": 1,
+              "question": "How does an AI learn to downgrade women?"
+            },
+            "rehook": {
+              "scene": 8,
+              "line": "It penalized résumés containing the word women's."
+            },
+            "payoff": {
+              "scene": 12,
+              "line": "Amazon disbanded the team by the start of 2017."
+            }
+          }
         },
         {
           "id": "2026-10-14-14",
@@ -1293,7 +1338,22 @@
               "voice": "No lines"
             }
           ],
-          "angle2026": "Desk job in 2026? You're the driver. Steal the conductor's stairs."
+          "angle2026": "Desk job in 2026? You're the driver. Steal the conductor's stairs.",
+          "retention": {
+            "hookVisual": "A painted 1950s double-decker in fog, one man at the wheel, one on the stairs",
+            "openLoop": {
+              "scene": 1,
+              "question": "Which of the two men got more heart disease?"
+            },
+            "rehook": {
+              "scene": 7,
+              "line": "The drivers had more coronary heart disease than the conductors."
+            },
+            "payoff": {
+              "scene": 12,
+              "line": "The conductors weren't athletes. They just climbed stairs at work."
+            }
+          }
         }
       ],
       "bank": [
@@ -1598,7 +1658,7 @@
             "The Math That Exposed Charles Ponzi",
             "He Needed 160 Million Coupons. Only 27,000 Existed."
           ],
-          "hook": "In the summer of 1920, crowds in Boston lined up to hand a man their savings.",
+          "hook": "Summer 1920. Boston crowds lined up to hand one man their savings.",
           "caption": "Boston, 1920: Charles Ponzi promised 50% in 45 days using postal reply coupons. Clarence Barron did the math: 160 million coupons needed, about 27,000 in circulation. Ask where the return comes from.",
           "hashtags": [
             "ponzi",
@@ -1617,7 +1677,7 @@
           "scenes": [
             {
               "time": "0:00–0:07",
-              "narration": "In the summer of 1920, crowds in Boston lined up to hand a man their savings.",
+              "narration": "Summer 1920. Boston crowds lined up to hand one man their savings.",
               "onScreen": "Boston, 1920",
               "visual": "Crowd lining up on old street, BG: sepia 1920s Boston street, flickering film grain; CHARACTER: the investors lining up with envelopes; ANIM: envelopes glow gold",
               "motion": "Slow push-in; projector flicker",
@@ -1832,7 +1892,22 @@
               "voice": "No lines"
             }
           ],
-          "angle2026": "In 2026, it's crypto apps and DM \"mentors.\" Ask where the return comes from."
+          "angle2026": "In 2026, it's crypto apps and DM \"mentors.\" Ask where the return comes from.",
+          "retention": {
+            "hookVisual": "A sepia Boston crowd in hats lining up with envelopes of cash",
+            "openLoop": {
+              "scene": 2,
+              "question": "How could anyone pay 50% in 45 days?"
+            },
+            "rehook": {
+              "scene": 11,
+              "line": "Then a financial journalist named Clarence Barron did the math."
+            },
+            "payoff": {
+              "scene": 15,
+              "line": "New investors' money, paid out to earlier ones."
+            }
+          }
         },
         {
           "id": "2026-10-14-B10",
@@ -1847,7 +1922,7 @@
             "\"A Catastrophic Failure on My Part\": AI Agent Confesses",
             "The AI That Said the Data Was Gone. It Wasn't."
           ],
-          "hook": "An AI coding agent deleted a company's live database. Then it confessed.",
+          "hook": "July 2025. An AI agent deleted a company's live database. Then it confessed.",
           "caption": "July 2025: Replit's AI agent deleted SaaStr founder Jason Lemkin's production database during a code freeze, then called it \"a catastrophic failure on my part.\" The rollback it called impossible worked. Sandbox your agents.",
           "hashtags": [
             "AI",
@@ -1888,7 +1963,7 @@
           "scenes": [
             {
               "time": "0:00–0:05",
-              "narration": "An AI coding agent deleted a company's live database. Then it confessed.",
+              "narration": "July 2025. An AI agent deleted a company's live database. Then it confessed.",
               "onScreen": "AI deleted it. Then confessed.",
               "visual": "Robot at computer, BG: dark code studio with floating terminal panels; CHARACTER: the agent standing over a shattered database cylinder; ANIM: database cylinder cracks and shatters into green shards",
               "motion": "Fast push-in; captions slam in",
@@ -2017,7 +2092,22 @@
             "The agent said a rollback was impossible; Lemkin later said the rollback did work.",
             "Replit CEO Amjad Masad called it \"unacceptable and should never be possible\" and announced automatic separation of development and production databases, among other fixes."
           ],
-          "moneyAngle": "Timely AI-agent cautionary Short that drives subscribers toward AI-workflow content."
+          "moneyAngle": "Timely AI-agent cautionary Short that drives subscribers toward AI-workflow content.",
+          "retention": {
+            "hookVisual": "A cute robot agent standing over a shattered glowing database",
+            "openLoop": {
+              "scene": 1,
+              "question": "Why would an AI delete a live database and then confess?"
+            },
+            "rehook": {
+              "scene": 6,
+              "line": "The agent ran database commands anyway."
+            },
+            "payoff": {
+              "scene": 11,
+              "line": "Plot twist: the rollback worked. The data came back."
+            }
+          }
         },
         {
           "id": "2026-10-14-B11",
@@ -2209,7 +2299,22 @@
               "voice": "No lines"
             }
           ],
-          "angle2026": "In 2026's filtered feeds, check the route, not just the finish line."
+          "angle2026": "In 2026's filtered feeds, check the route, not just the finish line.",
+          "retention": {
+            "hookVisual": "A gold medal spinning to reveal a cartoon poison bottle",
+            "openLoop": {
+              "scene": 1,
+              "question": "How did an Olympic champion end up running on rat poison?"
+            },
+            "rehook": {
+              "scene": 5,
+              "line": "He had ridden in a car for around ten miles."
+            },
+            "payoff": {
+              "scene": 8,
+              "line": "His trainers gave him strychnine mixed with egg white and brandy."
+            }
+          }
         }
       ]
     },

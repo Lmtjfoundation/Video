@@ -43,11 +43,11 @@ anything.
 | # | type  | platform  | format / length | notes |
 |---|-------|-----------|-----------------|-------|
 | 1 | post  | x         | `short`         | One tweet. hook + body + cta + hashtags must fit in 280 characters total. 0–1 hashtags. |
-| 2 | post  | x         | `thread`        | 4–8 tweets in `parts`, each under 270 characters. `parts[0]` is the hook tweet; the last part is the takeaway. |
+| 2 | post  | x         | `thread`        | 5–8 tweets in `parts`, each under 270 characters. `parts[0]` is the hook tweet; the last part is the takeaway. |
 | 3 | post  | linkedin  | `short`         | 700–1,300 characters. The hook must land in the first ~210 characters. 2–3 hashtags. |
-| 4 | post  | linkedin  | `carousel`      | 6–9 slides in `parts`, one idea per slide; `body` is the post text. |
+| 4 | post  | linkedin  | `carousel`      | 8–9 slides in `parts`, one idea per slide; `body` is the post text. |
 | 5 | post  | facebook  | `short`         | 80–250 words, story-led, ends with one specific question. 0–2 hashtags. |
-| 6 | post  | instagram | `carousel`      | 6–10 slides in `parts`; `body` is the caption (first line is the hook). 3–5 hashtags. |
+| 6 | post  | instagram | `carousel`      | 8–10 slides in `parts`; `body` is the caption (first line is the hook). 3–5 hashtags. |
 | 7 | video | tiktok    | `s90`           | 61–90 seconds (TikTok only pays creators for videos over 1 minute). |
 | 8 | video | instagram | `s60`           | Reel, 45–58 seconds. |
 | 9 | video | youtube   | `s60`           | Short, 45–58 seconds. |
@@ -102,6 +102,40 @@ made-up details.
   never a vague one ("You Won't Believe This").
 - Avoid clickbait that the content doesn't pay off, and avoid shock for its own sake (gore, tragedy
   as entertainment, mocking victims).
+
+## Retention playbook (finish rate and views come first)
+
+The owner's goal is more views and higher finish rates. Every piece is detailed and engineered so
+people stay to the end. All of this is still built from checked facts; detail never means invention.
+
+**Videos**
+- **0–1 s:** the first frame is already the most dramatic true moment, with motion and on-screen
+  text. Scene 1 narration is 14 words or fewer and contains a number, a name, a date or a money
+  amount. No setup, no context, no "today we're talking about".
+- **Open a loop in the first 25%:** make the viewer ask a question they need answered ("How does one
+  approval lose $1.5 billion?"). Don't answer it until the payoff.
+- **Re-hook between 30% and 80%:** a turn, a reveal or a "then it got worse" moment that is true and
+  paid off ("But the screen was lying."). Long videos re-hook every 20–30 seconds.
+- **Payoff after the re-hook,** then one twist or surprising true fact, then the 2026 line and the
+  lesson, then the loop line. Never pad the end; finish on movement.
+- **Detail density:** every scene carries at least one concrete detail: a name, number, date, place,
+  object, dollar amount, quote or sensory image. Aim for 6+ checkable facts in an `s60` and 8+ in an
+  `s90` (all in `factCheck`).
+- **Pattern interrupts every 2–4 seconds:** a new visual, camera move, caption style, sound hit or
+  number counter. Captions on every line (most people watch muted at first).
+- **Stakes stay visible:** a running counter, timer or score on screen when money or time is at
+  stake.
+- **Speak to one person:** "you" and concrete scenarios, short sentences, no filler words.
+- **End-to-start loop:** the last line flows back into the first frame so a replay feels seamless.
+- Record the plan in `retention` (see the format below).
+
+**Posts**
+- First line: a specific, true, high-stakes moment or number. Second line: why it matters to the
+  reader. Then the story in short lines, with names, dates and amounts.
+- X threads: 5–8 parts; each part ends on a reason to read the next one. Carousels: 8–10 slides;
+  slide 1 is the hook, slide 2 raises the stakes, the last slide is the save-worthy takeaway.
+- Every post ends with one concrete thing the reader can do today, and one comment-starting question
+  or a save/share cue.
 
 ## Voice (the app's personality lock — follow it exactly)
 
@@ -240,6 +274,8 @@ Example: `Trading floor monitors flashing red, BG: dark glossy trading floor wit
 - `artStyle`: one sentence naming the style, palette and caption look.
 - `cast`: list of `{ "name", "role", "look", "voice" }` for everyone who appears on screen.
 - `angle2026`: the 2026 tie-in line.
+- `retention`: `hookVisual`, `openLoop` {scene, question}, `rehook` {scene, line}, `payoff`
+  {scene, line}; scene numbers start at 1 (see "Retention playbook").
 
 The app keeps only the standard fields, so the look must also live inside each scene's `visual`
 and `motion`, and the cast's voices inside `voice`.
@@ -342,7 +378,13 @@ Every carousel (daily 04 and 06, bank B05) gets designed slide images the owner 
           "moneyAngle": "how this video earns",
           "artStyle": "one sentence: style, palette, caption look",
           "cast": [{ "name": "Nova", "role": "host", "look": "…", "voice": "…" }],
-          "angle2026": "the spoken 2026 tie-in line"
+          "angle2026": "the spoken 2026 tie-in line",
+          "retention": {
+            "hookVisual": "what the first frame shows",
+            "openLoop": { "scene": 1, "question": "the question the viewer now needs answered" },
+            "rehook": { "scene": 8, "line": "the turn or reveal" },
+            "payoff": { "scene": 13, "line": "where the open loop is answered" }
+          }
         }
       ],
       "bank": [

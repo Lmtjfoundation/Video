@@ -63,14 +63,14 @@ batches.forEach((b, bi) => {
         if (full.length > 280) err(w, `X post is ${full.length} characters with hashtags; the limit is 280`);
       }
       if (it.platform === "x" && it.format === "thread") {
-        if (it.parts.length < 4 || it.parts.length > 8) err(w, "X threads need 4–8 parts");
+        if (it.parts.length < (bi === 0 ? 5 : 4) || it.parts.length > 8) err(w, `X threads need ${bi === 0 ? 5 : 4}–8 parts`);
         it.parts.forEach((p, i) => p.length >= 270 && err(w, `thread part ${i + 1} is ${p.length} characters (keep under 270)`));
       }
       if (it.platform === "linkedin" && it.format === "short") {
         const n = [it.hook, it.body].join("\n\n").length;
         if (n < 600 || n > 3000) err(w, `LinkedIn post is ${n} characters; aim for 700–1,300`);
       }
-      if (it.format === "carousel" && (it.parts.length < 6 || it.parts.length > 10)) err(w, "carousels need 6–10 slides");
+      if (it.format === "carousel" && (it.parts.length < (bi === 0 ? 8 : 6) || it.parts.length > 10)) err(w, `carousels need ${bi === 0 ? 8 : 6}–10 slides`);
       if (bi === 0 && it.format === "carousel" && !existsSync(new URL(`./media/${it.id}/slide-1.jpg`, import.meta.url))) err(w, `carousel slides missing: run node tools/render-slides.mjs (expects media/${it.id}/slide-1.jpg)`);
       if (it.platform === "facebook" && it.format === "short") {
         const n = words([it.hook, it.body].join(" "));
@@ -102,6 +102,18 @@ batches.forEach((b, bi) => {
         if (bi === 0 && (s.motion ?? "").length > 300) err(w, `scene ${i + 1} motion is over 300 characters`);
       });
       if (bi === 0) {
+        const nS = scenes.length, r = it.retention ?? {};
+        const first = scenes[0]?.narration ?? "";
+        if (words(first) > 14) err(w, `scene 1 narration is ${words(first)} words; the hook must be 14 or fewer`);
+        const toks = first.split(/\s+/);
+        const named = toks.some((t, i) => i > 0 && /^[A-Z]/.test(t) && !/[.!?]$/.test(toks[i - 1]));
+        if (!/\d|\$|£|€/.test(first) && !named) err(w, "scene 1 narration needs a number, name, date or amount");
+        if (!r.hookVisual?.trim()) err(w, "retention.hookVisual is required");
+        if (!r.openLoop?.question?.trim() || !(r.openLoop.scene >= 1 && r.openLoop.scene <= Math.ceil(nS * 0.25))) err(w, `retention.openLoop needs a question and a scene in the first 25% (1–${Math.ceil(nS * 0.25)})`);
+        if (!r.rehook?.line?.trim() || !(r.rehook.scene >= Math.ceil(nS * 0.3) && r.rehook.scene <= Math.floor(nS * 0.8))) err(w, `retention.rehook needs a line and a scene between ${Math.ceil(nS * 0.3)} and ${Math.floor(nS * 0.8)}`);
+        if (!r.payoff?.line?.trim() || !(r.payoff.scene > (r.rehook?.scene ?? 0) && r.payoff.scene <= nS)) err(w, "retention.payoff needs a line and a scene after the rehook");
+        const minFacts = it.length === "s90" || it.length === "m3" || it.length === "long" ? 8 : 6;
+        if ((it.factCheck ?? []).length < minFacts) err(w, `factCheck needs at least ${minFacts} checkable facts (detail density)`);
         if (!it.artStyle?.trim()) err(w, "artStyle is required");
         if (!it.angle2026?.trim()) err(w, "angle2026 is required");
         if (!Array.isArray(it.cast) || !it.cast.length || it.cast.some((c) => !c?.name || !c?.role || !c?.look || !c?.voice)) err(w, "cast needs at least one { name, role, look, voice }");
