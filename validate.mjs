@@ -1,5 +1,5 @@
 // Checks inbox.json against BRIEF.md before a batch is pushed. Run: node validate.mjs
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 
 const PLATFORMS = ["x", "facebook", "linkedin", "instagram", "youtube", "tiktok"];
 const PILLARS = ["ai_leverage", "high_agency", "wealth_systems", "relationships", "longevity"];
@@ -71,6 +71,7 @@ batches.forEach((b, bi) => {
         if (n < 600 || n > 3000) err(w, `LinkedIn post is ${n} characters; aim for 700–1,300`);
       }
       if (it.format === "carousel" && (it.parts.length < 6 || it.parts.length > 10)) err(w, "carousels need 6–10 slides");
+      if (bi === 0 && it.format === "carousel" && !existsSync(new URL(`./media/${it.id}/slide-1.jpg`, import.meta.url))) err(w, `carousel slides missing: run node tools/render-slides.mjs (expects media/${it.id}/slide-1.jpg)`);
       if (it.platform === "facebook" && it.format === "short") {
         const n = words([it.hook, it.body].join(" "));
         if (n < 70 || n > 270) err(w, `Facebook post is ${n} words; aim for 80–250`);

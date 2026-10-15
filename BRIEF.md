@@ -27,7 +27,7 @@ mode set in "Posting through Metricool" below.
    Leave the top-level `series` array exactly as it is (finished episodes of story series such as
    *The Settlement*; the app imports them into Story Studio). Don't edit, reorder or delete it.
 4. Append one line per new piece (all 18) to `topics.txt`: `YYYY-MM-DD | platform | topic`.
-5. Run `node validate.mjs`. Fix every error it reports and run it again until it prints `OK`.
+5. Render the carousel slides (see "Carousel slides"), then run `node validate.mjs`. Fix every error it reports and run it again until it prints `OK`.
 6. Commit with the message `Batch YYYY-MM-DD (10 pieces + 8 bank)` and push to
    `nexus-pulse-content`. Never push to any other branch. Never touch the app's code.
 7. Follow "Posting through Metricool" below.
@@ -262,7 +262,35 @@ on her social accounts without each platform's developer app.
    time `getBestTimeToPostByNetwork` suggests, in the brand's timezone. Use
    `"draft": true` when the mode is `drafts` (she approves them in Metricool's planner) and
    `"draft": false, "autoPublish": true` only if the mode above says `auto`.
-5. Mention in your final line which posts went to Metricool, or why none did.
+5. If Instagram is connected, also schedule that day's Instagram carousel (item 06) as an Instagram
+   `POST` with its rendered slides (see "Carousel slides") as `media`, in slide order, using
+   `https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-content/media/<item id>/slide-N.jpg`
+   (the push must have landed first), `mediaAltText` from that folder's `alt.json`, and the caption
+   (`body`, then the hashtags with `#`) as text. Same timing and draft rules as step 4.
+6. Mention in your final line which posts went to Metricool, or why none did.
+
+## Carousel slides
+
+Every carousel (daily 04 and 06, bank B05) gets designed slide images the owner can post as-is.
+
+1. Give each carousel item a `slideDesign` object (the app ignores it):
+   `{ "tag": "short section label", "accent": "#hex", "glow": "rgba(...)", "slides": [ ... ] }`.
+   Slide 1 is the hook. Each slide: `title` (wrap words in `**double asterisks**` to colour them),
+   optional `sub`, `tag`, `big` + `size` (font px) and `visual`. Visuals that make the slide graphic:
+   - `{ "type": "chart", "points": [["label", value], ...], "show": n, "fmt": "£{v}", "markers": [{ "i": 1, "label": "BUYS BACK", "color": "#E8475A" }], "note": "source note" }`
+   - `{ "type": "stat", "value": "£20,000", "label": "..." }`
+   - `{ "type": "icons", "items": [["emoji", "label"], ...] }` (3 items)
+   - `{ "type": "checklist", "items": ["...", "..."] }`
+   - `{ "type": "timeline", "items": [["1886", "5¢", "on"], ...] }`
+   - `{ "type": "split", "l": ["label", "text"], "r": ["label", "text"] }`
+   - `{ "type": "strike", "text": "a debunked quote" }`
+   Use a visual on at least half the slides. Every number in a chart or stat is a checked fact; when
+   only some data points are documented, chart only those and add a `note`. Never invent in-between
+   values.
+2. Render: `npm --prefix tools install --no-audit --no-fund` then `node tools/render-slides.mjs`.
+   It writes `media/<item id>/slide-N.jpg` (1080x1350), `alt.json`, and `slides.pdf` for LinkedIn.
+3. Look at the rendered slides (open two or three of the JPGs) and fix anything that overflows or
+   reads badly, then commit the `media/<item id>/` folders with the batch.
 
 ---
 

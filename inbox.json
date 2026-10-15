@@ -87,7 +87,139 @@
             "productivity"
           ],
           "cta": "Send this to whoever owns your team's AI policy.",
-          "moneyAngle": "Lead magnet for an AI-usage policy template or workshop for teams."
+          "moneyAngle": "Lead magnet for an AI-usage policy template or workshop for teams.",
+          "slideDesign": {
+            "tag": "AI at work",
+            "handle": "Nexus Pulse",
+            "accent": "#1CD28B",
+            "accent2": "#8CF9CB",
+            "glow": "rgba(28,210,139,.20)",
+            "glow2": "rgba(232,71,90,.10)",
+            "lastCta": "Share with your team ↓",
+            "slides": [
+              {
+                "big": true,
+                "size": 100,
+                "title": "Samsung engineers made **3 AI mistakes** in 20 days.",
+                "sub": "Then the company banned the tools.",
+                "tag": "Spring 2023"
+              },
+              {
+                "big": true,
+                "size": 120,
+                "title": "3 leaks.\n20 days.",
+                "sub": "Nobody meant to leak **anything.**",
+                "tag": "The setup"
+              },
+              {
+                "title": "Leak 1",
+                "tag": "The bug",
+                "visual": {
+                  "type": "icons",
+                  "items": [
+                    [
+                      "🐞",
+                      "Source code"
+                    ],
+                    [
+                      "📋",
+                      "Pasted into ChatGPT"
+                    ],
+                    [
+                      "🔧",
+                      "To find a bug fix"
+                    ]
+                  ]
+                },
+                "sub": "An engineer pasted **source code** in to look for a fix."
+              },
+              {
+                "title": "Leak 2",
+                "tag": "Chip testing",
+                "visual": {
+                  "type": "icons",
+                  "items": [
+                    [
+                      "🧪",
+                      "Chip-defect test code"
+                    ],
+                    [
+                      "📋",
+                      "Pasted in"
+                    ],
+                    [
+                      "⚡",
+                      "\"Optimize this\""
+                    ]
+                  ]
+                },
+                "sub": "Another pasted code for a **chip-defect test sequence** and asked for optimization."
+              },
+              {
+                "title": "Leak 3",
+                "tag": "The meeting",
+                "visual": {
+                  "type": "icons",
+                  "items": [
+                    [
+                      "🎙️",
+                      "Recorded meeting"
+                    ],
+                    [
+                      "📝",
+                      "Transcribed"
+                    ],
+                    [
+                      "🤖",
+                      "Fed in for minutes"
+                    ]
+                  ]
+                },
+                "sub": "A **recorded meeting** was transcribed and fed in to produce minutes."
+              },
+              {
+                "big": true,
+                "size": 96,
+                "title": "May 2023: Samsung **temporarily banned** generative AI on company devices.",
+                "sub": "As reported by Bloomberg.",
+                "tag": "The response"
+              },
+              {
+                "title": "The real problem wasn't AI.",
+                "visual": {
+                  "type": "split",
+                  "l": [
+                    "What they thought",
+                    "A smarter search box"
+                  ],
+                  "r": [
+                    "What it was",
+                    "Text leaving the building"
+                  ]
+                },
+                "sub": "Nobody knew **where the text goes** after you hit enter.",
+                "tag": "The lesson"
+              },
+              {
+                "title": "The 3-question paste check",
+                "tag": "Use this",
+                "visual": {
+                  "type": "checklist",
+                  "items": [
+                    "Would I email this to a **stranger?**",
+                    "Does our AI policy **cover this tool?**",
+                    "Can I strip **names, numbers and code** first?"
+                  ]
+                }
+              },
+              {
+                "big": true,
+                "size": 92,
+                "title": "Approved tools for **sensitive work.**\nPublic chatbots for **public problems.**",
+                "tag": "The rule"
+              }
+            ]
+          }
         },
         {
           "id": "2026-10-14-05",
@@ -132,7 +264,223 @@
             "fomo"
           ],
           "cta": "Save this before the next hype cycle.",
-          "moneyAngle": "Saveable money-psychology carousel that grows followers for investing-basics products."
+          "moneyAngle": "Saveable money-psychology carousel that grows followers for investing-basics products.",
+          "slideDesign": {
+            "tag": "Money history",
+            "handle": "@bino_da_producer",
+            "accent": "#E8B04B",
+            "accent2": "#1CD28B",
+            "glow": "rgba(232,176,75,.22)",
+            "glow2": "rgba(28,210,139,.10)",
+            "lastCta": "Save this ↓",
+            "slides": [
+              {
+                "big": true,
+                "size": 112,
+                "title": "The smartest man in England lost a fortune to **FOMO.**",
+                "tag": "1720",
+                "visual": {
+                  "type": "chart",
+                  "points": [
+                    [
+                      "Jan",
+                      128
+                    ],
+                    [
+                      "Summer",
+                      1000
+                    ],
+                    [
+                      "Late summer",
+                      190
+                    ],
+                    [
+                      "Dec",
+                      124
+                    ]
+                  ],
+                  "valueLabel": false
+                },
+                "alt": "The smartest man in England lost a fortune to FOMO."
+              },
+              {
+                "title": "Isaac Newton.\nGravity. Calculus.\nWarden, then Master, of the Royal Mint.",
+                "sub": "And one **terrible** trade.",
+                "tag": "The genius"
+              },
+              {
+                "title": "1720: South Sea Company stock is the hottest thing in London.",
+                "tag": "The bubble",
+                "visual": {
+                  "type": "chart",
+                  "points": [
+                    [
+                      "Jan",
+                      128
+                    ],
+                    [
+                      "Summer",
+                      1000
+                    ],
+                    [
+                      "Late summer",
+                      190
+                    ],
+                    [
+                      "Dec",
+                      124
+                    ]
+                  ],
+                  "show": 1,
+                  "fmt": "£{v}"
+                },
+                "sub": "About **£128** a share in January."
+              },
+              {
+                "title": "Newton buys early, sells, and books a profit.",
+                "tag": "Move 1",
+                "visual": {
+                  "type": "split",
+                  "l": [
+                    "He buys",
+                    "Early"
+                  ],
+                  "r": [
+                    "He sells",
+                    "Profit ✓"
+                  ]
+                },
+                "sub": "Smart."
+              },
+              {
+                "title": "Then the price keeps climbing.",
+                "tag": "The pull",
+                "visual": {
+                  "type": "chart",
+                  "points": [
+                    [
+                      "Jan",
+                      128
+                    ],
+                    [
+                      "Summer",
+                      1000
+                    ],
+                    [
+                      "Late summer",
+                      190
+                    ],
+                    [
+                      "Dec",
+                      124
+                    ]
+                  ],
+                  "show": 2,
+                  "fmt": "~£{v}"
+                },
+                "sub": "Around **£1,000** by early summer. The people around him are getting rich."
+              },
+              {
+                "big": true,
+                "size": 120,
+                "title": "Newton buys back in.\n**Near the top.**",
+                "tag": "Move 2",
+                "visual": {
+                  "type": "chart",
+                  "points": [
+                    [
+                      "Jan",
+                      128
+                    ],
+                    [
+                      "Summer",
+                      1000
+                    ],
+                    [
+                      "Late summer",
+                      190
+                    ],
+                    [
+                      "Dec",
+                      124
+                    ]
+                  ],
+                  "show": 2,
+                  "valueLabel": false,
+                  "markers": [
+                    {
+                      "i": 1,
+                      "label": "BUYS BACK",
+                      "color": "#E8475A"
+                    }
+                  ]
+                },
+                "visualFirst": true
+              },
+              {
+                "title": "By December, shares are around **£124.**",
+                "tag": "The crash",
+                "visual": {
+                  "type": "chart",
+                  "points": [
+                    [
+                      "Jan",
+                      128
+                    ],
+                    [
+                      "Summer",
+                      1000
+                    ],
+                    [
+                      "Late summer",
+                      190
+                    ],
+                    [
+                      "Dec",
+                      124
+                    ]
+                  ],
+                  "fmt": "~£{v}",
+                  "note": "Approximate share prices, 1720. Sources differ slightly."
+                },
+                "sub": "The bubble has burst."
+              },
+              {
+                "title": "He reportedly lost",
+                "tag": "The damage",
+                "visual": {
+                  "type": "stat",
+                  "value": "£20,000",
+                  "label": "A fortune at the time."
+                },
+                "sub": "Historians call the exact evidence inconclusive."
+              },
+              {
+                "title": "That famous Newton line?",
+                "tag": "Myth check",
+                "visual": {
+                  "type": "strike",
+                  "text": "I can calculate the motions of heavenly bodies, but not the madness of people."
+                },
+                "sub": "There's **no solid source** for it. The loss is the real lesson."
+              },
+              {
+                "big": true,
+                "size": 92,
+                "title": "Genius doesn't protect you from crowds. **Rules do.**",
+                "tag": "Your rule",
+                "visual": {
+                  "type": "checklist",
+                  "items": [
+                    "Set your buy and sell rules **before** the crowd gets loud.",
+                    "Write them down.",
+                    "Follow them when it feels boring."
+                  ]
+                },
+                "alt": "Your rule: set buy and sell rules before the crowd gets loud, write them down, follow them when it feels boring."
+              }
+            ]
+          }
         },
         {
           "id": "2026-10-14-11",
@@ -1041,7 +1389,191 @@
             "budgeting"
           ],
           "cta": "Check the unit price on your next grocery run.",
-          "moneyAngle": "Saveable money-history carousel that grows followers for budgeting resources."
+          "moneyAngle": "Saveable money-history carousel that grows followers for budgeting resources.",
+          "slideDesign": {
+            "tag": "Money history",
+            "handle": "@bino_da_producer",
+            "accent": "#E8475A",
+            "accent2": "#1CD28B",
+            "glow": "rgba(232,71,90,.22)",
+            "glow2": "rgba(28,210,139,.08)",
+            "lastCta": "Save this ↓",
+            "slides": [
+              {
+                "big": true,
+                "size": 118,
+                "title": "A Coke cost **5 cents** for about 70 years.",
+                "tag": "1886–1959",
+                "visual": {
+                  "type": "chart",
+                  "points": [
+                    [
+                      "1886",
+                      5
+                    ],
+                    [
+                      "1918",
+                      5
+                    ],
+                    [
+                      "1930s",
+                      5
+                    ],
+                    [
+                      "1945",
+                      5
+                    ],
+                    [
+                      "1959",
+                      5
+                    ]
+                  ],
+                  "valueLabel": false
+                }
+              },
+              {
+                "title": "1886: Coca-Cola goes on sale.",
+                "tag": "1886",
+                "visual": {
+                  "type": "timeline",
+                  "items": [
+                    [
+                      "1886",
+                      "5¢",
+                      "on"
+                    ],
+                    [
+                      "1918",
+                      "?"
+                    ],
+                    [
+                      "1930s",
+                      "?"
+                    ],
+                    [
+                      "1945",
+                      "?"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "1918: World War I ends.",
+                "tag": "1918",
+                "visual": {
+                  "type": "timeline",
+                  "items": [
+                    [
+                      "1886",
+                      "5¢"
+                    ],
+                    [
+                      "1918",
+                      "Still 5¢",
+                      "on"
+                    ],
+                    [
+                      "1930s",
+                      "?"
+                    ],
+                    [
+                      "1945",
+                      "?"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "1930s: the Great Depression.",
+                "tag": "1930s",
+                "visual": {
+                  "type": "timeline",
+                  "items": [
+                    [
+                      "1886",
+                      "5¢"
+                    ],
+                    [
+                      "1918",
+                      "5¢"
+                    ],
+                    [
+                      "1930s",
+                      "Still 5¢",
+                      "on"
+                    ],
+                    [
+                      "1945",
+                      "?"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "1945: World War II ends.",
+                "tag": "1945",
+                "visual": {
+                  "type": "timeline",
+                  "items": [
+                    [
+                      "1886",
+                      "5¢"
+                    ],
+                    [
+                      "1918",
+                      "5¢"
+                    ],
+                    [
+                      "1930s",
+                      "5¢"
+                    ],
+                    [
+                      "1945",
+                      "Still 5¢",
+                      "on"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "Why? Vending machines that only took **one nickel.**",
+                "sub": "Changing the price meant changing the machines.",
+                "tag": "The reason"
+              },
+              {
+                "title": "Coca-Cola reportedly even floated a **7.5-cent coin.**",
+                "sub": "It never happened.",
+                "tag": "The wild idea"
+              },
+              {
+                "title": "By 1959, the nickel Coke was gone.",
+                "sub": "Economists still study it as a famous case of **\"sticky\" prices.**",
+                "tag": "The end"
+              },
+              {
+                "big": true,
+                "size": 100,
+                "title": "Today, when prices can't move, the **package shrinks.**",
+                "tag": "2026"
+              },
+              {
+                "title": "Your move",
+                "tag": "Do this",
+                "visual": {
+                  "type": "split",
+                  "l": [
+                    "Don't compare",
+                    "Price per pack"
+                  ],
+                  "r": [
+                    "Compare",
+                    "Price per ounce"
+                  ]
+                },
+                "sub": "Check the **unit price** on your next grocery run."
+              }
+            ]
+          }
         },
         {
           "id": "2026-10-14-B09",
