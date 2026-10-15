@@ -155,7 +155,7 @@ for (const [k, it] of carousels.entries()) {
     all.push(slide(s, i, n));
     await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${slide(s, i, n)}</body></html>`, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
-    await page.screenshot({ path: `${outDir}/slide-${i + 1}.jpg`, type: "jpeg", quality: 92 });
+    await page.screenshot({ path: `${outDir}/slide-${i + 1}.jpg`, type: "jpeg", quality: 96 });
   }
   if (deck.pdf) {
     await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>${css} .s{page-break-after:always}</style></head><body>${all.join("")}</body></html>`, { waitUntil: "load" });
