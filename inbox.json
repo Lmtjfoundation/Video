@@ -2,6 +2,2076 @@
   "version": 1,
   "batches": [
     {
+      "id": "2026-10-16",
+      "createdAt": "2026-10-16T06:06:53-05:00",
+      "items": [
+        {
+          "id": "2026-10-16-01",
+          "type": "post",
+          "platform": "x",
+          "pillar": "wealth_systems",
+          "format": "short",
+          "topic": "Grace Groner: $180 of Abbott stock in 1935 became a $7 million gift",
+          "hook": "$180. Three shares. A secretary bought them in 1935 and never sold.",
+          "body": "Grace Groner reinvested the dividends, lived in a one-bedroom cottage, never owned a car. At 100, she left ~$7M to her college.",
+          "parts": [],
+          "hashtags": [
+            "investing"
+          ],
+          "cta": "Turn on dividend reinvestment today.",
+          "moneyAngle": "Compounding story that builds an audience for index and long-term investing content."
+        },
+        {
+          "id": "2026-10-16-02",
+          "type": "post",
+          "platform": "x",
+          "pillar": "ai_leverage",
+          "format": "thread",
+          "topic": "Google Bard's James Webb telescope error and Alphabet's ~$100B drop (Feb 8, 2023)",
+          "hook": "Feb 8, 2023. Alphabet loses about $100 billion in market value in a day. The cause: one sentence from its own chatbot.",
+          "body": "Bard's demo claimed the James Webb telescope took the first picture of an exoplanet. The first one came from ESO's Very Large Telescope in 2004. Shares fell 7.7%.",
+          "parts": [
+            "Feb 8, 2023. Alphabet loses about $100 billion in market value in a single day.\n\nThe cause: one sentence written by its own chatbot, in its own demo.",
+            "Google had unveiled Bard on Feb 6. The demo asked:\n\n\"What new discoveries from the James Webb Space Telescope can I tell my 9 year old about?\"\n\nBard answered. One line was wrong.",
+            "The line: \"JWST took the very first pictures of a planet outside of our own solar system.\"\n\nConfident. Clean. Shareable.\n\nAnd false by almost two decades.",
+            "The first image of a planet outside our solar system came from the European Southern Observatory's Very Large Telescope. In 2004.\n\nReuters reported the error. Alphabet shares fell 7.7% that Wednesday.",
+            "The timing made it worse: that same day, Google held an event in Paris on how AI would change search. One day after Microsoft showed off its revamped Bing.",
+            "The twist: catching it didn't need AI. One search for \"first exoplanet image\" would have done it.\n\nGoogle's own verdict: it \"highlights the importance of a rigorous testing process.\"",
+            "Your rule for AI output: any fact you'd repeat in public gets one primary source before it ships. Names, dates, numbers, and anything called \"the first.\"\n\nWhat's the worst AI error you caught before it went out?"
+          ],
+          "hashtags": [
+            "AI"
+          ],
+          "cta": "Before you post anything an AI wrote, check every 'first', name, date and number against one primary source.",
+          "moneyAngle": "AI-literacy thread that grows a professional audience for AI workflow content."
+        },
+        {
+          "id": "2026-10-16-03",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "high_agency",
+          "format": "short",
+          "topic": "Sara Blakely built Spanx from $5,000 of savings and a restroom demo",
+          "hook": "Sara Blakely started Spanx in 2000 with $5,000 of her own savings and a pair of pantyhose with the feet cut off.",
+          "body": "She had spent about seven years selling fax machines door to door. Most hosiery mills turned her down. A mill in North Carolina finally said yes.\n\nShe wrote her own patent application with a library textbook to save on lawyer fees.\n\nA Neiman Marcus buyer agreed to stock it in seven stores after Blakely took her to the restroom and showed her the product on herself.\n\nIn November 2000, Oprah Winfrey named Spanx one of her Favorite Things.\n\nShe kept 100% of the company for 21 years. No outside investors. In 2012, Forbes named her the youngest self-made female billionaire. In 2021, Blackstone bought a majority stake at a $1.2 billion valuation.\n\nThe lesson isn't \"be fearless.\" It's mechanical:\n→ Door-to-door sales trained her to survive no.\n→ Doing the patent herself kept cash for product.\n→ The restroom demo replaced a pitch with proof.\n\nYour move today: find the 30-second demo that shows your idea working, and put it in front of one buyer.",
+          "parts": [],
+          "hashtags": [
+            "entrepreneurship",
+            "sales",
+            "startups"
+          ],
+          "cta": "What's the 30-second demo for your idea?",
+          "moneyAngle": "Founder story that attracts entrepreneurs and sales professionals to the brand."
+        },
+        {
+          "id": "2026-10-16-04",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "wealth_systems",
+          "format": "carousel",
+          "topic": "Long-Term Capital Management: two Nobel laureates, $4.6 billion lost in under four months (1998)",
+          "hook": "Two Nobel laureates. $4.6 billion gone in under four months.",
+          "body": "In 1998, a hedge fund run by some of the smartest people in finance lost $4.6 billion in less than four months.\n\nLong-Term Capital Management had two Nobel laureates, years of 40%+ returns, and more than $124 billion borrowed against $4.7 billion of equity.\n\nThen Russia defaulted, and trades that were supposed to be unrelated all went wrong together. The New York Fed had to bring 14 institutions together for a rescue.\n\nThe lesson for anyone with a mortgage, a margin account or a business loan: leverage doesn't change the odds. It changes how many bad months you can survive.\n\nSwipe for the full timeline. How much of a bad year could your finances absorb today?",
+          "parts": [
+            "Two Nobel laureates. $4.6 billion gone in under four months.",
+            "1994: John Meriwether launches Long-Term Capital Management with just over $1 billion.",
+            "Partners include Myron Scholes and Robert Merton, who share the 1997 Nobel Prize in Economics.",
+            "Returns after fees: about 21%, then 43%, then 41%. Banks line up to lend.",
+            "Start of 1998: $4.7 billion of equity, over $124.5 billion borrowed. More than 25 to 1.",
+            "August 17, 1998: Russia defaults. Trades that 'couldn't' move together, do.",
+            "By September 25, equity is down to about $400 million.",
+            "September 23: the New York Fed gathers 14 institutions for a rescue of about $3.6 billion. Bear Stearns declines.",
+            "The lesson: leverage turns 'rare' into 'fatal'. Never borrow so much that one bad month ends the game."
+          ],
+          "hashtags": [
+            "investing",
+            "riskmanagement",
+            "finance"
+          ],
+          "cta": "Save this before you take on your next loan.",
+          "moneyAngle": "Finance-history carousel that earns saves and shares from professionals; feeds investing-principles content.",
+          "slideDesign": {
+            "tag": "Money history",
+            "accent": "#E8475A",
+            "glow": "rgba(232,71,90,.22)",
+            "slides": [
+              {
+                "big": true,
+                "size": 100,
+                "title": "Two Nobel laureates. **$4.6 billion** gone in under four months.",
+                "sub": "Long-Term Capital Management, 1998.",
+                "tag": "1998"
+              },
+              {
+                "title": "John Meriwether launches **LTCM.**",
+                "tag": "1994",
+                "visual": {
+                  "type": "stat",
+                  "value": "$1B+",
+                  "label": "starting capital, first trading day"
+                }
+              },
+              {
+                "title": "The partners include **two future Nobel winners.**",
+                "tag": "The team",
+                "sub": "Myron Scholes and Robert Merton shared the 1997 Nobel Prize in Economics."
+              },
+              {
+                "title": "The early years look **unbeatable.**",
+                "tag": "Returns after fees",
+                "visual": {
+                  "type": "timeline",
+                  "items": [
+                    [
+                      "Year 1",
+                      "about 21%",
+                      "on"
+                    ],
+                    [
+                      "Year 2",
+                      "about 43%",
+                      "on"
+                    ],
+                    [
+                      "Year 3",
+                      "about 41%",
+                      "on"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "Then the borrowing.",
+                "tag": "Start of 1998",
+                "visual": {
+                  "type": "split",
+                  "l": [
+                    "Equity",
+                    "$4.7B"
+                  ],
+                  "r": [
+                    "Borrowed",
+                    "$124.5B+"
+                  ]
+                },
+                "sub": "More than **25 to 1.**"
+              },
+              {
+                "big": true,
+                "size": 92,
+                "title": "**Aug 17, 1998:** Russia defaults.",
+                "sub": "Trades that 'couldn't' move together all moved together.",
+                "tag": "The shock"
+              },
+              {
+                "title": "Equity, **melting.**",
+                "tag": "1998",
+                "visual": {
+                  "type": "chart",
+                  "points": [
+                    [
+                      "Jan 1998",
+                      4700
+                    ],
+                    [
+                      "Sep 1",
+                      2300
+                    ],
+                    [
+                      "Sep 25",
+                      400
+                    ]
+                  ],
+                  "fmt": "${v}M",
+                  "note": "Approximate equity as widely reported; only these three points charted."
+                }
+              },
+              {
+                "title": "The rescue.",
+                "tag": "Sep 23, 1998",
+                "visual": {
+                  "type": "stat",
+                  "value": "14",
+                  "label": "institutions, about $3.6B, gathered by the New York Fed"
+                },
+                "sub": "Bear Stearns **declined** to join."
+              },
+              {
+                "title": "Before you borrow:",
+                "tag": "Your move",
+                "visual": {
+                  "type": "checklist",
+                  "items": [
+                    "Ask: how many bad months can I survive?",
+                    "Assume 'unrelated' risks **move together**",
+                    "Keep a cash buffer no model can touch"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "2026-10-16-05",
+          "type": "post",
+          "platform": "facebook",
+          "pillar": "relationships",
+          "format": "short",
+          "topic": "Festinger's Westgate study: friendship follows the floor plan (MIT, 1950)",
+          "hook": "In 1950, three psychologists asked student couples at MIT one question: who do you see socially?",
+          "body": "The place was Westgate, a housing project on campus. Each apartment held a married couple, one of them a veteran. Each building had 10 apartments, five on each floor. Couples moved in as strangers.\n\nLeon Festinger, Stanley Schachter and Kurt Back mapped the answers.\n\nFriendship followed the floor plan. People named the neighbours who lived closest.\n\nAnd distance wasn't just metres. The apartment at the bottom of the stairs, the one upstairs residents walked past every day, got chosen more. The researchers called it functional distance.\n\nNobody fell for a staircase. They just kept bumping into the same faces until hello turned into dinner.\n\nWhich means closeness is partly logistics. Friendships and relationships grow where paths cross, and fade where they don't.\n\nToday: put one recurring crossing point on the calendar with someone you don't want to drift from. Same café, same walk, same night every week.",
+          "parts": [],
+          "hashtags": [
+            "relationships",
+            "psychology"
+          ],
+          "cta": "Who in your life did you meet purely because of where you lived?",
+          "moneyAngle": "Shareable psychology story that grows comments and reach on Facebook."
+        },
+        {
+          "id": "2026-10-16-06",
+          "type": "post",
+          "platform": "instagram",
+          "pillar": "longevity",
+          "format": "carousel",
+          "topic": "The Dallas Bed Rest Study: 3 weeks in bed vs 30 years of aging (1966/1996)",
+          "hook": "3 weeks in bed hurt five young men's fitness more than the next 30 years of aging.",
+          "body": "3 weeks in bed hurt five young men's fitness more than the next 30 years of aging.\n\nThe Dallas Bed Rest and Training Study, 1966. The same men were retested in 1996, then trained for six months. The ending is the hopeful part. Swipe.\n\nNot medical advice: talk to a professional before starting a new training plan.",
+          "parts": [
+            "3 weeks in bed beat 30 years of aging.",
+            "1966, Dallas: five healthy men, about 20 years old, spend 20 days in bed.",
+            "Their aerobic fitness drops hard.",
+            "1996: researchers find the same five men, now 50 to 51.",
+            "Those 3 weeks in bed had hurt their fitness more than 30 years of aging.",
+            "By 1996 their body fat had more than doubled. Only 2 of the 5 still exercised regularly.",
+            "Then six months of training: two walked, two jogged, one cycled. About 4.5 hours a week by the end.",
+            "The twist: the training reversed 100% of the fitness they had lost to aging.",
+            "Your move: stillness is the expensive habit. Walk today."
+          ],
+          "hashtags": [
+            "longevity",
+            "fitness",
+            "walking",
+            "healthyhabits"
+          ],
+          "cta": "Save this and take a walk after your next meal.",
+          "moneyAngle": "Hopeful health story that earns saves; builds the longevity audience.",
+          "slideDesign": {
+            "tag": "Health",
+            "accent": "#1CD28B",
+            "glow": "rgba(28,210,139,.20)",
+            "slides": [
+              {
+                "big": true,
+                "size": 112,
+                "title": "**3 weeks** in bed beat **30 years** of aging.",
+                "sub": "At wrecking fitness. Dallas, 1966.",
+                "tag": "True study"
+              },
+              {
+                "title": "Five healthy men, about 20 years old.",
+                "tag": "Dallas, 1966",
+                "visual": {
+                  "type": "stat",
+                  "value": "20 days",
+                  "label": "of bed rest, by design"
+                }
+              },
+              {
+                "title": "Their aerobic fitness **dropped hard.**",
+                "tag": "After bed rest",
+                "visual": {
+                  "type": "icons",
+                  "items": [
+                    [
+                      "🛏️",
+                      "20 days lying down"
+                    ],
+                    [
+                      "📉",
+                      "Aerobic power falls"
+                    ],
+                    [
+                      "🔬",
+                      "Measured in the lab"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "30 years later, researchers found **the same five men.**",
+                "tag": "The follow-up",
+                "visual": {
+                  "type": "timeline",
+                  "items": [
+                    [
+                      "1966",
+                      "Bed rest study",
+                      "on"
+                    ],
+                    [
+                      "1996",
+                      "Retested at 50 to 51",
+                      "on"
+                    ],
+                    [
+                      "2001",
+                      "Published in Circulation"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "Which hurt their fitness more?",
+                "tag": "The comparison",
+                "visual": {
+                  "type": "split",
+                  "l": [
+                    "30 years of aging",
+                    "Smaller drop"
+                  ],
+                  "r": [
+                    "3 weeks in bed",
+                    "Bigger drop"
+                  ]
+                }
+              },
+              {
+                "title": "By 1996:",
+                "tag": "30 years on",
+                "visual": {
+                  "type": "stat",
+                  "value": "2 of 5",
+                  "label": "still exercised regularly. Body fat had more than doubled."
+                }
+              },
+              {
+                "title": "Then: six months of training.",
+                "tag": "1996",
+                "visual": {
+                  "type": "icons",
+                  "items": [
+                    [
+                      "🚶",
+                      "2 walked"
+                    ],
+                    [
+                      "🏃",
+                      "2 jogged"
+                    ],
+                    [
+                      "🚴",
+                      "1 cycled"
+                    ]
+                  ]
+                },
+                "sub": "About **4.5 hours a week** by the end."
+              },
+              {
+                "title": "The twist:",
+                "tag": "The result",
+                "visual": {
+                  "type": "stat",
+                  "value": "100%",
+                  "label": "of the aerobic power lost to aging, won back"
+                }
+              },
+              {
+                "title": "Stillness is the **expensive** habit.",
+                "tag": "Your move",
+                "visual": {
+                  "type": "checklist",
+                  "items": [
+                    "Walk after one meal today",
+                    "Stand up once an hour",
+                    "See a professional before hard training"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "2026-10-16-07",
+          "type": "video",
+          "platform": "tiktok",
+          "niche": "tech",
+          "style": "true",
+          "length": "s90",
+          "topic": "The 2025 M&S cyberattack: a trick on a contractor, 46 days offline, a £300M hit",
+          "titles": [
+            "One Trick Cost M&S £300 Million",
+            "M&S Went Offline for 46 Days. Here's How",
+            "Profit: £391M to £3.4M After One Hack"
+          ],
+          "hook": "£300 million. That's what one trick on a contractor cost Marks & Spencer.",
+          "caption": "April 2025: hackers tricked staff at a third-party contractor and got past M&S's defences. Online orders stopped for 46 days, customer data was taken, and half-year profit fell from £391.1M to £3.4M. The weakest link is usually a helpful person.",
+          "hashtags": [
+            "cybersecurity",
+            "truestory",
+            "marksandspencer",
+            "scam",
+            "business"
+          ],
+          "cta": "Follow for the hacks that changed how companies work.",
+          "thumbnail": {
+            "text": "£300M TRICK",
+            "prompt": "Glitch-pop stylized 3D UK high-street shop front at dusk, shop window splitting into red pixel glitches, a faceless office worker holding a phone with a glowing fake login card, £300M counter in mint, near-black background, no logos, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), tense tech-thriller pace about 150 wpm; hard pause after \"Then it got worse.\" Story cast has no lines.",
+          "music": "Pulsing glitch-synth bed with digital stutters; drops out on the data reveal; low sub hit on the £3.4M number; light pad for Nova's 2026 line.",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "£300 million. That's what one trick on a contractor cost Marks & Spencer.",
+              "onScreen": "£300M. One trick.",
+              "visual": "Shopping street at night UK, BG: glitch-pop high street with red pixel tears across shop windows; CHARACTER: none; ANIM: £300M counter slams in and spins",
+              "motion": "Fast push-in; glitch cut; captions pop word by word",
+              "sfx": "Digital crunch"
+            },
+            {
+              "time": "0:04–0:08",
+              "narration": "Easter weekend, 2025. Contactless payments start failing in stores.",
+              "onScreen": "Easter 2025",
+              "visual": "Card payment terminal declined, BG: store till area with flickering red error glows; CHARACTER: the shopper, stylized 3D, tapping a card twice; ANIM: DECLINED stamp pulses on the terminal",
+              "motion": "Snap zoom on terminal; RGB split transition",
+              "sfx": "Error beep"
+            },
+            {
+              "time": "0:08–0:12",
+              "narration": "Click and collect stops working. Then the website starts to wobble.",
+              "onScreen": "Click and collect: down",
+              "visual": "Empty parcel collection counter, BG: glossy 3D service desk with drifting error icons; CHARACTER: the shop worker, stylized 3D, shrugging at a dead screen; ANIM: loading spinner freezes, cracks",
+              "motion": "Whip pan; caption glitches in",
+              "sfx": "Spinner tick"
+            },
+            {
+              "time": "0:12–0:17",
+              "narration": "So how does a 141-year-old retailer lose its online store to a trick?",
+              "onScreen": "141 years. One trick?",
+              "visual": "Old department store facade, BG: 2.5D parallax storefront aging from sepia to neon; CHARACTER: none; ANIM: 141 counter ticks up, question mark glitches",
+              "motion": "Slow dolly back; type-on caption",
+              "sfx": "Riser"
+            },
+            {
+              "time": "0:17–0:21",
+              "narration": "April 22: M&S admits a cyber incident. April 25: online orders stop.",
+              "onScreen": "Apr 22. Apr 25.",
+              "visual": "Calendar pages flipping, BG: dark grid with mint light sweeps; CHARACTER: none; ANIM: two dates stamp in, red line connects them",
+              "motion": "Calendar flip transition; date stamp",
+              "sfx": "Stamp thud"
+            },
+            {
+              "time": "0:21–0:25",
+              "narration": "No clothes, no homeware, nothing ordered online. The site just sits there.",
+              "onScreen": "Orders: OFF",
+              "visual": "Laptop shopping cart empty, BG: floating glass UI panels with greyed-out buttons; CHARACTER: the shopper, stylized 3D, refreshing a laptop; ANIM: BUY buttons grey out one by one",
+              "motion": "Screen push-in; button fade",
+              "sfx": "Click, click"
+            },
+            {
+              "time": "0:25–0:29",
+              "narration": "Warehouse systems are disconnected too, so stock struggles to reach stores.",
+              "onScreen": "Warehouses cut off",
+              "visual": "Warehouse conveyor belt stopped, BG: animated warehouse map with routes going dark; CHARACTER: none; ANIM: delivery routes blink out across the map",
+              "motion": "Top-down map zoom; route lines fade",
+              "sfx": "Power down"
+            },
+            {
+              "time": "0:29–0:33",
+              "narration": "Warm, sunny weather arrives, and M&S can't fully cash in.",
+              "onScreen": "Sunshine. Empty rails.",
+              "visual": "Sunny shopping street summer, BG: bright parallax street with heat shimmer; CHARACTER: the shopper, stylized 3D, at a half-empty rail; ANIM: sun icon rises, sales bar stays flat",
+              "motion": "Light sweep transition; caption slides",
+              "sfx": "Birdsong cut"
+            },
+            {
+              "time": "0:33–0:37",
+              "narration": "Then it got worse. Customer data had been taken.",
+              "onScreen": "Then it got worse",
+              "visual": "Hacker typing in dark room, BG: black void with red code rain; CHARACTER: none; ANIM: screen cracks, red data packets fly out",
+              "motion": "Freeze frame; crash zoom",
+              "sfx": "Bass drop"
+            },
+            {
+              "time": "0:37–0:42",
+              "narration": "Names, home addresses, dates of birth, phone numbers, order histories.",
+              "onScreen": "Your details. Taken.",
+              "visual": "Personal data on screen, BG: glass ID cards fanning out over a dark grid; CHARACTER: none; ANIM: data fields fill in, then get stamped COPIED",
+              "motion": "Card fan reveal; staggered captions",
+              "sfx": "Typewriter clicks"
+            },
+            {
+              "time": "0:42–0:46",
+              "narration": "No usable card details. No passwords. Every customer told to reset anyway.",
+              "onScreen": "Reset your password",
+              "visual": "Password reset screen phone, BG: mint-lit phone UI with drifting particles; CHARACTER: the shopper, stylized 3D, sighing at a reset prompt; ANIM: lock icon spins and relocks",
+              "motion": "Phone slides up; lock snap",
+              "sfx": "Lock click"
+            },
+            {
+              "time": "0:46–0:50",
+              "narration": "So how did they get in? Not through the front door.",
+              "onScreen": "Not the front door",
+              "visual": "Office building entrance at night, BG: parallax office lobby with a glowing side door; CHARACTER: none; ANIM: front door bolts, side door glows mint",
+              "motion": "Pan from front door to side door",
+              "sfx": "Door creak"
+            },
+            {
+              "time": "0:50–0:55",
+              "narration": "They tricked staff at a third-party contractor and slipped past M&S's defences.",
+              "onScreen": "They tricked people",
+              "visual": "Help desk worker on headset, BG: contractor office with red warning outlines; CHARACTER: the contractor, stylized 3D, helpfully typing; ANIM: fake ID card glitches into a real access pass",
+              "motion": "Over-shoulder shot; glitch morph",
+              "sfx": "Glitch zap"
+            },
+            {
+              "time": "0:55–1:00",
+              "narration": "Online orders stayed off for 46 days. The forecast profit hit: £300 million.",
+              "onScreen": "46 days. £300M.",
+              "visual": "Stopwatch running fast, BG: dark glossy void with a big day counter; CHARACTER: none; ANIM: day counter races to 46, money counter to £300M",
+              "motion": "Counter race; split-screen numbers",
+              "sfx": "Ticking clock"
+            },
+            {
+              "time": "1:00–1:05",
+              "narration": "The twist: half-year profit fell from £391 million to £3.4 million.",
+              "onScreen": "£391M → £3.4M",
+              "visual": "Stock chart falling red, BG: animated bar chart on a glass panel; CHARACTER: none; ANIM: tall bar collapses to a sliver",
+              "motion": "Chart draw-on then drop; shake",
+              "sfx": "Low sub hit"
+            },
+            {
+              "time": "1:05–1:09",
+              "narration": "In July, four people were arrested. One was a teenager.",
+              "onScreen": "4 arrests. July.",
+              "visual": "Police car lights at night, BG: rainy street with blue light sweeps; CHARACTER: none; ANIM: four silhouette cards slide in, faces blurred",
+              "motion": "Slow push; card slide",
+              "sfx": "Distant siren"
+            },
+            {
+              "time": "1:09–1:15",
+              "narration": "In 2026, the weakest password in any company is a person who wants to help.",
+              "onScreen": "Your weak spot: helpfulness",
+              "visual": "Friendly office worker smiling, BG: mint holographic office with soft light sweeps; CHARACTER: Nova on camera, tapping her wrist display; ANIM: a smiley face icon morphs into a key",
+              "motion": "Medium shot of Nova; kinetic caption",
+              "sfx": "Soft chime"
+            },
+            {
+              "time": "1:15–1:21",
+              "narration": "Your rule: nobody gets access because a request sounds urgent. Confirm it on a second channel.",
+              "onScreen": "Verify on a second channel",
+              "visual": "Person checking phone and laptop, BG: split glass UI panels with a green check; CHARACTER: Nova holding up two fingers, a phone and laptop beside her; ANIM: two channels light up, check mark lands",
+              "motion": "Split-screen wipe; check pop",
+              "sfx": "Success ping"
+            },
+            {
+              "time": "1:21–1:25",
+              "narration": "Because one helpful yes can turn into...",
+              "onScreen": "One helpful yes…",
+              "visual": "Hand pressing enter key, BG: dark keyboard with red glow; CHARACTER: none; ANIM: enter key press triggers the £300M counter again",
+              "motion": "Macro push; hard cut to first frame",
+              "sfx": "Key click"
+            }
+          ],
+          "loopLine": "Because one helpful yes can turn into… £300 million.",
+          "factCheck": [
+            "M&S had problems with contactless payments and click and collect over the Easter weekend 2025 (Reuters)",
+            "M&S is described as a 141-year-old British retailer (Reuters, June 2025)",
+            "M&S disclosed a cyber incident on April 22, 2025 and stopped online clothing and home orders on April 25 (Reuters)",
+            "M&S disconnected warehouse management systems and online ordering (The Record, Nov 2025)",
+            "The disruption hurt M&S's ability to get stock into stores during warm, sunny weather (Reuters)",
+            "Customer data taken could include names, dates of birth, phone numbers, home addresses, email addresses and online order histories; no usable card details or passwords (M&S via The Register, May 13, 2025)",
+            "Customers were prompted to reset passwords as a precaution (The Register)",
+            "Hackers tricked employees at a third-party contractor to get past M&S's defences (Reuters)",
+            "Online clothing orders resumed after a 46-day pause, June 10, 2025 (Reuters)",
+            "M&S forecast about £300 million in lost operating profit for 2025/26 (Reuters)",
+            "First-half 2025 profit fell to £3.4 million from £391.1 million (The Record, Nov 5, 2025)",
+            "Four people, including one teenager, were arrested in July 2025 in connection with the Co-op, Harrods and M&S hacks (The Record)"
+          ],
+          "moneyAngle": "Over-60-second TikTok eligible for creator rewards; security-awareness topic with high share rate.",
+          "artStyle": "Glitch-pop: glossy stylized 3D on near-black #07080B with red pixel tears and mint #1CD28B UI glow; captions pop word by word with RGB-split flicker.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The shopper",
+              "role": "story cast",
+              "look": "Original stylized 3D woman in her 30s, rain jacket, tote bag, faceless-friendly simple features",
+              "voice": "No lines"
+            },
+            {
+              "name": "The contractor",
+              "role": "story cast",
+              "look": "Original stylized 3D office worker with a headset and lanyard, eager posture",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, the weakest password in any company is a person who wants to help.",
+          "retention": {
+            "hookVisual": "A shop street at night tearing into red glitches while a £300M counter slams in and spins.",
+            "openLoop": {
+              "scene": 4,
+              "question": "How does a 141-year-old retailer lose its online store to a trick?"
+            },
+            "rehook": {
+              "scene": 9,
+              "line": "Then it got worse. Customer data had been taken."
+            },
+            "payoff": {
+              "scene": 13,
+              "line": "They tricked staff at a third-party contractor and slipped past M&S's defences."
+            }
+          }
+        },
+        {
+          "id": "2026-10-16-08",
+          "type": "video",
+          "platform": "instagram",
+          "niche": "lifestyle",
+          "style": "funny",
+          "length": "s60",
+          "topic": "New Coke: the taste-test winner America rejected in 79 days (1985)",
+          "titles": [
+            "It Won 200,000 Taste Tests. America Hated It",
+            "New Coke Lasted 79 Days",
+            "The Letter Addressed to 'Chief Dodo'"
+          ],
+          "hook": "April 23, 1985. Coca-Cola changes the formula of Coke.",
+          "caption": "April 23, 1985: Coca-Cola changed its formula after nearly 200,000 taste tests. Hotline calls jumped to 1,500 a day, a letter arrived addressed to 'Chief Dodo', and 79 days later the original came back. People don't just buy things. They belong to them.",
+          "hashtags": [
+            "history",
+            "marketing",
+            "truestory",
+            "newcoke"
+          ],
+          "cta": "Follow for true business stories that sound made up.",
+          "thumbnail": {
+            "text": "79 DAYS",
+            "prompt": "Retro 1980s cartoon style: a giant generic red soda can with a question mark, an angry crowd of cartoon shoppers waving signs, a mailbag spilling letters, warm halftone texture, no logos or brand names, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), deadpan comedy timing about 160 wpm; beat of silence before \"Chief Dodo.\" Story cast has no lines.",
+          "music": "Bouncy 80s synth-pop with a cheesy jingle feel; record scratch on the hotline jump; triumphant brass for the comeback; soft pad under Nova's lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:03",
+              "narration": "April 23, 1985. Coca-Cola changes the formula of Coke.",
+              "onScreen": "April 23, 1985",
+              "visual": "Soda pouring into glass, BG: retro cartoon 80s kitchen with halftone sunbursts; CHARACTER: none; ANIM: generic red can flips, label scribbled out and rewritten",
+              "motion": "Snap zoom; bouncy pop caption",
+              "sfx": "Fizz pop"
+            },
+            {
+              "time": "0:03–0:07",
+              "narration": "Nearly 200,000 taste tests said people liked the new one.",
+              "onScreen": "~200,000 taste tests",
+              "visual": "Taste test cups on table, BG: cartoon lab with spinning clipboards; CHARACTER: the taster, retro cartoon, sipping and nodding; ANIM: counter rolls to 200,000, thumbs up icons rain",
+              "motion": "Whip pan; counter roll",
+              "sfx": "Ding"
+            },
+            {
+              "time": "0:07–0:11",
+              "narration": "So why did America react like someone cancelled summer?",
+              "onScreen": "Then… outrage?",
+              "visual": "Angry crowd protest signs, BG: cartoon street with wobbling heat lines; CHARACTER: the crowd, retro cartoon, waving blank signs; ANIM: question mark bounces over the crowd",
+              "motion": "Crash zoom on question mark",
+              "sfx": "Record scratch"
+            },
+            {
+              "time": "0:11–0:16",
+              "narration": "Before the change, the company hotline got about 400 calls a day.",
+              "onScreen": "400 calls a day",
+              "visual": "Vintage telephone ringing, BG: retro office wallpaper with rotating phone icons; CHARACTER: the operator, retro cartoon, calm at a desk; ANIM: phone icon counter sits at 400",
+              "motion": "Static shot; soft wobble",
+              "sfx": "Phone ring"
+            },
+            {
+              "time": "0:16–0:18",
+              "narration": "By June: 1,500 a day.",
+              "onScreen": "1,500 a day",
+              "visual": "Switchboard operator busy, BG: same office, wallpaper spinning faster; CHARACTER: the operator juggling three receivers; ANIM: counter jumps to 1,500, phones multiply",
+              "motion": "Speed ramp; shake",
+              "sfx": "Phones overlapping"
+            },
+            {
+              "time": "0:18–0:22",
+              "narration": "A group called Old Cola Drinkers of America claimed 100,000 recruits.",
+              "onScreen": "100,000 recruits",
+              "visual": "Protest march crowd, BG: cartoon parade route with confetti; CHARACTER: the crowd marching, retro cartoon; ANIM: 100,000 badge stamps on screen",
+              "motion": "Tracking shot along march",
+              "sfx": "Marching drum"
+            },
+            {
+              "time": "0:22–0:26",
+              "narration": "One angry letter was addressed to Chief Dodo, The Coca-Cola Company.",
+              "onScreen": "To: Chief Dodo",
+              "visual": "Handwritten envelope close up, BG: desk with a spotlight and floating stamps; CHARACTER: none; ANIM: envelope flips, 'Chief Dodo' writes itself, dodo doodle waddles",
+              "motion": "Macro push; handwritten caption",
+              "sfx": "Pen scratch"
+            },
+            {
+              "time": "0:26–0:29",
+              "narration": "Then it got stranger. The company backed down.",
+              "onScreen": "Then it got stranger",
+              "visual": "White flag waving, BG: cartoon boardroom with blinds swinging; CHARACTER: the executive, retro cartoon, raising a tiny flag; ANIM: flag pops up, boardroom lights flicker",
+              "motion": "Freeze frame; zoom punch",
+              "sfx": "Boing"
+            },
+            {
+              "time": "0:29–0:33",
+              "narration": "July 11, 1985: the original returns as Coca-Cola Classic.",
+              "onScreen": "July 11: it's back",
+              "visual": "Cheering crowd celebration, BG: confetti burst over a parade street; CHARACTER: the crowd cheering, retro cartoon; ANIM: CLASSIC banner unfurls, fireworks",
+              "motion": "Crane up; banner wipe",
+              "sfx": "Brass fanfare"
+            },
+            {
+              "time": "0:33–0:35",
+              "narration": "That was 79 days after the change.",
+              "onScreen": "79 days",
+              "visual": "Calendar pages flying, BG: retro calendar tunnel with halftone dots; CHARACTER: none; ANIM: pages fly off, counter lands on 79",
+              "motion": "Tunnel push; counter stamp",
+              "sfx": "Page flutter"
+            },
+            {
+              "time": "0:35–0:40",
+              "narration": "Two days after the news broke, the hotline took 31,600 calls.",
+              "onScreen": "31,600 calls",
+              "visual": "Old telephones ringing, BG: office wallpaper of phones vibrating; CHARACTER: the operator buried in receivers; ANIM: counter rockets to 31,600",
+              "motion": "Speed ramp; shake",
+              "sfx": "Phone chaos"
+            },
+            {
+              "time": "0:40–0:44",
+              "narration": "The taste tests were right about taste. They never measured attachment.",
+              "onScreen": "They measured taste. Not love.",
+              "visual": "Heart shaped bottle cap, BG: soft pink halftone glow; CHARACTER: none; ANIM: a scale tips from 'taste' to 'belonging'",
+              "motion": "Slow orbit; scale tip",
+              "sfx": "Soft thunk"
+            },
+            {
+              "time": "0:44–0:50",
+              "narration": "In 2026, every app redesign hits the same wall: people feel they own what they use.",
+              "onScreen": "People own what they use",
+              "visual": "Smartphone app update screen, BG: mint glass UI with update progress bar; CHARACTER: Nova on camera, holding a phone; ANIM: 'New version' banner wobbles, users' heart icons flicker",
+              "motion": "Medium shot of Nova; kinetic caption",
+              "sfx": "Soft chime"
+            },
+            {
+              "time": "0:50–0:57",
+              "narration": "Change something people love? Test the meaning, not just the taste. Or you're back at April 23, 1985.",
+              "onScreen": "Test meaning, not taste",
+              "visual": "Notebook checklist pen, BG: retro desk with mint highlights; CHARACTER: Nova ticking a checklist; ANIM: check mark pops, date 1985 flashes",
+              "motion": "Push in; hard cut to first frame",
+              "sfx": "Pop"
+            }
+          ],
+          "loopLine": "Or you're back at April 23, 1985.",
+          "factCheck": [
+            "Coca-Cola announced the formula change on April 23, 1985 (Coca-Cola Company history)",
+            "The new formula was preferred in taste tests of nearly 200,000 consumers (Coca-Cola Company)",
+            "Hotline calls rose from about 400 a day before the change to 1,500 a day by June 1985 (Coca-Cola Company)",
+            "Old Cola Drinkers of America claimed to have recruited 100,000 people (Coca-Cola Company)",
+            "A letter was addressed to 'Chief Dodo, The Coca-Cola Company' (Coca-Cola Company)",
+            "The original formula returned as Coca-Cola Classic on July 11, 1985, 79 days after the change (Coca-Cola Company)",
+            "Two days after the return was announced, the company received 31,600 hotline calls (Coca-Cola Company)"
+          ],
+          "moneyAngle": "Funny, rewatchable Reel that drives shares and follows for business-story content.",
+          "artStyle": "Retro-cartoon 1980s: flat cel shading with halftone dots, warm reds and creams with mint #8CF9CB accents, bouncy pop captions in a chunky rounded font.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The operator",
+              "role": "story cast",
+              "look": "Original retro-cartoon 1980s phone operator with big hair and headset",
+              "voice": "No lines"
+            },
+            {
+              "name": "The crowd",
+              "role": "story cast",
+              "look": "Original retro-cartoon shoppers in 80s windbreakers holding blank signs",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, every app redesign hits the same wall: people feel they own what they use.",
+          "retention": {
+            "hookVisual": "A cartoon soda can flips while its label is scribbled out and rewritten, date stamped April 23, 1985.",
+            "openLoop": {
+              "scene": 3,
+              "question": "Why would a taste-test winner cause outrage?"
+            },
+            "rehook": {
+              "scene": 8,
+              "line": "Then it got stranger. The company backed down."
+            },
+            "payoff": {
+              "scene": 12,
+              "line": "The taste tests were right about taste. They never measured attachment."
+            }
+          }
+        },
+        {
+          "id": "2026-10-16-09",
+          "type": "video",
+          "platform": "youtube",
+          "niche": "tech",
+          "style": "explainer",
+          "length": "s60",
+          "topic": "Microsoft's Tay chatbot was pulled after 16 hours (March 2016)",
+          "titles": [
+            "Why Microsoft Pulled Its Chatbot in One Day",
+            "Microsoft's AI Lasted 16 Hours on Twitter",
+            "96,000 Tweets in 16 Hours: The Tay Disaster"
+          ],
+          "titleScores": {
+            "vidiq": [
+              {
+                "title": "Why Microsoft Pulled Its Chatbot in One Day",
+                "score": 87
+              },
+              {
+                "title": "Microsoft's AI Lasted 16 Hours on Twitter",
+                "score": 85
+              },
+              {
+                "title": "96,000 Tweets in 16 Hours: The Tay Disaster",
+                "score": 82
+              }
+            ]
+          },
+          "hook": "March 23, 2016. Microsoft lets an AI learn from Twitter.",
+          "caption": "March 23, 2016: Microsoft launched Tay, a chatbot that learned from Twitter. Trolls exploited a 'repeat after me' feature and Microsoft pulled it within 16 hours, after 96,000+ tweets. In 2026, AI agents read everything. Treat every input like a stranger.",
+          "hashtags": [
+            "AI",
+            "tech",
+            "chatbot",
+            "shorts"
+          ],
+          "cta": "Subscribe for the AI failures that shaped today's tools.",
+          "thumbnail": {
+            "text": "16 HOURS",
+            "prompt": "Stylized 3D glossy chatbot avatar bubble cracking apart, swarm of anonymous speech bubbles attacking it, a 16:00:00 timer in mint, near-black background with mint light sweeps, no logos, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), clear explainer pace about 160 wpm; pause after \"She lasted 16 hours.\" Story cast has no lines.",
+          "music": "Bright curious synth plucks at launch; distorted bass creeps in with the trolls; cuts to silence on the shutdown; calm pad for the lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "March 23, 2016. Microsoft lets an AI learn from Twitter.",
+              "onScreen": "March 23, 2016",
+              "visual": "Smartphone social media feed, BG: glossy 3D void filled with floating speech bubbles; CHARACTER: Tay, a stylized 3D chat bubble avatar, waving; ANIM: timer appears at 00:00 and starts",
+              "motion": "Push-in on avatar; caption pops",
+              "sfx": "Notification ping"
+            },
+            {
+              "time": "0:04–0:09",
+              "narration": "Her name was Tay, built to talk like a 19-year-old American girl.",
+              "onScreen": "Meet Tay",
+              "visual": "Chat bubbles on phone, BG: soft pastel UI panels drifting; CHARACTER: Tay bouncing between bubbles; ANIM: name tag types on, age tag slides in",
+              "motion": "Orbit around avatar; type-on",
+              "sfx": "Bubbly pop"
+            },
+            {
+              "time": "0:09–0:13",
+              "narration": "The more people chatted with her, the more she learned.",
+              "onScreen": "More chats = more learning",
+              "visual": "Network connections glowing, BG: animated network graph growing nodes; CHARACTER: Tay at the centre of the network; ANIM: lines multiply, learning bar fills",
+              "motion": "Pull-out reveal of network",
+              "sfx": "Rising tone"
+            },
+            {
+              "time": "0:13–0:17",
+              "narration": "She lasted 16 hours. What breaks a bot that fast?",
+              "onScreen": "16 hours. Why?",
+              "visual": "Clock ticking close up, BG: dark glossy void with mint light sweeps; CHARACTER: none; ANIM: timer jumps to 16:00:00 and freezes",
+              "motion": "Snap zoom on timer; shake",
+              "sfx": "Clock stop"
+            },
+            {
+              "time": "0:17–0:20",
+              "narration": "In that time, Tay posted more than 96,000 tweets.",
+              "onScreen": "96,000+ tweets",
+              "visual": "Fast scrolling feed, BG: speech bubbles pouring like a waterfall; CHARACTER: Tay buried in bubbles; ANIM: counter spins to 96,000",
+              "motion": "Speed ramp; counter roll",
+              "sfx": "Rapid typing"
+            },
+            {
+              "time": "0:20–0:23",
+              "narration": "Then trolls found a feature: repeat after me.",
+              "onScreen": "\"Repeat after me\"",
+              "visual": "Anonymous hacker hoodie, BG: red-tinted void with glitching bubbles; CHARACTER: faceless troll avatars circling Tay; ANIM: a parrot icon flashes over Tay",
+              "motion": "Whip pan; glitch cut",
+              "sfx": "Glitch"
+            },
+            {
+              "time": "0:23–0:27",
+              "narration": "Type something vile, Tay said it back. In public.",
+              "onScreen": "She said it back",
+              "visual": "Megaphone broadcasting, BG: glossy stage under harsh spotlights; CHARACTER: Tay with a megaphone, eyes spinning; ANIM: censored bars cover every bubble",
+              "motion": "Low angle; stutter zoom",
+              "sfx": "Static burst"
+            },
+            {
+              "time": "0:27–0:31",
+              "narration": "Then it got worse. It was coordinated, under Microsoft's name.",
+              "onScreen": "Then it got worse",
+              "visual": "Swarm of notifications, BG: red alert lights sweeping a dark hall; CHARACTER: troll avatars multiplying; ANIM: brand-free company badge cracks under the bubbles",
+              "motion": "Freeze frame; crash zoom",
+              "sfx": "Bass drop"
+            },
+            {
+              "time": "0:31–0:34",
+              "narration": "Microsoft took her offline and blamed a coordinated attack.",
+              "onScreen": "Offline",
+              "visual": "Power switch turned off, BG: control room with lights going dark; CHARACTER: Tay fading to grey; ANIM: OFFLINE stamp slams down",
+              "motion": "Hard cut; dim",
+              "sfx": "Power down"
+            },
+            {
+              "time": "0:34–0:38",
+              "narration": "March 25: an apology on Microsoft's official blog.",
+              "onScreen": "March 25: sorry",
+              "visual": "Laptop reading blog post, BG: calm grey office with soft light; CHARACTER: none; ANIM: apology card slides in",
+              "motion": "Slow push; card slide",
+              "sfx": "Soft click"
+            },
+            {
+              "time": "0:38–0:42",
+              "narration": "The flaw wasn't intelligence. Tay trusted every input the same.",
+              "onScreen": "She trusted everyone",
+              "visual": "Open door with crowd, BG: glowing doorway with no lock; CHARACTER: Tay welcoming every bubble equally; ANIM: all bubbles get the same green check",
+              "motion": "Dolly through doorway",
+              "sfx": "Door swing"
+            },
+            {
+              "time": "0:42–0:45",
+              "narration": "March 30, she returned by accident, stuck repeating herself.",
+              "onScreen": "Back. By accident.",
+              "visual": "Looping arrow animation, BG: glossy void with a spinning loop ring; CHARACTER: Tay spinning inside the loop; ANIM: same bubble repeats in a ring",
+              "motion": "Spin transition; loop wipe",
+              "sfx": "Echo"
+            },
+            {
+              "time": "0:45–0:50",
+              "narration": "In 2026, AI agents read your inbox. What they read can steer them.",
+              "onScreen": "What they read steers them",
+              "visual": "AI assistant reading emails, BG: mint holographic inbox panels; CHARACTER: Nova on camera, emails orbiting her wrist display; ANIM: one email glows red and tugs a string",
+              "motion": "Medium shot of Nova; kinetic caption",
+              "sfx": "Soft chime"
+            },
+            {
+              "time": "0:50–0:57",
+              "narration": "Never let AI act on input you wouldn't trust from a stranger. Like Twitter, March 23, 2016.",
+              "onScreen": "Untrusted input = stranger",
+              "visual": "Hand blocking stop gesture, BG: mint gradient with drifting particles; CHARACTER: Nova raising a hand, a lock clicking shut; ANIM: lock icon snaps, timer resets to 00:00",
+              "motion": "Push-in; hard cut to first frame",
+              "sfx": "Lock click"
+            }
+          ],
+          "loopLine": "Like Twitter, March 23, 2016.",
+          "factCheck": [
+            "Tay was released on Twitter on March 23, 2016, as TayTweets (@TayandYou)",
+            "Tay was developed by Microsoft's research and Bing divisions",
+            "Tay was designed to mimic the language of a 19-year-old American girl and learn from Twitter users",
+            "Microsoft suspended the account within 16 hours, after more than 96,000 tweets",
+            "Many offensive tweets came from users exploiting a 'repeat after me' capability",
+            "Microsoft cited a 'coordinated attack by a subset of people'",
+            "Peter Lee posted an apology on Microsoft's official blog on March 25, 2016",
+            "Microsoft accidentally re-released Tay on March 30, 2016; it got stuck in a repetitive loop and was taken offline again"
+          ],
+          "moneyAngle": "Evergreen AI-history Short that drives subscribers to AI-workflow content.",
+          "artStyle": "Stylized 3D glossy: soft cinematic light on near-black #07080B, pastel chat bubbles turning red, mint #1CD28B highlights; clean sans captions that pop word by word.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "Tay",
+              "role": "story cast (the chatbot)",
+              "look": "Original stylized 3D chat-bubble avatar with simple dot eyes, pastel gradient; not Microsoft's design",
+              "voice": "No lines"
+            },
+            {
+              "name": "The trolls",
+              "role": "story cast",
+              "look": "Faceless hooded 3D avatars made of grey speech bubbles",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, AI agents read your inbox. What they read can steer them.",
+          "retention": {
+            "hookVisual": "A glossy chat-bubble avatar waves in a void of floating speech bubbles as a timer starts at 00:00.",
+            "openLoop": {
+              "scene": 4,
+              "question": "What breaks a chatbot in 16 hours?"
+            },
+            "rehook": {
+              "scene": 8,
+              "line": "Then it got worse. It was coordinated, under Microsoft's name."
+            },
+            "payoff": {
+              "scene": 11,
+              "line": "The flaw wasn't intelligence. Tay trusted every input the same."
+            }
+          }
+        },
+        {
+          "id": "2026-10-16-10",
+          "type": "video",
+          "platform": "facebook",
+          "niche": "edu",
+          "style": "countdown",
+          "length": "s60",
+          "topic": "The Gimli Glider: Air Canada 143 ran out of fuel at 41,000 feet (July 23, 1983)",
+          "titles": [
+            "A 767 Ran Out of Fuel at 41,000 Feet",
+            "3 Numbers Behind the Gimli Glider",
+            "Pounds vs Kilograms: The Jet That Went Silent"
+          ],
+          "hook": "41,000 feet. Both engines of a Boeing 767 go silent.",
+          "caption": "July 23, 1983: Air Canada Flight 143 ran out of fuel at about 41,000 feet because a conversion used pounds instead of kilograms. The crew glided for about 17 minutes onto a former air base turned racetrack. All 69 people survived. Check the unit.",
+          "hashtags": [
+            "aviation",
+            "history",
+            "truestory",
+            "gimliglider"
+          ],
+          "cta": "Follow for true stories where one number changed everything.",
+          "thumbnail": {
+            "text": "0 FUEL",
+            "prompt": "2.5D parallax painterly scene of a generic twin-engine jet gliding silently over Manitoba farmland at sunset, fuel gauge reading empty in mint glow, racetrack visible below, no airline logos, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), countdown pacing about 160 wpm; hard stop after each number. Story cast has no lines.",
+          "music": "Low wind ambience and a ticking pulse; music cuts to silence when the engines stop; heartbeat drum during the glide; warm swell on 'nobody died'.",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "41,000 feet. Both engines of a Boeing 767 go silent.",
+              "onScreen": "41,000 ft. Silence.",
+              "visual": "Airplane cockpit at night, BG: 2.5D parallax cloud layers sliding past a dark cockpit; CHARACTER: the captain, stylized 3D, staring at blank gauges; ANIM: engine gauges drop to zero, altitude counter starts falling",
+              "motion": "Slow push into cockpit; captions pop",
+              "sfx": "Engines spool down"
+            },
+            {
+              "time": "0:04–0:07",
+              "narration": "July 23, 1983. Air Canada Flight 143. 69 aboard.",
+              "onScreen": "69 people aboard",
+              "visual": "Passenger airplane cabin, BG: parallax cabin rows with soft evening light; CHARACTER: passengers, stylized 3D, faces calm and unaware; ANIM: 69 counter stamps in",
+              "motion": "Dolly down the aisle",
+              "sfx": "Cabin chime"
+            },
+            {
+              "time": "0:07–0:11",
+              "narration": "Three numbers explain how a new jet ran dry.",
+              "onScreen": "3 numbers",
+              "visual": "Fuel gauge empty, BG: dark glossy panel with mint countdown digits; CHARACTER: none; ANIM: 3, 2, 1 cards flip into place",
+              "motion": "Card flip transition",
+              "sfx": "Tick"
+            },
+            {
+              "time": "0:11–0:14",
+              "narration": "Number three: 22,300. The fuel they needed, in kilograms.",
+              "onScreen": "#3: 22,300 kg",
+              "visual": "Jet refuelling truck, BG: airport apron at dawn with parallax depth; CHARACTER: the fueller, stylized 3D, holding a clipboard; ANIM: 22,300 KG counter rolls up",
+              "motion": "Tracking shot along fuel hose",
+              "sfx": "Pump hum"
+            },
+            {
+              "time": "0:14–0:18",
+              "narration": "This 767 was one of the first using metric fuel.",
+              "onScreen": "New jet. New units.",
+              "visual": "Cockpit fuel display, BG: glass UI panel with kg and lb tabs; CHARACTER: none; ANIM: kg tab glows, lb tab flickers",
+              "motion": "Macro push on display",
+              "sfx": "Beep"
+            },
+            {
+              "time": "0:18–0:22",
+              "narration": "The math used 1.77 pounds per litre as kilograms.",
+              "onScreen": "1.77 lb ≠ 1.77 kg",
+              "visual": "Calculator and paper notes, BG: animated formula board with a red error ring; CHARACTER: the first officer, stylized 3D, checking figures; ANIM: lb crosses into the kg column, red circle pulses",
+              "motion": "Zoom into formula; red pulse",
+              "sfx": "Error buzz"
+            },
+            {
+              "time": "0:22–0:25",
+              "narration": "They loaded about 22,300 pounds. Less than half.",
+              "onScreen": "Less than half",
+              "visual": "Fuel tank gauge low, BG: cutaway fuel tank filling only halfway; CHARACTER: none; ANIM: tank bar stops at under 50%",
+              "motion": "Cutaway reveal; bar fill",
+              "sfx": "Liquid slosh"
+            },
+            {
+              "time": "0:25–0:28",
+              "narration": "Number two: 17 minutes gliding with no engines.",
+              "onScreen": "#2: 17 minutes",
+              "visual": "Airplane gliding over clouds, BG: sunset parallax clouds with wind streaks; CHARACTER: none; ANIM: 17:00 glide timer counts down",
+              "motion": "Wide tracking shot; timer overlay",
+              "sfx": "Wind"
+            },
+            {
+              "time": "0:28–0:32",
+              "narration": "Then it got worse. The reachable runway wasn't an airport anymore.",
+              "onScreen": "Then it got worse",
+              "visual": "Old abandoned runway, BG: Manitoba farmland parallax with a lone strip; CHARACTER: none; ANIM: map pin drops on GIMLI, label flips to RACETRACK",
+              "motion": "Freeze frame; crash zoom on map",
+              "sfx": "Bass hit"
+            },
+            {
+              "time": "0:32–0:36",
+              "narration": "Gimli, an old air force base, was now a racetrack. Mid-race.",
+              "onScreen": "A race was on",
+              "visual": "Race cars on track, BG: sunlit drag strip with heat shimmer; CHARACTER: racers, stylized 3D, looking up; ANIM: jet shadow sweeps across the track",
+              "motion": "Low angle tilt up to sky",
+              "sfx": "Car engines"
+            },
+            {
+              "time": "0:36–0:41",
+              "narration": "Captain Bob Pearson crossed the controls, a glider pilot's trick, to lose height.",
+              "onScreen": "A glider pilot's trick",
+              "visual": "Pilot hands on yoke, BG: cockpit with tilted horizon and sweeping light; CHARACTER: the captain, stylized 3D, crossing the controls; ANIM: horizon tilts, altitude drops faster",
+              "motion": "Dutch angle; roll transition",
+              "sfx": "Air rush"
+            },
+            {
+              "time": "0:41–0:45",
+              "narration": "The nose gear collapsed. The jet scraped to a stop.",
+              "onScreen": "Nose down. Sparks.",
+              "visual": "Airplane landing sparks, BG: runway at dusk with spark particles; CHARACTER: none; ANIM: sparks spray, speed counter falls to 0",
+              "motion": "Slow-mo then speed ramp",
+              "sfx": "Metal scrape"
+            },
+            {
+              "time": "0:45–0:47",
+              "narration": "Number one: zero. Nobody died.",
+              "onScreen": "#1: zero deaths",
+              "visual": "People walking from plane, BG: warm sunset glow with drifting dust; CHARACTER: passengers stepping onto the runway; ANIM: big 0 settles softly, heart icon glows",
+              "motion": "Slow pull-back",
+              "sfx": "Warm swell"
+            },
+            {
+              "time": "0:47–0:52",
+              "narration": "In 2026, you'll paste AI numbers into budgets. The unit still decides everything.",
+              "onScreen": "The unit decides",
+              "visual": "Spreadsheet on laptop, BG: mint glass spreadsheet cells floating; CHARACTER: Nova on camera, tapping a cell; ANIM: a cell flips from kg to lb and flashes red",
+              "motion": "Medium shot of Nova; kinetic caption",
+              "sfx": "Soft chime"
+            },
+            {
+              "time": "0:52–0:57",
+              "narration": "Check the unit on every number you didn't calculate. Before 41,000 feet.",
+              "onScreen": "Check the unit",
+              "visual": "Checklist with pen, BG: cockpit glass with mint check marks; CHARACTER: Nova ticking a checklist; ANIM: check mark lands, altitude flips to 41,000",
+              "motion": "Push-in; hard cut to first frame",
+              "sfx": "Tick"
+            }
+          ],
+          "loopLine": "Before 41,000 feet.",
+          "factCheck": [
+            "Air Canada Flight 143 ran out of fuel on July 23, 1983, at about 41,000 feet",
+            "The aircraft was a Boeing 767, one of the first with metric-calibrated fuel systems",
+            "69 people were aboard (61 passengers, 8 crew)",
+            "About 22,300 kg of fuel was needed",
+            "Crews used 1.77 (pounds per litre) as if it were kilograms per litre; the correct figure was 0.803 kg/L",
+            "About 22,300 lb (about 10,100 kg) was loaded, less than half the requirement",
+            "The aircraft glided for about 17 minutes",
+            "It landed at former RCAF Station Gimli, which had become a motorsport park where a race was underway",
+            "Captain Bob Pearson used a forward slip, a technique used by glider pilots, to lose altitude",
+            "The nose gear collapsed on landing; there were no fatalities"
+          ],
+          "moneyAngle": "High-retention countdown Reel that earns Facebook Reels views and shares.",
+          "artStyle": "2.5D parallax painterly: layered clouds, prairie and runway planes sliding in depth, sunset ambers with mint #8CF9CB instrument glow on near-black; condensed bold captions that slide up.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The captain",
+              "role": "story cast",
+              "look": "Original stylized 3D airline captain, 1980s uniform, calm focused posture, no real likeness",
+              "voice": "No lines"
+            },
+            {
+              "name": "The first officer",
+              "role": "story cast",
+              "look": "Original stylized 3D first officer with a clipboard, 1980s uniform",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, you'll paste AI numbers into budgets. The unit still decides everything.",
+          "retention": {
+            "hookVisual": "A dark cockpit as both engine gauges fall to zero and an altitude counter starts dropping from 41,000.",
+            "openLoop": {
+              "scene": 3,
+              "question": "How does a new jet run dry?"
+            },
+            "rehook": {
+              "scene": 9,
+              "line": "Then it got worse. The reachable runway wasn't an airport anymore."
+            },
+            "payoff": {
+              "scene": 13,
+              "line": "Number one: zero. Nobody died."
+            }
+          }
+        }
+      ],
+      "bank": [
+        {
+          "id": "2026-10-16-B01",
+          "type": "post",
+          "platform": "x",
+          "pillar": "wealth_systems",
+          "format": "short",
+          "topic": "Ronald Wayne sold his 10% of Apple for $800 (1976)",
+          "hook": "Ronald Wayne owned 10% of Apple. About 12 days later he sold it for $800.",
+          "body": "Jobs had borrowed $15,000 for an order. Wayne owned a house and feared personal liability. He later took $1,500 more to drop all claims.",
+          "parts": [],
+          "hashtags": [
+            "startups"
+          ],
+          "cta": "Before you sign, know your downside.",
+          "moneyAngle": "Founder-history hook that grows the business audience."
+        },
+        {
+          "id": "2026-10-16-B02",
+          "type": "post",
+          "platform": "x",
+          "pillar": "wealth_systems",
+          "format": "thread",
+          "topic": "The Panic of 1907: J.P. Morgan's 2:16 p.m. rescue and the locked library",
+          "hook": "Oct 24, 1907. Money to borrow on Wall Street costs 100% a year. One banker has minutes to find $25 million.",
+          "body": "Knickerbocker Trust collapsed, call money hit 100%, J.P. Morgan raised $23.6 million from 14 banks by 2:16 p.m., then locked trust presidents in his library. The Federal Reserve followed in 1913.",
+          "parts": [
+            "Oct 24, 1907. Money to borrow on Wall Street costs 100% a year. The stock exchange is close to shutting.\n\nOne 70-year-old banker has minutes to find $25 million.",
+            "It started at Knickerbocker Trust. News tied its president to a failed speculator. Depositors pulled nearly $8 million. On Oct 22, it suspended.",
+            "Trust companies held about 5% of deposits in cash. National banks held 25%.\n\nSo when the runs spread, the trusts had almost nothing to hand back.",
+            "Call money, the short loans that kept brokers alive, jumped from 9.5% to 70%. Two days later: 100%.",
+            "J.P. Morgan called in the bank presidents. He told them they needed \"$25 million within the next 10 to 12 minutes.\"\n\nBy 2:16 p.m. he had $23.6 million from 14 banks.",
+            "It wasn't over. On Sunday, Nov 3, he summoned the trust company presidents to his library.\n\nThen he quietly locked the front doors until they committed to a rescue.",
+            "The twist: a whole country's safety net had been one private citizen. The Federal Reserve was created in 1913.",
+            "The lesson: never let your plan depend on a rescuer. Keep enough cash that you never need one.\n\nHow many months of expenses could you cover today?"
+          ],
+          "hashtags": [
+            "finance"
+          ],
+          "cta": "Count how many months of expenses your cash covers today.",
+          "moneyAngle": "Money-history thread that builds the personal-finance audience."
+        },
+        {
+          "id": "2026-10-16-B03",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "high_agency",
+          "format": "short",
+          "topic": "Post-it Notes: the 'failed' 3M glue, a hymn book and the Boise Blitz",
+          "hook": "In 1968, a 3M scientist set out to make a super-strong glue. He made a weak one instead.",
+          "body": "Spencer Silver's adhesive stuck, peeled off and stuck again. For about five years he pitched it inside 3M as a \"solution without a problem.\" Nobody bit.\n\nIn 1974, his colleague Art Fry had a small, annoying problem: his bookmarks kept falling out of his hymn book. He used Silver's glue to anchor them, and kept developing the idea under 3M's policy of permitted \"bootlegging.\"\n\nThe first launch flopped. In 1977, 3M test-marketed \"Press 'n Peel\" in four cities. Disappointing results.\n\nSo in 1978 they tried the Boise Blitz: free samples to offices in Boise, Idaho. Over 90% of people who tried them said they would buy.\n\nNew name: Post-it Note. National launch: 1980. The canary yellow came from scrap paper in the lab next door.\n\nWhat made it work:\n→ Silver kept pitching a \"failure\" for years.\n→ Fry matched it to a real problem.\n→ 3M stopped describing it and put it in people's hands.\n\nYour move this week: take one shelved idea and put a free sample in front of 10 real users.",
+          "parts": [],
+          "hashtags": [
+            "innovation",
+            "productmanagement",
+            "leadership"
+          ],
+          "cta": "What shelved idea deserves a second test?",
+          "moneyAngle": "Innovation story that attracts product and leadership audiences on LinkedIn."
+        },
+        {
+          "id": "2026-10-16-B04",
+          "type": "post",
+          "platform": "facebook",
+          "pillar": "relationships",
+          "format": "short",
+          "topic": "The Michelangelo phenomenon: partners who sculpt each other (Drigotas et al., 1999)",
+          "hook": "Michelangelo described sculpting as freeing a figure already hidden inside the stone.",
+          "body": "In 1999, psychologist Stephen Drigotas and colleagues borrowed that idea for couples. Across four studies in the Journal of Personality and Social Psychology, they looked at whether partners help each other become the person each one hopes to be.\n\nThey called it the Michelangelo phenomenon.\n\nThe finding: when your partner sees you as capable of your ideal self, and acts like it, you move toward that self. And you tend to move toward your own ideal too.\n\nThe part that matters most is behaviour. Believing in your partner helps. Acting on it matters more. Later work linked it to higher life satisfaction and less loneliness.\n\nSo it isn't flattery. It's logistics: covering the school run so they can take the course. Asking how the training went. Treating the goal as real.\n\nToday, ask your partner one question: what are you trying to become this year? Then do one thing that makes it easier.",
+          "parts": [],
+          "hashtags": [
+            "relationships"
+          ],
+          "cta": "What's one thing your partner did that made you a better version of yourself?",
+          "moneyAngle": "Warm, shareable relationship psychology that drives comments."
+        },
+        {
+          "id": "2026-10-16-B05",
+          "type": "post",
+          "platform": "instagram",
+          "pillar": "wealth_systems",
+          "format": "carousel",
+          "topic": "Wells Fargo's fake accounts: quotas, 5,300 firings and a $3 billion settlement",
+          "hook": "5,300 employees fired for gaming the targets they were given.",
+          "body": "5,300 employees fired for gaming the targets they were given.\n\nWells Fargo opened millions of accounts customers never asked for between 2012 and 2016. The fines came in 2016. The $3 billion settlement came in 2020.\n\nThe lesson for your money and your work: whatever gets measured gets gamed. Swipe.",
+          "parts": [
+            "5,300 employees fired for gaming the targets they were given.",
+            "Millions of accounts customers never asked for.",
+            "Why? Aggressive sales quotas.",
+            "The timeline: 2012 to 2020.",
+            "2016: $185 million in fines and about 5,300 employees fired.",
+            "February 2020: $3 billion to settle civil and criminal cases.",
+            "The twist: the incentive was the scheme.",
+            "Your move: audit the numbers you're judged on."
+          ],
+          "hashtags": [
+            "money",
+            "banking",
+            "business",
+            "truestory"
+          ],
+          "cta": "Save this and check one incentive in your life today.",
+          "moneyAngle": "Scandal carousel that earns saves and shares; feeds money-systems content.",
+          "slideDesign": {
+            "tag": "Money",
+            "accent": "#E8B04B",
+            "glow": "rgba(232,176,75,.22)",
+            "slides": [
+              {
+                "big": true,
+                "size": 108,
+                "title": "**5,300** employees fired.",
+                "sub": "For gaming the targets they were given.",
+                "tag": "Wells Fargo"
+              },
+              {
+                "title": "Accounts customers **never asked for.**",
+                "tag": "2012–2016",
+                "visual": {
+                  "type": "stat",
+                  "value": "3M+",
+                  "label": "accounts opened without authorization (DOJ)"
+                }
+              },
+              {
+                "title": "Why?",
+                "tag": "The pressure",
+                "visual": {
+                  "type": "icons",
+                  "items": [
+                    [
+                      "🎯",
+                      "Aggressive quotas"
+                    ],
+                    [
+                      "📈",
+                      "Pressure from the top"
+                    ],
+                    [
+                      "🏦",
+                      "Sales culture"
+                    ]
+                  ]
+                },
+                "sub": "Employees were pushed to hit **sales goals.**"
+              },
+              {
+                "title": "How it unravelled.",
+                "tag": "Timeline",
+                "visual": {
+                  "type": "timeline",
+                  "items": [
+                    [
+                      "2012",
+                      "Fraud begins (DOJ)"
+                    ],
+                    [
+                      "2016",
+                      "$185M fines, 5,300 fired",
+                      "on"
+                    ],
+                    [
+                      "2020",
+                      "$3B settlement",
+                      "on"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "The first bill.",
+                "tag": "2016",
+                "visual": {
+                  "type": "stat",
+                  "value": "$185M",
+                  "label": "in fines for unethical sales practices"
+                }
+              },
+              {
+                "title": "The big bill.",
+                "tag": "Feb 2020",
+                "visual": {
+                  "type": "stat",
+                  "value": "$3B",
+                  "label": "to settle civil and criminal cases"
+                }
+              },
+              {
+                "title": "The twist: the incentive **was** the scheme.",
+                "tag": "The lesson",
+                "visual": {
+                  "type": "split",
+                  "l": [
+                    "Measured",
+                    "Accounts opened"
+                  ],
+                  "r": [
+                    "Mattered",
+                    "Customers who wanted them"
+                  ]
+                }
+              },
+              {
+                "title": "Audit your own incentives:",
+                "tag": "Your move",
+                "visual": {
+                  "type": "checklist",
+                  "items": [
+                    "Name the number you're judged on",
+                    "Ask how someone could fake it",
+                    "Measure the **outcome**, not the activity"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "2026-10-16-B06",
+          "type": "video",
+          "platform": "tiktok",
+          "niche": "edu",
+          "style": "true",
+          "length": "s90",
+          "topic": "The 1971 Baker Street robbery heard live by a radio ham",
+          "titles": [
+            "He Heard a Bank Robbery on His Radio",
+            "The Tunnel Heist on Sherlock Holmes's Street",
+            "Police Checked 750 Banks and Missed It"
+          ],
+          "hook": "September 1971. A man in London hears a bank robbery on his radio.",
+          "caption": "September 1971: a gang tunnelled about 40 feet from a leather shop into Lloyds Bank on Baker Street. A radio ham, Robert Rowlands, heard their walkie-talkies and recorded them. Police checked about 750 banks and still missed it. Assume someone is listening.",
+          "hashtags": [
+            "heist",
+            "truestory",
+            "london",
+            "history",
+            "crime"
+          ],
+          "cta": "Follow for heists that sound like movies but happened.",
+          "thumbnail": {
+            "text": "HEARD IT LIVE",
+            "prompt": "Newsreel 3D style 1970s London street at night, a vintage radio with glowing dial in the foreground, a tunnel cutaway under a bank, faceless figures with walkie-talkies, sepia and mint palette, no logos, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), noir-thriller pace about 150 wpm; pause after \"Then it got stranger.\" Story cast has no lines.",
+          "music": "1970s noir bass and brushed drums; radio static stings between scenes; explosion thud on the gelignite; warm pad for Nova's lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "September 1971. A man in London hears a bank robbery on his radio.",
+              "onScreen": "He heard it. Live.",
+              "visual": "Vintage radio dial glowing, BG: newsreel 3D London flat at night with film grain; CHARACTER: the radio ham, stylized 3D, leaning into a radio; ANIM: dial needle sweeps, static waveform pulses",
+              "motion": "Slow push on radio; captions type on",
+              "sfx": "Radio static"
+            },
+            {
+              "time": "0:04–0:08",
+              "narration": "Robert Rowlands, an amateur radio enthusiast, is scanning frequencies at night.",
+              "onScreen": "Robert Rowlands",
+              "visual": "Ham radio equipment, BG: cosy 1970s room with parallax wallpaper; CHARACTER: the radio ham turning a dial; ANIM: frequency numbers scroll",
+              "motion": "Macro on dial; caption slide",
+              "sfx": "Dial clicks"
+            },
+            {
+              "time": "0:08–0:12",
+              "narration": "Walkie-talkie chatter. A gang, mid-job, somewhere nearby.",
+              "onScreen": "A gang. Mid-job.",
+              "visual": "Walkie talkie close up, BG: dark brick wall with torchlight sweeps; CHARACTER: faceless gang members with walkie-talkies; ANIM: sound waves ripple out of the radio",
+              "motion": "Whip pan; grain flicker",
+              "sfx": "Walkie chirp"
+            },
+            {
+              "time": "0:12–0:16",
+              "narration": "He hits record. Then he calls the police. They don't believe him.",
+              "onScreen": "Police: not convinced",
+              "visual": "Reel to reel tape recorder, BG: warm lamp light with dust motes; CHARACTER: the radio ham pressing record, then holding a phone; ANIM: tape reels spin, 'DOUBTED' stamp",
+              "motion": "Split-screen; stamp",
+              "sfx": "Tape click"
+            },
+            {
+              "time": "0:16–0:21",
+              "narration": "So how do you find one bank, out of hundreds, before it's too late?",
+              "onScreen": "One bank. Hundreds to check.",
+              "visual": "London map at night, BG: animated 1970s map with hundreds of bank pins; CHARACTER: none; ANIM: pins blink, a question mark hovers",
+              "motion": "Top-down map zoom",
+              "sfx": "Clock tick"
+            },
+            {
+              "time": "0:21–0:25",
+              "narration": "Rewind. The gang had taken over a leather goods shop called Le Sac.",
+              "onScreen": "Rewind: Le Sac",
+              "visual": "Leather handbag shop window, BG: 1970s shopfront with rewind lines; CHARACTER: none; ANIM: rewind effect, shop sign glows",
+              "motion": "Rewind scrub transition",
+              "sfx": "Rewind whir"
+            },
+            {
+              "time": "0:25–0:29",
+              "narration": "It was two doors from Lloyds Bank, 185 Baker Street.",
+              "onScreen": "185 Baker Street",
+              "visual": "London street shopfronts, BG: parallax street with labelled storefronts; CHARACTER: none; ANIM: arrow traces two doors to the bank",
+              "motion": "Lateral dolly along street",
+              "sfx": "Footsteps"
+            },
+            {
+              "time": "0:29–0:34",
+              "narration": "They dug a tunnel about 40 feet long, under a Chicken Inn restaurant.",
+              "onScreen": "40-foot tunnel",
+              "visual": "Underground tunnel digging, BG: cutaway soil layers with dust particles; CHARACTER: gang members digging, stylized 3D; ANIM: tunnel line draws under the street, 40 FT label",
+              "motion": "Cutaway reveal; draw-on line",
+              "sfx": "Shovel scrapes"
+            },
+            {
+              "time": "0:34–0:38",
+              "narration": "A jack didn't break the vault floor. A thermal lance didn't either.",
+              "onScreen": "Jack. Lance. Nope.",
+              "visual": "Sparks from cutting torch, BG: dark vault floor lit by orange sparks; CHARACTER: a gang member with a lance; ANIM: two X marks stamp on tools",
+              "motion": "Macro sparks; X stamp",
+              "sfx": "Hiss"
+            },
+            {
+              "time": "0:38–0:41",
+              "narration": "So they used gelignite.",
+              "onScreen": "So: gelignite",
+              "visual": "Dust explosion underground, BG: vault floor with shockwave rings; CHARACTER: none; ANIM: dust burst, screen shakes",
+              "motion": "Shake; flash cut",
+              "sfx": "Explosion thud"
+            },
+            {
+              "time": "0:41–0:46",
+              "narration": "Then it got stranger. Scotland Yard believes Rowlands, and still can't find them.",
+              "onScreen": "Then it got stranger",
+              "visual": "Old police headquarters, BG: newsreel 3D police office with spinning map; CHARACTER: a detective, stylized 3D, staring at a map; ANIM: map pins multiply",
+              "motion": "Freeze frame; crash zoom",
+              "sfx": "Bass hit"
+            },
+            {
+              "time": "0:46–0:51",
+              "narration": "Officers check about 750 banks within an eight-mile radius.",
+              "onScreen": "750 banks checked",
+              "visual": "Police car driving night, BG: animated map with an eight-mile circle; CHARACTER: none; ANIM: counter rolls to 750, circle pulses",
+              "motion": "Map pull-out; counter roll",
+              "sfx": "Engine rumble"
+            },
+            {
+              "time": "0:51–0:55",
+              "narration": "They don't reach the right one in time.",
+              "onScreen": "Too late",
+              "visual": "Bank vault door open, BG: dim vault with drifting dust; CHARACTER: none; ANIM: clock hands spin, vault light flickers",
+              "motion": "Slow push into vault",
+              "sfx": "Low drone"
+            },
+            {
+              "time": "0:55–0:59",
+              "narration": "Inside: 268 safe deposit boxes, opened.",
+              "onScreen": "268 boxes",
+              "visual": "Safe deposit boxes open, BG: rows of open metal boxes in torchlight; CHARACTER: none; ANIM: box counter ticks to 268",
+              "motion": "Tracking shot along boxes",
+              "sfx": "Metal clanks"
+            },
+            {
+              "time": "0:59–1:04",
+              "narration": "The haul? Estimates range from £150,000 to nearly £4 million. Reports differ.",
+              "onScreen": "£150K to ~£4M",
+              "visual": "Cash and jewellery pile, BG: velvet table under a spotlight; CHARACTER: none; ANIM: range bar stretches between two numbers",
+              "motion": "Push-in; range bar draw",
+              "sfx": "Coin jingle"
+            },
+            {
+              "time": "1:04–1:09",
+              "narration": "The twist: a tunnel heist on Sherlock Holmes's street, copying an 1891 Holmes story.",
+              "onScreen": "Straight out of Sherlock",
+              "visual": "Old book pages turning, BG: Victorian book illustration coming alive; CHARACTER: none; ANIM: book title 'The Red-Headed League' fades in",
+              "motion": "Page-turn transition",
+              "sfx": "Page flip"
+            },
+            {
+              "time": "1:09–1:14",
+              "narration": "Arrests came that October. In 1973, three men got 12 years each.",
+              "onScreen": "12 years each",
+              "visual": "Courtroom gavel, BG: newsreel courtroom with film grain; CHARACTER: faceless defendants in silhouette; ANIM: 12 YEARS stamp",
+              "motion": "Low angle; stamp",
+              "sfx": "Gavel"
+            },
+            {
+              "time": "1:14–1:20",
+              "narration": "In 2026, your phone, car and doorbell all transmit. Assume someone can hear it.",
+              "onScreen": "Everything transmits",
+              "visual": "Smart home devices, BG: mint holographic house with signal rings; CHARACTER: Nova on camera, signal rings around her wrist display; ANIM: rings ripple out of devices",
+              "motion": "Medium shot of Nova; kinetic caption",
+              "sfx": "Soft chime"
+            },
+            {
+              "time": "1:20–1:25",
+              "narration": "So say nothing over the air you wouldn't want recorded. Ask Robert Rowlands.",
+              "onScreen": "Assume it's recorded",
+              "visual": "Microphone recording light, BG: dark studio with a red REC light; CHARACTER: Nova pointing at a REC light; ANIM: REC dot blinks, radio dial returns",
+              "motion": "Push-in; hard cut to first frame",
+              "sfx": "Static"
+            }
+          ],
+          "loopLine": "Ask Robert Rowlands. September 1971…",
+          "factCheck": [
+            "The Baker Street robbery took place on the night of 11 September 1971 at Lloyds Bank, 185 Baker Street, London",
+            "Amateur radio enthusiast Robert Rowlands overheard the gang's walkie-talkie traffic and recorded it",
+            "Local police were initially skeptical; Scotland Yard took him seriously",
+            "The gang tunnelled about 40 feet from Le Sac, a leather goods shop two doors away, under the Chicken Inn restaurant",
+            "They tried a jack, then a thermal lance, then gelignite to break the vault floor",
+            "Police checked about 750 banks within an 8-mile radius and did not find the gang in time",
+            "268 safe deposit boxes were opened",
+            "Loot estimates range from about £150,000 to nearly £4 million",
+            "The plan echoed Arthur Conan Doyle's 1891 Sherlock Holmes story 'The Red-Headed League'",
+            "Arrests came in late October 1971; in 1973 three men received 12 years each"
+          ],
+          "moneyAngle": "Over-60-second TikTok heist story eligible for creator rewards; strong follow driver.",
+          "artStyle": "Newsreel 3D 1970s: sepia film grain over stylized 3D sets, tungsten oranges with mint #8CF9CB radio glow on near-black; typewriter captions that stamp in.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The radio ham",
+              "role": "story cast",
+              "look": "Original stylized 3D man in a 1970s cardigan with headphones, no real likeness",
+              "voice": "No lines"
+            },
+            {
+              "name": "The gang",
+              "role": "story cast",
+              "look": "Faceless stylized 3D figures in 1970s work clothes with walkie-talkies",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, your phone, car and doorbell all transmit. Assume someone can hear it.",
+          "retention": {
+            "hookVisual": "A vintage radio dial glowing in a dark 1970s flat as a static waveform pulses.",
+            "openLoop": {
+              "scene": 5,
+              "question": "How do you find one bank out of hundreds before it's too late?"
+            },
+            "rehook": {
+              "scene": 11,
+              "line": "Then it got stranger. Scotland Yard believes Rowlands, and still can't find them."
+            },
+            "payoff": {
+              "scene": 13,
+              "line": "They don't reach the right one in time."
+            }
+          }
+        },
+        {
+          "id": "2026-10-16-B07",
+          "type": "video",
+          "platform": "youtube",
+          "niche": "tech",
+          "style": "true",
+          "length": "s60",
+          "topic": "The 2025 Jaguar Land Rover cyberattack and the £1.5 billion government-backed loan",
+          "titles": [
+            "One Hack Stopped Jaguar Land Rover for Weeks",
+            "Why the UK Backed JLR With £1.5 Billion",
+            "The Cyberattack That Dented UK Growth"
+          ],
+          "hook": "August 31, 2025. Jaguar Land Rover pulls the plug on its own network.",
+          "caption": "Aug 31, 2025: JLR shut down its network after detecting hackers. Production stopped for weeks, the UK government backed a £1.5B loan, and the quarter's cyber costs hit £196M. In 2026, a login can stop a factory.",
+          "hashtags": [
+            "cybersecurity",
+            "cars",
+            "business",
+            "shorts"
+          ],
+          "cta": "Subscribe for the hacks that hit the real economy.",
+          "thumbnail": {
+            "text": "FACTORY: OFF",
+            "prompt": "2.5D parallax data-noir car factory at night, robotic arms frozen mid-motion, red padlock hologram over the assembly line, £1.5B in mint glowing type, no logos or real car badges, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), urgent news pace about 160 wpm; pause after \"Then it got worse.\" Story cast has no lines.",
+          "music": "Industrial percussion that stops dead when the network goes down; tense low drones through the shutdown; metallic hit on the £196M number; calm pad for the lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:05",
+              "narration": "August 31, 2025. Jaguar Land Rover pulls the plug on its own network.",
+              "onScreen": "Aug 31, 2025",
+              "visual": "Car factory assembly line, BG: 2.5D data-noir factory with flickering screens; CHARACTER: the IT lead, stylized 3D, pulling a big switch; ANIM: screens go black row by row",
+              "motion": "Fast push-in; captions pop",
+              "sfx": "Power cut"
+            },
+            {
+              "time": "0:05–0:09",
+              "narration": "Hackers are inside. So the carmaker shuts everything down.",
+              "onScreen": "Hackers inside",
+              "visual": "Server room red lights, BG: dark server aisles with red light sweeps; CHARACTER: none; ANIM: padlock hologram slams over the racks",
+              "motion": "Lateral dolly; red flash",
+              "sfx": "Alarm pulse"
+            },
+            {
+              "time": "0:09–0:12",
+              "narration": "Production lines stop. Dealers can't even register new cars.",
+              "onScreen": "Lines: stopped",
+              "visual": "Robotic arms idle, BG: frozen factory with dust drifting; CHARACTER: the line worker, stylized 3D, waiting; ANIM: robot arms freeze mid-weld",
+              "motion": "Slow pan across line",
+              "sfx": "Machine wind-down"
+            },
+            {
+              "time": "0:12–0:17",
+              "narration": "How does one hack end up needing £1.5 billion in government backing?",
+              "onScreen": "One hack. £1.5B?",
+              "visual": "Government building London, BG: parallax skyline with a mint money counter; CHARACTER: none; ANIM: £1.5B counter flickers with a question mark",
+              "motion": "Crane up; counter flicker",
+              "sfx": "Riser"
+            },
+            {
+              "time": "0:17–0:20",
+              "narration": "Week one. Week two. Restart dates keep slipping.",
+              "onScreen": "Week 1… week 2…",
+              "visual": "Calendar weeks passing, BG: dark grid calendar with crossed-out dates; CHARACTER: none; ANIM: restart dates crossed out one by one",
+              "motion": "Calendar flip; cross-out",
+              "sfx": "Pen strikes"
+            },
+            {
+              "time": "0:20–0:24",
+              "narration": "About 120,000 people in its supply chain depend on JLR.",
+              "onScreen": "120,000 people",
+              "visual": "Workers at small factory, BG: animated supply-chain map with glowing nodes; CHARACTER: the supplier, stylized 3D, in a small workshop; ANIM: 120,000 counter, nodes dim",
+              "motion": "Map pull-out; node dim",
+              "sfx": "Low hum"
+            },
+            {
+              "time": "0:24–0:28",
+              "narration": "Many suppliers are small firms. Some risk going under.",
+              "onScreen": "Suppliers at risk",
+              "visual": "Empty workshop closed sign, BG: rain-streaked workshop window; CHARACTER: the supplier flipping a sign; ANIM: cash bar drains to red",
+              "motion": "Push through window",
+              "sfx": "Rain"
+            },
+            {
+              "time": "0:28–0:31",
+              "narration": "Then it got worse. Scattered Lapsus$ Hunters claimed it.",
+              "onScreen": "Then it got worse",
+              "visual": "Hacker silhouette screen, BG: black void with red glitch text; CHARACTER: faceless hooded figures; ANIM: group name glitches onto screen",
+              "motion": "Freeze frame; crash zoom",
+              "sfx": "Bass drop"
+            },
+            {
+              "time": "0:31–0:35",
+              "narration": "September 28: the UK government backs a £1.5 billion loan.",
+              "onScreen": "Sept 28: £1.5B",
+              "visual": "Signing official document, BG: parallax government office with mint light; CHARACTER: none; ANIM: £1.5B stamps onto a document",
+              "motion": "Macro on stamp",
+              "sfx": "Stamp thud"
+            },
+            {
+              "time": "0:35–0:37",
+              "narration": "Production restarts by October 8.",
+              "onScreen": "Restart: ~Oct 8",
+              "visual": "Factory lights turning on, BG: factory waking in sequence with light sweeps; CHARACTER: the line worker cheering quietly; ANIM: lights snap on row by row",
+              "motion": "Wide reveal; light wipe",
+              "sfx": "Machines start"
+            },
+            {
+              "time": "0:37–0:42",
+              "narration": "The quarter's bill: £196 million in cyber costs. Revenue down 24%.",
+              "onScreen": "£196M. Revenue −24%",
+              "visual": "Financial chart falling, BG: glass panel with a dropping bar chart; CHARACTER: none; ANIM: £196M counter, revenue bar shrinks",
+              "motion": "Chart draw-on; shake",
+              "sfx": "Metallic hit"
+            },
+            {
+              "time": "0:42–0:46",
+              "narration": "The Bank of England said it helped slow UK growth.",
+              "onScreen": "It dented UK growth",
+              "visual": "Bank of England building, BG: parallax city with a GDP line dipping; CHARACTER: none; ANIM: GDP line bends downward",
+              "motion": "Slow push; line draw",
+              "sfx": "Low drone"
+            },
+            {
+              "time": "0:46–0:51",
+              "narration": "In 2026, factories run on software. One login can stop a line.",
+              "onScreen": "A login can stop a factory",
+              "visual": "Engineer at control panel, BG: mint holographic factory dashboard; CHARACTER: Nova on camera, a login card on her wrist display; ANIM: login card flips to a padlock",
+              "motion": "Medium shot of Nova; kinetic caption",
+              "sfx": "Soft chime"
+            },
+            {
+              "time": "0:51–0:57",
+              "narration": "Name the one system your income needs, and back it up offline. Before your August 31.",
+              "onScreen": "Back up the one system",
+              "visual": "External hard drive backup, BG: mint glass UI with a progress bar; CHARACTER: Nova plugging in a drive; ANIM: backup bar fills, date flashes Aug 31",
+              "motion": "Push-in; hard cut to first frame",
+              "sfx": "Success ping"
+            }
+          ],
+          "loopLine": "Before your August 31.",
+          "factCheck": [
+            "JLR shut down its network on August 31, 2025 after detecting hackers (Yahoo Finance/AP)",
+            "UK dealers reported disruption blocking car registrations and parts supply (Security Affairs)",
+            "JLR missed several recovery deadlines (Yahoo Finance)",
+            "The UK government said about 120,000 people in the supply chain depend on JLR (Yahoo Finance)",
+            "Many suppliers are small businesses at risk of bankruptcy (Yahoo Finance)",
+            "A group called Scattered Lapsus$ Hunters claimed responsibility (Security Affairs)",
+            "On September 28, 2025 the UK government announced government backing for a loan of up to £1.5 billion (Security Affairs)",
+            "Production restarted by October 8, 2025 (Security Affairs)",
+            "JLR reported £196M of cyber-related costs for July 1 to September 30, 2025; Q2 revenue £4.9bn, down 24% (Security Affairs)",
+            "The Bank of England said the attack partly explained weaker-than-expected UK Q3 2025 GDP growth (Security Affairs)"
+          ],
+          "moneyAngle": "Recent-news Short that rides cybersecurity search interest and drives subscribers.",
+          "artStyle": "2.5D parallax data-noir: layered factory and skyline planes in deep blues and blacks, red alert accents and mint #1CD28B data overlays; condensed caps captions that flicker in.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The IT lead",
+              "role": "story cast",
+              "look": "Original stylized 3D engineer in a fleece and lanyard, no real likeness",
+              "voice": "No lines"
+            },
+            {
+              "name": "The supplier",
+              "role": "story cast",
+              "look": "Original stylized 3D small-workshop owner in overalls",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, factories run on software. One login can stop a line.",
+          "retention": {
+            "hookVisual": "Factory screens going black row by row as a figure pulls a giant switch, date Aug 31, 2025 on screen.",
+            "openLoop": {
+              "scene": 4,
+              "question": "How does one hack end up needing £1.5 billion in government backing?"
+            },
+            "rehook": {
+              "scene": 8,
+              "line": "Then it got worse. Scattered Lapsus$ Hunters claimed it."
+            },
+            "payoff": {
+              "scene": 11,
+              "line": "The quarter's bill: £196 million in cyber costs. Revenue down 24%."
+            }
+          }
+        },
+        {
+          "id": "2026-10-16-B08",
+          "type": "video",
+          "platform": "instagram",
+          "niche": "tech",
+          "style": "explainer",
+          "length": "s60",
+          "topic": "The Pentium FDIV bug: five missing table entries cost Intel $475 million (1994)",
+          "titles": [
+            "5 Empty Cells Cost Intel $475 Million",
+            "The Professor Who Caught a Chip Doing Bad Math",
+            "Intel Said It Was Rare. Then IBM Stopped Selling"
+          ],
+          "hook": "$475 million. That's what five wrong cells in a table cost Intel.",
+          "caption": "1994: math professor Thomas Nicely found the Pentium got some divisions wrong. Intel said it was rare, IBM paused sales, and in January 1995 Intel took a $475 million charge. The cause: five lookup-table cells that should have held 2.",
+          "hashtags": [
+            "tech",
+            "history",
+            "computers",
+            "truestory"
+          ],
+          "cta": "Follow for tech stories that changed how we test things.",
+          "thumbnail": {
+            "text": "$475M MATH BUG",
+            "prompt": "90s CRT pixel-pop style: a giant generic computer chip with a cracked division sign, a lookup grid with five red empty cells, retro beige computer, mint scanlines, no logos or brand names, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), puzzle-solving explainer pace about 160 wpm; pause after \"Then it got worse.\" Story cast has no lines.",
+          "music": "Chiptune arpeggios over a 90s beat; glitch stab on each wrong answer; drops to a single bleep on the five cells; warm pad for the lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:05",
+              "narration": "$475 million. That's what five wrong cells in a table cost Intel.",
+              "onScreen": "$475M. 5 cells.",
+              "visual": "Computer chip macro, BG: 90s CRT pixel-pop grid with scanlines; CHARACTER: none; ANIM: five grid cells flash red, $475M counter spins",
+              "motion": "Snap zoom; pixel-pop captions",
+              "sfx": "Glitch bleep"
+            },
+            {
+              "time": "0:05–0:08",
+              "narration": "1994. Math professor Thomas Nicely is running long calculations.",
+              "onScreen": "Prof. Thomas Nicely",
+              "visual": "Professor at old computer, BG: beige 90s office with CRT glow; CHARACTER: the professor, stylized pixel-3D, typing; ANIM: numbers stream up the screen",
+              "motion": "Push-in on CRT",
+              "sfx": "Keyboard clatter"
+            },
+            {
+              "time": "0:08–0:12",
+              "narration": "June 13, he notices results that don't line up.",
+              "onScreen": "June 13: wrong answers",
+              "visual": "Old monitor numbers, BG: CRT screen with mismatched number columns; CHARACTER: the professor squinting; ANIM: two columns misalign, red highlight",
+              "motion": "Macro on screen; highlight",
+              "sfx": "Error beep"
+            },
+            {
+              "time": "0:12–0:15",
+              "narration": "His code? His compiler? Or the chip itself?",
+              "onScreen": "Code? Compiler? Chip?",
+              "visual": "Detective magnifying glass, BG: pixel desk with three suspect cards; CHARACTER: the professor holding a magnifier; ANIM: three suspect cards flip",
+              "motion": "Card flip transition",
+              "sfx": "Tick"
+            },
+            {
+              "time": "0:15–0:19",
+              "narration": "Months of ruling things out. By October 19, only the chip remains.",
+              "onScreen": "Only the chip left",
+              "visual": "Crossed out checklist, BG: CRT notepad with strike-throughs; CHARACTER: none; ANIM: code and compiler cards burn away",
+              "motion": "Strike-through wipe",
+              "sfx": "Paper tear"
+            },
+            {
+              "time": "0:19–0:21",
+              "narration": "October 24, he tells Intel.",
+              "onScreen": "Oct 24: reported",
+              "visual": "Sending email old computer, BG: pixel envelope flying across CRT; CHARACTER: the professor clicking send; ANIM: envelope zooms off screen",
+              "motion": "Whoosh transition",
+              "sfx": "Send swoosh"
+            },
+            {
+              "time": "0:21–0:25",
+              "narration": "Intel's answer: real, but not serious for most people.",
+              "onScreen": "\"Not serious\"",
+              "visual": "Corporate press statement, BG: glossy boardroom with blinds; CHARACTER: a spokesperson, stylized 3D, shrugging; ANIM: speech bubble with 'RARE' stamp",
+              "motion": "Medium shot; bubble pop",
+              "sfx": "Shrug boing"
+            },
+            {
+              "time": "0:25–0:28",
+              "narration": "Replacements? Only if you could prove you were affected.",
+              "onScreen": "Prove it first",
+              "visual": "Customer service desk, BG: pixel queue with a red rope; CHARACTER: a customer holding a printout; ANIM: 'PROOF REQUIRED' sign lights up",
+              "motion": "Lateral dolly along queue",
+              "sfx": "Buzzer"
+            },
+            {
+              "time": "0:28–0:33",
+              "narration": "Then it got worse. IBM paused sales of PCs with Intel chips.",
+              "onScreen": "Then it got worse",
+              "visual": "Stack of boxed computers, BG: warehouse with red stop lights; CHARACTER: none; ANIM: STOP stamp hits a pile of boxes",
+              "motion": "Freeze frame; crash zoom",
+              "sfx": "Bass drop"
+            },
+            {
+              "time": "0:33–0:38",
+              "narration": "December 20, 1994: Intel offers to replace every flawed chip on request.",
+              "onScreen": "Dec 20: replace all",
+              "visual": "Replacing computer chip, BG: pixel workshop with mint glow; CHARACTER: a technician swapping a chip; ANIM: chip slots in, check mark pops",
+              "motion": "Macro on chip; check pop",
+              "sfx": "Click"
+            },
+            {
+              "time": "0:38–0:42",
+              "narration": "The cause: five lookup-table cells should have held 2. They held 0.",
+              "onScreen": "Should be 2. Was 0.",
+              "visual": "Spreadsheet grid zoom, BG: giant glowing lookup grid; CHARACTER: none; ANIM: five cells flip from 2 to 0 in red",
+              "motion": "Zoom into grid; flip",
+              "sfx": "Single bleep"
+            },
+            {
+              "time": "0:42–0:46",
+              "narration": "January 17, 1995: Intel takes a $475 million charge.",
+              "onScreen": "$475M charge",
+              "visual": "Financial report pages, BG: pixel newspaper headline spinning in; CHARACTER: none; ANIM: $475M stamps on the page",
+              "motion": "Spin-in headline",
+              "sfx": "Stamp thud"
+            },
+            {
+              "time": "0:46–0:51",
+              "narration": "In 2026, when an AI tool is 'rarely wrong', ask: rare for whom?",
+              "onScreen": "Rare for whom?",
+              "visual": "AI chatbot on laptop, BG: mint holographic chat panel; CHARACTER: Nova on camera, eyebrow raised; ANIM: 'RARE' label cracks into a question mark",
+              "motion": "Medium shot of Nova; kinetic caption",
+              "sfx": "Soft chime"
+            },
+            {
+              "time": "0:51–0:57",
+              "narration": "Keep your own test cases. One person with proof beat 'it's rare'. Remember the five cells.",
+              "onScreen": "Keep your test cases",
+              "visual": "Notebook with test results, BG: CRT glow with mint check marks; CHARACTER: Nova tapping a notebook; ANIM: five red cells reappear",
+              "motion": "Push-in; hard cut to first frame",
+              "sfx": "Bleep"
+            }
+          ],
+          "loopLine": "Remember the five cells.",
+          "factCheck": [
+            "Thomas Nicely, a mathematics professor at Lynchburg College, discovered the Pentium FDIV bug in 1994",
+            "He first noticed inconsistencies on June 13, 1994",
+            "He had ruled out other causes by October 19, 1994",
+            "He reported it to Intel on October 24, 1994",
+            "Intel said the flaw was not serious for most users and initially offered replacements only to users who could show they were affected",
+            "IBM paused sales of PCs with Intel CPUs",
+            "On December 20, 1994, Intel offered to replace all flawed Pentium processors on request",
+            "Five lookup-table cells that should have held +2 were zero",
+            "On January 17, 1995, Intel announced a $475 million pre-tax charge"
+          ],
+          "moneyAngle": "Explainer Reel with a satisfying reveal; drives follows for tech-history content.",
+          "artStyle": "90s CRT pixel-pop: chunky pixel-3D objects with scanlines and beige-and-black palette, mint #8CF9CB phosphor glow; captions in a blocky bitmap font that blink in.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The professor",
+              "role": "story cast",
+              "look": "Original pixel-3D math professor in a 90s sweater and glasses, no real likeness",
+              "voice": "No lines"
+            },
+            {
+              "name": "The spokesperson",
+              "role": "story cast",
+              "look": "Original stylized 3D figure in a 90s suit, generic badge, no logos",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, when an AI tool is 'rarely wrong', ask: rare for whom?",
+          "retention": {
+            "hookVisual": "A glowing pixel grid where five cells flash red while a $475M counter spins.",
+            "openLoop": {
+              "scene": 4,
+              "question": "Was it his code, his compiler, or the chip itself?"
+            },
+            "rehook": {
+              "scene": 9,
+              "line": "Then it got worse. IBM paused sales of PCs with Intel chips."
+            },
+            "payoff": {
+              "scene": 11,
+              "line": "The cause: five lookup-table cells should have held 2. They held 0."
+            }
+          }
+        }
+      ]
+    },
+    {
       "id": "2026-10-15",
       "createdAt": "2026-10-15T06:11:58-05:00",
       "items": [
