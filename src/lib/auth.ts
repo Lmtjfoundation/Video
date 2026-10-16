@@ -401,6 +401,8 @@ export async function spendCredits(userId: string, n: number) {
   const u = await getUser(userId);
   if (!u) throw new AuthError("Account not found.");
   const now = Date.now();
+  // The app's owner (admin) pays for the AI through their own keys, so their account never uses credits.
+  if (u.role === "admin") return balance(u.vault?.lots ?? [], now);
   await rollVault(u, now);
   const v = u.vault!;
   let have = balance(v.lots, now);
@@ -432,7 +434,7 @@ export async function spendCredits(userId: string, n: number) {
 }
 export async function refundCredits(userId: string, n: number) {
   const u = await getUser(userId);
-  if (!u) return;
+  if (!u || u.role === "admin") return; // nothing was taken from an admin, so nothing to give back
   u.vault = u.vault ?? emptyVault();
   u.vault.lots = restore(u.vault.lots, n, Date.now(), uid("lot"));
   u.usage.credits = Math.max(0, u.usage.credits - n);

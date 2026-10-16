@@ -161,6 +161,19 @@ describe("vault with storage", () => {
     expect((await fresh(u.id)).usage.credits).toBe(0);
   });
 
+  it("the owner (admin) account never uses credits, even with an empty vault", async () => {
+    expect((await fresh(owner.id)).role).toBe("admin");
+    const before = (await fresh(owner.id)).usage.credits;
+    await expect(auth.spendCredits(owner.id, 500)).resolves.toBeTypeOf("number");
+    await auth.refundCredits(owner.id, 500); // nothing was taken, so nothing is added back
+    const after = await fresh(owner.id);
+    expect(after.usage.credits).toBe(before);
+    expect(auth.vaultSummary(after).balance).toBeLessThanOrEqual(after.plan === "free" ? 30 : 100000);
+    // A regular account is still charged and still refused when short.
+    const u = await newUser();
+    await expect(auth.spendCredits(u.id, 500)).rejects.toThrow(/your vault has/);
+  });
+
   it("credits unused after 30 days move to the community pool, once", async () => {
     const before = (await pool.poolSnapshot()).balance;
     const u = await newUser();

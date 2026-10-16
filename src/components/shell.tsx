@@ -82,7 +82,7 @@ function AccountCard() {
       <div>
         <div className="flex items-baseline justify-between text-[12px]">
           <span className="text-white/60">{me.plan.name} plan</span>
-          <span className="tabular-nums text-white/80">{me.creditsLeft.toLocaleString()} credits</span>
+          <span className="tabular-nums text-white/80">{me.user.role === "admin" ? "Owner · no credits used" : `${me.creditsLeft.toLocaleString()} credits`}</span>
         </div>
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
           <div className="h-full rounded-full bg-gradient-to-r from-mint-400 to-gold-400" style={{ width: `${Math.max(2, 100 - (used / meterTotal) * 100)}%` }} />

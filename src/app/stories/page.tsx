@@ -128,7 +128,7 @@ export default function StoryStudio() {
       <PageHeader title="Story Studio" subtitle="Faceless story scripts built for retention: hook, scene-by-scene narration, on-screen text, visuals to source, titles and a fact-check list." />
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
         <Card className="h-fit xl:sticky xl:top-10">
-          <CardHeader title="New story" subtitle={status ? `${status.me.creditsLeft} credits left · this costs ${cost}` : undefined} icon={<BookOpenText className="h-4 w-4" />} />
+          <CardHeader title="New story" subtitle={status ? (status.me.user.role === "admin" ? "Owner account · no credits used" : `${status.me.creditsLeft} credits left · this costs ${cost}`) : undefined} icon={<BookOpenText className="h-4 w-4" />} />
           <div className="grid gap-4 p-5">
             <Field label="Niche">
               <Select value={f.niche} onChange={(e) => setF({ ...f, niche: e.target.value })}>
