@@ -26,6 +26,8 @@ export const POST = authed(async (req: Request) => {
     merged.method = "manual";
   }
   if (!merged.accessToken) return fail("An access token is required.");
+  // A pasted Page token switches Facebook to automatic Page posting.
+  if (platform === "facebook") merged.mode = "page";
   await saveCredential(platform, merged);
   await log("info", "system", `Credentials updated for ${platform}`, { platform });
   return ok(await credentialStatuses());

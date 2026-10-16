@@ -51,7 +51,7 @@ export const SETUP_GUIDES: Record<Exclude<Platform, "webhook">, SetupGuide> = {
   },
   facebook: {
     minutes: "15 minutes",
-    needs: "A Facebook Page you're an admin of. Meta doesn't let apps post to personal profiles, including profiles in professional mode.",
+    needs: "A Facebook Page you're an admin of, for automatic posting. Profiles (including monetized ones) don't need this setup: they use “Use my profile” on the Facebook card, because Meta doesn't let apps post to profiles.",
     idLabel: "App ID",
     secretLabel: "App Secret",
     steps: [

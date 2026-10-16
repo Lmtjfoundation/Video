@@ -56,6 +56,7 @@ export const DEFAULT_SETTINGS: Settings = {
   faceless: true,
   genres: ["trending", "black_america", "money", "tech_ai"],
   trendAutopilot: { enabled: false, mode: "schedule", videos: true, videoLength: "s90", autoRender: false },
+  handoffEmail: true,
   pillarMix: {
     wealth_systems: 30,
     ai_leverage: 30,

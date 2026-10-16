@@ -102,6 +102,12 @@ export async function finishAuth(platform: Platform, code: string, state: string
         `${graph}/oauth/access_token?` + new URLSearchParams({ grant_type: "fb_exchange_token", client_id: id, client_secret: secret, fb_exchange_token: short.data.access_token }),
         { label: "Facebook long-lived token" },
       );
+      // Who signed in (public profile: app-scoped id and name). Used for profile posting and the Page/profile switch.
+      const me = await request<{ id: string; name?: string }>(
+        `${graph}/me?` + new URLSearchParams({ fields: "id,name", access_token: long.data.access_token }),
+        { label: "Facebook profile" },
+      );
+      const profile = { profileId: me.data.id, profileName: me.data.name || "My Facebook profile" };
       const acc = await request<{ data?: { id: string; name: string; access_token?: string; tasks?: string[] }[] }>(
         `${graph}/me/accounts?` + new URLSearchParams({ fields: "id,name,access_token,tasks", limit: "100", access_token: long.data.access_token }),
         { label: "Facebook Pages" },
@@ -109,12 +115,14 @@ export async function finishAuth(platform: Platform, code: string, state: string
       const pages = (acc.data.data ?? [])
         .filter((pg) => pg.access_token && (!pg.tasks || pg.tasks.includes("CREATE_CONTENT")))
         .map((pg) => ({ id: pg.id, name: pg.name, token: pg.access_token! }));
-      if (!pages.length) {
-        throw new Error("No Facebook Pages found that you can post to. Apps can only post to Pages you manage, not personal profiles. Create a Page, or ask its admin for full control, then connect again.");
-      }
       await saveFacebookPages(pages);
+      if (!pages.length) {
+        // No Page: connect the person's own profile (including a monetized profile in professional mode).
+        // Facebook doesn't let apps post to profiles, so these posts are prepared and handed over to post with one tap.
+        return { ...base, mode: "profile", ...profile, handle: profile.profileName };
+      }
       const first = pages[0];
-      return { ...base, accessToken: first.token, accountId: first.id, handle: first.name };
+      return { ...base, mode: "page", accessToken: first.token, accountId: first.id, handle: first.name, ...profile };
     }
 
     case "linkedin": {

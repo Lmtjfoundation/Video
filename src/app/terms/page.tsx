@@ -21,7 +21,7 @@ export default async function TermsPage() {
       <h2>2. What the Service does</h2>
       <p>
         Nexus Pulse helps you research content niches, draft posts and video scripts with AI, render short videos, and schedule and publish them to social accounts you
-        connect (X, Facebook Pages, Instagram, LinkedIn, YouTube and TikTok). Content is published only to accounts you connect, following the schedule and approval
+        connect (X, Facebook Pages, Instagram, LinkedIn, YouTube and TikTok). For a personal Facebook profile, the Service prepares posts and you publish them yourself. Content is published only to accounts you connect, following the schedule and approval
         settings you choose. You can pause all posting at any time.
       </p>
 

@@ -39,8 +39,13 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
   try {
     const cred = await finishAuth(p, code, state);
     await saveCredential(p, cred);
+    if (p === "facebook" && cred.mode === "profile") {
+      await log("info", "system", `Linked Facebook profile ${cred.handle ?? ""} — posts are prepared for you to share with one tap`.trim(), { platform: p });
+      return back({ connected: p, mode: "profile" });
+    }
     await log("info", "system", `Linked ${label} account ${cred.handle ?? ""}`.trim(), { platform: p });
-    if (p === "facebook" && (await listFacebookPages()).length > 1) return back({ connected: p, pick: "facebook" });
+    // A Page was found: the person can still switch to their own profile, or to another Page, on the Facebook card.
+    if (p === "facebook" && (await listFacebookPages()).length >= 1) return back({ connected: p, pick: "facebook" });
     return back({ connected: p });
   } catch (e) {
     await log("error", "system", `${label} linking failed: ${(e as Error).message}`, { platform: p });

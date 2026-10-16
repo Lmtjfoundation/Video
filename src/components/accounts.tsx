@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Check, Copy, ExternalLink, KeyRound, Link2 } from "lucide-react";
+import { Check, Copy, ExternalLink, KeyRound, Link2, UserRound, Zap } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api, copyToClipboard } from "@/lib/client";
 import type { CredentialStatus, Platform, Settings } from "@/lib/types";
@@ -160,42 +160,36 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
             <Card key={p}>
               <CardHeader
                 title={<span className="flex items-center gap-2"><PlatformChip platform={p} /> {spec.name}</span>}
-                subtitle={st.connected ? <span className="text-mint-300">Connected as {st.handle || "your account"}</span> : "Not connected"}
+                subtitle={st.connected ? <span className="text-mint-300">Connected as {st.handle || "your account"}{p === "facebook" ? (st.mode === "profile" ? " · your profile" : " · Page") : ""}</span> : "Not connected"}
                 action={<Switch checked={settings.platforms[p]} onChange={(v) => setSettings({ ...settings.platforms, [p]: v })} label={`Use ${spec.name}`} />}
               />
               <div className="grid gap-3 p-5">
                 {st.connected ? (
                   <div className="flex flex-wrap items-center gap-2 rounded-xl bg-mint-400/[0.05] p-3 ring-1 ring-mint-400/20">
-                    <Badge tone="mint">{st.method === "oauth" ? "Linked with " + o.label : "Manual token"}</Badge>
+                    <Badge tone="mint">{st.mode === "profile" ? "Profile · one-tap posting" : st.method === "oauth" ? "Linked with " + o.label : "Manual token"}</Badge>
                     {note && <span className={cn("text-xs", /expired|Reconnect/.test(note) ? "text-gold-300" : "text-white/55")}>{note}</span>}
                     <div className="ml-auto flex gap-2">
                       {st.oauthReady && (
-                        <a href={`/api/connect/${p}`}><Button size="sm">Reconnect</Button></a>
+                        <a href={`/api/connect/${p}`}><Button size="sm">{st.mode === "profile" ? "Connect a Page" : "Reconnect"}</Button></a>
                       )}
                       <Button size="sm" variant="danger" onClick={() => disconnect(p)}>{confirmOff === p ? "Confirm disconnect" : "Disconnect"}</Button>
                     </div>
                   </div>
                 ) : null}
-                {st.connected && st.choices && st.choices.length > 1 && (
-                  <Field label="Post as this Page" hint={`${st.choices.length} Pages available`}>
-                    <Select
-                      value={st.choices.find((c) => c.name === st.handle)?.id ?? st.choices[0].id}
-                      onChange={async (e) => {
-                        try {
-                          await api("/api/facebook-page", { body: { pageId: e.target.value } });
-                          toast("Facebook Page updated", "success");
-                          refresh();
-                        } catch (err) {
-                          toast((err as Error).message, "error");
-                        }
-                      }}
-                    >
-                      {st.choices.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </Select>
-                  </Field>
-                )}
+                {p === "facebook" && st.connected && <FacebookTargets st={st} handoffEmail={settings.handoffEmail} onChanged={refresh} />}
                 <AccountTypeNote platform={p} />
-                {st.connected ? null : st.oauthReady ? (
+                {st.connected ? null : p === "facebook" ? (
+                  <FacebookChoice
+                    oauthReady={st.oauthReady}
+                    isAdmin={isAdmin}
+                    origin={origin}
+                    onSaved={() => {
+                      refresh();
+                      // Adding a profile means "use Facebook": switch it on (the plan's platform limit still applies).
+                      if (!settings.platforms.facebook) setSettings({ ...settings.platforms, facebook: true });
+                    }}
+                  />
+                ) : st.oauthReady ? (
                   <a href={`/api/connect/${p}`} className="block">
                     <Button variant="primary" size="lg" className="w-full"><Link2 className="h-4 w-4" /> Connect with {o.label}</Button>
                   </a>
@@ -410,10 +404,8 @@ function AppKeysLine({ platform, source, preview, origin, onChanged }: { platfor
 function AccountTypeNote({ platform }: { platform: string }) {
   if (platform === "facebook")
     return (
-      <div className="rounded-xl bg-amber-400/[0.06] p-3 text-[13px] leading-relaxed text-amber-100/90 ring-1 ring-amber-300/25">
-        <b className="text-amber-200">Facebook only lets apps post to Pages.</b> Personal profiles — including profiles in professional mode — can't be connected for auto-posting.
-        {" "}No Page yet? <a className="underline hover:text-white" href="https://www.facebook.com/pages/create" target="_blank" rel="noreferrer">Create a free Page</a> with the same name and photo, then connect it here.
-        {" "}You can still use your profile: posts for it are marked <b>Copy-ready</b> so you can paste them in one tap.
+      <div className="rounded-xl bg-blue-500/[0.06] p-3 text-[13px] leading-relaxed text-blue-50/85 ring-1 ring-blue-400/20">
+        <b className="text-white">Pages and profiles both work.</b> A <b className="text-white">Page</b> posts automatically. A <b className="text-white">profile</b> — including a monetized profile in professional mode — can't be posted to by any app (Facebook's rule), so Nexus Pulse gets each post ready at its time, HD video and caption included, and you post it from your phone with one tap.
       </div>
     );
   if (platform === "instagram")
@@ -425,3 +417,137 @@ function AccountTypeNote({ platform }: { platform: string }) {
   return null;
 }
 
+
+
+/** Not connected yet: pick a Page (automatic posting) or your own profile (one-tap posting, no Facebook Login needed). */
+function FacebookChoice({ oauthReady, isAdmin, origin, onSaved }: { oauthReady: boolean; isAdmin: boolean; origin: string; onSaved: () => void }) {
+  const [form, setForm] = useState(false);
+  return (
+    <div className="grid gap-3">
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        <div className="grid content-between gap-3 rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.07]">
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-medium text-white"><Zap className="h-4 w-4 text-mint-300" /> Facebook Page</p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-white/55">Posts automatically at your time slots, and replies to comments.</p>
+          </div>
+          {oauthReady ? (
+            <a href="/api/connect/facebook" className="block">
+              <Button variant="primary" className="w-full"><Link2 className="h-4 w-4" /> Connect a Page</Button>
+            </a>
+          ) : (
+            <p className="text-[12px] text-white/40">{isAdmin ? "Set up Facebook below first." : "The workspace admin switches this on once for everyone."}</p>
+          )}
+        </div>
+        <div className="grid content-between gap-3 rounded-xl bg-gold-400/[0.04] p-3.5 ring-1 ring-gold-400/20">
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-medium text-white"><UserRound className="h-4 w-4 text-gold-300" /> Your profile</p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-white/55">Monetized or not. Each post is ready at its time with the HD video and caption — you post it with one tap.</p>
+          </div>
+          <Button variant="gold" className="w-full" onClick={() => setForm((v) => !v)}>{form ? "Close" : "Use my profile"}</Button>
+        </div>
+      </div>
+      {form && <ProfileForm onSaved={() => { setForm(false); onSaved(); }} />}
+      {!oauthReady && isAdmin && <SetupWizard platform="facebook" origin={origin} onSaved={onSaved} />}
+    </div>
+  );
+}
+
+/** Connected: switch between a Page and your profile, edit the profile, and choose whether to get an email when a post is ready. */
+function FacebookTargets({ st, handoffEmail, onChanged }: { st: CredentialStatus; handoffEmail: boolean; onChanged: () => void }) {
+  const toast = useApp((x) => x.toast);
+  const [form, setForm] = useState(false);
+  const [email, setEmail] = useState(handoffEmail);
+  const pages = st.choices ?? [];
+  const options = [
+    ...pages.map((c) => ({ value: c.id, label: `${c.name} — Page, posts automatically` })),
+    ...(st.profileName ? [{ value: "__profile", label: `${st.profileName} — your profile, one-tap posting` }] : []),
+  ];
+  const value = st.mode === "profile" ? "__profile" : pages.find((c) => c.name === st.handle)?.id ?? pages[0]?.id ?? "";
+
+  async function choose(v: string) {
+    try {
+      await api("/api/facebook-page", { body: v === "__profile" ? { target: "profile" } : { pageId: v } });
+      toast(v === "__profile" ? "Facebook posts will be ready for you to post on your profile" : "Facebook now posts to your Page automatically", "success");
+      onChanged();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  }
+  async function setNotify(v: boolean) {
+    setEmail(v);
+    try {
+      await api("/api/settings", { method: "PUT", body: { handoffEmail: v } });
+      toast(v ? "You'll get an email when a post is ready" : "Ready-post emails off", "success");
+      onChanged();
+    } catch (e) {
+      setEmail(!v);
+      toast((e as Error).message, "error");
+    }
+  }
+
+  return (
+    <div className="grid gap-3">
+      {options.length > 1 && (
+        <Field label="Post to" hint={`${pages.length} Page${pages.length === 1 ? "" : "s"}${st.profileName ? " + your profile" : ""}`}>
+          <Select value={value} onChange={(e) => choose(e.target.value)}>
+            {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </Select>
+        </Field>
+      )}
+      {st.mode === "profile" && (
+        <div className="grid gap-2.5 rounded-xl bg-gold-400/[0.04] p-3 ring-1 ring-gold-400/20">
+          <p className="text-[13px] leading-relaxed text-white/70">
+            At each post's time it's marked <b className="text-white">Ready for you</b> on your dashboard. Open it on your phone, tap <b className="text-white">Share to Facebook</b>, paste the caption (already copied), done.
+          </p>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[13px] text-white/80">Email me when a post is ready</span>
+            <Switch checked={email} onChange={setNotify} label="Email me when a Facebook post is ready" />
+          </div>
+        </div>
+      )}
+      {form ? (
+        <ProfileForm initialName={st.profileName ?? ""} onSaved={() => { setForm(false); onChanged(); }} onCancel={() => setForm(false)} />
+      ) : (
+        <button className="focus-ring w-fit text-left text-xs text-white/50 hover:text-white" onClick={() => setForm(true)}>
+          {st.mode === "profile" ? "Edit profile name or link" : st.profileName ? "Edit your profile details" : "Post on my profile instead"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ProfileForm({ initialName = "", onSaved, onCancel }: { initialName?: string; onSaved: () => void; onCancel?: () => void }) {
+  const toast = useApp((x) => x.toast);
+  const [name, setName] = useState(initialName);
+  const [url, setUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  async function save() {
+    setSaving(true);
+    try {
+      await api("/api/facebook-profile", { body: { name, url } });
+      toast("Profile added. Facebook posts will be ready for you to post with one tap.", "success");
+      onSaved();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+  return (
+    <div className="grid gap-3 rounded-xl bg-ink-900/80 p-3.5 ring-1 ring-white/[0.08]">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Name on your profile">
+          <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoComplete="name" placeholder="Your name as it shows on Facebook" />
+        </Field>
+        <Field label="Profile link (optional)" hint="Profile → … → Copy link">
+          <Input value={url} onChange={(e) => setUrl(e.target.value)} inputMode="url" autoComplete="off" spellCheck={false} placeholder="facebook.com/yourname" />
+        </Field>
+      </div>
+      <p className="text-[12px] leading-relaxed text-white/45">No Facebook password or login needed. Nothing is posted without you: you make the final tap on every post.</p>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="primary" loading={saving} disabled={!name.trim()} onClick={save}><UserRound className="h-4 w-4" /> Save profile</Button>
+        {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
+      </div>
+    </div>
+  );
+}

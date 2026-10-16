@@ -15,6 +15,10 @@ import { currentUserId } from "./db";
 import { firstImageUrl, readFile, remoteVideoMedia, signedUrl, trustedVideoUrl } from "./media";
 import { db } from "./db";
 import type { MediaItem } from "./types";
+import { isProfileCred } from "./facebook-profile";
+import { inQuietHours } from "./time";
+import { notifyHandoffs } from "./handoff";
+import type { User } from "./auth";
 
 /** The newest video attached to a post (rendered first), loaded for upload. */
 async function videoFor(userId: string, post: Post): Promise<VideoFile | null> {
@@ -39,6 +43,25 @@ const STALE_MS = 12 * 3600_000;
 const MAX_PER_RUN = 6;
 
 export type PublishOutcome = "published" | "copy_ready" | "waiting" | "failed" | "retry";
+type PublishResultInfo = { outcome: PublishOutcome; message: string; handoff?: boolean };
+
+/**
+ * Facebook profiles (including monetized profiles in professional mode): Facebook doesn't let apps post to them,
+ * so at the post's time it's prepared and handed to the person, who shares it from their phone with one tap.
+ * Counts toward the plan's monthly posts once, like a published post.
+ */
+async function handOffToProfile(post: Post, userId: string | null, manual: boolean): Promise<PublishResultInfo> {
+  const first = !post.handoff;
+  const now = nowIso();
+  post.status = "copy_ready";
+  post.error = undefined;
+  // Pressing "Post now" in the app needs no email: the person is already here.
+  post.handoff = { to: "facebook_profile", readyAt: now, notifiedAt: manual ? now : undefined };
+  await savePost(post);
+  if (first && userId) await usePostAllowance(userId, true);
+  await log("info", "post", `Ready for your Facebook profile — “${post.hook.slice(0, 80)}”. Open it and tap Share to Facebook.`, { platform: post.platform, postId: post.id });
+  return { outcome: "copy_ready", message: "Ready for your Facebook profile. Open it and tap Share to Facebook.", handoff: true };
+}
 
 async function setWaiting(post: Post, reason: string) {
   if (post.error !== reason) {
@@ -48,7 +71,7 @@ async function setWaiting(post: Post, reason: string) {
   }
 }
 
-export async function publishOne(post: Post, settings: Settings, manual = false): Promise<{ outcome: PublishOutcome; message: string }> {
+export async function publishOne(post: Post, settings: Settings, manual = false): Promise<PublishResultInfo> {
   const adapter = ADAPTERS[post.platform];
   const userId = currentUserId();
 
@@ -109,6 +132,15 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
 
   const can = adapter.publishable(post);
   const cred = can === true ? await freshCredential(post.platform) : null;
+  if (post.platform === "facebook" && cred && isProfileCred(cred)) {
+    // Don't ask the person to post in the middle of the night: wait for quiet hours to end (Post now still works).
+    const q = settings.quietHours;
+    if (!manual && q.enabled && inQuietHours(new Date(), settings.timezone, q.start, q.end)) {
+      await setWaiting(post, "Quiet hours — it will be ready for you when they end.");
+      return { outcome: "waiting", message: post.error ?? "" };
+    }
+    return handOffToProfile(post, userId, manual);
+  }
   if (can !== true || !cred) {
     post.status = "copy_ready";
     post.error = can !== true ? can : "No account connected — copy and post manually, or connect it in Settings.";
@@ -177,8 +209,8 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
   }
 }
 
-/** Cron entry: publish everything that's due. */
-export async function runPublish() {
+/** Cron entry: publish everything that's due. `user` (when given) gets one email for posts handed to their Facebook profile. */
+export async function runPublish(user?: User) {
   const settings = await getSettings();
   if (settings.killSwitch) return { ran: false, reason: "Kill switch on" };
   if (!settings.autopilot) return { ran: false, reason: "Autopilot off" };
@@ -188,6 +220,7 @@ export async function runPublish() {
   posts.sort((a, b) => a.scheduledAt!.localeCompare(b.scheduledAt!));
 
   const results: Record<string, string> = {};
+  const handedOff: Post[] = [];
   let processed = 0;
   for (const post of posts) {
     if (!settings.platforms[post.platform]) continue;
@@ -202,7 +235,9 @@ export async function runPublish() {
     if (processed >= MAX_PER_RUN) break;
     const r = await publishOne(post, settings);
     results[post.id] = r.outcome;
+    if (r.handoff) handedOff.push(post);
     processed++;
   }
+  if (user && handedOff.length && settings.handoffEmail) await notifyHandoffs(user, handedOff);
   return { ran: true, due: posts.length, results };
 }

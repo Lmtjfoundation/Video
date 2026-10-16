@@ -21,7 +21,7 @@ export default function Dashboard() {
     );
   }
 
-  const { settings, stats, env, upcoming, logs, credentials, me, llmHealth } = status;
+  const { settings, stats, env, upcoming, logs, credentials, me, llmHealth, readyForYou = [], readyForYouCount = 0 } = status;
   const isAdmin = me.user.role === "admin";
   const aiDown = isAdmin && llmHealth && !llmHealth.ok ? llmHealth : null;
   const connected = credentials.filter((c) => c.connected).length;
@@ -55,6 +55,35 @@ export default function Dashboard() {
           </>
         }
       />
+
+      {readyForYouCount > 0 && (
+        <Card className="mb-6 overflow-hidden border-gold-400/25 p-0">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold-400/[0.08] via-transparent to-blue-500/[0.07]" />
+          <div className="relative grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <PlatformChip platform="facebook" />
+                <p className="text-sm font-semibold text-white">
+                  {readyForYouCount === 1 ? "1 post is ready for your Facebook profile" : `${readyForYouCount} posts are ready for your Facebook profile`}
+                </p>
+              </div>
+              <ul className="mt-2 grid min-w-0 gap-1">
+                {readyForYou.slice(0, 3).map((r) => (
+                  <li key={r.id} className="min-w-0">
+                    <Link href={`/post/${r.id}`} className="flex min-w-0 items-center gap-2 text-[13px] text-white/65 hover:text-white">
+                      <span className="shrink-0 text-xs">{r.kind === "video" ? "🎬" : r.kind === "media" ? "📎" : "📝"}</span>
+                      <span className="min-w-0 truncate">{r.hook}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Link href={`/post/${readyForYou[0]?.id}`}>
+              <Button variant="gold" size="lg" className="w-full sm:w-auto">Post now <ArrowRight className="h-4 w-4" /></Button>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       {/* Control panel */}
       <Card className={cn("mb-6 overflow-hidden", settings.killSwitch && "border-red-400/30")}>

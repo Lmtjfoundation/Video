@@ -29,6 +29,11 @@ export const GET = authed(async (_req, user) => {
     .sort((a, b) => a.scheduledAt!.localeCompare(b.scheduledAt!));
   const weekPosts = upcoming.filter((p) => new Date(p.scheduledAt!).getTime() < weekAhead);
 
+  // Posts handed to the person's Facebook profile, oldest first, so they can post them in order.
+  const readyForYou = posts
+    .filter((p) => p.status === "copy_ready" && p.handoff && !p.handoff.postedAt)
+    .sort((a, b) => a.handoff!.readyAt.localeCompare(b.handoff!.readyAt))
+    .map((p) => ({ id: p.id, hook: p.hook, kind: p.kind === "video" || p.videoUrl ? "video" : p.mediaIds?.length ? "media" : "text", readyAt: p.handoff!.readyAt }));
   const plan = planById(user.plan);
   const [llm, stripe, llmHealth, ownAi] = await Promise.all([llmConfigured(), stripeReady(), user.role === "admin" ? getLlmHealth() : Promise.resolve(null), ownAiStatus()]);
   return ok({
@@ -74,6 +79,8 @@ export const GET = authed(async (_req, user) => {
       avgMoneyScore: weekPosts.length ? Math.round(weekPosts.reduce((s, p) => s + p.moneyScore, 0) / weekPosts.length) : 0,
     },
     upcoming: upcoming.slice(0, 6),
+    readyForYou: readyForYou.slice(0, 5),
+    readyForYouCount: readyForYou.length,
     logs,
   });
 });

@@ -40,6 +40,9 @@ export interface StatusPayload {
     avgMoneyScore: number;
   };
   upcoming: Post[];
+  /** Posts ready for the person to post on their Facebook profile (Facebook doesn't let apps post to profiles). */
+  readyForYou?: { id: string; hook: string; kind: string; readyAt: string }[];
+  readyForYouCount?: number;
   logs: LogEntry[];
 }
 

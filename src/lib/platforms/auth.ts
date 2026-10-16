@@ -3,6 +3,7 @@ import { getCredential, log, patchCredential } from "../repo";
 import type { Credential, Platform } from "../types";
 import { request } from "./http";
 import { getAppKeys } from "../app-keys";
+import { isProfileCred } from "../facebook-profile";
 
 const msLeft = (c: Credential) => (c.expiresAt ? new Date(c.expiresAt).getTime() - Date.now() : Infinity);
 const expiringSoon = (c: Credential) => msLeft(c) < 5 * 60_000;
@@ -13,6 +14,8 @@ const expiringSoon = (c: Credential) => msLeft(c) < 5 * 60_000;
  */
 export async function freshCredential(platform: Platform): Promise<Credential | null> {
   const cred = await getCredential(platform);
+  // A Facebook profile connection holds no token on purpose (posts are handed to the person); it's still "connected".
+  if (platform === "facebook" && isProfileCred(cred)) return cred;
   if (!cred?.accessToken) return null;
   try {
     // Instagram long-lived tokens (60 days) are refreshed with the token itself — no refresh token.

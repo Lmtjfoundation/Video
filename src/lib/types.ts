@@ -64,6 +64,11 @@ export interface Post {
   sources?: { name: string; url: string }[];
   /** Admin's note when a post is rejected or edited in review */
   reviewNote?: string;
+  /**
+   * Set when a post is meant for the person's own Facebook profile. Facebook doesn't let apps post to profiles,
+   * so at its time the post is prepared (HD video + caption) and handed to the person to post with one tap.
+   */
+  handoff?: { to: "facebook_profile"; readyAt: string; notifiedAt?: string; postedAt?: string };
   /** "video" posts carry a full production plan in `video` */
   kind?: "text" | "video";
   video?: VideoPlan;
@@ -189,6 +194,8 @@ export interface Settings {
   /** Content genres this account focuses on (src/lib/genres.ts). */
   genres: string[];
   trendAutopilot: TrendAutopilotSettings;
+  /** Email me when a post for my Facebook profile is ready to post. */
+  handoffEmail: boolean;
 }
 
 /** Trend Autopilot: writes posts (and optionally videos) from live news in the chosen genres into open slots. */
@@ -287,8 +294,12 @@ export interface CredentialStatus {
   keySource?: "env" | "app";
   /** Masked app ID, e.g. "1234…5678" */
   keyPreview?: string;
-  /** Facebook: the Pages this login can post to (names only), when there's more than one. */
+  /** Facebook: the Pages this login can post to (names only). */
   choices?: { id: string; name: string }[];
+  /** Facebook: "page" posts automatically; "profile" means the person's own profile, posted with one tap. */
+  mode?: "page" | "profile";
+  /** Facebook: the person's profile name, when known, so they can switch between a Page and their profile. */
+  profileName?: string;
 }
 
 /** Decrypted platform credential (server only). */
@@ -299,8 +310,14 @@ export interface Credential {
   /** X user id, LinkedIn author URN, IG user id, YouTube channel id */
   accountId?: string;
   handle?: string;
-  /** "oauth" | "manual" */
+  /** "oauth" | "manual" | "profile" */
   method?: string;
+  /** Facebook: "page" (automatic posting) or "profile" (the person's own profile, posted with one tap). */
+  mode?: string;
+  /** Facebook: the person's own profile. The id is app-scoped (from Facebook Login); the link is optional. */
+  profileId?: string;
+  profileName?: string;
+  profileUrl?: string;
   scopes?: string;
   refreshExpiresAt?: string;
   connectedAt?: string;

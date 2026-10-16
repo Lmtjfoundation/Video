@@ -3,6 +3,7 @@ import type { Credential, Platform, Post } from "../types";
 import { AuthError, CopyReadyError, request } from "./http";
 import { sleep } from "../utils";
 import { postWebhook } from "./webhook-send";
+import { isProfileCred } from "../facebook-profile";
 
 export interface PublishResult {
   externalId: string;
@@ -143,10 +144,14 @@ const x: Adapter = {
 /* ───────────────────────────── Facebook Pages (Graph API) ───────────────────────────── */
 const fbGraph = () => `https://graph.facebook.com/${process.env.FACEBOOK_GRAPH_VERSION || "v25.0"}`;
 
+const PROFILE_NO_API = "Facebook doesn't let apps read or reply to comments on personal profiles. Reply in the Facebook app.";
+
 const facebook: Adapter = {
   platform: "facebook",
   publishable: () => true,
   async publish(_post, texts, cred, video) {
+    // The publisher hands profile posts to the person before reaching here; this guards any other caller.
+    if (isProfileCred(cred)) throw new CopyReadyError("Ready for your Facebook profile — open it and tap Share to Facebook.");
     const pageId = need(cred, "accountId", "Facebook Page ID is missing — connect Facebook again.");
     if (video) {
       // Graph API video upload by URL: Facebook fetches the file from the signed link.
@@ -169,6 +174,7 @@ const facebook: Adapter = {
   },
   engageable: true,
   async fetchComments(cred, postIds) {
+    if (isProfileCred(cred)) throw new CopyReadyError(PROFILE_NO_API);
     const out: RawComment[] = [];
     for (const id of postIds) {
       const { data } = await request<{ data?: { id: string; message?: string; created_time: string; from?: { id: string; name: string } }[] }>(
@@ -183,6 +189,7 @@ const facebook: Adapter = {
     return out;
   },
   async reply(cred, target, text) {
+    if (isProfileCred(cred)) throw new CopyReadyError(PROFILE_NO_API);
     const { data } = await request<{ id: string }>(`${fbGraph()}/${target.commentExternalId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

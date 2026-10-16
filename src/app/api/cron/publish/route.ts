@@ -8,5 +8,5 @@ export const maxDuration = 300;
 /** Publishes every due post, for every active account. */
 export const GET = handle(async (req: Request) => {
   if (!cronAuthorized(req)) return fail("Unauthorized", 401);
-  return ok(await forEachActiveUser(() => runPublish()));
+  return ok(await forEachActiveUser((u) => runPublish(u)));
 });

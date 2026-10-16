@@ -32,17 +32,17 @@ export const PLATFORM_SPECS: Record<Platform, PlatformSpec> = {
       "Standard accounts: 280 characters per post. Threads: 4–8 parts, each under 270 characters, first part is the hook, last part is a takeaway. Hashtags rarely help on X; use 0–1. Line breaks for rhythm.",
   },
   facebook: {
-    name: "Facebook Page",
+    name: "Facebook",
     short: "f",
     chip: "bg-blue-500/15 text-blue-300 ring-blue-400/30",
     maxChars: 63206,
     maxHashtags: 3,
     recommendedHashtags: "0–2",
     formats: ["short", "caption", "video_script"],
-    publish: "Automatic text posts to a Facebook Page you manage (Graph API). Personal profiles can't be posted to by apps.",
-    engage: "Automatic comment monitoring and replies as your Page.",
+    publish: "Pages: automatic text and video posts (Graph API). Profiles, including monetized profiles in professional mode: each post is ready at its time with the HD video and caption, and you post it with one tap — Facebook doesn't let any app post to profiles.",
+    engage: "Pages: automatic comment monitoring and replies. Profiles: reply in the Facebook app (no API access to profile comments).",
     writingRules:
-      "Facebook Page post: 80–250 words performs well; the first 1–2 lines show before 'See more', so the hook must land there. Conversational, story-led, short paragraphs. Ask one specific question to drive comments. 0–2 hashtags. Reels: video_script with beats in parts.",
+      "Facebook post (Page or personal profile): 80–250 words performs well; the first 1–2 lines show before 'See more', so the hook must land there. Conversational, story-led, short paragraphs. Ask one specific question to drive comments. 0–2 hashtags. Reels: video_script with beats in parts.",
   },
   linkedin: {
     name: "LinkedIn",

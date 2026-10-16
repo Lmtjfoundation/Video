@@ -95,6 +95,9 @@ interface CredRow {
   handle?: string;
   expiresAt?: string;
   method?: string;
+  /** Facebook: "page" or "profile" (non-secret, shown in the UI). */
+  mode?: string;
+  profileName?: string;
 }
 
 export async function getCredential(platform: Platform): Promise<Credential | null> {
@@ -122,6 +125,8 @@ export async function saveCredential(platform: Platform, cred: Credential) {
     handle: clean.handle,
     expiresAt: clean.expiresAt,
     method: clean.method ?? "manual",
+    mode: clean.mode,
+    profileName: clean.profileName,
   };
   await db().upsert("credentials", row as CredRow);
 }
@@ -143,9 +148,11 @@ export async function credentialStatuses(): Promise<CredentialStatus[]> {
   const keys = Object.fromEntries(await Promise.all(PLATFORMS.map(async (p) => [p, await appKeyStatus(p)] as const)));
   return PLATFORMS.map((p) => {
     const r = rows.find((x) => x.id === p);
+    // A Facebook profile connection has no token: Facebook doesn't let apps post to profiles, so those posts are handed to the person.
+    const profile = p === "facebook" && r?.mode === "profile";
     return {
       platform: p,
-      connected: !!r && r.fields.includes("accessToken"),
+      connected: !!r && (r.fields.includes("accessToken") || profile),
       fields: r?.fields ?? [],
       updatedAt: r?.updatedAt,
       handle: r?.handle,
@@ -154,7 +161,9 @@ export async function credentialStatuses(): Promise<CredentialStatus[]> {
       oauthReady: keys[p].configured,
       keySource: keys[p].configured ? keys[p].source : undefined,
       keyPreview: keys[p].configured ? keys[p].idPreview : undefined,
-      choices: p === "facebook" && fbPages.length > 1 ? fbPages.map(({ id, name }) => ({ id, name })) : undefined,
+      choices: p === "facebook" && fbPages.length ? fbPages.map(({ id, name }) => ({ id, name })) : undefined,
+      mode: p === "facebook" && r ? (profile ? "profile" : "page") : undefined,
+      profileName: p === "facebook" ? r?.profileName : undefined,
     };
   });
 }

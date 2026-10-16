@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { CalendarClock, Check, ChevronDown, CircleDollarSign, Clapperboard, Copy, ExternalLink, Pencil, Repeat2, Send, ShieldAlert, Trash2, Undo2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { CalendarClock, Check, ChevronDown, CircleDollarSign, Clapperboard, Copy, ExternalLink, Pencil, Repeat2, Send, Share, ShieldAlert, Trash2, Undo2 } from "lucide-react";
 import { describeFlag } from "@/lib/compliance";
 import { RepurposeDialog } from "./repurpose-dialog";
 import type { Post, Settings } from "@/lib/types";
@@ -26,6 +28,7 @@ export function PostCard({
   compact?: boolean;
 }) {
   const toast = useApp((s) => s.toast);
+  const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [open, setOpen] = useState(!compact);
   const [editing, setEditing] = useState(false);
@@ -70,7 +73,7 @@ export function PostCard({
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             <PlatformChip platform={post.platform} />
-            <StatusBadge status={post.status} />
+            {post.status === "copy_ready" && post.handoff ? <Badge tone="gold">Ready for you</Badge> : <StatusBadge status={post.status} />}
             <Badge>{post.kind === "video" ? NICHES.find((n) => n.id === post.video?.niche)?.name ?? "Video" : PILLAR_LABEL[post.pillar]}</Badge>
             <Badge tone="violet">{post.kind === "video" ? "🎬 Video" : FORMAT_LABEL[post.format]}</Badge>
             {offer && <Badge tone="gold"><CircleDollarSign className="h-3 w-3" />{offer.name}</Badge>}
@@ -229,7 +232,13 @@ export function PostCard({
                     <Undo2 className="h-3.5 w-3.5" /> Unschedule
                   </Button>
                 )}
-                {post.status === "copy_ready" ? (
+                {post.status === "copy_ready" && post.handoff ? (
+                  <Link href={`/post/${post.id}`}>
+                    <Button size="sm" variant="primary">
+                      <Share className="h-3.5 w-3.5" /> Post to my profile
+                    </Button>
+                  </Link>
+                ) : post.status === "copy_ready" ? (
                   <Button size="sm" variant="primary" onClick={() => patch({ status: "published" }, "Marked as posted")}>
                     <Check className="h-3.5 w-3.5" /> I posted it
                   </Button>
@@ -240,8 +249,10 @@ export function PostCard({
                     disabled={blocked.length > 0}
                     onClick={() =>
                       run("publish", async () => {
-                        const r = await api<{ outcome: string; message: string; post: Post }>("/api/posts/publish", { body: { id: post.id } });
+                        const r = await api<{ outcome: string; message: string; post: Post; handoff?: boolean }>("/api/posts/publish", { body: { id: post.id } });
                         if (r.post) onChange(r.post);
+                        // Facebook profile: open the one-tap posting screen straight away.
+                        if (r.handoff) return router.push(`/post/${post.id}`);
                         toast(r.outcome === "published" ? "Published" : r.message, r.outcome === "published" ? "success" : "info");
                       })
                     }

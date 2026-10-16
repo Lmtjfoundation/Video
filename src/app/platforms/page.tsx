@@ -28,8 +28,9 @@ export default function PlatformsPage() {
     const q = new URLSearchParams(window.location.search);
     const connected = q.get("connected");
     const error = q.get("error");
-    if (connected && connected in PLATFORM_SPECS) toast(`${PLATFORM_SPECS[connected as Platform].name} account linked`, "success");
-    if (q.get("pick") === "facebook") toast("You manage several Facebook Pages. Choose which one to post as on the Facebook card.", "info");
+    if (connected === "facebook" && q.get("mode") === "profile") toast("Facebook profile linked. Posts will be ready at their time for you to post with one tap.", "success");
+    else if (connected && connected in PLATFORM_SPECS) toast(`${PLATFORM_SPECS[connected as Platform].name} account linked`, "success");
+    if (q.get("pick") === "facebook") toast("Facebook will post to your Page automatically. To use another Page or your own profile, choose it on the Facebook card.", "info");
     if (error) toast(error, "error");
     if (connected || error || q.get("pick")) {
       window.history.replaceState(null, "", "/platforms");
