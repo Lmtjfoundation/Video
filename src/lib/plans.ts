@@ -30,7 +30,22 @@ export interface Plan {
   };
   highlights: string[];
   popular?: boolean;
+  /**
+   * Free trial on the monthly plan: `days` free (card on file, nothing charged), then the first paid month at
+   * `firstMonth` dollars, then the normal `monthly` price. Yearly purchases get the free days but no intro month.
+   */
+  trial?: { days: number; firstMonth: number };
 }
+
+/** Length of the free trial on plans that have one. */
+export const TRIAL_DAYS = 14;
+/**
+ * During a free trial, AI writing doesn't use credits up to this many credits' worth a day (about 25–40 pieces).
+ * Past it, the plan's normal credits are used, so a heavy user can't run up the AI bill.
+ */
+export const TRIAL_DAILY_FREE_CREDITS = 40;
+/** What the intro month saves (dollars, monthly billing). 0 when the plan has no trial. */
+export const introDiscount = (p: Plan) => (p.trial ? Math.max(0, p.monthly - p.trial.firstMonth) : 0);
 
 export const PLANS: Plan[] = [
   {
@@ -73,6 +88,7 @@ export const PLANS: Plan[] = [
     maxPlatforms: 7,
     storageMb: 10_000,
     popular: true,
+    trial: { days: TRIAL_DAYS, firstMonth: 10 },
     features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true },
     highlights: ["1,200 AI credits a month", "1,500 posts a month, up to 6 a day", "All 6 platforms + any app via webhook", "Automatic comment replies", "8–10 minute scripts on our strongest model", "10 GB uploads"],
   },
@@ -87,6 +103,7 @@ export const PLANS: Plan[] = [
     maxPostsPerDay: null,
     maxPlatforms: 7,
     storageMb: 50_000,
+    trial: { days: TRIAL_DAYS, firstMonth: 20 },
     features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true },
     highlights: ["Unlimited posts — you choose posts per day", "3,500 AI credits a month", "All 6 platforms + any app via webhook", "Everything in Pro", "Strongest model for long scripts", "50 GB uploads"],
   },

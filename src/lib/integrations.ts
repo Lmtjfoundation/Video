@@ -29,6 +29,8 @@ export interface Integrations {
   stripePrices?: Record<string, string>;
   /** planId → Stripe product id */
   stripeProducts?: Record<string, string>;
+  /** planId → Stripe coupon id for the trial plans' discounted first paid month (created by "Connect Stripe"). */
+  stripeCoupons?: Record<string, string>;
   /** Resend (https://resend.com) API key for password-reset emails. Railway blocks SMTP on Hobby, so email goes over HTTPS. */
   resendKey?: string;
   /** Sender, e.g. "Nexus Pulse <support@yourdomain.com>" (the domain must be verified in Resend). */
@@ -111,6 +113,11 @@ export const emailFrom = () => pick("emailFrom", "EMAIL_FROM");
 export async function stripePriceId(plan: string, interval: "month" | "year") {
   const env = process.env[`STRIPE_PRICE_${plan.toUpperCase()}_${interval === "year" ? "ANNUAL" : "MONTHLY"}`];
   return (await getIntegrations()).stripePrices?.[`${plan}_${interval}`] || env || "";
+}
+
+/** Coupon that makes the first paid month after a trial cost the plan's intro price. Env: STRIPE_COUPON_<PLAN>_INTRO. */
+export async function stripeIntroCoupon(plan: string) {
+  return (await getIntegrations()).stripeCoupons?.[plan] || process.env[`STRIPE_COUPON_${plan.toUpperCase()}_INTRO`] || "";
 }
 
 const mask = (v: string) => (v.length > 12 ? `${v.slice(0, 7)}…${v.slice(-4)}` : "••••");

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Badge, Button, Card, CardHeader } from "./ui";
 
 export interface PlansPayload {
-  plans: (Plan & { checkout: { month: boolean; year: boolean } })[];
+  plans: (Plan & { checkout: { month: boolean; year: boolean }; introReady?: boolean })[];
   credits: { action: string; credits: number; label: string }[];
   payments: boolean;
 }
@@ -30,11 +30,14 @@ export function PricingTable({
   currentPlan,
   signedIn,
   hasSubscription,
+  trialEligible = true,
   initial,
 }: {
   currentPlan?: string;
   signedIn: boolean;
   hasSubscription?: boolean;
+  /** Whether this account can still start a free trial (visitors who aren't signed in can). */
+  trialEligible?: boolean;
   /** Server-rendered plans (public pricing page), so plans show without waiting for JavaScript. */
   initial?: PlansPayload;
 }) {
@@ -69,6 +72,8 @@ export function PricingTable({
   }
 
   if (!data) return <div className="glass h-96 animate-pulse" />;
+  /** Show the trial on plans that have one, to visitors and to accounts that haven't used a trial or subscribed. */
+  const offersTrial = (p: PlansPayload["plans"][number]) => !!p.trial && trialEligible && !hasSubscription && currentPlan !== p.id;
 
   return (
     <div className="grid gap-6">
@@ -98,6 +103,19 @@ export function PricingTable({
                 <span className="text-4xl font-semibold tabular-nums text-white">${price}</span>
                 <span className="text-sm text-white/45">/ month{cycle === "year" && p.monthly ? ", billed yearly" : ""}</span>
               </div>
+              {offersTrial(p) && (
+                <div className="-mt-2 grid gap-1 rounded-xl bg-mint-400/[0.07] p-3 text-[13px] ring-1 ring-mint-400/20">
+                  <span className="font-semibold text-mint-200">{p.trial!.days} days free</span>
+                  <span className="text-white/65">
+                    {cycle === "month" && p.introReady
+                      ? <>Then <span className="font-medium text-white">${p.trial!.firstMonth}</span> for your first month, then ${p.monthly}/month.</>
+                      : cycle === "month"
+                        ? <>Then ${p.monthly}/month.</>
+                        : <>Then ${p.annual * 12} for the year.</>}
+                  </span>
+                  <span className="text-[11.5px] text-white/45">Free AI writing every day of the trial. Card required; cancel before day {p.trial!.days} and you pay nothing.</span>
+                </div>
+              )}
               <ul className="grid flex-1 gap-2 text-sm text-white/75">
                 {p.highlights.map((h) => (
                   <li key={h} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-mint-300" /> {h}</li>
@@ -113,7 +131,7 @@ export function PricingTable({
                 <Button disabled title="The admin hasn't connected payments yet">Coming soon</Button>
               ) : (
                 <Button variant={p.popular ? "primary" : "secondary"} loading={busy === p.id} onClick={() => choose(p.id)}>
-                  {signedIn ? (hasSubscription ? "Change plan" : `Choose ${p.name}`) : `Start with ${p.name}`}
+                  {offersTrial(p) ? `Start ${p.trial!.days}-day free trial` : signedIn ? (hasSubscription ? "Change plan" : `Choose ${p.name}`) : `Start with ${p.name}`}
                 </Button>
               )}
             </div>

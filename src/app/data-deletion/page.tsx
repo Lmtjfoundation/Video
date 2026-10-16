@@ -29,7 +29,7 @@ export default async function DataDeletionPage() {
 
       <h2>Disconnect a single platform</h2>
       <p>
-        In <strong>Settings → Accounts</strong>, press Disconnect next to the platform. Nexus Pulse deletes the stored access token straight away and stops posting there.
+        On the <strong>Platforms</strong> tab, press Disconnect next to the platform. Nexus Pulse deletes the stored access token straight away and stops posting there.
       </p>
 
       <h2>Remove access on the platform side</h2>

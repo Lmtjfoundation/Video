@@ -85,4 +85,4 @@ WHAT TO KNOW
 
 ## Screenshots
 
-Use real screens from the running app (Studio, Story Studio, Calendar, Settings → Accounts, Niche Lab). Do not use mock data that implies results. Sizes change; check App Store Connect and Play Console for the current required sizes before capturing.
+Use real screens from the running app (Studio, Story Studio, Calendar, the Platforms tab, Niche Lab). Do not use mock data that implies results. Sizes change; check App Store Connect and Play Console for the current required sizes before capturing.

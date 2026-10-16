@@ -6,7 +6,9 @@ import { getLlmHealth } from "@/lib/llm-health";
 import { storageMode } from "@/lib/db";
 import { localParts } from "@/lib/time";
 import { kvGet } from "@/lib/repo";
-import { publicUser } from "@/lib/auth";
+import { publicUser, trialActive, trialEligible, trialFreeLeft } from "@/lib/auth";
+import { ownAiStatus } from "@/lib/ai-provider";
+import { TRIAL_DAILY_FREE_CREDITS } from "@/lib/plans";
 import { planById } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
@@ -28,13 +30,21 @@ export const GET = authed(async (_req, user) => {
   const weekPosts = upcoming.filter((p) => new Date(p.scheduledAt!).getTime() < weekAhead);
 
   const plan = planById(user.plan);
-  const [llm, stripe, llmHealth] = await Promise.all([llmConfigured(), stripeReady(), user.role === "admin" ? getLlmHealth() : Promise.resolve(null)]);
+  const [llm, stripe, llmHealth, ownAi] = await Promise.all([llmConfigured(), stripeReady(), user.role === "admin" ? getLlmHealth() : Promise.resolve(null), ownAiStatus()]);
   return ok({
     me: {
       user: publicUser(user),
       plan,
       creditsLeft: Math.max(0, plan.credits - user.usage.credits),
       postsLeft: plan.postsPerMonth === null ? null : Math.max(0, plan.postsPerMonth - user.usage.posts),
+      trial: {
+        active: trialActive(user),
+        endsAt: user.billing?.trialEnd ?? null,
+        eligible: trialEligible(user),
+        freeLeftToday: trialFreeLeft(user),
+        freePerDay: TRIAL_DAILY_FREE_CREDITS,
+      },
+      ownAi,
     },
     settings,
     env: {

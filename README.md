@@ -11,7 +11,9 @@ Built with Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn-style compo
 | Area | Features |
 |---|---|
 | **Accounts & admin** | Email + password sign-in with secure sessions. The first account is the admin. Every user's data is separated. Admin console: users, plans, suspend, reset passwords, require approval before a user's posts publish, a review queue to edit/approve/send back any post, revenue and AI-cost overview, sign-up and approval settings. Self-serve account deletion. |
-| **Plans & billing** | Free · Creator $12 · Pro $29 · Unlimited $59 (yearly ≈17% off). Unlimited has no post cap and the user sets posts per day. Credits meter AI writing; post counts, platforms, storage and features are enforced per plan. Stripe Checkout, customer portal and webhooks. |
+| **Plans & billing** | Free · Creator $12 · Pro $29 · Unlimited $59 (yearly ≈17% off). **14-day free trial on Pro and Unlimited** (card at checkout, one per account): then a $10 (Pro) or $20 (Unlimited) first month, then the regular price. During the trial, AI writing uses no credits up to a daily allowance (40 credits' worth a day), then the plan's credits. Unlimited has no post cap and the user sets posts per day. Credits meter AI writing; post counts, platforms, storage and features are enforced per plan. Stripe Checkout, customer portal and webhooks. |
+| **Platforms tab** | One page to link every social account (X, Facebook, LinkedIn, Instagram, YouTube, TikTok, webhook), see what's linked and posting, and switch each one on or off (saves instantly, within the plan's platform limit). |
+| **Bring your own AI** | Subscribers don't need a Claude account: the app's built-in Claude is included. In Settings → AI they can instead plug in their own key for Claude, ChatGPT (OpenAI), Google Gemini or OpenRouter (hundreds of models) and pick the model. Keys are stored encrypted per user; everything they generate then runs on their key and uses no credits. |
 | **Niche Lab** | Revenue-per-view table for 13 niches from a study of 300 channels' own YouTube Studio data, a revenue calculator, and a Claude research report ranking sub-niches for you with story ideas, a money stack, risks and a 30-day plan. |
 | **Story Studio** | Faceless scripts for Shorts, TikTok (>1 min) or 8–10 minute videos: hook, timed scenes, on-screen text, visuals to source, title options, thumbnail text, description and a fact-check list. Upload your notes/transcripts and reference images. Save as a draft post or repurpose to every platform. |
 | **Uploads** | Media library for images and videos (drag and drop), attachable to posts; Instagram uses the attached image through a signed, expiring link. Bulk CSV import of posts. |
@@ -34,7 +36,7 @@ Built with Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn-style compo
 | **Instagram** | ✅ Image posts | ✅ | Requires a Business or Creator account linked to the Graph API. Each post needs a **public https image URL**; text-only posts aren't possible on Instagram. |
 | **YouTube** | ❌ copy-ready scripts | ✅ | Video upload isn't automated in this version, and Community posts have no API. Comment replies use the Data API v3 (watch your daily quota). |
 | **TikTok** | ❌ copy-ready | ❌ | Direct posting needs an **audited** Content Posting API app; unaudited apps can only post privately. There is no general comment API. |
-| **Any app (webhook)** | ✅ JSON to your URL | ❌ | Paste a webhook URL from Zapier, Make, n8n, Slack, Discord or your own server (Settings → Accounts). https only, internal addresses blocked, optional HMAC signature (`X-Nexus-Signature`, signed over `timestamp.body`). Text posts only. "Published" means the receiver accepted it. |
+| **Any app (webhook)** | ✅ JSON to your URL | ❌ | Paste a webhook URL from Zapier, Make, n8n, Slack, Discord or your own server (the Platforms tab). https only, internal addresses blocked, optional HMAC signature (`X-Nexus-Signature`, signed over `timestamp.body`). Text posts only. "Published" means the receiver accepted it. |
 
 Platform terms and tiers change. Check each developer portal before relying on a feature.
 
@@ -113,6 +115,7 @@ Environment variables (e.g. `ANTHROPIC_API_KEY`) work as defaults: a key saved i
    - creates the Creator, Pro and Unlimited products with monthly and yearly USD prices from `src/lib/plans.ts` ($12/$120, $29/$288, $59/$588),
    - registers the webhook `{APP_URL}/api/stripe/webhook` (checkout + subscription events) and stores its signing secret,
    - sets up the Customer Portal (switch plans, update card, invoices, cancel at period end) with your Terms and Privacy links.
+   - creates the trial coupons: "Pro: first month $10" and "Unlimited: first month $20" (one month of discount from the day the subscription starts, so it covers the invoice at the end of the 14-day trial and nothing after). **If you connected Stripe before trials were added, press the button once more** so the coupons exist; until then the 14 free days still work and the pricing page shows the regular price after the trial.
 3. Running it again is safe: existing products and prices are reused. To go live, activate your Stripe account, paste the `sk_live_` key and press the button again.
 
 Test card in test mode: `4242 4242 4242 4242`, any future date, any CVC.
@@ -127,7 +130,7 @@ Until Stripe is set up, paid plans show "Coming soon" and you can assign plans b
 
 **Why these prices:** comparable tools charge $15–$29 to start (OpusClip $15, AutoShorts $19, Later $25, SocialBee $29) and usually cover only video, or only scheduling. Each Nexus Pulse credit costs at most about 1.1¢ of Claude usage, so every paid plan stays profitable even if a subscriber uses every credit: about 33–59% gross margin on monthly billing in that worst case (about 19% on yearly Unlimited), and 65–77% at a typical half usage, after card fees. Admin → Overview shows your MRR and an AI-cost ceiling.
 
-### 5. Link your accounts (Settings → Accounts)
+### 5. Link your accounts (the Platforms tab)
 
 Each platform card (X, Facebook, LinkedIn, Instagram, YouTube, TikTok) has a **Connect with …** button. It sends you to the platform's own sign-in page, you approve the permissions there, and you come back already linked. The app never sees your password. It stores only the access token, encrypted, and refreshes it automatically where the platform allows.
 
@@ -205,7 +208,7 @@ Railway runs the app as an always-on server, so the built-in scheduler posts on 
    - `INTERNAL_SCHEDULER` = `1`
    - `DATA_DIR` = `/data`
    - Optional: `ANTHROPIC_API_KEY` and the other service keys (or paste them later in Admin → App settings → Integrations), Supabase (instead of the volume), platform app keys (or enter those in the app's Setup Wizard).
-4. Deploy. Open the URL, sign up with the setup code, add your Claude key and connect Stripe in **Admin → App settings**, then go to **Settings → Accounts** and use the Setup Wizard for each platform.
+4. Deploy. Open the URL, sign up with the setup code, add your Claude key and connect Stripe in **Admin → App settings**, then go to **the Platforms tab** and use the Setup Wizard for each platform.
 5. Each platform's redirect URL is shown in the wizard: `APP_URL/api/connect/<platform>/callback`.
 
 ## Daily batch from Claude (content inbox)

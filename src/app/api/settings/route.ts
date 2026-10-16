@@ -26,7 +26,9 @@ export const PUT = authed(async (req, user) => {
   }
   if (patch.platforms) {
     const on = PLATFORMS.filter((p) => patch.platforms![p]).length;
-    if (on > plan.maxPlatforms) return fail(`${plan.name} includes ${plan.maxPlatforms} platform${plan.maxPlatforms > 1 ? "s" : ""}. Turn one off or upgrade.`, 402);
+    const wasOn = PLATFORMS.filter((p) => before.platforms[p]).length;
+    // Over the limit only blocks turning more on, so an account above it (e.g. after a downgrade) can always switch platforms off.
+    if (on > plan.maxPlatforms && on > wasOn) return fail(`${plan.name} includes ${plan.maxPlatforms} platform${plan.maxPlatforms > 1 ? "s" : ""}. Turn one off or upgrade.`, 402);
   }
   if (patch.autoReply && !plan.features.autoReplies) return fail(`Automatic replies are included from Pro. You can still draft replies by hand on the Engagement page.`, 402);
 

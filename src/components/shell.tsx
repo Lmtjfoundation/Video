@@ -15,6 +15,7 @@ import {
   MessageSquare,
   ScrollText,
   Settings,
+  Share2,
   ShieldCheck,
   Sparkles,
   X,
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 type NavItem = { href: string; label: string; short: string; icon: typeof Activity; badge?: "pending" | "review"; admin?: boolean };
 const NAV: NavItem[] = [
   { href: "/", label: "Command Center", short: "Home", icon: LayoutDashboard },
+  { href: "/platforms", label: "Platforms", short: "Platforms", icon: Share2 },
   { href: "/niche", label: "Niche Lab", short: "Niches", icon: Compass },
   { href: "/stories", label: "Story Studio", short: "Stories", icon: BookOpenText },
   { href: "/studio", label: "Content Studio", short: "Create", icon: Sparkles },
@@ -56,6 +58,12 @@ function Logo({ compact }: { compact?: boolean }) {
   );
 }
 
+function trialDaysLeft(endsAt: string | null) {
+  if (!endsAt) return "ends soon";
+  const days = Math.ceil((new Date(endsAt).getTime() - Date.now()) / 86400_000);
+  return days <= 1 ? "last day" : `${days} days`;
+}
+
 function AccountCard() {
   const { status, logout } = useApp();
   if (!status) return <div className="h-24 animate-pulse rounded-xl bg-white/[0.04]" />;
@@ -77,6 +85,12 @@ function AccountCard() {
           <div className="h-full rounded-full bg-gradient-to-r from-mint-400 to-gold-400" style={{ width: `${Math.max(2, 100 - (used / Math.max(1, me.plan.credits)) * 100)}%` }} />
         </div>
       </div>
+      {me.trial?.active && (
+        <Link href="/plans" className="rounded-lg bg-mint-400/[0.08] px-2.5 py-1.5 text-[11.5px] leading-snug text-mint-200 ring-1 ring-mint-400/20 hover:bg-mint-400/[0.12]">
+          Free trial · {trialDaysLeft(me.trial.endsAt)} left
+          <span className="block text-white/55">{me.ownAi ? "Your own AI: no credits used" : `${me.trial.freeLeftToday} free AI credits left today`}</span>
+        </Link>
+      )}
       <div className="flex items-center justify-between gap-2">
         <span className="min-w-0 truncate text-[12px] text-white/50" title={me.user.email}>{me.user.email}</span>
         <button onClick={logout} className="focus-ring rounded-lg p-1.5 text-white/40 hover:bg-white/[0.06] hover:text-white" aria-label="Sign out" title="Sign out">

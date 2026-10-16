@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 /** The platform sends the user back here with ?code=…&state=… after they approve (or ?error=… if they cancel). */
 export async function GET(req: Request, ctx: { params: Promise<{ platform: string }> }) {
   const user = await userFromRequest(req);
-  if (!user) return NextResponse.redirect(`${appOrigin(req)}/login?next=${encodeURIComponent("/settings?tab=accounts")}`);
+  if (!user) return NextResponse.redirect(`${appOrigin(req)}/login?next=${encodeURIComponent("/platforms")}`);
   return asUser(user.id, () => run(req, ctx));
 }
 
@@ -21,7 +21,7 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
   const { platform } = await params;
   const url = new URL(req.url);
   const origin = appOrigin(req);
-  const back = (q: Record<string, string>) => NextResponse.redirect(`${origin}/settings?${new URLSearchParams({ tab: "accounts", ...q })}`);
+  const back = (q: Record<string, string>) => NextResponse.redirect(`${origin}/platforms?${new URLSearchParams(q)}`);
   if (!PLATFORMS.includes(platform as Platform) || !isOAuthPlatform(platform)) return back({ error: "Unknown platform." });
   const p = platform;
   const label = OAUTH[p].label;

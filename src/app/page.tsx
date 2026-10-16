@@ -34,7 +34,7 @@ export default function Dashboard() {
         { ok: env.stripe, label: "Payments", hint: "Admin → App settings → Connect Stripe", href: "/admin?tab=settings" },
       ]
     : [
-        { ok: connected > 0, label: "Link a social account", hint: "Settings → Accounts" },
+        { ok: connected > 0, label: "Link a social account", hint: "Platforms tab", href: "/platforms" },
         { ok: stats.scheduled + stats.inReview > 0, label: "Schedule your first posts", hint: "Calendar → Fill my week" },
       ];
   const setupDone = setup.every((s) => s.ok);

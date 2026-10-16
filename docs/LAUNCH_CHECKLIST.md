@@ -14,7 +14,7 @@
 A Claude Pro or Max subscription is for the Claude apps. It doesn't give a hosted product like this one API access. The app calls the Claude API with an API key from console.anthropic.com, billed separately by usage. Put that key in Admin → App settings → Integrations. If AI writing says it's unavailable, the dashboard shows the exact reason (for example, no API credit left).
 
 ## 3. Connect-your-apps (what you still do once)
-Each platform needs a developer app registered by you (the owner); customers then just press Connect. Use the Setup Wizard in Settings → Accounts.
+Each platform needs a developer app registered by you (the owner); customers then just press Connect. Use the Setup Wizard on the Platforms tab.
 - Meta (Facebook, Instagram): customers other than people with a role on your app can connect only after Meta App Review and Business Verification.
 - TikTok: unaudited apps can only create private drafts.
 - X: posting and reading replies at volume need a paid X API plan.

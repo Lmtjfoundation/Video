@@ -1,58 +1,23 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Check, CircleDollarSign, Copy, ExternalLink, KeyRound, Link2, Plus, Save, ShieldCheck, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { AiProviderTab } from "@/components/ai-provider";
+import { Brain, CircleDollarSign, KeyRound, Plus, Save, ShieldCheck, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
-import type { CredentialStatus, Offer, Pillar, Platform, Settings } from "@/lib/types";
+import type { Offer, Pillar, Platform, Settings } from "@/lib/types";
 import { PILLARS, PLATFORMS, REPLY_MODES } from "@/lib/types";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
-import { OAUTH, type OAuthPlatform } from "@/lib/oauth-config";
-import { COPY_LABELS, SETUP_GUIDES, type CopyKey } from "@/lib/setup-guides";
-import { copyToClipboard } from "@/lib/client";
 import { MODE_LABEL, PILLAR_LABEL, cn, uid } from "@/lib/utils";
-import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, PlatformChip, Select, Switch, Textarea } from "@/components/ui";
+import { Button, Card, CardHeader, Field, Input, PageHeader, PlatformChip, Select, Switch, Textarea } from "@/components/ui";
 
 const TABS = [
   { key: "general", label: "General", icon: SlidersHorizontal },
-  { key: "accounts", label: "Accounts", icon: Link2 },
+  { key: "ai", label: "AI", icon: Brain },
   { key: "safety", label: "Limits & safety", icon: ShieldCheck },
   { key: "money", label: "Revenue & offers", icon: CircleDollarSign },
   { key: "voice", label: "Voice & mature mode", icon: UserRound },
   { key: "account", label: "Account", icon: KeyRound },
 ] as const;
-
-const CRED_FIELDS: Record<Platform, { key: "accessToken" | "refreshToken" | "accountId" | "handle"; label: string; secret?: boolean; placeholder?: string }[]> = {
-  x: [
-    { key: "accessToken", label: "OAuth 2.0 user access token", secret: true, placeholder: "scopes: tweet.read tweet.write users.read offline.access" },
-    { key: "refreshToken", label: "Refresh token", secret: true, placeholder: "enables auto-refresh (needs X_CLIENT_ID)" },
-    { key: "accountId", label: "Your numeric user ID", placeholder: "used to skip your own replies" },
-    { key: "handle", label: "Handle", placeholder: "@yourhandle" },
-  ],
-  facebook: [
-    { key: "accessToken", label: "Page access token", secret: true, placeholder: "pages_manage_posts, pages_manage_engagement, pages_read_user_content" },
-    { key: "accountId", label: "Page ID", placeholder: "numeric Page ID" },
-    { key: "handle", label: "Page name", placeholder: "Your Page" },
-  ],
-  linkedin: [
-    { key: "accessToken", label: "Access token (w_member_social)", secret: true },
-    { key: "accountId", label: "Author URN", placeholder: "urn:li:person:XXXX or urn:li:organization:123" },
-  ],
-  instagram: [
-    { key: "accessToken", label: "Long-lived access token", secret: true, placeholder: "instagram_basic, instagram_content_publish, instagram_manage_comments" },
-    { key: "accountId", label: "Instagram Business/Creator account ID" },
-    { key: "handle", label: "Username", placeholder: "yourname" },
-  ],
-  youtube: [
-    { key: "accessToken", label: "Access token (youtube.force-ssl)", secret: true },
-    { key: "refreshToken", label: "Refresh token", secret: true, placeholder: "enables auto-refresh (needs GOOGLE_CLIENT_ID/SECRET)" },
-    { key: "accountId", label: "Channel ID", placeholder: "UC…" },
-  ],
-  tiktok: [{ key: "accessToken", label: "Access token (optional — publishing is copy-ready)", secret: true }],
-  webhook: [
-    { key: "accessToken", label: "Webhook URL", secret: true, placeholder: "https://hooks.zapier.com/… or your Make / n8n / Slack / Discord URL" },
-    { key: "refreshToken", label: "Signing secret (optional)", secret: true, placeholder: "lets your receiver verify posts came from Nexus Pulse" },
-  ],
-};
 
 export default function SettingsPage() {
   const { status, toast, refresh } = useApp();
@@ -65,9 +30,15 @@ export default function SettingsPage() {
     if (status && !s) setS(status.settings);
   }, [status, s]);
 
-  // Returning from a platform sign-in: ?tab=accounts&connected=x or &error=…
+  // Old links to ?tab=accounts go to the Platforms tab; other ?tab= values open that tab.
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
+    // Linking social accounts moved to its own Platforms tab; keep old links (and sign-in returns) working.
+    if (q.get("tab") === "accounts") {
+      q.delete("tab");
+      window.location.replace(`/platforms${q.toString() ? `?${q}` : ""}`);
+      return;
+    }
     const t = q.get("tab");
     if (t && TABS.some((x) => x.key === t)) setTab(t as (typeof TABS)[number]["key"]);
     const connected = q.get("connected");
@@ -110,7 +81,7 @@ export default function SettingsPage() {
     <>
       <PageHeader
         title="Settings"
-        subtitle="Accounts, schedule, safety limits, revenue model and voice."
+        subtitle="Schedule, AI, safety limits, revenue model and voice. Social accounts are on the Platforms tab."
         actions={<Button variant="primary" onClick={save} loading={saving} disabled={!dirty}><Save className="h-4 w-4" /> {dirty ? "Save changes" : "Saved"}</Button>}
       />
 
@@ -196,7 +167,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {tab === "accounts" && <Accounts settings={s} setSettings={(p) => set("platforms", p)} statuses={status.credentials} />}
+      {tab === "ai" && <AiProviderTab />}
 
       {tab === "safety" && (
         <div className="grid gap-5">
@@ -377,366 +348,6 @@ function OfferRow({ offer, onChange, onRemove }: { offer: Offer; onChange: (o: O
   );
 }
 
-function Accounts({ settings, setSettings, statuses }: { settings: Settings; setSettings: (p: Settings["platforms"]) => void; statuses: CredentialStatus[] }) {
-  const { toast, refresh } = useApp();
-  const isAdmin = useApp((x) => x.status?.me.user.role === "admin");
-  const [forms, setForms] = useState<Record<string, Record<string, string>>>({});
-  const [busy, setBusy] = useState<string | null>(null);
-  const [manual, setManual] = useState<Record<string, boolean>>({});
-  const [confirmOff, setConfirmOff] = useState<string | null>(null);
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-
-  async function saveCred(p: Platform) {
-    setBusy(p);
-    try {
-      await api("/api/credentials", { body: { platform: p, ...(forms[p] ?? {}) } });
-      setForms({ ...forms, [p]: {} });
-      toast(`${PLATFORM_SPECS[p].name} token saved (encrypted)`, "success");
-      refresh();
-    } catch (e) {
-      toast((e as Error).message, "error");
-    } finally {
-      setBusy(null);
-    }
-  }
-  async function disconnect(p: Platform) {
-    if (confirmOff !== p) {
-      setConfirmOff(p);
-      setTimeout(() => setConfirmOff((c) => (c === p ? null : c)), 4000);
-      return;
-    }
-    setConfirmOff(null);
-    try {
-      await api(`/api/credentials?platform=${p}`, { method: "DELETE" });
-      toast(`${PLATFORM_SPECS[p].name} disconnected. You can also revoke access in that platform's security settings.`, "success");
-      refresh();
-    } catch (e) {
-      toast((e as Error).message, "error");
-    }
-  }
-
-  const expiryNote = (st: CredentialStatus) => {
-    if (!st.expiresAt) return null;
-    const d = new Date(st.expiresAt);
-    const autoRenew = st.method === "oauth" && (st.platform !== "linkedin" || st.fields.includes("refreshToken"));
-    if (autoRenew) return "Renews automatically";
-    const days = Math.round((d.getTime() - Date.now()) / 86400_000);
-    return days < 0 ? "Token expired — reconnect" : `Reconnect by ${d.toLocaleDateString()} (${days} days)`;
-  };
-
-  return (
-    <div className="grid gap-5">
-      <Card className="p-4 text-[13px] leading-relaxed text-white/65">
-        <span className="font-medium text-white">How linking works.</span> “Connect” sends you to the platform's own sign-in page. You approve the permissions there, and you're brought back here. Your password is never seen by this app; only an access token is stored, encrypted. You can disconnect here at any time, or revoke access from the platform's security settings.
-      </Card>
-      <div className="grid gap-5 lg:grid-cols-2">
-        {PLATFORMS.map((p) => {
-          const spec = PLATFORM_SPECS[p];
-          if (p === "webhook") {
-            const st = statuses.find((x) => x.platform === p) ?? { platform: p, connected: false, fields: [], oauthReady: false };
-            return (
-              <Card key={p}>
-                <CardHeader
-                  title={<span className="flex items-center gap-2"><PlatformChip platform={p} /> {spec.name}</span>}
-                  subtitle={st.connected ? <span className="text-mint-300">Connected</span> : "Not connected"}
-                  action={<Switch checked={settings.platforms[p]} onChange={(v) => setSettings({ ...settings.platforms, [p]: v })} label={`Use ${spec.name}`} />}
-                />
-                <div className="grid gap-3 p-5">
-                  <p className="text-[13px] leading-relaxed text-white/65">
-                    Works with any app that can receive a webhook: Zapier, Make, n8n, Slack, Discord, Buffer or Notion automations, or your own server. Create a “catch webhook” in that tool, paste its URL here, and every post you schedule for this connection is sent there as JSON.
-                  </p>
-                  {CRED_FIELDS.webhook.map((f) => (
-                    <Field key={f.key} label={f.label} hint={st.fields.includes(f.key) ? <Badge tone="mint">stored</Badge> : undefined}>
-                      <Input
-                        type="password"
-                        autoComplete="off"
-                        value={forms[p]?.[f.key] ?? ""}
-                        onChange={(e) => setForms({ ...forms, [p]: { ...(forms[p] ?? {}), [f.key]: e.target.value } })}
-                        placeholder={st.fields.includes(f.key) ? "•••••••• (leave blank to keep)" : f.placeholder}
-                      />
-                    </Field>
-                  ))}
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="primary" loading={busy === p} onClick={() => saveCred(p)}><KeyRound className="h-3.5 w-3.5" /> Save connection</Button>
-                    {st.connected && (
-                      <>
-                        <Button size="sm" variant="secondary" loading={busy === "webhook-test"} onClick={async () => {
-                          setBusy("webhook-test");
-                          try {
-                            await api("/api/webhook-test", { body: {} });
-                            toast("Test message sent. Check your app.", "success");
-                          } catch (e) {
-                            toast((e as Error).message, "error");
-                          } finally {
-                            setBusy(null);
-                          }
-                        }}>Send test message</Button>
-                        <Button size="sm" variant="danger" onClick={() => disconnect(p)}>{confirmOff === p ? "Confirm disconnect" : "Disconnect"}</Button>
-                      </>
-                    )}
-                  </div>
-                  <div className="grid gap-1 text-[12px]">
-                    <p className="text-white/60"><span className="text-white/85">Sends:</span> {spec.publish}</p>
-                    <p className="text-white/60"><span className="text-white/85">Security:</span> https addresses only. Internal addresses are blocked. With a signing secret, each request carries an HMAC signature (X-Nexus-Signature) over “timestamp.body”.</p>
-                  </div>
-                  <p className="text-[11px] text-white/35">The switch above turns this connection on or off for posting. Press “Save changes” at the top after changing it.</p>
-                </div>
-              </Card>
-            );
-          }
-          const o = OAUTH[p];
-          const st = statuses.find((x) => x.platform === p) ?? { platform: p, connected: false, fields: [], oauthReady: false };
-          const note = st.connected ? expiryNote(st) : null;
-          return (
-            <Card key={p}>
-              <CardHeader
-                title={<span className="flex items-center gap-2"><PlatformChip platform={p} /> {spec.name}</span>}
-                subtitle={st.connected ? <span className="text-mint-300">Connected as {st.handle || "your account"}</span> : "Not connected"}
-                action={<Switch checked={settings.platforms[p]} onChange={(v) => setSettings({ ...settings.platforms, [p]: v })} label={`Use ${spec.name}`} />}
-              />
-              <div className="grid gap-3 p-5">
-                {st.connected ? (
-                  <div className="flex flex-wrap items-center gap-2 rounded-xl bg-mint-400/[0.05] p-3 ring-1 ring-mint-400/20">
-                    <Badge tone="mint">{st.method === "oauth" ? "Linked with " + o.label : "Manual token"}</Badge>
-                    {note && <span className={cn("text-xs", /expired|Reconnect/.test(note) ? "text-gold-300" : "text-white/55")}>{note}</span>}
-                    <div className="ml-auto flex gap-2">
-                      {st.oauthReady && (
-                        <a href={`/api/connect/${p}`}><Button size="sm">Reconnect</Button></a>
-                      )}
-                      <Button size="sm" variant="danger" onClick={() => disconnect(p)}>{confirmOff === p ? "Confirm disconnect" : "Disconnect"}</Button>
-                    </div>
-                  </div>
-                ) : null}
-                {st.connected && st.choices && st.choices.length > 1 && (
-                  <Field label="Post as this Page" hint={`${st.choices.length} Pages available`}>
-                    <Select
-                      value={st.choices.find((c) => c.name === st.handle)?.id ?? st.choices[0].id}
-                      onChange={async (e) => {
-                        try {
-                          await api("/api/facebook-page", { body: { pageId: e.target.value } });
-                          toast("Facebook Page updated", "success");
-                          refresh();
-                        } catch (err) {
-                          toast((err as Error).message, "error");
-                        }
-                      }}
-                    >
-                      {st.choices.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </Select>
-                  </Field>
-                )}
-                <AccountTypeNote platform={p} />
-                {st.connected ? null : st.oauthReady ? (
-                  <a href={`/api/connect/${p}`} className="block">
-                    <Button variant="primary" size="lg" className="w-full"><Link2 className="h-4 w-4" /> Connect with {o.label}</Button>
-                  </a>
-                ) : isAdmin ? (
-                  <SetupWizard platform={p} origin={origin} onSaved={refresh} />
-                ) : (
-                  <p className="rounded-xl bg-white/[0.03] p-3 text-[13px] text-white/60 ring-1 ring-white/[0.06]">{o.label} linking isn't switched on yet. The workspace admin enables it once for everyone.</p>
-                )}
-
-                {st.oauthReady && isAdmin && (
-                  <AppKeysLine platform={p} source={st.keySource} preview={st.keyPreview} origin={origin} onChanged={refresh} />
-                )}
-                <div className="grid gap-1 text-[12px]">
-                  <p className="text-white/60"><span className="text-white/85">Asks permission to:</span> {o.permissions.join(" · ")}</p>
-                  <p className="text-white/60"><span className="text-white/85">Publishing:</span> {spec.publish}</p>
-                  <p className="text-white/60"><span className="text-white/85">Engagement:</span> {spec.engage}</p>
-                </div>
-
-                <button className="focus-ring w-fit text-left text-xs text-white/45 hover:text-white" onClick={() => setManual({ ...manual, [p]: !manual[p] })}>
-                  {manual[p] ? "Hide manual token entry" : "Advanced: paste a token instead"}
-                </button>
-                {manual[p] && (
-                  <div className="grid gap-3 rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]">
-                    {CRED_FIELDS[p].map((f) => (
-                      <Field key={f.key} label={f.label} hint={st.fields.includes(f.key) ? <Badge tone="mint">stored</Badge> : undefined}>
-                        <Input
-                          type={f.secret ? "password" : "text"}
-                          autoComplete="off"
-                          value={forms[p]?.[f.key] ?? ""}
-                          onChange={(e) => setForms({ ...forms, [p]: { ...(forms[p] ?? {}), [f.key]: e.target.value } })}
-                          placeholder={st.fields.includes(f.key) ? "•••••••• (leave blank to keep)" : f.placeholder}
-                        />
-                      </Field>
-                    ))}
-                    <Button size="sm" variant="secondary" className="w-fit" loading={busy === p} onClick={() => saveCred(p)}>
-                      <KeyRound className="h-3.5 w-3.5" /> Save token
-                    </Button>
-                  </div>
-                )}
-                <p className="text-[11px] text-white/35">The switch above turns {spec.name} on or off for posting. Press “Save changes” at the top after changing it.</p>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function CopyBox({ value }: { value: string }) {
-  const toast = useApp((x) => x.toast);
-  return (
-    <div className="mt-1.5 flex items-stretch gap-1.5">
-      <code className="min-w-0 flex-1 break-all rounded-lg bg-ink-950 px-2.5 py-1.5 font-mono text-[12px] text-mint-300 ring-1 ring-white/[0.06]">{value}</code>
-      <Button size="sm" onClick={async () => toast((await copyToClipboard(value)) ? "Copied" : "Copy blocked — select the text instead", "success")}>
-        <Copy className="h-3.5 w-3.5" /> Copy
-      </Button>
-    </div>
-  );
-}
-
-/** One-time owner setup: guided steps, then paste the app ID and secret — no file editing. */
-function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; origin: string; onSaved: () => void }) {
-  const toast = useApp((x) => x.toast);
-  const g = SETUP_GUIDES[platform];
-  const o = OAUTH[platform];
-  const [open, setOpen] = useState(false);
-  const [done, setDone] = useState<Record<number, boolean>>({});
-  const [id, setId] = useState("");
-  const [secret, setSecret] = useState("");
-  const [saving, setSaving] = useState(false);
-  const redirect = `${origin}/api/connect/${platform}/callback`;
-  const values: Record<CopyKey, string> = {
-    redirect,
-    site: origin,
-    scopes: o.scopes.join(o.scopeSeparator === "," ? "," : " "),
-    privacy: `${origin}/privacy`,
-    terms: `${origin}/terms`,
-    deletion: `${origin}/data-deletion`,
-  };
-  const finished = Object.values(done).filter(Boolean).length;
-
-  async function save() {
-    setSaving(true);
-    try {
-      await api("/api/app-keys", { body: { platform, id, secret } });
-      setId("");
-      setSecret("");
-      toast(`${o.label} is set up. Press “Connect with ${o.label}” to link your account.`, "success");
-      onSaved();
-    } catch (e) {
-      toast((e as Error).message, "error");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (!open) {
-    return (
-      <div className="grid gap-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
-        <p className="text-[13px] text-white/80">
-          <span className="font-medium text-white">One-time setup needed</span> · about {g.minutes}. After this, linking is one click for you and your subscribers.
-        </p>
-        <Button variant="gold" className="w-full" onClick={() => setOpen(true)}>Set up {o.label} step by step</Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-3 rounded-xl bg-ink-900/80 p-4 ring-1 ring-gold-400/25">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-white">Set up {o.label}</p>
-          <p className="text-xs text-white/50">You need: {g.needs}</p>
-        </div>
-        <span className="shrink-0 text-xs tabular-nums text-white/45">{finished}/{g.steps.length} done</span>
-      </div>
-      <ol className="grid gap-2.5">
-        {g.steps.map((st, i) => (
-          <li key={i} className={cn("flex gap-3 rounded-lg p-2.5 ring-1", done[i] ? "bg-mint-400/[0.04] ring-mint-400/20" : "bg-white/[0.02] ring-white/[0.06]")}>
-            <button
-              onClick={() => setDone({ ...done, [i]: !done[i] })}
-              aria-label={done[i] ? `Mark step ${i + 1} not done` : `Mark step ${i + 1} done`}
-              className={cn("focus-ring mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md text-[11px] font-semibold ring-1", done[i] ? "bg-mint-400 text-ink-950 ring-mint-400" : "text-white/60 ring-white/20")}
-            >
-              {done[i] ? <Check className="h-3 w-3" /> : i + 1}
-            </button>
-            <div className="min-w-0 flex-1 text-[13px] leading-relaxed text-white/80">
-              {st.text}
-              {typeof st.copy === "string" && <CopyBox value={values[st.copy]} />}
-              {Array.isArray(st.copy) &&
-                st.copy.map((k) => (
-                  <div key={k} className="mt-2">
-                    <p className="text-[11px] uppercase tracking-wide text-white/40">{COPY_LABELS[k]}</p>
-                    <CopyBox value={values[k]} />
-                  </div>
-                ))}
-              {st.note && <p className="mt-1 text-xs text-gold-300/90">{st.note}</p>}
-              {st.link && (
-                <a href={st.link.href} target="_blank" rel="noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-xs text-mint-300 hover:underline">
-                  {st.link.label} <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-            </div>
-          </li>
-        ))}
-      </ol>
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Field label={g.idLabel}>
-          <Input value={id} onChange={(e) => setId(e.target.value)} autoComplete="off" spellCheck={false} placeholder={`Paste ${g.idLabel}`} />
-        </Field>
-        <Field label={g.secretLabel}>
-          <Input type="password" value={secret} onChange={(e) => setSecret(e.target.value)} autoComplete="off" placeholder={`Paste ${g.secretLabel}`} />
-        </Field>
-      </div>
-      <p className="text-xs text-white/45">Stored encrypted on your server. Never shown again in the browser.</p>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="primary" loading={saving} disabled={!id.trim() || !secret.trim()} onClick={save}>
-          <KeyRound className="h-4 w-4" /> Save and enable Connect
-        </Button>
-        <Button variant="ghost" onClick={() => setOpen(false)}>Close</Button>
-      </div>
-      <div className="grid gap-1 border-t border-white/[0.06] pt-3 text-xs leading-relaxed text-white/55">
-        <p><span className="text-white/80">Testing:</span> {g.testing}</p>
-        <p><span className="text-white/80">Before subscribers can connect:</span> {g.review}</p>
-      </div>
-    </div>
-  );
-}
-
-function AppKeysLine({ platform, source, preview, origin, onChanged }: { platform: Platform; source?: "env" | "app"; preview?: string; origin: string; onChanged: () => void }) {
-  const toast = useApp((x) => x.toast);
-  const [confirm, setConfirm] = useState(false);
-  const [show, setShow] = useState(false);
-  return (
-    <div className="grid gap-1.5 text-[12px] text-white/50">
-      <p>
-        App keys: <span className="font-mono text-white/70">{preview}</span> · {source === "env" ? "from environment variables" : "saved in the app"}
-        {" · "}
-        <button className="text-white/60 underline-offset-2 hover:text-white hover:underline" onClick={() => setShow((v) => !v)}>{show ? "Hide" : "Show"} redirect URL</button>
-        {source === "app" && (
-          <>
-            {" · "}
-            <button
-              className="text-red-300/80 underline-offset-2 hover:underline"
-              onClick={async () => {
-                if (!confirm) {
-                  setConfirm(true);
-                  setTimeout(() => setConfirm(false), 4000);
-                  return;
-                }
-                try {
-                  await api(`/api/app-keys?platform=${platform}`, { method: "DELETE" });
-                  toast("App keys removed", "success");
-                  onChanged();
-                } catch (e) {
-                  toast((e as Error).message, "error");
-                }
-              }}
-            >
-              {confirm ? "Confirm remove keys" : "Remove keys"}
-            </button>
-          </>
-        )}
-      </p>
-      {show && <CopyBox value={`${origin}/api/connect/${platform}/callback`} />}
-    </div>
-  );
-}
-
 function AccountTab() {
   const { status, toast, logout } = useApp();
   const [cur, setCur] = useState("");
@@ -829,20 +440,3 @@ function DeleteAccount() {
 
 
 /** Tells users up front which account types each platform lets apps post to. */
-function AccountTypeNote({ platform }: { platform: string }) {
-  if (platform === "facebook")
-    return (
-      <div className="rounded-xl bg-amber-400/[0.06] p-3 text-[13px] leading-relaxed text-amber-100/90 ring-1 ring-amber-300/25">
-        <b className="text-amber-200">Facebook only lets apps post to Pages.</b> Personal profiles — including profiles in professional mode — can't be connected for auto-posting.
-        {" "}No Page yet? <a className="underline hover:text-white" href="https://www.facebook.com/pages/create" target="_blank" rel="noreferrer">Create a free Page</a> with the same name and photo, then connect it here.
-        {" "}You can still use your profile: posts for it are marked <b>Copy-ready</b> so you can paste them in one tap.
-      </div>
-    );
-  if (platform === "instagram")
-    return (
-      <div className="rounded-xl bg-white/[0.03] p-3 text-[13px] leading-relaxed text-white/65 ring-1 ring-white/[0.06]">
-        Needs an Instagram <b className="text-white/85">professional account</b> (Business or Creator): Instagram → Settings → Account type and tools. Link it to your Facebook Page so replies and insights work.
-      </div>
-    );
-  return null;
-}

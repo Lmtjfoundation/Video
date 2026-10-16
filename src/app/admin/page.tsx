@@ -140,7 +140,7 @@ function Overview({ stats }: { stats: Stats | null }) {
       </Card>
       <Card className="p-5 text-sm text-white/65">
         <p className="font-medium text-white">Platform setup</p>
-        <p className="mt-1">Connect buttons for X, Facebook, Instagram, LinkedIn, YouTube and TikTok are set up once by you in <Link className="text-mint-300 hover:underline" href="/settings?tab=accounts">Settings → Accounts</Link>. Every user then links their own accounts with one click.</p>
+        <p className="mt-1">Connect buttons for X, Facebook, Instagram, LinkedIn, YouTube and TikTok are set up once by you in <Link className="text-mint-300 hover:underline" href="/platforms">Platforms</Link>. Every user then links their own accounts with one click.</p>
       </Card>
     </div>
   );

@@ -31,9 +31,9 @@ export const redirectUriFor = (origin: string, platform: Platform) => `${origin}
 
 /** Step 1: build the platform's sign-in URL and remember the state (and PKCE verifier) for 10 minutes. */
 export async function startAuth(platform: Platform, origin: string) {
-  if (!isOAuthPlatform(platform)) throw new Error("This connection doesn't use a sign-in page. Paste its URL in Settings → Accounts instead.");
+  if (!isOAuthPlatform(platform)) throw new Error("This connection doesn't use a sign-in page. Paste its URL on the Platforms tab instead.");
   const keys = await getAppKeys(platform);
-  if (!keys) throw new Error(`${OAUTH[platform].label} linking isn't set up yet. Open Settings → Accounts and follow the setup steps on the ${OAUTH[platform].label} card.`);
+  if (!keys) throw new Error(`${OAUTH[platform].label} linking isn't set up yet. Open the Platforms tab and follow the setup steps on the ${OAUTH[platform].label} card.`);
   const p = OAUTH[platform];
   const state = b64url(randomBytes(24));
   const redirectUri = redirectUriFor(origin, platform);
@@ -67,7 +67,7 @@ export async function finishAuth(platform: Platform, code: string, state: string
   if (!isOAuthPlatform(platform)) throw new Error("This connection doesn't use a sign-in page.");
   const p = OAUTH[platform];
   const keys = await getAppKeys(platform);
-  if (!keys) throw new Error(`${p.label} app keys were removed. Add them again in Settings → Accounts.`);
+  if (!keys) throw new Error(`${p.label} app keys were removed. Add them again on the Platforms tab.`);
   const { id, secret } = keys;
   const form = (o: Record<string, string | undefined>) =>
     new URLSearchParams(Object.entries(o).filter(([, v]) => v !== undefined) as [string, string][]);

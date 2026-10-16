@@ -11,7 +11,8 @@ export default function PlansPage() {
 
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("checkout");
-    if (q === "success") toast("Thanks! Your plan updates as soon as Stripe confirms the payment.", "success");
+    const trial = new URLSearchParams(window.location.search).get("trial") === "1";
+    if (q === "success") toast(trial ? "Your free trial has started. Generate as much as you like today!" : "Thanks! Your plan updates as soon as Stripe confirms the payment.", "success");
     if (q === "cancelled") toast("Checkout cancelled. Nothing was charged.", "info");
     if (q) {
       window.history.replaceState(null, "", "/plans");
@@ -46,19 +47,28 @@ export default function PlansPage() {
   }, [wanted, me, toast]);
   return (
     <>
-      <PageHeader title="Plans & Billing" subtitle="Credits pay for AI writing. Everything else is included on every plan." />
+      <PageHeader title="Plans & Billing" subtitle="Credits pay for AI writing. Everything else is included on every plan. Pro and Unlimited start with a 14-day free trial." />
       {me && (
         <Card className="mb-6 grid gap-5 p-5 md:grid-cols-[auto_1fr_1fr_auto] md:items-center">
           <div>
             <p className="label">Current plan</p>
             <p className="mt-1 text-2xl font-semibold text-white">{me.plan.name}</p>
             {sub?.status && (
-              <Badge tone={sub.status === "active" && !sub.cancelAtPeriodEnd ? "mint" : "gold"}>
+              <Badge tone={(sub.status === "active" || sub.status === "trialing") && !sub.cancelAtPeriodEnd ? "mint" : "gold"}>
                 {sub.cancelAtPeriodEnd && sub.status !== "canceled" ? "cancelled" : sub.status.replace("_", " ")}
-                {sub.currentPeriodEnd && sub.status !== "canceled"
-                  ? ` · ${sub.cancelAtPeriodEnd ? "ends" : "renews"} ${new Date(sub.currentPeriodEnd).toLocaleDateString()}`
-                  : ""}
+                {sub.status === "trialing" && sub.trialEnd
+                  ? ` · free until ${new Date(sub.trialEnd).toLocaleDateString()}`
+                  : sub.currentPeriodEnd && sub.status !== "canceled"
+                    ? ` · ${sub.cancelAtPeriodEnd ? "ends" : "renews"} ${new Date(sub.currentPeriodEnd).toLocaleDateString()}`
+                    : ""}
               </Badge>
+            )}
+            {me.trial.active && (
+              <p className="mt-2 max-w-[16rem] text-[12px] leading-snug text-white/55">
+                {me.ownAi
+                  ? "You're on your own AI key, so generating uses no credits."
+                  : `Trial bonus: ${me.trial.freeLeftToday} of ${me.trial.freePerDay} free AI credits left today. After that, your plan credits are used.`}
+              </p>
             )}
           </div>
           <Usage label="AI credits" used={me.plan.credits - me.creditsLeft} total={me.plan.credits} />
@@ -79,7 +89,7 @@ export default function PlansPage() {
           )}
         </Card>
       )}
-      <PricingTable currentPlan={me?.plan.id} signedIn hasSubscription={!!sub?.subscriptionId && sub?.status !== "canceled"} />
+      <PricingTable currentPlan={me?.plan.id} signedIn hasSubscription={!!sub?.subscriptionId && sub?.status !== "canceled"} trialEligible={me?.trial.eligible ?? false} />
       <p className="mt-6 text-xs text-white/40">Credits and post counts reset on the 1st of each month. Unused credits don't roll over. Prices in USD; taxes may apply at checkout.</p>
     </>
   );

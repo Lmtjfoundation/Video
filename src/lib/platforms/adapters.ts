@@ -485,7 +485,7 @@ const webhook: Adapter = {
   platform: "webhook",
   publishable: (post) => (post.kind === "video" ? "Video files can't be sent through a webhook. Download the video and post it in your app." : true),
   async publish(post, texts, cred) {
-    const url = need(cred, "accessToken", "Add your webhook URL in Settings → Accounts.");
+    const url = need(cred, "accessToken", "Add your webhook URL on the Platforms tab.");
     const res = await postWebhook(
       url,
       {

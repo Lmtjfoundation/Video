@@ -11,14 +11,14 @@ export const dynamic = "force-dynamic";
 /** "Connect with …" — sends the browser to the platform's own sign-in page. */
 export async function GET(req: Request, ctx: { params: Promise<{ platform: string }> }) {
   const user = await userFromRequest(req);
-  if (!user) return NextResponse.redirect(`${appOrigin(req)}/login?next=${encodeURIComponent("/settings?tab=accounts")}`);
+  if (!user) return NextResponse.redirect(`${appOrigin(req)}/login?next=${encodeURIComponent("/platforms")}`);
   return asUser(user.id, () => run(req, ctx));
 }
 
 async function run(req: Request, { params }: { params: Promise<{ platform: string }> }) {
   const { platform } = await params;
   const origin = appOrigin(req);
-  const back = (q: Record<string, string>) => NextResponse.redirect(`${origin}/settings?${new URLSearchParams({ tab: "accounts", ...q })}`);
+  const back = (q: Record<string, string>) => NextResponse.redirect(`${origin}/platforms?${new URLSearchParams(q)}`);
   if (!PLATFORMS.includes(platform as Platform)) return back({ error: "Unknown platform." });
   try {
     return NextResponse.redirect(await startAuth(platform as Platform, origin));

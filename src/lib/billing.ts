@@ -1,10 +1,10 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "crypto";
 import { gdb } from "./db";
-import { getUser, listUsers, saveUser, type User } from "./auth";
-import { PLANS, type PlanId } from "./plans";
+import { getUser, listUsers, saveUser, trialEligible, type User } from "./auth";
+import { PLANS, introDiscount, planById, type PlanId } from "./plans";
 import { nowIso } from "./utils";
-import { saveIntegrations, stripePortalConfig, stripePriceId, stripeSecretKey } from "./integrations";
+import { saveIntegrations, stripeIntroCoupon, stripePortalConfig, stripePriceId, stripeSecretKey } from "./integrations";
 
 /**
  * Stripe Billing over Stripe's REST API (no SDK needed).
@@ -55,16 +55,28 @@ export async function createCheckout(user: User, plan: PlanId, interval: Interva
   if (!(await stripeReady())) throw new Error("Payments aren't set up yet. Ask the admin to connect Stripe.");
   const price = await priceFor(plan, interval);
   if (!price) throw new Error(`The ${plan} ${interval === "year" ? "yearly" : "monthly"} price isn't set up yet. The admin presses "Connect Stripe" in Admin → App settings.`);
+  const offer = await trialOffer(user, plan, interval);
   const params = (withCustomer: boolean) => ({
     mode: "subscription",
     line_items: { 0: { price, quantity: 1 } },
-    success_url: `${origin}/plans?checkout=success`,
+    success_url: `${origin}/plans?checkout=success${offer ? "&trial=1" : ""}`,
     cancel_url: `${origin}/plans?checkout=cancelled`,
     client_reference_id: user.id,
     ...(withCustomer && user.billing?.customerId ? { customer: user.billing.customerId } : { customer_email: user.email }),
-    allow_promotion_codes: "true",
-    metadata: { userId: user.id },
-    subscription_data: { metadata: { userId: user.id } },
+    // Stripe allows either a fixed discount or customer promo codes on one checkout, not both.
+    ...(offer?.coupon ? { discounts: { 0: { coupon: offer.coupon } } } : { allow_promotion_codes: "true" }),
+    ...(offer ? { payment_method_collection: "always" } : {}),
+    metadata: { userId: user.id, ...(offer ? { trial: "1" } : {}) },
+    subscription_data: {
+      metadata: { userId: user.id },
+      ...(offer
+        ? {
+            trial_period_days: offer.days,
+            // No card on file when the trial ends: cancel instead of leaving an unpaid invoice.
+            trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
+          }
+        : {}),
+    },
   });
   try {
     return (await stripe<{ url: string }>("/checkout/sessions", params(true))).url;
@@ -75,6 +87,18 @@ export async function createCheckout(user: User, plan: PlanId, interval: Interva
     }
     throw e;
   }
+}
+
+/**
+ * The free-trial offer for this checkout, or null. Each account gets one trial (Pro or Unlimited): `days` free, then
+ * the first paid month at the plan's intro price (monthly billing, via a coupon "Connect Stripe" creates), then the
+ * normal price. Yearly checkouts get the free days without the intro month.
+ */
+export async function trialOffer(user: User, plan: PlanId, interval: Interval) {
+  const p = planById(plan);
+  if (!p.trial || !trialEligible(user)) return null;
+  const coupon = interval === "month" && introDiscount(p) > 0 ? await stripeIntroCoupon(p.id) : "";
+  return { days: p.trial.days, coupon: coupon || null, firstMonth: coupon ? p.trial.firstMonth : null };
 }
 
 export async function createPortal(user: User, origin: string) {
@@ -141,6 +165,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string) {
   const products = await call<StripeList<SProduct>>("/products?limit=100&active=true", undefined, "GET");
   const stripePrices: Record<string, string> = {};
   const stripeProducts: Record<string, string> = {};
+  const stripeCoupons: Record<string, string> = {};
   const portalProducts: { product: string; prices: string[] }[] = [];
   for (const p of PLANS.filter((x) => x.monthly > 0)) {
     let prod = products.data.find((x) => x.metadata?.nexus_plan === p.id);
@@ -174,6 +199,29 @@ export async function setupStripeBilling(secretKey: string, appUrl: string) {
       ids.push(price.id);
     }
     portalProducts.push({ product: prod.id, prices: ids });
+
+    // Trial plans: a coupon that takes the first paid month down to the intro price. It lasts one month from the
+    // day the subscription starts, so it covers the invoice at the end of the 14-day trial and nothing after it.
+    const off = introDiscount(p);
+    if (p.trial && off > 0) {
+      // The id carries the amount and product, so a price change or a recreated product gets a fresh coupon.
+      let couponId = `nexus_${p.id}_intro_${Math.round(off * 100)}_${prod.id.slice(-8)}`;
+      const found = await call<{ id: string; valid?: boolean }>(`/coupons/${couponId}`, undefined, "GET").catch(() => null);
+      if (!found?.id || found.valid === false) {
+        if (found?.id) couponId = `${couponId}_${Date.now().toString(36)}`; // an expired/deleted coupon keeps its id
+        await call("/coupons", {
+          id: couponId,
+          name: `${p.name}: first month $${p.trial.firstMonth}`,
+          amount_off: Math.round(off * 100),
+          currency: "usd",
+          duration: "repeating",
+          duration_in_months: 1,
+          applies_to: { products: { 0: prod.id } },
+          metadata: { nexus_plan: p.id, app: "nexus-pulse" },
+        });
+      }
+      stripeCoupons[p.id] = couponId;
+    }
   }
 
   // Webhook: recreate ours so the signing secret (only returned at creation) is captured.
@@ -218,14 +266,15 @@ export async function setupStripeBilling(secretKey: string, appUrl: string) {
     stripePortalConfig: portal.id,
     stripePrices,
     stripeProducts,
+    stripeCoupons,
     stripeMode: mode,
   });
-  return { mode, prices: Object.keys(stripePrices).length, webhook: url, portal: portal.id };
+  return { mode, prices: Object.keys(stripePrices).length, coupons: Object.keys(stripeCoupons).length, webhook: url, portal: portal.id };
 }
 
 /** Removes the saved Stripe settings (the products stay in Stripe). */
 export async function disconnectStripe() {
-  await saveIntegrations({ stripeSecretKey: "", stripeWebhookSecret: "", stripeWebhookId: "", stripePortalConfig: "", stripePrices: null, stripeProducts: null, stripeMode: "" });
+  await saveIntegrations({ stripeSecretKey: "", stripeWebhookSecret: "", stripeWebhookId: "", stripePortalConfig: "", stripePrices: null, stripeProducts: null, stripeCoupons: null, stripeMode: "" });
 }
 
 /* ───────────── Webhooks ───────────── */
@@ -254,6 +303,7 @@ interface StripeSub {
   cancel_at_period_end?: boolean;
   cancel_at?: number | null;
   current_period_end?: number;
+  trial_end?: number | null;
   items?: { data?: { price?: { id: string; metadata?: Record<string, string>; recurring?: { interval?: string } | null }; current_period_end?: number }[] };
   metadata?: { userId?: string };
 }
@@ -298,6 +348,8 @@ export async function handleStripeEvent(evt: { id: string; type: string; data: {
         interval: mapped?.interval,
         currentPeriodEnd: end ? new Date(end * 1000).toISOString() : undefined,
         cancelAtPeriodEnd: !!(sub.cancel_at_period_end || sub.cancel_at),
+        trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : undefined,
+        trialUsed: !!(u.billing?.trialUsed || sub.trial_end),
       };
       if (evt.type === "customer.subscription.deleted" || !ACTIVE.includes(sub.status)) u.plan = "free";
       else if (mapped) u.plan = mapped.plan;

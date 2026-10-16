@@ -2,7 +2,7 @@ import "server-only";
 import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { gdb } from "./db";
-import { planById, type PlanId } from "./plans";
+import { TRIAL_DAILY_FREE_CREDITS, planById, type PlanId } from "./plans";
 import { nowIso, uid } from "./utils";
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
@@ -28,7 +28,13 @@ export interface User {
     currentPeriodEnd?: string;
     /** true when the customer cancelled: the plan stays active until currentPeriodEnd, then drops to Free. */
     cancelAtPeriodEnd?: boolean;
+    /** When the free trial ends (Stripe charges the first paid month then). */
+    trialEnd?: string;
+    /** Set once a trial has started, so each account gets one free trial. */
+    trialUsed?: boolean;
   };
+  /** Free AI used today during a trial (credits' worth), so the daily cap can be enforced. */
+  trialFree?: { day: string; credits: number };
   createdAt: string;
   lastLoginAt?: string;
 }
@@ -341,4 +347,38 @@ export async function usePostAllowance(userId: string, commit: boolean) {
     await saveUser(u);
   }
   return { ok: true };
+}
+
+/* Free trial */
+
+/** True while a Stripe trial is running for this account. */
+export const trialActive = (u: User) =>
+  u.billing?.status === "trialing" && !!u.billing.trialEnd && new Date(u.billing.trialEnd).getTime() > Date.now();
+
+/** One trial per account: not after a trial has been used or a paid subscription has existed. */
+export const trialEligible = (u: User) => !u.billing?.trialUsed && !u.billing?.subscriptionId;
+
+const utcDay = () => new Date().toISOString().slice(0, 10);
+
+/** Free AI left today for a trialing account (credits' worth); 0 when not on a trial. */
+export function trialFreeLeft(u: User) {
+  if (!trialActive(u)) return 0;
+  const used = u.trialFree?.day === utcDay() ? u.trialFree.credits : 0;
+  return Math.max(0, TRIAL_DAILY_FREE_CREDITS - used);
+}
+
+/** Uses the trial's free daily AI allowance instead of credits. Returns false when not trialing or the day's allowance is used up. */
+export async function spendTrialFree(userId: string, n: number) {
+  const u = await getUser(userId);
+  if (!u || trialFreeLeft(u) < n) return false;
+  const day = utcDay();
+  u.trialFree = { day, credits: (u.trialFree?.day === day ? u.trialFree.credits : 0) + n };
+  await saveUser(u);
+  return true;
+}
+export async function refundTrialFree(userId: string, n: number) {
+  const u = await getUser(userId);
+  if (!u?.trialFree || u.trialFree.day !== utcDay()) return;
+  u.trialFree.credits = Math.max(0, u.trialFree.credits - n);
+  await saveUser(u);
 }

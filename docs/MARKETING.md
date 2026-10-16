@@ -110,7 +110,7 @@ The free plan needs no card. You approve what goes out, and you can stop everyth
 2. (5–15 s) Show the hook, scenes and fact-check list. "Every claim is listed so you can check it."
 3. (15–25 s) Press Repurpose. "One idea becomes a post for each platform."
 4. (25–35 s) Calendar: "Drop them on the week, or press Fill my week."
-5. (35–42 s) Settings → Accounts. "Connect with each platform's own sign-in, or send posts to any app by webhook."
+5. (35–42 s) Platforms tab. "Connect with each platform's own sign-in, or send posts to any app by webhook."
 6. (42–45 s) "Nexus Pulse. Free plan available."
 
 ## Before you publish any of this

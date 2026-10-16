@@ -3,12 +3,17 @@ import { create } from "zustand";
 import { api } from "./client";
 import type { CredentialStatus, LogEntry, Post, Settings } from "./types";
 import type { Plan } from "./plans";
+import type { OwnAiStatus } from "./ai-providers";
 
 export interface Me {
-  user: { id: string; email: string; name: string; role: "admin" | "user"; status: string; plan: string; requireApproval: boolean; usage: { period: string; credits: number; posts: number }; billing?: { status?: string; interval?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; customerId?: string; subscriptionId?: string } };
+  user: { id: string; email: string; name: string; role: "admin" | "user"; status: string; plan: string; requireApproval: boolean; usage: { period: string; credits: number; posts: number }; billing?: { status?: string; interval?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; customerId?: string; subscriptionId?: string; trialEnd?: string; trialUsed?: boolean } };
   plan: Plan;
   creditsLeft: number;
   postsLeft: number | null;
+  /** Free trial: whether it's running, when it ends, whether this account can still start one, and today's free AI left. */
+  trial: { active: boolean; endsAt: string | null; eligible: boolean; freeLeftToday: number; freePerDay: number };
+  /** The subscriber's own AI connection (Settings → AI), or null when the app's AI is used. */
+  ownAi: OwnAiStatus | null;
 }
 
 export interface StatusPayload {
