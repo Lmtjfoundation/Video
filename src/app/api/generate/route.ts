@@ -11,6 +11,10 @@ import { lengthAllowed, videoCredits, VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/
 import type { Platform as P, Post, Settings, VideoPlan } from "@/lib/types";
 import { LLMError } from "@/lib/llm";
 import { takeFromBank } from "@/lib/inbox";
+import { genreById } from "@/lib/genres";
+import { spendCredits } from "@/lib/auth";
+import { enqueueRender, ffmpegAvailable } from "@/lib/render";
+import { nowIso } from "@/lib/utils";
 
 /**
  * When Claude's API can't write (no credits, key problem), hand out finished pieces Claude already wrote
@@ -33,8 +37,11 @@ async function withBankFallback(platform: P, kind: "text" | "video", count: numb
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-export const POST = authed(async (req: Request) => {
-  const b = await body<{ kind?: "text" | "video"; platform: Platform; pillar?: Pillar | "auto"; format?: Format | "auto"; topic?: string; count?: number; imageUrl?: string; mediaIds?: string[]; mature?: boolean; niche?: string; style?: VideoPlan["style"]; length?: VideoPlan["length"] }>(req);
+export const POST = authed(async (req: Request, user) => {
+  const b = await body<{ kind?: "text" | "video"; platform: Platform; pillar?: Pillar | "auto"; format?: Format | "auto"; topic?: string; count?: number; imageUrl?: string; mediaIds?: string[]; mature?: boolean; niche?: string; style?: VideoPlan["style"]; length?: VideoPlan["length"]; genre?: string; sourceText?: string; faceless?: boolean; renderNow?: boolean }>(req);
+  const genre = genreById(b.genre) ? b.genre : undefined;
+  // Text to video / text to post: build only from pasted material.
+  const sourceText = typeof b.sourceText === "string" && b.sourceText.trim().length >= 40 ? b.sourceText.trim().slice(0, 15000) : undefined;
   if (!PLATFORMS.includes(b.platform)) return fail("Choose a platform.");
   if (b.kind !== "text" && b.kind !== "video") return fail("Choose Text post or Video post.");
   const s = await getSettings();
@@ -42,18 +49,31 @@ export const POST = authed(async (req: Request) => {
   if (b.kind === "video") {
     const length = b.length && b.length in VIDEO_LENGTHS ? b.length : "s60";
     if (!lengthAllowed(length, b.platform)) {
-      return fail(length === "long" ? "Long-form videos are for YouTube. Pick a shorter length for this platform." : "X allows videos up to 2 minutes 20 seconds. Pick a shorter length for X.");
+      return fail(length === "long" ? "16:9 long-form is for YouTube and Facebook. Pick another length for this platform." : length === "m10" ? "10-minute videos are for TikTok, Facebook and YouTube. Pick a shorter length for this platform." : "X allows videos up to 2 minutes 20 seconds. Pick a shorter length for X.");
     }
     const style = b.style && b.style in VIDEO_STYLES ? b.style : "true";
     const n = clamp(Number(b.count) || 1, 1, 3);
     const mediaIds = Array.isArray(b.mediaIds) ? b.mediaIds.slice(0, 10) : undefined;
     const { posts: videos, fromBank } = await withBankFallback(b.platform, "video", n, s, () =>
       withCredits(n * videoCredits(length, "plan"), () =>
-        generateVideoPosts({ platform: b.platform, count: n, niche: String(b.niche ?? "edu"), style, length, topic: b.topic?.slice(0, 500), mediaIds }, s),
+        generateVideoPosts({ platform: b.platform, count: n, niche: String(b.niche ?? (genre ? "auto" : "edu")), style, length, topic: b.topic?.slice(0, 500), mediaIds, genre, sourceText, faceless: typeof b.faceless === "boolean" ? b.faceless : undefined }, s),
       ),
     );
     if (fromBank && mediaIds?.length) videos.forEach((p) => (p.mediaIds = mediaIds));
+    // "Render it now": turn the plan straight into an MP4 (render credits as usual).
+    if (b.renderNow && (await ffmpegAvailable())) {
+      for (const v of videos) {
+        const credits = videoCredits(v.video?.length, "render");
+        try {
+          await spendCredits(user.id, credits);
+        } catch {
+          break; // not enough credits to render: the plan is still saved and can be rendered later
+        }
+        v.render = { status: "queued", progress: 0, message: "Waiting to render…", credits, updatedAt: nowIso() };
+      }
+    }
     await savePosts(videos);
+    for (const v of videos) if (v.render?.status === "queued") enqueueRender(user.id, v.id, v.render.credits ?? 0);
     await log("info", "generate", `${fromBank ? "From Claude's daily batch (API out of credits): " : ""}Video plan${videos.length > 1 ? "s" : ""}: ${videos.map((p) => `“${p.hook}”`).join(", ")}`, { platform: b.platform });
     return ok(videos);
   }
@@ -63,7 +83,7 @@ export const POST = authed(async (req: Request) => {
 
   const { posts, fromBank } = await withBankFallback(b.platform, "text", count, s, () =>
     withCredits(count * CREDIT_COST.post, () =>
-      generatePosts({ platform: b.platform, count, pillars, format, topic: b.topic?.slice(0, 500), mature: b.mature }, s),
+      generatePosts({ platform: b.platform, count, pillars: genre ? undefined : pillars, format, topic: b.topic?.slice(0, 500), mature: b.mature, genre, sourceText }, s),
     ),
   );
   if (b.imageUrl) posts.forEach((p) => (p.imageUrl = b.imageUrl));

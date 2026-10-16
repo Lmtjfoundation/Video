@@ -35,7 +35,17 @@ interface CallOpts {
   images?: ImageInput[];
   /** Override the model for this call (e.g. the strongest model on the Unlimited plan). */
   model?: string;
+  /**
+   * Let Claude check live reporting with Anthropic's web search tool, limited to these domains. Only used on the
+   * app's own Claude key (subscribers' own AI keys get the feed reporting only). Falls back to a normal call when
+   * web search isn't enabled for the organization.
+   */
+  webSearch?: { domains: string[]; maxUses?: number };
 }
+
+/** Set when the API refuses the web search tool (not enabled for the org), so we stop asking for an hour. */
+let webSearchOffUntil = 0;
+export const webSearchAvailable = () => Date.now() > webSearchOffUntil;
 
 export async function llmConfigured() {
   return !!(await anthropicKey()) || !!(await getOwnAi());
@@ -85,7 +95,7 @@ export async function callOwnAi(own: OwnAi, { system, user, maxTokens = 2500, te
 export async function claude(opts: CallOpts): Promise<string> {
   const own = await getOwnAi();
   if (own) return callOwnAi(own, opts);
-  const { system, user, maxTokens = 2500, temperature = 0.85, images, model: modelOverride } = opts;
+  const { system, user, maxTokens = 2500, temperature = 0.85, images, model: modelOverride, webSearch } = opts;
   const apiKey = await anthropicKey();
   if (!apiKey) {
     const owner = "Claude isn't connected yet. Add the Claude API key in Admin → App settings → Integrations.";
@@ -98,32 +108,48 @@ export async function claude(opts: CallOpts): Promise<string> {
     : user;
 
   const headers = { ...(await anthropicHeaders(apiKey)), "content-type": "application/json" };
+  let useSearch = !!webSearch?.domains.length && webSearchAvailable();
+  const messages: { role: "user" | "assistant"; content: unknown }[] = [{ role: "user", content }];
+  let collected = "";
   let lastErr = "";
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 6; attempt++) {
     const res = await fetch(API_URL, {
       method: "POST",
       headers,
       body: JSON.stringify({
         model,
-        max_tokens: maxTokens,
+        max_tokens: maxTokens + (useSearch ? 2000 : 0),
         temperature,
         system,
-        messages: [{ role: "user", content }],
+        messages,
+        ...(useSearch
+          ? { tools: [{ type: "web_search_20250305", name: "web_search", max_uses: webSearch!.maxUses ?? 3, allowed_domains: webSearch!.domains }] }
+          : {}),
       }),
     });
 
     if (res.ok) {
       await recordLlmHealth(true);
-      const json = (await res.json()) as { content?: { type: string; text?: string }[] };
-      const text = (json.content ?? [])
+      const json = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string };
+      collected += (json.content ?? [])
         .filter((b) => b.type === "text")
         .map((b) => b.text ?? "")
         .join("");
-      if (!text.trim()) throw new LLMError("Model returned an empty response.");
-      return text;
+      // A long web-search turn can pause; hand the partial turn back so Claude finishes it.
+      if (json.stop_reason === "pause_turn" && attempt < 5) {
+        messages.push({ role: "assistant", content: json.content ?? [] });
+        continue;
+      }
+      if (!collected.trim()) throw new LLMError("Model returned an empty response.");
+      return collected;
     }
 
     const errText = await res.text();
+    if (useSearch && res.status === 400 && /web_search|tool/i.test(errText)) {
+      webSearchOffUntil = Date.now() + 3600_000;
+      useSearch = false;
+      continue;
+    }
     const hint = anthropicWorkspaceHint(res.status, errText);
     if (hint || res.status === 401 || res.status === 403) {
       const owner = hint ?? `Claude rejected the API key (${res.status}). Check it in Admin → App settings → Integrations.`;

@@ -9,12 +9,17 @@ export const VIDEO_LENGTHS: Record<VideoPlan["length"], { label: string; words: 
   s60: { label: "Short · 45–58 seconds", words: "120–150 words", scenes: "12–16", long: false, tier: "short" },
   s90: { label: "61–90 seconds (TikTok only pays over 1 minute)", words: "170–230 words", scenes: "16–22", long: false, tier: "short" },
   m3: { label: "3 minutes · vertical (TikTok, Reels, Shorts)", words: "430–480 words", scenes: "36–48", long: false, tier: "mid" },
-  long: { label: "Long-form · 8–10 minutes (YouTube)", words: "1,200–1,500 words", scenes: "40–60", long: true, tier: "long" },
+  m10: { label: "10 minutes · vertical (TikTok, Facebook, YouTube)", words: "1,350–1,500 words", scenes: "45–65", long: false, tier: "long" },
+  long: { label: "Long-form · 8–10 minutes · 16:9 (YouTube, Facebook)", words: "1,200–1,500 words", scenes: "40–60", long: true, tier: "long" },
 };
 
-/** Which lengths each platform accepts. X caps standard accounts at 2 min 20 s; long-form is YouTube only. */
+/**
+ * Which lengths each platform accepts. X caps standard accounts at 2 min 20 s; Instagram Reels at 3 minutes;
+ * 10-minute vertical video is for TikTok, Facebook and YouTube; 16:9 long-form for YouTube and Facebook.
+ */
 export function lengthAllowed(length: VideoPlan["length"], platform: Platform) {
-  if (length === "long") return platform === "youtube";
+  if (length === "long") return platform === "youtube" || platform === "facebook";
+  if (length === "m10") return platform === "tiktok" || platform === "facebook" || platform === "youtube";
   if (length === "m3") return platform !== "x";
   return true;
 }

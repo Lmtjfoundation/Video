@@ -53,6 +53,9 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultReplyMode: "auto",
   matureX: false,
   xSensitiveConfirmed: false,
+  faceless: true,
+  genres: ["trending", "black_america", "money", "tech_ai"],
+  trendAutopilot: { enabled: false, mode: "schedule", videos: true, videoLength: "s90", autoRender: false },
   pillarMix: {
     wealth_systems: 30,
     ai_leverage: 30,
@@ -82,5 +85,7 @@ export function mergeSettings(stored: Partial<Settings> | null | undefined): Set
     audience: Object.fromEntries(PLATFORMS.map((p) => [p, { ...d.audience[p], ...(s.audience?.[p] ?? {}) }])) as Settings["audience"],
     pillarMix: { ...d.pillarMix, ...(s.pillarMix ?? {}) },
     offers: Array.isArray(s.offers) ? s.offers : d.offers,
+    genres: Array.isArray(s.genres) && s.genres.length ? s.genres : d.genres,
+    trendAutopilot: { ...d.trendAutopilot, ...(s.trendAutopilot ?? {}) },
   };
 }

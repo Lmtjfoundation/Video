@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Clapperboard, Download, FileUp, PenLine, Sparkles, WandSparkles } from "lucide-react";
+import { Clapperboard, Download, FileText, FileUp, PenLine, Sparkles, WandSparkles } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
@@ -15,6 +15,7 @@ import { StarterButton } from "@/components/starter-button";
 import { NICHES } from "@/lib/niches";
 import { lengthAllowed, videoCredits, VIDEO_LENGTHS, VIDEO_STYLES, VIDEO_TARGET } from "@/lib/video-spec";
 import type { VideoPlan } from "@/lib/types";
+import { GENRES } from "@/lib/genres";
 
 const FILTERS: { key: PostStatus | "all" | "video"; label: string }[] = [
   { key: "all", label: "All" },
@@ -45,6 +46,14 @@ export default function Studio() {
   const [media, setMedia] = useState<(MediaItem & { url: string })[]>([]);
   const [attach, setAttach] = useState<string[]>([]);
   const [importOpen, setImportOpen] = useState(false);
+  const [genre, setGenre] = useState("");
+  const [fromText, setFromText] = useState(false);
+  const [sourceText, setSourceText] = useState("");
+  const [faceless, setFaceless] = useState(true);
+  const [renderNow, setRenderNow] = useState(false);
+  useEffect(() => {
+    if (settings) setFaceless(settings.faceless ?? true);
+  }, [settings?.faceless]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     api<{ items: (MediaItem & { url: string })[] }>("/api/media").then((r) => setMedia(r.items)).catch(() => {});
   }, []);
@@ -84,8 +93,8 @@ export default function Studio() {
     try {
       const created = await api<Post[]>("/api/generate", {
         body: kind === "video"
-          ? { kind, platform, count, topic, niche: vNiche, style: vStyle, length: vLen, mediaIds: attach.length ? attach : undefined }
-          : { kind, platform, pillar, format, count, topic, imageUrl: imageUrl || undefined, mediaIds: attach.length ? attach : undefined, mature: platform === "x" && mature },
+          ? { kind, platform, count, topic, niche: genre ? "auto" : vNiche, style: vStyle, length: vLen, mediaIds: attach.length ? attach : undefined, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, faceless, renderNow: fromText && renderNow }
+          : { kind, platform, pillar, format, count, topic, imageUrl: imageUrl || undefined, mediaIds: attach.length ? attach : undefined, mature: platform === "x" && mature, genre: genre || undefined, sourceText: fromText ? sourceText : undefined },
       });
       setPosts((p) => [...created, ...p]);
       setFilter("all");
@@ -125,14 +134,15 @@ export default function Studio() {
         <Card className="h-fit xl:sticky xl:top-10">
           <CardHeader
             title="Generate"
-            subtitle={!kind ? "First, what are you making?" : kind === "video" ? "Video post — a complete, production-ready video plan." : "Text post — on-voice posts with their money potential."}
+            subtitle={!kind ? "First, what are you making?" : kind === "video" ? (fromText ? "Text to video — a faceless video built from your text." : "Video post — a complete, production-ready video plan.") : "Text post — on-voice posts with their money potential."}
             icon={<WandSparkles className="h-4 w-4" />}
             action={kind ? <Button size="sm" variant="ghost" onClick={() => setKind(null)}>Change</Button> : undefined}
           />
           {!kind ? (
             <div className="grid gap-3 p-5">
-              <KindButton icon={<PenLine className="h-5 w-5" />} title="Text post" text="Posts, threads, carousels and captions, ready to publish." onClick={() => { setKind("text"); if (count > 5) setCount(1); }} />
-              <KindButton icon={<Clapperboard className="h-5 w-5" />} title="Video post" text="Full script, scene-by-scene visuals, on-screen text, voice and music direction, titles, thumbnail and caption." onClick={() => { setKind("video"); if (count > 3) setCount(1); }} />
+              <KindButton icon={<PenLine className="h-5 w-5" />} title="Text post" text="Posts, threads, carousels and captions, ready to publish." onClick={() => { setKind("text"); setFromText(false); if (count > 5) setCount(1); }} />
+              <KindButton icon={<Clapperboard className="h-5 w-5" />} title="Video post" text="Full script, scene-by-scene visuals, on-screen text, voice and music direction, titles, thumbnail and caption. Up to 10 minutes." onClick={() => { setKind("video"); setFromText(false); if (count > 3) setCount(1); }} />
+              <KindButton icon={<FileText className="h-5 w-5" />} title="Text to video" text="Paste an article, notes or a script. Get a faceless video built only from it, and render it to MP4 in one go." onClick={() => { setKind("video"); setFromText(true); setRenderNow(true); setCount(1); }} />
             </div>
           ) : (
           <div className="grid gap-4 p-5">
@@ -155,13 +165,21 @@ export default function Studio() {
               </div>
               <p className="mt-1.5 text-[11px] text-white/40">{kind === "video" ? VIDEO_TARGET[platform] : PLATFORM_SPECS[platform].publish}</p>
             </div>
+            <Field label="Genre" hint={<Link href="/trends" className="text-mint-300 hover:underline">Live stories →</Link>}>
+              <Select value={genre} onChange={(e) => setGenre(e.target.value)}>
+                <option value="">{kind === "video" ? "Pick by niche (below)" : "My usual voice and pillars"}</option>
+                {GENRES.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </Select>
+            </Field>
             {kind === "video" ? (
               <>
+                {!genre && (
                 <Field label="Niche">
                   <Select value={vNiche} onChange={(e) => setVNiche(e.target.value)}>
                     {NICHES.filter((n) => n.id !== "kids").map((n) => <option key={n.id} value={n.id}>{n.name} · ${n.rpm.toFixed(2)} RPM</option>)}
                   </Select>
                 </Field>
+                )}
                 <div className="grid grid-cols-[1fr_90px] gap-3">
                   <Field label="Style">
                     <Select value={vStyle} onChange={(e) => setVStyle(e.target.value as VideoPlan["style"])}>
@@ -177,6 +195,13 @@ export default function Studio() {
                     {Object.entries(VIDEO_LENGTHS).filter(([k]) => lengthAllowed(k as VideoPlan["length"], platform)).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                   </Select>
                 </Field>
+                <div className="flex items-start justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+                  <div>
+                    <p className="text-[13px] font-medium text-white">Faceless</p>
+                    <p className="text-xs text-white/50">Voiceover over stock footage, maps, documents and AI scenes. Nobody on camera.</p>
+                  </div>
+                  <Switch checked={faceless} onChange={setFaceless} label="Faceless video" />
+                </div>
               </>
             ) : (
             <>
@@ -207,9 +232,29 @@ export default function Studio() {
             </div>
             </>
             )}
+            {fromText ? (
+              <>
+                <Field label="Your text" hint={`${sourceText.length.toLocaleString()} / 15,000`}>
+                  <Textarea value={sourceText} onChange={(e) => setSourceText(e.target.value.slice(0, 15000))} placeholder="Paste an article, your notes, a transcript or a finished script. The video uses only what's in here." className="min-h-[180px]" />
+                </Field>
+                {kind === "video" && (
+                  <div className="flex items-start justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+                    <div>
+                      <p className="text-[13px] font-medium text-white">Render the video right away</p>
+                      <p className="text-xs text-white/50">Voice, visuals and captions into an MP4 · {videoCredits(vLen, "render")} more credits.</p>
+                    </div>
+                    <Switch checked={renderNow} onChange={setRenderNow} label="Render now" />
+                  </div>
+                )}
+              </>
+            ) : (
+              <button className="focus-ring -mt-1 w-fit text-left text-xs text-white/45 hover:text-white" onClick={() => setFromText(true)}>+ Build it from my own text instead</button>
+            )}
+            {!fromText && (
             <Field label={kind === "video" ? "Topic or story" : "Topic or angle"} hint={kind === "video" ? "optional — blank picks the strongest documented story" : "optional"}>
               <Textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder={kind === "video" ? "e.g. The Great Emu War of 1932" : "e.g. Why most people's 'side hustle' is a second job with worse pay"} className="min-h-[80px]" />
             </Field>
+            )}
             {media.length > 0 && (
               <div>
                 <span className="mb-1.5 block text-[13px] font-medium text-white/80">Attach media <span className="font-normal text-white/40">· {platform === "instagram" ? "first image is used for the post" : "optional"}</span></span>
@@ -246,7 +291,7 @@ export default function Studio() {
                 <Switch checked={mature} onChange={setMature} label="Mature post" tone="red" />
               </div>
             )}
-            <Button variant="primary" size="lg" loading={busy} onClick={generate} disabled={!settings}>
+            <Button variant="primary" size="lg" loading={busy} onClick={generate} disabled={!settings || (fromText && sourceText.trim().length < 40)}>
               <Sparkles className="h-4 w-4" />{" "}
               {kind === "video"
                 ? busy ? "Producing…" : `Generate video plan · ${videoCost} credit${videoCost > 1 ? "s" : ""}`

@@ -2,7 +2,9 @@ import "server-only";
 import { claudeJson } from "./llm";
 import { NICHES, QUALITY_BAR } from "./niches";
 import { PLATFORM_SPECS } from "./platforms/specs";
-import { finalizePost, pickPillars } from "./generate";
+import { finalizePost, genrePrompt, pickPillars, reachAndMoney, searchFor, tagPosts, type GenreContext } from "./generate";
+import { genreById } from "./genres";
+import { FACELESS, NEWS_LOCK, ON_CAMERA } from "./viral";
 import { listPosts } from "./repo";
 import { VIDEO_LENGTHS, VIDEO_STYLES, VIDEO_TARGET } from "./video-spec";
 import type { Platform, Post, Settings, VideoPlan, VideoScene } from "./types";
@@ -31,7 +33,9 @@ export interface RawVideo {
   moneyAngle?: string;
 }
 
-export interface VideoOptions {
+export interface VideoOptions extends GenreContext {
+  /** Nobody on camera (voiceover + visuals). Defaults to the account's setting. */
+  faceless?: boolean;
   platform: Platform;
   count: number;
   niche: string;
@@ -43,16 +47,23 @@ export interface VideoOptions {
 
 export async function generateVideoPosts(o: VideoOptions, settings: Settings): Promise<Post[]> {
   const fmt = VIDEO_LENGTHS[o.length];
+  const g = genreById(o.genre);
+  if (g && (!o.niche || o.niche === "auto")) o = { ...o, niche: g.niche };
+  if (o.stories?.length) o = { ...o, count: o.stories.length };
   const n = NICHES.find((x) => x.id === o.niche);
+  const genreBlock = await genrePrompt(o, o.count);
+  const faceless = o.faceless ?? settings.faceless ?? true;
   const recent = (await listPosts()).filter((p) => p.platform === o.platform).slice(0, 25).map((p) => `- ${p.hook}`);
   const spec = PLATFORM_SPECS[o.platform];
   const user = `Write ${o.count} distinct, production-ready video${o.count > 1 ? "s" : ""} — the best-performing quality possible, not a draft.
 PLATFORM: ${VIDEO_TARGET[o.platform]}.
 NICHE: ${n ? `${n.name} (measured YouTube median RPM $${n.rpm}; formats that work: ${n.formats})` : "highest-earning fit for the topic"}.
 STYLE: ${VIDEO_STYLES[o.style]}. ${STYLE_RULES[o.style]}
-LENGTH: ${fmt.label}; narration totals ${fmt.words} across ${fmt.scenes} scenes${fmt.long ? "; re-hook every 30–60 seconds and build to a payoff" : fmt.tier === "mid" ? "; vertical 9:16; a new visual every 3–5 seconds; re-hook every 30–45 seconds with a new question or reveal, and save the biggest payoff for the last 20 seconds" : "; a new visual every 2–4 seconds"}.
-${o.topic ? `TOPIC: ${o.topic}` : "TOPIC: choose the most attention-grabbing, high-earning, documented story for this niche."}
+LENGTH: ${fmt.label}; narration totals ${fmt.words} across ${fmt.scenes} scenes${fmt.tier === "long" ? `; ${fmt.long ? "16:9 landscape" : "vertical 9:16"}; chapters; re-hook every 30–60 seconds with a new question, reveal or stake, and build to a payoff` : fmt.tier === "mid" ? "; vertical 9:16; a new visual every 3–5 seconds; re-hook every 30–45 seconds with a new question or reveal, and save the biggest payoff for the last 20 seconds" : "; a new visual every 2–4 seconds"}.
+${genreBlock ? `${genreBlock}\n` : ""}${o.topic ? `TOPIC: ${o.topic}` : o.stories?.length || o.sourceText ? "" : "TOPIC: choose the most attention-grabbing, high-earning, documented story for this niche."}
 ${QUALITY_BAR}
+${faceless ? FACELESS : ON_CAMERA}
+${await reachAndMoney(o.platform)}
 PRODUCTION CRAFT:
 - 0–2 s: spoken hook + matching visual hook + on-screen text. No intro, no "in this video", no greeting, no logo.
 - Every scene: what is said, what is on screen (≤6 words, punchy), exactly what is shown (a stock-footage search phrase or a detailed cinematic AI image/video prompt — no real person's likeness, no logos), the camera move or edit, and a sound effect where it adds punch.
@@ -65,15 +76,17 @@ ${recent.length ? recent.join("\n") : "- (none yet)"}
 Reply with ONLY JSON:
 {"videos":[{"titles":["3 options, strongest first, under 70 characters"],"hook":"first spoken line","caption":"…","hashtags":["…"],"cta":"…","thumbnail":{"text":"2–4 words","prompt":"…"},"voice":"…","music":"…","scenes":[{"time":"0:00–0:02","narration":"…","onScreen":"…","visual":"…","motion":"…","sfx":""}],"loopLine":"…","factCheck":["every factual claim to verify"],"moneyAngle":"how this video earns"}]}`;
 
+  const producer = "You are a top faceless-video producer and scriptwriter. You only use documented facts, you never pad, and every line earns its place.";
   const res = await claudeJson<{ videos?: RawVideo[] }>({
-    system: "You are a top faceless-video producer and scriptwriter. You only use documented facts, you never pad, and every line earns its place.",
+    system: o.genre || o.stories?.length || o.sourceText ? `${NEWS_LOCK}\n\n${producer}` : producer,
     user,
-    maxTokens: (fmt.long ? 9000 : fmt.tier === "mid" ? 6500 : 3500) * o.count,
+    maxTokens: (fmt.tier === "long" ? 12000 : fmt.tier === "mid" ? 6500 : 3500) * o.count,
     temperature: 0.7,
+    webSearch: await searchFor(o),
   });
   const list = (res.videos ?? []).filter((v) => Array.isArray(v?.scenes) && v.scenes!.length).slice(0, o.count);
   if (!list.length) throw new Error("The video plan came back empty. Try again.");
-  return list.map((v) => videoPost(v, o, settings));
+  return tagPosts(list.map((v) => videoPost(v, o, settings)), o);
 }
 
 export function videoPost(v: RawVideo, o: Pick<VideoOptions, "platform" | "niche" | "style" | "length" | "topic" | "mediaIds">, settings: Settings): Post {

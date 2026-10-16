@@ -56,8 +56,12 @@ export interface Post {
   mediaIds?: string[];
   /** Mature (18+) post — X only, never auto-published */
   mature?: boolean;
-  /** "claude-batch" when Claude wrote it in a scheduled cloud session and the app imported it */
-  source?: "claude-batch";
+  /** "claude-batch" when Claude wrote it in a scheduled cloud session and the app imported it; "trend-autopilot" when Trend Autopilot wrote it */
+  source?: "claude-batch" | "trend-autopilot";
+  /** Content genre (src/lib/genres.ts), e.g. "black_america" */
+  genre?: string;
+  /** The reporting a news-based post was built from, so it can be checked before posting */
+  sources?: { name: string; url: string }[];
   /** Admin's note when a post is rejected or edited in review */
   reviewNote?: string;
   /** "video" posts carry a full production plan in `video` */
@@ -180,6 +184,23 @@ export interface Settings {
   matureX: boolean;
   /** User confirmed their X account has "Mark media you post as containing sensitive material" turned on */
   xSensitiveConfirmed: boolean;
+  /** Videos are faceless (voiceover + visuals, nobody on camera). On by default. */
+  faceless: boolean;
+  /** Content genres this account focuses on (src/lib/genres.ts). */
+  genres: string[];
+  trendAutopilot: TrendAutopilotSettings;
+}
+
+/** Trend Autopilot: writes posts (and optionally videos) from live news in the chosen genres into open slots. */
+export interface TrendAutopilotSettings {
+  enabled: boolean;
+  /** "schedule" fills open calendar slots (they publish when Autopilot publishing is on); "drafts" only writes drafts. */
+  mode: "schedule" | "drafts";
+  /** Also write a video plan per run for TikTok / YouTube / Instagram / Facebook when they're on. */
+  videos: boolean;
+  videoLength: VideoPlan["length"];
+  /** Render those video plans into MP4s automatically (uses render credits). */
+  autoRender: boolean;
 }
 
 export interface MediaItem {
@@ -298,7 +319,7 @@ export interface VideoScene {
 export interface VideoPlan {
   niche: string;
   style: "true" | "funny" | "explainer" | "countdown" | "fiction";
-  length: "s30" | "s60" | "s90" | "m3" | "long";
+  length: "s30" | "s60" | "s90" | "m3" | "m10" | "long";
   topic?: string;
   titles: string[];
   thumbnail: { text?: string; prompt?: string };

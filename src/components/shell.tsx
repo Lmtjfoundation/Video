@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Compass,
   CreditCard,
+  Flame,
   Images,
   LayoutDashboard,
   LogOut,
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 type NavItem = { href: string; label: string; short: string; icon: typeof Activity; badge?: "pending" | "review"; admin?: boolean };
 const NAV: NavItem[] = [
   { href: "/", label: "Command Center", short: "Home", icon: LayoutDashboard },
+  { href: "/trends", label: "Trend Radar", short: "Trends", icon: Flame },
   { href: "/platforms", label: "Platforms", short: "Platforms", icon: Share2 },
   { href: "/niche", label: "Niche Lab", short: "Niches", icon: Compass },
   { href: "/stories", label: "Story Studio", short: "Stories", icon: BookOpenText },
@@ -39,7 +41,7 @@ const NAV: NavItem[] = [
   { href: "/admin", label: "Admin", short: "Admin", icon: ShieldCheck, badge: "review", admin: true },
 ];
 /** Bottom bar on phones: the five things people do most. */
-const MOBILE_TABS = ["/", "/stories", "/studio", "/calendar", "/engage"];
+const MOBILE_TABS = ["/", "/trends", "/studio", "/calendar", "/engage"];
 const BARE_ROUTES = ["/login", "/signup", "/pricing", "/offline", "/terms", "/privacy", "/data-deletion", "/forgot", "/reset"];
 
 function Logo({ compact }: { compact?: boolean }) {

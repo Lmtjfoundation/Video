@@ -2,6 +2,7 @@
   "crons": [
     { "path": "/api/cron/publish", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/engage", "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/inbox", "schedule": "*/15 * * * *" }
+    { "path": "/api/cron/inbox", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/trends", "schedule": "*/30 * * * *" }
   ]
 }

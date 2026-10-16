@@ -27,6 +27,8 @@ export interface Plan {
     bulkImport: boolean;
     repurpose: boolean;
     priorityModel: boolean;
+    /** Every piece is written with the full money stack (src/lib/viral.ts). */
+    moneyStack: boolean;
   };
   highlights: string[];
   popular?: boolean;
@@ -59,7 +61,7 @@ export const PLANS: Plan[] = [
     maxPostsPerDay: 1,
     maxPlatforms: 2,
     storageMb: 250,
-    features: { autoReplies: false, nicheResearch: false, longStories: false, bulkImport: false, repurpose: false, priorityModel: false },
+    features: { autoReplies: false, nicheResearch: false, longStories: false, bulkImport: false, repurpose: false, priorityModel: false, moneyStack: false },
     highlights: ["30 AI credits a month", "30 published posts a month", "2 connected platforms", "Niche Lab revenue data", "Short story scripts"],
   },
   {
@@ -73,7 +75,7 @@ export const PLANS: Plan[] = [
     maxPostsPerDay: 3,
     maxPlatforms: 3,
     storageMb: 2_000,
-    features: { autoReplies: false, nicheResearch: true, longStories: false, bulkImport: true, repurpose: true, priorityModel: false },
+    features: { autoReplies: false, nicheResearch: true, longStories: false, bulkImport: true, repurpose: true, priorityModel: false, moneyStack: false },
     highlights: ["400 AI credits a month", "300 posts a month, up to 3 a day", "3 platforms", "Niche research reports", "Repurpose to every platform", "Bulk CSV import · 2 GB uploads"],
   },
   {
@@ -89,7 +91,7 @@ export const PLANS: Plan[] = [
     storageMb: 10_000,
     popular: true,
     trial: { days: TRIAL_DAYS, firstMonth: 10 },
-    features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true },
+    features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true, moneyStack: false },
     highlights: ["1,200 AI credits a month", "1,500 posts a month, up to 6 a day", "All 6 platforms + any app via webhook", "Automatic comment replies", "8–10 minute scripts on our strongest model", "10 GB uploads"],
   },
   {
@@ -104,8 +106,8 @@ export const PLANS: Plan[] = [
     maxPlatforms: 7,
     storageMb: 50_000,
     trial: { days: TRIAL_DAYS, firstMonth: 20 },
-    features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true },
-    highlights: ["Unlimited posts — you choose posts per day", "3,500 AI credits a month", "All 6 platforms + any app via webhook", "Everything in Pro", "Strongest model for long scripts", "50 GB uploads"],
+    features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true, moneyStack: true },
+    highlights: ["Unlimited posts — you choose posts per day", "3,500 AI credits a month", "Money Stack on every piece: every ad, affiliate, sponsor and search lever", "All 6 platforms + any app via webhook", "Everything in Pro", "Strongest model for long scripts", "50 GB uploads"],
   },
 ];
 
@@ -137,6 +139,8 @@ export const CREDIT_COST = {
   storyShort: 2,
   storyLong: 6,
   repurposePerPlatform: 1,
+  /** Added to a piece built from a live story: Claude checks the details against current newsroom coverage. */
+  liveCheck: 1,
 } as const;
 export type CreditAction = keyof typeof CREDIT_COST;
 
@@ -156,6 +160,7 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   storyShort: "Short story script",
   storyLong: "Long story script (8–10 min)",
   repurposePerPlatform: "Repurpose to one platform",
+  liveCheck: "Live fact-check of a news piece (added to the post or video)",
 };
 
 /** Hard safety ceiling even on Unlimited: beyond this, platforms treat accounts as spam. */

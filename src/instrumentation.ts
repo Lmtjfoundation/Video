@@ -1,7 +1,7 @@
 /**
  * Built-in scheduler for always-on servers (Railway, Render, a VPS, Docker).
  * Set INTERNAL_SCHEDULER=1 and the server calls its own cron endpoints:
- * publishing every 5 minutes, engagement every 15. Leave it off on Vercel (vercel.json crons do this there).
+ * publishing every 5 minutes, engagement every 15, Trend Autopilot every 30. Leave it off on Vercel (vercel.json crons do this there).
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs" || process.env.INTERNAL_SCHEDULER !== "1") return;
@@ -26,6 +26,8 @@ export async function register() {
   const loop = async () => {
     // Import Claude-written drafts first, so a batch is in the account before publishing runs.
     if (tick % 3 === 0) await hit("/api/cron/inbox");
+    // Trend Autopilot fills the next few hours with posts from live news (each account at most every 2 hours).
+    if (tick % 6 === 0) await hit("/api/cron/trends");
     await hit("/api/cron/publish");
     if (tick++ % 3 === 0) await hit("/api/cron/engage");
   };

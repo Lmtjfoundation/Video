@@ -7,6 +7,11 @@ import { renderPost } from "./compose";
 import { checkOutput } from "./safety";
 import { scorePost } from "./scoring";
 import { listPosts } from "./repo";
+import { currentPlan } from "./credits";
+import { getOwnAi } from "./ai-provider";
+import { genreById } from "./genres";
+import { todaysHeadlines, type TrendStory } from "./trends";
+import { ALGORITHM_PLAYBOOK, MONEY_STACK, NEWS_LOCK, RELIABLE_DOMAINS, VIRAL_CRAFT, storyBlock } from "./viral";
 import type { Format, Pillar, Platform, Post, Settings } from "./types";
 import { FORMATS, PILLARS } from "./types";
 import { nowIso, uid } from "./utils";
@@ -120,24 +125,86 @@ export function finalizePost(post: Post, settings: Settings): Post {
   return post;
 }
 
+export interface GenreContext {
+  /** Content genre (src/lib/genres.ts). Switches the writer to the newsroom voice and the genre's rules. */
+  genre?: string;
+  /** Live stories to build from: one post (or video) per story, in order. */
+  stories?: TrendStory[];
+  /** Pasted material (article, notes, transcript): build only from it. */
+  sourceText?: string;
+}
+
+/** The genre / live-news / source-material part of a prompt, shared by posts and videos. */
+export async function genrePrompt(ctx: GenreContext, count: number) {
+  const g = genreById(ctx.genre);
+  const parts: string[] = [];
+  if (g) parts.push(`GENRE: ${g.name}. ${g.brief}${g.rules ? `\n${g.rules}` : ""}`);
+  if (ctx.stories?.length) {
+    parts.push(ctx.stories.map((st, i) => `${ctx.stories!.length > 1 ? `PIECE ${i + 1} — ` : ""}${storyBlock(st)}`).join("\n\n"));
+    parts.push("Each piece covers its own story above. Put the outlet's name in the caption (\"Source: …\"). If a detail isn't in the reporting, leave it out.");
+  } else if (g && !g.feeds.length && !ctx.sourceText) {
+    const today = await todaysHeadlines(6);
+    parts.push(`Evergreen genre: use specific, documented stories. Make each piece feel timely: tie it to today's date, an anniversary, or one of today's headlines ONLY where the connection is real:\n${today.map((t) => `- ${t.title} (${t.source})`).join("\n") || "- (headlines unavailable)"}`);
+  }
+  if (ctx.sourceText) parts.push(`SOURCE MATERIAL (use only facts from this; don't add outside claims):\n"""\n${ctx.sourceText.slice(0, 15000)}\n"""`);
+  void count;
+  return parts.join("\n\n");
+}
+
+/** Newsroom voice when the piece is genre / news / source based; the original niche voice otherwise. */
+export function systemFor(ctx: GenreContext, mature = false) {
+  if (ctx.genre || ctx.stories?.length || ctx.sourceText) return NEWS_LOCK;
+  return mature ? `${PERSONALITY_LOCK}\n\n${MATURE_X_ADDON}` : PERSONALITY_LOCK;
+}
+
+/** Web search on the app's Claude key for news pieces, so details are checked against live reporting. */
+export async function searchFor(ctx: GenreContext) {
+  if (!ctx.stories?.length || (await getOwnAi())) return undefined;
+  return { domains: RELIABLE_DOMAINS, maxUses: Math.min(5, 2 + ctx.stories.length) };
+}
+
+/** Platform ranking signals + the money stack on plans that include it. */
+export async function reachAndMoney(platform: Platform) {
+  const plan = await currentPlan().catch(() => null);
+  return `${VIRAL_CRAFT}\n\nALGORITHM (${PLATFORM_SPECS[platform].name}): ${ALGORITHM_PLAYBOOK[platform]}${plan?.features.moneyStack ? `\n\n${MONEY_STACK}` : ""}`;
+}
+
+/** Copies the genre and source links onto finished posts. */
+export function tagPosts(posts: Post[], ctx: GenreContext) {
+  posts.forEach((p, i) => {
+    if (ctx.genre) p.genre = ctx.genre;
+    const st = ctx.stories?.[ctx.stories.length > 1 ? i : 0];
+    if (st) {
+      p.topic = st.title;
+      p.sources = st.coverage.slice(0, 4).map((c) => ({ name: c.source, url: c.link }));
+    }
+  });
+  return posts;
+}
+
 export async function generatePosts(
-  opts: { platform: Platform; count: number; pillars?: Pillar[]; format?: Format; topic?: string; mature?: boolean },
+  opts: { platform: Platform; count: number; pillars?: Pillar[]; format?: Format; topic?: string; mature?: boolean } & GenreContext,
   settings: Settings,
 ): Promise<Post[]> {
-  const mature = !!opts.mature && opts.platform === "x" && settings.matureX;
+  const mature = !!opts.mature && opts.platform === "x" && settings.matureX && !opts.genre;
   const spec = PLATFORM_SPECS[opts.platform];
-  const pillars = opts.pillars?.length ? opts.pillars : pickPillars(opts.count, settings.pillarMix, Date.now() % 997);
+  const g = genreById(opts.genre);
+  const count = opts.stories?.length ? opts.stories.length : opts.count;
+  const pillars = opts.pillars?.length ? opts.pillars : g ? (Array(count).fill(g.pillar) as Pillar[]) : pickPillars(count, settings.pillarMix, Date.now() % 997);
   const recent = await recentHooks(opts.platform);
+  const genreBlock = await genrePrompt(opts, count);
 
-  const user = `Write ${opts.count} distinct ${spec.name} posts.
+  const user = `Write ${count} distinct ${spec.name} posts.
 
 PLATFORM RULES
 ${spec.writingRules}
 Allowed formats: ${spec.formats.join(", ")}${opts.format ? ` (use "${opts.format}" for all posts)` : " (pick the best format per idea)"}.
-
+${genreBlock ? `\n${genreBlock}\n` : `
 PILLARS — one post per entry, in this order:
-${pillars.map((p, i) => `${i + 1}. ${p}: ${PILLAR_BRIEF[p]}`).join("\n")}
+${pillars.map((p, i) => `${i + 1}. ${p}: ${PILLAR_BRIEF[p]}`).join("\n")}`}
 ${opts.topic ? `\nFOCUS TOPIC (apply to every post): ${opts.topic}` : ""}
+
+${await reachAndMoney(opts.platform)}
 ${settings.brandVoiceNotes ? `\nCREATOR NOTES: ${settings.brandVoiceNotes}` : ""}
 
 DO NOT REPEAT these recent hooks or their ideas:
@@ -151,12 +218,13 @@ OUTPUT — JSON only:
 {"posts":[{"pillar":"wealth_systems","format":"short","topic":"…","hook":"…","body":"…","parts":[],"hashtags":["…"],"cta":"…","offerId":null,"moneyAngle":"one sentence on how this post earns"}]}
 Field rules: "hook" is the first line / headline / title. "body" is the rest of the post (for threads and scripts it may be a 1–2 sentence description). "parts" holds thread posts, carousel slides, or script beats; otherwise []. Hashtags without "#". Never write the offer URL or a disclosure — the app adds both.`;
 
-  const system = mature ? `${PERSONALITY_LOCK}\n\n${MATURE_X_ADDON}` : PERSONALITY_LOCK;
-  const res = await claudeJson<{ posts: Draft[] }>({ system, user, maxTokens: 1200 * opts.count + 800 });
-  return (res.posts ?? [])
+  const system = systemFor(opts, mature);
+  const res = await claudeJson<{ posts: Draft[] }>({ system, user, maxTokens: 1200 * count + 800, webSearch: await searchFor(opts) });
+  const posts = (res.posts ?? [])
     .filter((d) => d?.hook)
-    .slice(0, opts.count)
-    .map((d) => toPost(d, opts.platform, settings, mature ? { mature: true } : undefined));
+    .slice(0, count)
+    .map((d, i) => toPost(g ? { ...d, pillar: pillars[i] ?? g.pillar } : d, opts.platform, settings, mature ? { mature: true } : undefined));
+  return tagPosts(posts, opts);
 }
 
 /** One-click "Maximize Money Potential" rewrite. Keeps id, schedule and image. */

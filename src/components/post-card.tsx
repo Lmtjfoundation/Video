@@ -160,6 +160,18 @@ export function PostCard({
           {post.status === "pending_review" && <p className="mt-3 rounded-lg bg-gold-400/[0.06] px-3 py-2 text-xs text-gold-300 ring-1 ring-gold-400/20">Waiting for admin approval before it can publish.</p>}
           {post.reviewNote && <p className={cn("mt-3 rounded-lg px-3 py-2 text-xs ring-1", post.status === "rejected" ? "bg-red-500/[0.06] text-red-200 ring-red-400/20" : "bg-white/[0.03] text-white/60 ring-white/10")}>Reviewer note: {post.reviewNote}{post.status === "rejected" ? " — edit it, then schedule again to resubmit." : ""}</p>}
           {post.moneyAngle && <p className="mt-3 text-xs text-white/50"><span className="text-gold-300">Money angle:</span> {post.moneyAngle}</p>}
+          {post.sources && post.sources.length > 0 && (
+            <p className="mt-2 text-xs text-white/50">
+              <span className="text-mint-300">Built from:</span>{" "}
+              {post.sources.map((src, i) => (
+                <span key={src.url}>
+                  {i > 0 && " · "}
+                  <a href={src.url} target="_blank" rel="noreferrer" className="underline decoration-white/20 hover:text-white">{src.name}</a>
+                </span>
+              ))}
+              <span className="text-white/35"> — check the facts before it posts.</span>
+            </p>
+          )}
           {!compact && post.scoreNotes.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {post.scoreNotes.map((n) => (

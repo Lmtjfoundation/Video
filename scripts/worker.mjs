@@ -17,6 +17,8 @@ async function hit(path) {
 }
 
 async function loop() {
+  // Trend Autopilot every 6th tick (≈30 min); each account runs at most every 2 hours.
+  if (tick % 6 === 0) await hit("/api/cron/trends");
   await hit("/api/cron/publish");
   // Engagement runs every 3rd tick (≈15 min at the default interval) to stay gentle on APIs.
   if (tick % 3 === 0) await hit("/api/cron/engage");
