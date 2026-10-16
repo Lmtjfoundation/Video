@@ -40,9 +40,10 @@ export const AI_PROVIDERS: Record<AiProvider, AiProviderInfo> = {
   gemini: {
     id: "gemini",
     name: "Google Gemini",
-    blurb: "Google's Gemini models through Google AI Studio. Has a free tier with daily limits.",
-    defaultModel: "gemini-2.5-flash",
-    modelHint: "Any model on ai.google.dev → Models, e.g. gemini-2.5-flash or gemini-2.5-pro.",
+    blurb:
+      "Google's Gemini models through Google AI Studio. The free tier has daily limits, and Google may use free-tier prompts and answers to improve its products; a key with billing turned on is not used that way.",
+    defaultModel: "gemini-3.8-flash",
+    modelHint: "Any model on ai.google.dev → Models, e.g. gemini-3.8-flash (fast) or gemini-3.5-flash-lite (cheapest).",
     keyUrl: "https://aistudio.google.com/apikey",
   },
   openrouter: {
@@ -50,7 +51,7 @@ export const AI_PROVIDERS: Record<AiProvider, AiProviderInfo> = {
     name: "OpenRouter (hundreds of models)",
     blurb: "One key for models from OpenAI, Google, Meta, Mistral, DeepSeek, xAI and more. 'openrouter/auto' picks one for you.",
     defaultModel: "openrouter/auto",
-    modelHint: "Any model id from openrouter.ai/models, e.g. openai/gpt-5 or google/gemini-2.5-pro.",
+    modelHint: "Any model id listed on openrouter.ai/models, e.g. openai/gpt-5.",
     keyPrefix: "sk-or-",
     keyUrl: "https://openrouter.ai/keys",
   },

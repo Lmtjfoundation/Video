@@ -10,17 +10,19 @@ import { nowIso } from "./utils";
 export interface LlmHealth {
   ok: boolean;
   message?: string;
+  /** Claude is failing but the Gemini backup answered, so subscribers are not affected. */
+  covered?: boolean;
   at: string;
 }
 
 const ROW = "llm_health";
-let last: { ok: boolean; message?: string } | null = null;
+let last: { ok: boolean; message?: string; covered: boolean } | null = null;
 
-export async function recordLlmHealth(ok: boolean, message?: string) {
-  if (last && last.ok === ok && last.message === message) return;
-  last = { ok, message };
+export async function recordLlmHealth(ok: boolean, message?: string, covered = false) {
+  if (last && last.ok === ok && last.message === message && last.covered === covered) return;
+  last = { ok, message, covered };
   try {
-    await gdb().upsert("kv", { id: ROW, value: { ok, message, at: nowIso() } satisfies LlmHealth });
+    await gdb().upsert("kv", { id: ROW, value: { ok, message, covered: covered || undefined, at: nowIso() } satisfies LlmHealth });
   } catch (e) {
     console.error("[nexus:llm-health]", (e as Error).message);
   }

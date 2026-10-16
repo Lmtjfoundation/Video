@@ -12,6 +12,8 @@ export const GET = authed(async () => ok(await integrationStatus()), { admin: tr
 const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   anthropicKey: { re: /^sk-ant-[A-Za-z0-9_-]{20,}$/, msg: "A Claude API key starts with sk-ant- (Claude Console → API keys)." },
   anthropicWorkspaceId: { re: /^wrkspc_[A-Za-z0-9]{6,}$/, msg: "A workspace ID starts with wrkspc_ (Claude Console → Settings → Workspaces → ID column)." },
+  geminiKey: { re: /^[A-Za-z0-9_.-]{20,}$/, msg: "That doesn't look like a Gemini API key. Create one at aistudio.google.com/apikey (it usually starts with AIza) and paste only the key." },
+  geminiModel: { re: /^gemini-[a-z0-9][a-z0-9._-]{1,60}$/, msg: "A Gemini model code looks like gemini-3.8-flash (see ai.google.dev/gemini-api/docs/models). Leave it blank for the app's default." },
   elevenlabsKey: { re: /^[A-Za-z0-9_-]{20,}$/, msg: "That doesn't look like an ElevenLabs API key (elevenlabs.io → Developers → API keys)." },
   elevenlabsVoiceId: { re: /^[A-Za-z0-9]{10,40}$/, msg: "A voice ID is a short code of letters and numbers (ElevenLabs → Voices → ID)." },
   pixabayKey: { re: /^[A-Za-z0-9-]{20,}$/, msg: "That doesn't look like a Pixabay API key. Sign in at pixabay.com/api/docs and copy the value in the \"key\" row (numbers, a dash, then letters and numbers)." },
@@ -30,6 +32,9 @@ export const PUT = authed(async (req) => {
     if (v && !rule.re.test(v)) return fail(rule.msg);
     patch[field as keyof Integrations] = v;
   }
+  for (const flag of ["geminiForTrials", "geminiBackup"] as const) {
+    if (flag in b) (patch as Record<string, unknown>)[flag] = b[flag] === false ? false : "";
+  }
   if ("emailFrom" in b) {
     const from = typeof b.emailFrom === "string" ? b.emailFrom.trim() : "";
     if (from && !validFrom(from)) return fail('Use an address like "Nexus Pulse <support@yourdomain.com>" or support@yourdomain.com.');
@@ -40,7 +45,7 @@ export const PUT = authed(async (req) => {
   return ok(await integrationStatus());
 }, { admin: true });
 
-/** Actions: { action: "test", which } (which = anthropic | elevenlabs | pixabay | pexels | stripe | email) · { action: "stripe-connect", secretKey? } · { action: "stripe-disconnect" } */
+/** Actions: { action: "test", which } (which = anthropic | gemini | elevenlabs | pixabay | pexels | stripe | email) · { action: "stripe-connect", secretKey? } · { action: "stripe-disconnect" } */
 export const POST = authed(async (req, user) => {
   const b = await body<{ action?: string; which?: string; secretKey?: string }>(req);
   if (b.action === "test" && b.which === "email") {
@@ -60,8 +65,8 @@ export const POST = authed(async (req, user) => {
     }
   }
   if (b.action === "test") {
-    const which = b.which as "anthropic" | "elevenlabs" | "pixabay" | "pexels" | "stripe";
-    if (!["anthropic", "elevenlabs", "pixabay", "pexels", "stripe"].includes(which)) return fail("Unknown integration.");
+    const which = b.which as "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe";
+    if (!["anthropic", "gemini", "elevenlabs", "pixabay", "pexels", "stripe"].includes(which)) return fail("Unknown integration.");
     const r = await testIntegration(which);
     console.log(`[integrations] test ${which}: ${r.ok ? "ok" : "failed"} — ${r.message}`);
     return ok(r);

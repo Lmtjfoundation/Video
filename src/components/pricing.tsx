@@ -141,7 +141,7 @@ export function PricingTable({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="What credits buy" subtitle="Credits pay for Claude-written content. Posting, scheduling, analytics and safety checks never use credits." />
+          <CardHeader title="What credits buy" subtitle="Credits pay for AI-written content. Posting, scheduling, analytics and safety checks never use credits." />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[420px] text-left text-sm">
               <thead className="text-[11px] uppercase tracking-wider text-white/40"><tr><th className="px-5 py-2.5">Action</th><th className="px-5 py-2.5">Credits</th><th className="px-5 py-2.5">Pro covers / month</th></tr></thead>

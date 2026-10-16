@@ -37,6 +37,7 @@ export default async function PrivacyPage() {
       <p>We share only what each provider needs to do its job for us:</p>
       <ul>
         <li><strong>Anthropic (Claude API)</strong> — prompts containing your niche, settings and drafts, to generate text.</li>
+        <li><strong>Google (Gemini API)</strong> — the same kind of prompts, when we use Gemini to generate text (for free trials, or as a backup when Claude is unavailable).</li>
         <li><strong>ElevenLabs</strong> — script text, to create voiceovers, when voiceover is used.</li>
         <li><strong>Pixabay and Pexels</strong> — search keywords, to find stock footage. No personal information is sent.</li>
         <li><strong>Stripe</strong> — payment and subscription processing.</li>

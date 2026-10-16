@@ -27,7 +27,7 @@ export default function Dashboard() {
   const connected = credentials.filter((c) => c.connected).length;
   const setup = isAdmin
     ? [
-        { ok: env.llm && !aiDown, label: "Claude (AI writing)", hint: aiDown ? "Not working — see the alert above" : "Admin → App settings → Integrations", href: "/admin?tab=settings" },
+        { ok: env.llm && (!aiDown || !!aiDown.covered), label: "AI writing", hint: aiDown ? (aiDown.covered ? "Claude needs attention, Gemini is covering — see the alert above" : "Not working — see the alert above") : "Admin → App settings → Integrations", href: "/admin?tab=settings" },
         { ok: env.encryption, label: "Encryption key", hint: "ENCRYPTION_KEY on the server — run npm run gen:key" },
         { ok: env.appUrl, label: "Public app URL", hint: "APP_URL — needed for linking and uploads" },
         { ok: env.cron, label: "Scheduler", hint: "INTERNAL_SCHEDULER=1 or CRON_SECRET + a cron caller" },
@@ -126,13 +126,17 @@ export default function Dashboard() {
       </Card>
 
       {aiDown && (
-        <Card className="mb-6 border-red-400/30 p-5">
+        <Card className={cn("mb-6 p-5", aiDown.covered ? "border-gold-400/30" : "border-red-400/30")}>
           <div className="flex items-start gap-3">
-            <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+            <TriangleAlert className={cn("mt-0.5 h-5 w-5 shrink-0", aiDown.covered ? "text-gold-300" : "text-red-300")} />
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-red-200">Claude can't write right now — AI writing is paused for you and every subscriber</p>
+              <p className={cn("text-sm font-semibold", aiDown.covered ? "text-gold-200" : "text-red-200")}>
+                {aiDown.covered
+                  ? "Claude can't write right now — Gemini is covering, so subscribers can still generate"
+                  : "Claude can't write right now — AI writing is paused for you and every subscriber"}
+              </p>
               <p className="mt-1 text-[13px] leading-relaxed text-white/70">{aiDown.message}</p>
-              <p className="mt-1 text-[11px] text-white/40">Since {new Date(aiDown.at).toLocaleString()}. This clears by itself after the next successful AI request or Test.</p>
+              <p className="mt-1 text-[11px] text-white/40">Since {new Date(aiDown.at).toLocaleString()}. This clears by itself after the next successful Claude request or Test.</p>
               <Link href="/admin?tab=settings" className="mt-2 inline-block text-[13px] text-mint-300 hover:underline">Open Integrations → Claude →</Link>
             </div>
           </div>

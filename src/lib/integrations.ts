@@ -3,6 +3,9 @@ import { gdb } from "./db";
 import { decrypt, encrypt } from "./crypto";
 import { nowIso } from "./utils";
 import { recordLlmHealth } from "./llm-health";
+import { AI_PROVIDERS } from "./ai-providers";
+import { buildCall, readText } from "./llm-providers";
+import { geminiProblem } from "./llm-route";
 
 /**
  * App-wide service keys the owner pastes in Admin → App settings → Integrations.
@@ -14,6 +17,18 @@ export interface Integrations {
   anthropicKey?: string;
   /** Only for personal/service-account keys that aren't tied to one workspace (sent as anthropic-workspace-id). */
   anthropicWorkspaceId?: string;
+  /**
+   * Google Gemini key owned by the app (not a subscriber's). Used for free trials and as an automatic backup when Claude
+   * can't answer, so subscribers never need an AI account of their own. Use a key from a billing-enabled Google Cloud
+   * project: on the free tier Google may use prompts and answers to improve its products.
+   */
+  geminiKey?: string;
+  /** Model code, e.g. gemini-3.8-flash. Blank = the app's default. */
+  geminiModel?: string;
+  /** Free-trial accounts write with Gemini (default on). */
+  geminiForTrials?: boolean;
+  /** Gemini answers when Claude can't (default on). */
+  geminiBackup?: boolean;
   elevenlabsKey?: string;
   elevenlabsVoiceId?: string;
   /** Pixabay (https://pixabay.com/api/docs/) — free stock video, the main footage source. */
@@ -92,6 +107,26 @@ export function anthropicWorkspaceHint(status: number, body: string) {
   if (status === 404 && /Workspace .* not found/i.test(body)) return "Claude couldn't find that workspace, or this key can't use it. Check the workspace ID in Claude Console → Settings → Workspaces.";
   return null;
 }
+
+/** The app's Gemini connection, or null when no key is set. */
+export interface OwnerGemini {
+  key: string;
+  model: string;
+  forTrials: boolean;
+  backup: boolean;
+}
+export async function ownerGemini(): Promise<OwnerGemini | null> {
+  const i = await getIntegrations();
+  const key = i.geminiKey || process.env.GEMINI_API_KEY || "";
+  if (!key) return null;
+  return {
+    key,
+    model: i.geminiModel || process.env.GEMINI_MODEL || AI_PROVIDERS.gemini.defaultModel,
+    forTrials: i.geminiForTrials !== false,
+    backup: i.geminiBackup !== false,
+  };
+}
+
 export const elevenlabsKey = () => pick("elevenlabsKey", "ELEVENLABS_API_KEY");
 export const elevenlabsVoice = () => pick("elevenlabsVoiceId", "ELEVENLABS_VOICE_ID");
 export const pixabayKey = () => pick("pixabayKey", "PIXABAY_API_KEY");
@@ -136,6 +171,12 @@ export async function integrationStatus() {
   const priced = (await Promise.all(prices.map((k) => stripePriceId(k.split("_")[0], k.split("_")[1] as "month" | "year")))).filter(Boolean).length;
   return {
     anthropic: { ...entry("ANTHROPIC_API_KEY", i.anthropicKey), workspaceId: i.anthropicWorkspaceId || process.env.ANTHROPIC_WORKSPACE_ID || "" },
+    gemini: {
+      ...entry("GEMINI_API_KEY", i.geminiKey),
+      model: i.geminiModel || process.env.GEMINI_MODEL || AI_PROVIDERS.gemini.defaultModel,
+      forTrials: i.geminiForTrials !== false,
+      backup: i.geminiBackup !== false,
+    },
     elevenlabs: { ...entry("ELEVENLABS_API_KEY", i.elevenlabsKey), voiceId: i.elevenlabsVoiceId || process.env.ELEVENLABS_VOICE_ID || "" },
     pixabay: entry("PIXABAY_API_KEY", i.pixabayKey),
     pexels: entry("PEXELS_API_KEY", i.pexelsKey),
@@ -153,7 +194,7 @@ export async function integrationStatus() {
 }
 
 /** Live checks for the admin "Test" buttons. Only the Claude test spends anything: one tiny reply (a tiny fraction of a cent) to confirm billing works. */
-export async function testIntegration(which: "anthropic" | "elevenlabs" | "pixabay" | "pexels" | "stripe"): Promise<{ ok: boolean; message: string }> {
+export async function testIntegration(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe"): Promise<{ ok: boolean; message: string }> {
   try {
     if (which === "anthropic") {
       const key = await anthropicKey();
@@ -187,6 +228,22 @@ export async function testIntegration(which: "anthropic" | "elevenlabs" | "pixab
         hint ?? (res.status === 401 ? "Claude rejected this key (401). Copy it again from the Claude Console → API keys." : `Claude answered ${res.status}: ${text.slice(0, 160)}`);
       await recordLlmHealth(false, msg);
       return { ok: false, message: msg };
+    }
+    if (which === "gemini") {
+      const g = await ownerGemini();
+      if (!g) return { ok: false, message: "No Gemini API key saved yet." };
+      const call = buildCall("gemini", g.key, g.model, { system: "Answer in one word.", user: "Say OK.", maxTokens: 16, temperature: 0.7 });
+      const res = await fetch(call.url, { method: "POST", headers: call.headers, body: JSON.stringify(call.body) });
+      if (res.ok) {
+        const text = readText("gemini", await res.json().catch(() => ({}))).trim();
+        if (!text) return { ok: false, message: `Google accepted the key but ${g.model} returned an empty answer. Press Test again, or choose another model.` };
+        return {
+          ok: true,
+          message: `Gemini works — ${g.model} answered. This test can't see whether billing is on: use a key from a Google Cloud project with billing enabled, because on the free tier Google may use prompts and answers to improve its products.`,
+        };
+      }
+      const body = await res.text();
+      return { ok: false, message: geminiProblem(res.status, body, g.model) ?? `Gemini answered ${res.status}: ${body.replace(/\s+/g, " ").slice(0, 160)}` };
     }
     if (which === "elevenlabs") {
       const key = await elevenlabsKey();

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bot, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Trash2, Users, X } from "lucide-react";
+import { Bot, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, Users, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { PLANS, type PlanId } from "@/lib/plans";
@@ -63,6 +63,7 @@ interface AppSettingsPayload {
 type KeyState = { set: boolean; source?: "server" | "app"; preview?: string; serverFallback?: boolean };
 interface IntegrationStatus {
   anthropic: KeyState & { workspaceId: string };
+  gemini: KeyState & { model: string; forTrials: boolean; backup: boolean };
   elevenlabs: KeyState & { voiceId: string };
   pixabay: KeyState;
   pexels: KeyState;
@@ -460,7 +461,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "elevenlabs" | "pixabay" | "pexels" | "email") {
+  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -492,7 +493,21 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email") {
+  function resetGeminiModel() {
+    run("rm:geminiModel", () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { geminiModel: "" } }), (next) => {
+      setSt(next);
+      toast("Gemini model reset to the app's default", "success");
+    });
+  }
+
+  function toggle(field: "geminiForTrials" | "geminiBackup", on: boolean) {
+    run(`toggle:${field}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { [field]: on } }), (next) => {
+      setSt(next);
+      toast(on ? "Turned on" : "Turned off", "success");
+    });
+  }
+
+  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -559,6 +574,58 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             )}
             {st.anthropic.workspaceId && (
               <Button size="sm" variant="ghost" loading={busy === "rm:anthropicWorkspaceId"} onClick={clearWorkspace}>Clear workspace</Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Sparkles className="h-4 w-4" />}
+          title="Gemini — free trials & backup"
+          desc="Your own Google Gemini key. Free-trial accounts write with it, and it steps in automatically whenever Claude can't answer (no credits, overloaded), so subscribers never need an AI account of their own. Optional."
+          link={{ href: "https://aistudio.google.com/apikey", label: "Get a key" }}
+          state={st.gemini}
+          result={results.gemini}
+        >
+          {st.gemini.source === "server" && <ServerNote />}
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="Gemini API key (AIza…)" value={vals.geminiKey ?? ""} onChange={set("geminiKey")} />
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={`Model: ${st.gemini.model} — leave blank to keep`}
+            value={vals.geminiModel ?? ""}
+            onChange={set("geminiModel")}
+          />
+          <label className="flex items-start gap-2 text-xs text-white/70">
+            <input
+              type="checkbox"
+              className="mt-0.5 accent-emerald-400"
+              checked={st.gemini.forTrials}
+              disabled={busy === "toggle:geminiForTrials"}
+              onChange={(e) => toggle("geminiForTrials", e.target.checked)}
+            />
+            <span>Free trials write with Gemini (keeps trial cost off your Claude balance). Posts that need live news checking still use Claude.</span>
+          </label>
+          <label className="flex items-start gap-2 text-xs text-white/70">
+            <input
+              type="checkbox"
+              className="mt-0.5 accent-emerald-400"
+              checked={st.gemini.backup}
+              disabled={busy === "toggle:geminiBackup"}
+              onChange={(e) => toggle("geminiBackup", e.target.checked)}
+            />
+            <span>Use Gemini as the backup when Claude can't answer, so nobody is blocked.</span>
+          </label>
+          <p className="text-[11px] leading-relaxed text-white/45">
+            Use a key from a Google Cloud project with <b className="text-white/70">billing turned on</b>. On Google's free tier, prompts and answers may be used to improve Google's products, and daily limits are small. Gemini content is written by a different AI than Claude, so compare a few posts before relying on it for paying customers.
+          </p>
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Gemini"} onClick={() => save(["geminiKey", "geminiModel"], "Gemini", "gemini")}>Save &amp; test</Button>
+            <Button size="sm" loading={busy === "test:gemini"} disabled={!st.gemini.set} onClick={() => check("gemini")}>Test</Button>
+            {st.gemini.set && st.gemini.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:geminiKey"} onClick={() => remove("geminiKey", "Gemini")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+            {st.gemini.set && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:geminiModel"} onClick={resetGeminiModel}>Reset model</Button>
             )}
           </Actions>
         </Service>
