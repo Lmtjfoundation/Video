@@ -9,8 +9,8 @@ Each batch also carries a **bank**: 8 extra finished pieces the app keeps in res
 shown as drafts. When the owner taps **Generate** and the app's Claude API has no credits, the app
 hands out bank pieces for that platform instead of failing.
 
-Nothing publishes without the owner: items land as drafts, and anything sent to Metricool follows the
-mode set in "Posting through Metricool" below.
+Items land in the app as drafts. Posts sent to Metricool follow the mode set in "Posting through
+Metricool" below (currently `auto`, at the owner's request: they publish on schedule without approval).
 
 ---
 
@@ -285,7 +285,7 @@ and `motion`, and the cast's voices inside `voice`.
 The owner's Metricool brand id (blogId) is `7360508`. Metricool is how the daily run can put posts
 on her social accounts without each platform's developer app.
 
-**METRICOOL_MODE: drafts**
+**METRICOOL_MODE: auto**
 
 1. After pushing, call Metricool's `getBrandSettings`. If it says no networks are connected (or the
    Metricool tools aren't available), skip this section and say so in your final line.
