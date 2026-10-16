@@ -1,4 +1,4 @@
-# App Store and Google Play listing — Nexus Pulse
+# App Store and Google Play listing — Ghost Post
 
 All text below describes what the app does today. Nothing here is a performance, income or ranking claim.
 Character counts are checked by `node docs/check-listing.mjs`.
@@ -7,7 +7,7 @@ Character counts are checked by `node docs/check-listing.mjs`.
 
 | Field | Value |
 |---|---|
-| App name | Nexus Pulse |
+| App name | Ghost Post |
 | Category | Apple: Productivity (secondary: Business). Google Play: Productivity |
 | Support URL / email | Your support page and the address set in Admin → App settings |
 | Privacy policy URL | `https://nexus-pulse.up.railway.app/privacy` |
@@ -26,7 +26,7 @@ Character counts are checked by `node docs/check-listing.mjs`.
 
 **Description (max 4000):**
 
-Nexus Pulse is a content studio and scheduler for creators who run channels without being on camera.
+Ghost Post is a content studio and scheduler for creators who run channels without being on camera.
 
 It does four jobs in one place:
 
@@ -40,7 +40,7 @@ SCHEDULE AND POST
 Drag posts onto a weekly calendar, or press "Fill my week". Posts publish automatically where the platform allows it: Facebook Pages, X, LinkedIn and Instagram. Where a platform doesn't allow it, you get copy-ready text instead, and the app says why.
 
 CONNECT YOUR APPS
-Link accounts with each platform's own sign-in page. Nexus Pulse never sees your password. Use the webhook connection to send posts to Zapier, Make, n8n, Slack, Discord or your own server, so they reach whatever app you use.
+Link accounts with each platform's own sign-in page. Ghost Post never sees your password. Use the webhook connection to send posts to Zapier, Make, n8n, Slack, Discord or your own server, so they reach whatever app you use.
 
 KEEP YOUR ACCOUNTS SAFE
 Every post is checked against platform rules before it goes out. A kill switch, daily limits and quiet hours keep posting under your control. Posts can wait for your approval.
@@ -71,7 +71,7 @@ WHAT TO KNOW
 
 ## Google Play
 
-**Title (max 30):** Nexus Pulse: Post Scheduler
+**Title (max 30):** Ghost Post: Post Scheduler
 
 **Short description (max 80):** Write scripts and posts for six platforms, schedule them, connect any app.
 

@@ -6,7 +6,7 @@ import type { Platform, Post } from "./types";
 
 /**
  * Metricool as a connection hub: accounts the person already connected in Metricool (Facebook Page, Instagram,
- * X, LinkedIn, YouTube, TikTok) are used by Nexus Pulse without any developer setup. Posts are sent to Metricool's
+ * X, LinkedIn, YouTube, TikTok) are used by Ghost Post without any developer setup. Posts are sent to Metricool's
  * scheduler API, which publishes them about two minutes later.
  *
  * Metricool's API needs the person's API token (Metricool → Account settings → API, Advanced or Custom plan),
@@ -29,7 +29,7 @@ export interface MetricoolConn {
   brand?: string;
   /** Accounts found connected in the Metricool brand. */
   found: McPlatform[];
-  /** Which platforms Nexus Pulse posts to through Metricool. */
+  /** Which platforms Ghost Post posts to through Metricool. */
   use: Partial<Record<McPlatform, boolean>>;
   connectedAt: string;
   checkedAt: string;

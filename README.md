@@ -1,4 +1,4 @@
-# Nexus Pulse Autopilot
+# Ghost Post Autopilot
 
 A subscription SaaS for faceless creators: it finds the niches that pay the most per view, writes retention-built story scripts and platform-native posts, publishes them to six platforms on a schedule, answers comments, and checks every post against each platform's rules so accounts stay in good standing.
 
@@ -136,7 +136,7 @@ Until Stripe is set up, paid plans show "Coming soon" and you can assign plans b
 
 `/terms` (with the refund policy), `/privacy` and `/data-deletion` are public and use the business name, support email and governing law you set in Admin → App settings. Stripe asks for these links when you activate payments, and Meta, Google, X, LinkedIn and TikTok ask for them in app review. They're a solid starting point, not legal advice — have them reviewed for your business.
 
-**Why these prices:** comparable tools charge $15–$29 to start (OpusClip $15, AutoShorts $19, Later $25, SocialBee $29) and usually cover only video, or only scheduling. Each Nexus Pulse credit costs about 2¢ of Claude usage (1.6–2.2¢, measured from the app's prompt sizes at Claude Sonnet 5.5 prices). Priced at $15 / $39 / $99, every paid plan stays profitable even if a subscriber uses every credit: about 42% / 45% / 36% gross margin on monthly billing in that worst case (35% / 36% / 26% on yearly), and above 60% at a typical half usage, after card fees (hosting, voice and render compute not included). The community pool only moves credits somebody already paid for, so it never raises total usage above the credits sold. Admin → Overview shows your MRR, an estimated AI cost, the credits sitting in vaults and the pool balance. Competitor list prices checked Oct 2026: SocialBee $29/$49/$99, Later $25/$50/$110, Metricool $25/$67, ContentStudio $19/$49/$99, SocialPilot $20/$40/$100.
+**Why these prices:** comparable tools charge $15–$29 to start (OpusClip $15, AutoShorts $19, Later $25, SocialBee $29) and usually cover only video, or only scheduling. Each Ghost Post credit costs about 2¢ of Claude usage (1.6–2.2¢, measured from the app's prompt sizes at Claude Sonnet 5.5 prices). Priced at $15 / $39 / $99, every paid plan stays profitable even if a subscriber uses every credit: about 42% / 45% / 36% gross margin on monthly billing in that worst case (35% / 36% / 26% on yearly), and above 60% at a typical half usage, after card fees (hosting, voice and render compute not included). The community pool only moves credits somebody already paid for, so it never raises total usage above the credits sold. Admin → Overview shows your MRR, an estimated AI cost, the credits sitting in vaults and the pool balance. Competitor list prices checked Oct 2026: SocialBee $29/$49/$99, Later $25/$50/$110, Metricool $25/$67, ContentStudio $19/$49/$99, SocialPilot $20/$40/$100.
 
 ### 5. Link your accounts (the Platforms tab)
 

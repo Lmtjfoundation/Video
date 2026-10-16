@@ -388,7 +388,7 @@ function AppSettingsTab() {
             <Input type="email" defaultValue={s.supportEmail} onBlur={(e) => e.target.value !== s.supportEmail && save({ supportEmail: e.target.value })} placeholder="support@yourdomain.com" />
           </Field>
           <Field label="Business name" hint="shown on Terms and Privacy">
-            <Input defaultValue={s.legalName} onBlur={(e) => e.target.value !== s.legalName && save({ legalName: e.target.value })} placeholder="Nexus Pulse" />
+            <Input defaultValue={s.legalName} onBlur={(e) => e.target.value !== s.legalName && save({ legalName: e.target.value })} placeholder="Ghost Post" />
           </Field>
           <Field label="Governing law" hint="used in the Terms">
             <Input defaultValue={s.legalJurisdiction} onBlur={(e) => e.target.value !== s.legalJurisdiction && save({ legalJurisdiction: e.target.value })} placeholder="the State of Texas, USA" />
@@ -694,7 +694,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           <Input
             autoComplete="off"
             spellCheck={false}
-            placeholder={st.email.from ? `From: ${st.email.from}` : "From, e.g. Nexus Pulse <support@yourdomain.com>"}
+            placeholder={st.email.from ? `From: ${st.email.from}` : "From, e.g. Ghost Post <support@yourdomain.com>"}
             value={vals.emailFrom ?? ""}
             onChange={set("emailFrom")}
           />

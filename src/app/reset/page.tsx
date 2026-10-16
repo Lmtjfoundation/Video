@@ -37,7 +37,7 @@ export default function ResetPage() {
         <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
           <Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} />
         </span>
-        <span className="text-lg font-semibold text-white">Nexus Pulse</span>
+        <span className="text-lg font-semibold text-white">Ghost Post</span>
       </Link>
       <div className="glass w-full max-w-sm p-7">
         {token === "" ? (

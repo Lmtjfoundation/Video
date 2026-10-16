@@ -1,14 +1,14 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 /**
- * The native app is a secure shell around your hosted Nexus Pulse (same login, same data).
+ * The native app is a secure shell around your hosted Ghost Post (same login, same data).
  * Defaults to the live site; set APP_URL to use a different (e.g. custom) domain before `npx cap sync`.
  */
 const APP_URL = process.env.APP_URL ?? "https://nexus-pulse.up.railway.app";
 
 const config: CapacitorConfig = {
   appId: "com.nexuspulse.app",
-  appName: "Nexus Pulse",
+  appName: "Ghost Post",
   webDir: "www",
   server: {
     url: APP_URL,

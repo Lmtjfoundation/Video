@@ -78,7 +78,7 @@ describe("Stripe prices follow plans.ts", () => {
     const oldProducts: Record<string, string> = {};
     for (const [plan, [m, a]] of Object.entries(OLD)) {
       const prod = `prod_old_${plan}`;
-      stripe.products.set(prod, { id: prod, metadata: { nexus_plan: plan }, statement_descriptor: "NEXUS PULSE" });
+      stripe.products.set(prod, { id: prod, metadata: { nexus_plan: plan }, statement_descriptor: "GHOST POST" });
       oldProducts[plan] = prod;
       for (const [interval, amount] of [["month", m * 100], ["year", a * 12 * 100]] as const) {
         const id = `price_old_${plan}_${interval}`;

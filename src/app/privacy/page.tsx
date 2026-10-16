@@ -2,14 +2,14 @@ import Link from "next/link";
 import { Contact, LegalShell, legalInfo } from "@/components/legal";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Privacy Policy · Nexus Pulse" };
+export const metadata = { title: "Privacy Policy · Ghost Post" };
 
 export default async function PrivacyPage() {
   const { name, email } = await legalInfo();
   return (
     <LegalShell
       title="Privacy Policy"
-      intro={`${name} operates Nexus Pulse (the "Service"). This policy explains what information we collect, why we collect it, who we share it with and the choices you have.`}
+      intro={`${name} operates Ghost Post (the "Service"). This policy explains what information we collect, why we collect it, who we share it with and the choices you have.`}
     >
       <h2>1. Information we collect</h2>
       <ul>
@@ -48,13 +48,13 @@ export default async function PrivacyPage() {
 
       <h2>4. Google and YouTube</h2>
       <p>
-        If you connect YouTube, Nexus Pulse uses YouTube API Services to upload the videos you choose to your channel. By connecting YouTube you agree to the{" "}
+        If you connect YouTube, Ghost Post uses YouTube API Services to upload the videos you choose to your channel. By connecting YouTube you agree to the{" "}
         <a href="https://www.youtube.com/t/terms" target="_blank" rel="noreferrer">YouTube Terms of Service</a>, and Google&apos;s handling of your data is described in
-        the <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">Google Privacy Policy</a>. You can revoke Nexus Pulse&apos;s access at any time
+        the <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">Google Privacy Policy</a>. You can revoke Ghost Post&apos;s access at any time
         from your <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer">Google account permissions</a>.
       </p>
       <p>
-        Nexus Pulse&apos;s use and transfer to any other app of information received from Google APIs will adhere to the{" "}
+        Ghost Post&apos;s use and transfer to any other app of information received from Google APIs will adhere to the{" "}
         <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noreferrer">Google API Services User Data Policy</a>, including
         the Limited Use requirements.
       </p>

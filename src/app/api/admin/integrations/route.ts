@@ -37,7 +37,7 @@ export const PUT = authed(async (req) => {
   }
   if ("emailFrom" in b) {
     const from = typeof b.emailFrom === "string" ? b.emailFrom.trim() : "";
-    if (from && !validFrom(from)) return fail('Use an address like "Nexus Pulse <support@yourdomain.com>" or support@yourdomain.com.');
+    if (from && !validFrom(from)) return fail('Use an address like "Ghost Post <support@yourdomain.com>" or support@yourdomain.com.');
     patch.emailFrom = from;
   }
   if (!Object.keys(patch).length) return fail("Nothing to save.");
@@ -53,7 +53,7 @@ export const POST = authed(async (req, user) => {
     try {
       await sendEmail({
         to: user.email,
-        subject: "Nexus Pulse test email",
+        subject: "Ghost Post test email",
         text: "Email works. Password-reset links will be sent from this address.",
         html: emailLayout({ title: "Email works", lines: ["Password-reset links will be sent from this address."] }),
       });

@@ -3,10 +3,10 @@ import "./globals.css";
 import { Shell } from "@/components/shell";
 
 export const metadata: Metadata = {
-  title: "Nexus Pulse Autopilot",
+  title: "Ghost Post Autopilot",
   description: "Niche research, faceless story scripts and autopilot posting for six platforms.",
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Nexus Pulse" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Ghost Post" },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
 

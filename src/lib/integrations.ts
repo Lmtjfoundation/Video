@@ -48,7 +48,7 @@ export interface Integrations {
   stripeCoupons?: Record<string, string>;
   /** Resend (https://resend.com) API key for password-reset emails. Railway blocks SMTP on Hobby, so email goes over HTTPS. */
   resendKey?: string;
-  /** Sender, e.g. "Nexus Pulse <support@yourdomain.com>" (the domain must be verified in Resend). */
+  /** Sender, e.g. "Ghost Post <support@yourdomain.com>" (the domain must be verified in Resend). */
   emailFrom?: string;
   updatedAt?: string;
 }

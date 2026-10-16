@@ -14,7 +14,7 @@ export const POST = authed(async () => {
       {
         event: "test",
         platform: "webhook",
-        text: "This is a test message from Nexus Pulse. If you can read this, your connection works.",
+        text: "This is a test message from Ghost Post. If you can read this, your connection works.",
         sentAt: new Date().toISOString(),
       },
       cred.refreshToken,

@@ -49,7 +49,7 @@ function canShareFile(file: File | null) {
 
 /**
  * "Post to your Facebook profile": Facebook doesn't let apps post to personal profiles (monetized ones included),
- * so Nexus Pulse prepares the post and the person makes the final tap: share the HD video to Facebook, paste the
+ * so Ghost Post prepares the post and the person makes the final tap: share the HD video to Facebook, paste the
  * caption (already copied), then mark it posted.
  */
 export default function PostToProfile() {
@@ -313,7 +313,7 @@ export default function PostToProfile() {
 
               <div className="flex gap-2.5 rounded-xl bg-white/[0.02] p-3.5 text-[12.5px] leading-relaxed text-white/50 ring-1 ring-white/[0.05]">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
-                <p>Facebook doesn't let any app post to personal profiles, including monetized profiles in professional mode, so Nexus Pulse gets everything ready and you make the final tap.</p>
+                <p>Facebook doesn't let any app post to personal profiles, including monetized profiles in professional mode, so Ghost Post gets everything ready and you make the final tap.</p>
               </div>
             </>
           )}

@@ -9,7 +9,7 @@ export const LEGAL_UPDATED = "October 11, 2026";
 export async function legalInfo() {
   const s = await getAppSettings();
   return {
-    name: s.legalName || "Nexus Pulse",
+    name: s.legalName || "Ghost Post",
     email: s.supportEmail || "",
     law: s.legalJurisdiction || "the State of Texas, USA",
   };
@@ -31,7 +31,7 @@ export function LegalShell({ title, intro, children }: { title: string; intro?: 
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500">
             <Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} />
           </span>
-          <span className="font-semibold text-white">Nexus Pulse</span>
+          <span className="font-semibold text-white">Ghost Post</span>
         </Link>
         <nav className="flex gap-1 text-sm">
           <Link href="/pricing" className="rounded-lg px-3 py-2 text-white/60 hover:text-white">Pricing</Link>

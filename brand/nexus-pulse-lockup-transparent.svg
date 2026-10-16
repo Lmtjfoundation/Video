@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1005 240" role="img" aria-label="Nexus Pulse">
-  <title>Nexus Pulse</title><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8CF9CB"/><stop offset="1" stop-color="#1CD28B"/></linearGradient></defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1005 240" role="img" aria-label="Ghost Post">
+  <title>Ghost Post</title><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8CF9CB"/><stop offset="1" stop-color="#1CD28B"/></linearGradient></defs>
   
   <g transform="translate(40 40) scale(0.3125)"><rect width="512" height="512" rx="112" fill="url(#g)"/><path d="M52 300H150L206 164L272 372L352 262" fill="none" stroke="#07080B" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M352 262L410 190M352 262L410 334" fill="none" stroke="#07080B" stroke-width="22" stroke-linecap="round"/>

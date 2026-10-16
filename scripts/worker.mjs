@@ -25,6 +25,6 @@ async function loop() {
   tick++;
 }
 
-console.log(`Nexus Pulse worker → ${base} every ${minutes} min`);
+console.log(`Ghost Post worker → ${base} every ${minutes} min`);
 loop();
 setInterval(loop, minutes * 60_000);

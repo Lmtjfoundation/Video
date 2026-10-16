@@ -1,8 +1,8 @@
-# Nexus Pulse — iOS & Android apps
+# Ghost Post — iOS & Android apps
 
 You get the mobile app two ways:
 
-1. **Installable web app (works today, free).** Open your Nexus Pulse address on a phone:
+1. **Installable web app (works today, free).** Open your Ghost Post address on a phone:
    - iPhone: Safari → Share → **Add to Home Screen**.
    - Android: Chrome → menu → **Install app**.
    It opens full-screen with its own icon, bottom tab bar and offline screen.
@@ -17,7 +17,7 @@ You need a Mac with Xcode for iOS, and Android Studio for Android.
 ```bash
 cd mobile
 npm install
-export APP_URL=https://nexus-pulse.up.railway.app   # your deployed Nexus Pulse (or your custom domain)
+export APP_URL=https://nexus-pulse.up.railway.app   # your deployed Ghost Post (or your custom domain)
 npx cap add ios
 npx cap add android
 npm run assets        # generates every icon and splash size from assets/icon.png
@@ -35,7 +35,7 @@ Accounts you'll need: Apple Developer Program ($99/year) and Google Play Console
   which is the safest default. In the US storefront, Apple now allows a link to outside checkout with an
   entitlement and a commission; outside the US the rules differ by region. Google Play has similar billing rules.
   Check the current Apple and Google policies before adding purchase links to the app.
-- **Minimum functionality (Apple 4.2).** Apple rejects apps that are "just a website". Nexus Pulse is a full
+- **Minimum functionality (Apple 4.2).** Apple rejects apps that are "just a website". Ghost Post is a full
   tool with accounts, scheduling and uploads, which helps — make sure your App Store screenshots show it.
 - **Sign in with Apple.** Not required, because the app only uses email + password sign-in (no Google/Facebook login).
 - **Account deletion.** Apple requires in-app account deletion: it's in Settings → Account → Delete account

@@ -85,7 +85,7 @@ export function PricingTable({
             </button>
           ))}
         </div>
-        {native && <p className="text-sm text-white/55">Plans can be changed on the Nexus Pulse website.</p>}
+        {native && <p className="text-sm text-white/55">Plans can be changed on the Ghost Post website.</p>}
       </div>
       {error && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-200 ring-1 ring-red-400/25">{error}</p>}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -156,7 +156,7 @@ export function PricingTable({
         <Card>
           <CardHeader title="How the price compares" subtitle="Entry plans of popular tools (2026 list prices). Most cover only scheduling or only video." />
           <div className="grid gap-2.5 p-5">
-            {[...COMPETITORS, ["Nexus Pulse Creator", 12] as [string, number], ["Nexus Pulse Pro", 29] as [string, number]]
+            {[...COMPETITORS, ["Ghost Post Creator", 12] as [string, number], ["Ghost Post Pro", 29] as [string, number]]
               .sort((a, b) => a[1] - b[1])
               .map(([n, pr]) => (
                 <div key={n} className="grid grid-cols-[150px_1fr_44px] items-center gap-3 text-sm">
@@ -165,7 +165,7 @@ export function PricingTable({
                   <span className="text-right tabular-nums text-white/80">${pr}</span>
                 </div>
               ))}
-            <p className="mt-2 text-xs text-white/40">Nexus Pulse combines niche research, story scripts, scheduling for six platforms and reply automation in one plan. It doesn't render video yet.</p>
+            <p className="mt-2 text-xs text-white/40">Ghost Post combines niche research, story scripts, scheduling for six platforms and reply automation in one plan. It doesn't render video yet.</p>
           </div>
         </Card>
       </div>

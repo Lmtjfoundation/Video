@@ -16,7 +16,7 @@ type Reply = { metricool: MetricoolStatus; credentials: CredentialStatus[]; skip
 const idsIn = (s: string) => ({ userId: s.match(/userId=(\d{3,15})/i)?.[1], blogId: s.match(/blogId=(\d{3,15})/i)?.[1] });
 
 /**
- * Quick connect: every account the person already connected in Metricool is used by Nexus Pulse,
+ * Quick connect: every account the person already connected in Metricool is used by Ghost Post,
  * with no developer setup. Posts go to Metricool at their time and Metricool publishes them.
  */
 export function MetricoolCard({ status, credentials }: { status?: MetricoolStatus; credentials: CredentialStatus[] }) {
@@ -127,7 +127,7 @@ export function MetricoolCard({ status, credentials }: { status?: MetricoolStatu
               <p className="mt-0.5 text-[13px] leading-relaxed text-white/55">
                 {connected
                   ? `Using the accounts connected in ${status?.brand ? `“${status.brand}”` : "your Metricool brand"}. Each post goes to Metricool at its time and Metricool publishes it about 2 minutes later.`
-                  : "Already connected your accounts in Metricool? Link it once and Nexus Pulse posts to all of them — no developer setup."}
+                  : "Already connected your accounts in Metricool? Link it once and Ghost Post posts to all of them — no developer setup."}
               </p>
             </div>
           </div>

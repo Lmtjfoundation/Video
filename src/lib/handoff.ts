@@ -78,14 +78,14 @@ export async function notifyHandoffs(user: User, posts: Post[]) {
       subject: n === 1 ? `Ready to post on Facebook: ${pending[0].hook.slice(0, 60)}` : `${n} posts are ready for your Facebook profile`,
       text: [
         `${title}.`,
-        "Facebook doesn't let apps post to personal profiles, so Nexus Pulse got it ready for you: open it on your phone and tap Share to Facebook. The video and caption are ready.",
+        "Facebook doesn't let apps post to personal profiles, so Ghost Post got it ready for you: open it on your phone and tap Share to Facebook. The video and caption are ready.",
         ...hooks,
         `${base}/post/${pending[0].id}`,
       ].join("\n\n"),
       html: emailLayout({
         title,
         lines: [
-          "Facebook doesn't let apps post to personal profiles, so Nexus Pulse got it ready for you. Open it on your phone and tap Share to Facebook — the video and caption are ready.",
+          "Facebook doesn't let apps post to personal profiles, so Ghost Post got it ready for you. Open it on your phone and tap Share to Facebook — the video and caption are ready.",
           ...hooks,
         ],
         button: { label: n === 1 ? "Open and post" : "Open the first one", url: `${base}/post/${pending[0].id}` },

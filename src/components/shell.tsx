@@ -52,7 +52,7 @@ function Logo({ compact }: { compact?: boolean }) {
       </div>
       {!compact && (
         <div className="leading-tight">
-          <div className="text-[15px] font-semibold tracking-tight text-white">Nexus Pulse</div>
+          <div className="text-[15px] font-semibold tracking-tight text-white">Ghost Post</div>
           <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-mint-300/80">Autopilot</div>
         </div>
       )}

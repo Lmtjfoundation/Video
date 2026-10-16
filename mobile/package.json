@@ -2,7 +2,7 @@
   "name": "nexus-pulse-mobile",
   "private": true,
   "version": "1.0.0",
-  "description": "iOS and Android app shell for Nexus Pulse (loads your hosted app).",
+  "description": "iOS and Android app shell for Ghost Post (loads your hosted app).",
   "scripts": {
     "add:ios": "cap add ios",
     "add:android": "cap add android",

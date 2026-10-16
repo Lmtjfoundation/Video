@@ -65,7 +65,7 @@ export default function PlatformsPage() {
     <>
       <PageHeader
         title="Platforms"
-        subtitle="Connect the social accounts Nexus Pulse posts to, and switch each one on or off."
+        subtitle="Connect the social accounts Ghost Post posts to, and switch each one on or off."
       />
 
       <Card className="mb-5 grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">

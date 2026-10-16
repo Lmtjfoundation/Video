@@ -302,7 +302,7 @@ export interface CredentialStatus {
   profileName?: string;
   /** "metricool" when this platform posts through the person's Metricool connection. */
   via?: "metricool";
-  /** Connected directly in Nexus Pulse (its own sign-in or token), as opposed to only through Metricool. */
+  /** Connected directly in Ghost Post (its own sign-in or token), as opposed to only through Metricool. */
   direct?: boolean;
 }
 

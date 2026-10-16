@@ -2,14 +2,14 @@ import Link from "next/link";
 import { Contact, LegalShell, legalInfo } from "@/components/legal";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Data deletion · Nexus Pulse" };
+export const metadata = { title: "Data deletion · Ghost Post" };
 
 export default async function DataDeletionPage() {
   const { email } = await legalInfo();
   return (
     <LegalShell
       title="Delete your data"
-      intro="You can delete your Nexus Pulse account and everything stored with it yourself, at any time. Here's how, plus how to remove Nexus Pulse's access from each social platform."
+      intro="You can delete your Ghost Post account and everything stored with it yourself, at any time. Here's how, plus how to remove Ghost Post's access from each social platform."
     >
       <h2>Delete your account and all data</h2>
       <ul>
@@ -29,16 +29,16 @@ export default async function DataDeletionPage() {
 
       <h2>Disconnect a single platform</h2>
       <p>
-        On the <strong>Platforms</strong> tab, press Disconnect next to the platform. Nexus Pulse deletes the stored access token straight away and stops posting there.
+        On the <strong>Platforms</strong> tab, press Disconnect next to the platform. Ghost Post deletes the stored access token straight away and stops posting there.
       </p>
 
       <h2>Remove access on the platform side</h2>
       <ul>
-        <li><strong>Facebook and Instagram (Meta):</strong> Facebook Settings &amp; privacy → Settings → Business integrations (or Apps and websites) → Nexus Pulse → Remove.</li>
-        <li><strong>X:</strong> Settings and privacy → Security and account access → Apps and sessions → Connected apps → Nexus Pulse → Revoke app permissions.</li>
-        <li><strong>YouTube (Google):</strong> open <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer">myaccount.google.com/permissions</a> → Nexus Pulse → Remove access.</li>
-        <li><strong>LinkedIn:</strong> Settings → Data privacy → Permitted services → Nexus Pulse → Remove.</li>
-        <li><strong>TikTok:</strong> Settings and privacy → Security and permissions → Apps and services permissions → Nexus Pulse → Remove access.</li>
+        <li><strong>Facebook and Instagram (Meta):</strong> Facebook Settings &amp; privacy → Settings → Business integrations (or Apps and websites) → Ghost Post → Remove.</li>
+        <li><strong>X:</strong> Settings and privacy → Security and account access → Apps and sessions → Connected apps → Ghost Post → Revoke app permissions.</li>
+        <li><strong>YouTube (Google):</strong> open <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer">myaccount.google.com/permissions</a> → Ghost Post → Remove access.</li>
+        <li><strong>LinkedIn:</strong> Settings → Data privacy → Permitted services → Ghost Post → Remove.</li>
+        <li><strong>TikTok:</strong> Settings and privacy → Security and permissions → Apps and services permissions → Ghost Post → Remove access.</li>
       </ul>
       <p>
         Posts that were already published stay on each platform until you delete them there. For more detail, see our <Link href="/privacy">Privacy Policy</Link>.

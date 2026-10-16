@@ -1,16 +1,16 @@
-# Nexus Pulse — marketing copy
+# Ghost Post — marketing copy
 
 Rules used for everything below: it describes what the app does today; it has no income promises, no invented
 numbers, no testimonials and no "guaranteed" claims. Add real numbers and real customer quotes only after you have them.
 
 ## One line
-Nexus Pulse is a content studio and scheduler for faceless creators: research a niche, write the script, schedule the posts, and check every one against each platform's rules.
+Ghost Post is a content studio and scheduler for faceless creators: research a niche, write the script, schedule the posts, and check every one against each platform's rules.
 
 ## Two sentences
-Nexus Pulse writes posts and video scripts in each platform's native format, then schedules them to X, LinkedIn, Facebook, Instagram, YouTube and TikTok. Where a platform allows automatic posting it posts for you; where it doesn't, you get copy-ready text and a plain explanation of why.
+Ghost Post writes posts and video scripts in each platform's native format, then schedules them to X, LinkedIn, Facebook, Instagram, YouTube and TikTok. Where a platform allows automatic posting it posts for you; where it doesn't, you get copy-ready text and a plain explanation of why.
 
 ## What it is, in plain words
-You pick a niche and a topic. Nexus Pulse, using Claude (an AI model from Anthropic), writes a script with a hook, timed scenes, on-screen text, visuals to find, title options and a fact-check list. It turns the idea into posts for each platform and puts them on a weekly calendar. Before anything goes out, a rules check looks for things that get accounts in trouble: duplicate posts, engagement bait, financial guarantees, medical claims and unapproved links. You stay in control with a kill switch, daily limits, quiet hours and an optional approval step.
+You pick a niche and a topic. Ghost Post, using Claude (an AI model from Anthropic), writes a script with a hook, timed scenes, on-screen text, visuals to find, title options and a fact-check list. It turns the idea into posts for each platform and puts them on a weekly calendar. Before anything goes out, a rules check looks for things that get accounts in trouble: duplicate posts, engagement bait, financial guarantees, medical claims and unapproved links. You stay in control with a kill switch, daily limits, quiet hours and an optional approval step.
 
 ## Who it is for
 - Creators who run channels without appearing on camera.
@@ -58,10 +58,10 @@ Free $0 · Creator $15/month · Pro $39/month · Unlimited $99/month. Paying yea
 ## Social posts (ready to use)
 
 **X (short)**
-Most "posting tools" stop at scheduling. Nexus Pulse also writes each post in the platform's own format and checks it against that platform's rules first. Free plan available.
+Most "posting tools" stop at scheduling. Ghost Post also writes each post in the platform's own format and checks it against that platform's rules first. Free plan available.
 
 **X (thread)**
-1/ We built Nexus Pulse for people who run channels without being on camera.
+1/ We built Ghost Post for people who run channels without being on camera.
 2/ Step one is research: revenue-per-view data by niche, then a ranked list of sub-niches with story ideas.
 3/ Step two is writing: a timed script with hook, scenes, on-screen text and a fact-check list.
 4/ Step three is scheduling to six platforms from one calendar. Where a platform blocks auto-posting, you get copy-ready text and the reason.
@@ -71,7 +71,7 @@ Most "posting tools" stop at scheduling. Nexus Pulse also writes each post in th
 **LinkedIn**
 Running a faceless channel means doing four jobs: research, scripting, posting and staying inside each platform's rules.
 
-Nexus Pulse puts those four in one place. You pick a niche, it writes the script and the posts in each platform's native format, and a rules check runs before anything is published. You can require approval for every post.
+Ghost Post puts those four in one place. You pick a niche, it writes the script and the posts in each platform's native format, and a rules check runs before anything is published. You can require approval for every post.
 
 It is honest about limits: Facebook Pages, X, LinkedIn and Instagram can post automatically; YouTube and TikTok are copy-ready because of those platforms' own rules. A webhook connection sends posts to any tool you use, such as Zapier, Make or n8n.
 
@@ -82,17 +82,17 @@ There is a free plan.
 **Instagram caption**
 Write it, schedule it, keep your account in good standing.
 
-Nexus Pulse writes posts and scripts for six platforms, puts them on one calendar, and checks each one against that platform's rules before it goes out. Free plan, link in bio.
+Ghost Post writes posts and scripts for six platforms, puts them on one calendar, and checks each one against that platform's rules before it goes out. Free plan, link in bio.
 
 #contentcreator #socialmediatools #faceless #scheduling
 
 ## Email (launch announcement)
 
-**Subject:** Nexus Pulse is ready to try (free plan included)
+**Subject:** Ghost Post is ready to try (free plan included)
 
 Hi {first_name},
 
-Nexus Pulse is live. It's a content studio and scheduler for creators who don't appear on camera: research a niche, write the script, schedule the posts, and check each one against the platform's rules before it goes out.
+Ghost Post is live. It's a content studio and scheduler for creators who don't appear on camera: research a niche, write the script, schedule the posts, and check each one against the platform's rules before it goes out.
 
 What you can do today:
 - Write scripts and posts for X, LinkedIn, Facebook, Instagram, YouTube and TikTok.
@@ -111,7 +111,7 @@ The free plan needs no card. You approve what goes out, and you can stop everyth
 3. (15–25 s) Press Repurpose. "One idea becomes a post for each platform."
 4. (25–35 s) Calendar: "Drop them on the week, or press Fill my week."
 5. (35–42 s) Platforms tab. "Connect with each platform's own sign-in, or send posts to any app by webhook."
-6. (42–45 s) "Nexus Pulse. Free plan available."
+6. (42–45 s) "Ghost Post. Free plan available."
 
 ## Before you publish any of this
 - Verify the Niche Lab data source and wording yourself before you advertise it.

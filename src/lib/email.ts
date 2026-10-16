@@ -40,7 +40,7 @@ export function emailLayout(opts: { title: string; lines: string[]; button?: { l
   return `<!doctype html><html><body style="margin:0;background:#0b0f17;padding:28px 12px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#111827;border:1px solid #1f2937;border-radius:16px">
-<tr><td style="padding:28px 28px 8px"><p style="margin:0 0 18px;font-size:14px;font-weight:700;color:#6ee7b7;letter-spacing:.3px">NEXUS PULSE</p>
+<tr><td style="padding:28px 28px 8px"><p style="margin:0 0 18px;font-size:14px;font-weight:700;color:#6ee7b7;letter-spacing:.3px">GHOST POST</p>
 <h1 style="margin:0 0 16px;font-size:21px;line-height:1.3;color:#f8fafc">${esc(opts.title)}</h1>${body}${button}${footer}</td></tr>
 <tr><td style="padding:0 28px 24px"></td></tr></table></td></tr></table></body></html>`;
 }

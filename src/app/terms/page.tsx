@@ -3,14 +3,14 @@ import { Contact, LegalShell, legalInfo } from "@/components/legal";
 import { planById } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Terms of Service · Nexus Pulse" };
+export const metadata = { title: "Terms of Service · Ghost Post" };
 
 export default async function TermsPage() {
   const { name, email, law } = await legalInfo();
   return (
     <LegalShell
       title="Terms of Service"
-      intro={`These Terms of Service ("Terms") govern your use of Nexus Pulse (the "Service"), operated by ${name} ("we", "us"). By creating an account or using the Service you agree to these Terms and to our Privacy Policy.`}
+      intro={`These Terms of Service ("Terms") govern your use of Ghost Post (the "Service"), operated by ${name} ("we", "us"). By creating an account or using the Service you agree to these Terms and to our Privacy Policy.`}
     >
       <h2>1. Your account</h2>
       <ul>
@@ -21,7 +21,7 @@ export default async function TermsPage() {
 
       <h2>2. What the Service does</h2>
       <p>
-        Nexus Pulse helps you research content niches, draft posts and video scripts with AI, render short videos, and schedule and publish them to social accounts you
+        Ghost Post helps you research content niches, draft posts and video scripts with AI, render short videos, and schedule and publish them to social accounts you
         connect (X, Facebook Pages, Instagram, LinkedIn, YouTube and TikTok). For a personal Facebook profile, the Service prepares posts and you publish them yourself. Content is published only to accounts you connect, following the schedule and approval
         settings you choose. You can pause all posting at any time.
       </p>
@@ -55,7 +55,7 @@ export default async function TermsPage() {
         <li>You own the content you create or upload. You give us a limited licence to host, process, copy, transmit and display it only as needed to run the Service for you — for example sending prompts to our AI providers, rendering videos and publishing to the accounts you connect.</li>
         <li>You&apos;re responsible for what is published from your accounts through the Service, including having the rights to any material you use and following the law and each platform&apos;s rules.</li>
         <li>Publishing depends on each platform&apos;s API, review status, permissions and limits. Platforms can change, restrict, delay or reject posts, and some limit what unreviewed apps can publish (for example, private or draft-only uploads). We aren&apos;t responsible for actions taken by those platforms.</li>
-        <li>Nexus Pulse is independent and is not affiliated with, endorsed or sponsored by X, Meta, LinkedIn, Google/YouTube or TikTok.</li>
+        <li>Ghost Post is independent and is not affiliated with, endorsed or sponsored by X, Meta, LinkedIn, Google/YouTube or TikTok.</li>
       </ul>
 
       <h2>6. AI-generated content</h2>

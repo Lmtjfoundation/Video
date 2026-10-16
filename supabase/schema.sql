@@ -1,4 +1,4 @@
--- Nexus Pulse Autopilot — Supabase schema (multi-user)
+-- Ghost Post Autopilot — Supabase schema (multi-user)
 -- Run in Supabase → SQL Editor. The app uses the service-role key on the server only.
 -- Row Level Security is enabled with NO policies, so the anon/public key cannot read anything.
 -- Each row belongs to an owner (a user id, or '_global'); `id` is "<owner>::<row id>".

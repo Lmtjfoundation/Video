@@ -67,7 +67,7 @@ export function buildCall(provider: AiProvider, apiKey: string, model: string, r
   }
   return {
     url: "https://openrouter.ai/api/v1/chat/completions",
-    headers: { Authorization: `Bearer ${apiKey}`, "content-type": "application/json", "X-Title": "Nexus Pulse" },
+    headers: { Authorization: `Bearer ${apiKey}`, "content-type": "application/json", "X-Title": "Ghost Post" },
     body: { model, messages, max_tokens: roomy(r.maxTokens), temperature: r.temperature },
   };
 }

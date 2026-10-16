@@ -1,4 +1,4 @@
-# Nexus Pulse brand kit
+# Ghost Post brand kit
 
 The mark is a pulse line that ends in a node with two branches: content going out to the apps you connect.
 
@@ -9,7 +9,7 @@ The mark is a pulse line that ends in a node with two branches: content going ou
 | `play-store-icon-512.png` | Google Play icon: square, no transparency |
 | `nexus-pulse-icon-square.svg` | Full-bleed source for store icons |
 | `nexus-pulse-mark-dark.svg`, `nexus-pulse-mark-light.svg` | Mark only, for use on your own backgrounds |
-| `nexus-pulse-lockup-*.svg/png` | Icon plus the "Nexus Pulse" wordmark (outlined from Poppins Bold, so no font install is needed) |
+| `nexus-pulse-lockup-*.svg/png` | Icon plus the "Ghost Post" wordmark (outlined from Poppins Bold, so no font install is needed) |
 
 Colours: mint `#8CF9CB` → `#1CD28B`, ink `#07080B`. Poppins Bold is licensed under the SIL Open Font License (`assets/fonts/LICENSE.txt`).
 

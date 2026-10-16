@@ -48,7 +48,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
             <Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} />
           </div>
-          <span className="text-lg font-semibold text-white">Nexus Pulse</span>
+          <span className="text-lg font-semibold text-white">Ghost Post</span>
         </div>
         <div className="max-w-md">
           <h1 className="text-[40px] font-semibold leading-[1.05] tracking-tight text-white">

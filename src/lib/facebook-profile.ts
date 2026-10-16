@@ -4,7 +4,7 @@ import type { Credential } from "./types";
  * Facebook personal profiles, including monetized profiles in professional mode.
  *
  * Meta's Graph API publishes to Pages only (personal-profile publishing was removed in 2018), so no app can post to
- * a profile by itself. A profile connection therefore works as a handoff: at the scheduled time Nexus Pulse prepares
+ * a profile by itself. A profile connection therefore works as a handoff: at the scheduled time Ghost Post prepares
  * the post (HD video or image plus caption), lets the person know, and they post it from their phone with one tap.
  */
 

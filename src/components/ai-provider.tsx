@@ -74,7 +74,7 @@ export function AiProviderTab() {
   return (
     <div className="grid gap-5">
       <Card className="p-4 text-[13px] leading-relaxed text-white/65">
-        <span className="font-medium text-white">You don't need a Claude account.</span> Nexus Pulse comes with its own AI built in, paid for by your plan's credits. If you'd rather use an AI you already pay for (ChatGPT, Gemini, Claude or any model on OpenRouter), connect it below with your own API key: everything you generate then runs on your key and <span className="text-mint-300">uses no credits</span>. Your key is stored encrypted and only ever sent to that provider.
+        <span className="font-medium text-white">You don't need a Claude account.</span> Ghost Post comes with its own AI built in, paid for by your plan's credits. If you'd rather use an AI you already pay for (ChatGPT, Gemini, Claude or any model on OpenRouter), connect it below with your own API key: everything you generate then runs on your key and <span className="text-mint-300">uses no credits</span>. Your key is stored encrypted and only ever sent to that provider.
       </Card>
 
       <Card>
@@ -86,7 +86,7 @@ export function AiProviderTab() {
           <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="AI service">
             {(["builtin", ...AI_PROVIDER_IDS] as Choice[]).map((c) => {
               const name = c === "builtin" ? "Built-in (included)" : AI_PROVIDERS[c].name;
-              const blurb = c === "builtin" ? "Claude, run by Nexus Pulse. Uses your plan's credits. Nothing to set up." : AI_PROVIDERS[c].blurb;
+              const blurb = c === "builtin" ? "Claude, run by Ghost Post. Uses your plan's credits. Nothing to set up." : AI_PROVIDERS[c].blurb;
               const active = choice === c;
               return (
                 <button

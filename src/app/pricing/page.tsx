@@ -6,7 +6,7 @@ import { plansPayload } from "@/lib/plans-public";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Pricing · Nexus Pulse",
+  title: "Pricing · Ghost Post",
   description: "Niche research, AI story scripts, video rendering and auto-posting to X, Facebook, Instagram, LinkedIn, YouTube and TikTok. Start free.",
 };
 
@@ -17,7 +17,7 @@ export default async function PricingPage() {
       <header className="mb-10 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500"><Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} /></span>
-          <span className="font-semibold text-white">Nexus Pulse</span>
+          <span className="font-semibold text-white">Ghost Post</span>
         </Link>
         <div className="flex gap-3 text-sm">
           <Link href="/login" className="rounded-lg px-3 py-2 text-white/70 hover:text-white">Sign in</Link>

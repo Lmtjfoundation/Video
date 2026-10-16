@@ -156,7 +156,7 @@ describe("monetized Facebook profiles", () => {
       }),
     );
     process.env.RESEND_API_KEY = "re_test";
-    process.env.EMAIL_FROM = "Nexus Pulse <hello@example.com>";
+    process.env.EMAIL_FROM = "Ghost Post <hello@example.com>";
     process.env.APP_URL = "https://app.example.com";
     const { asUser } = await import("@/lib/db");
     const { getUser } = await import("@/lib/auth");

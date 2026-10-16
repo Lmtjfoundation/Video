@@ -1,4 +1,4 @@
-/* Nexus Pulse service worker: offline shell + static asset caching. API calls always go to the network. */
+/* Ghost Post service worker: offline shell + static asset caching. API calls always go to the network. */
 const CACHE = "np-shell-v1";
 const SHELL = ["/offline", "/icons/icon-192.png", "/icons/icon-512.png"];
 

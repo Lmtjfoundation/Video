@@ -296,7 +296,7 @@ export interface AppSettings {
   allowSignups: boolean;
   requireApprovalForNewUsers: boolean;
   supportEmail: string;
-  /** Business name shown on the Terms and Privacy pages (defaults to "Nexus Pulse"). */
+  /** Business name shown on the Terms and Privacy pages (defaults to "Ghost Post"). */
   legalName: string;
   /** Governing law shown in the Terms (defaults to the State of Texas, USA). */
   legalJurisdiction: string;

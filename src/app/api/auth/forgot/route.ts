@@ -27,7 +27,7 @@ export const POST = handle(async (req: Request) => {
     try {
       await sendEmail({
         to: reset.user.email,
-        subject: "Reset your Nexus Pulse password",
+        subject: "Reset your Ghost Post password",
         text: `Hi ${reset.user.name},\n\nUse this link to choose a new password (it works once, for 1 hour):\n${link}\n\nIf you didn't ask for this, ignore this email — your password stays the same.`,
         html: emailLayout({
           title: "Reset your password",

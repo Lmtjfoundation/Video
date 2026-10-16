@@ -130,7 +130,7 @@ interface SProduct {
   statement_descriptor?: string | null;
 }
 /** What subscribers see on their card statement for these plans (max 22 characters, letters required). */
-const STATEMENT_DESCRIPTOR = "NEXUS PULSE";
+const STATEMENT_DESCRIPTOR = "GHOST POST";
 interface SPrice {
   id: string;
   unit_amount: number | null;
@@ -180,7 +180,7 @@ export async function stripePricesStale(): Promise<boolean> {
  * Creates (or reuses) everything subscriptions need in the owner's Stripe account:
  * one product per paid plan, a monthly and a yearly USD price each, a webhook pointed at this app (its signing
  * secret is captured on creation) and a customer-portal configuration that allows plan changes, card updates,
- * invoices and cancel-at-period-end. Safe to run again: existing Nexus Pulse products/prices are reused.
+ * invoices and cancel-at-period-end. Safe to run again: existing Ghost Post products/prices are reused.
  */
 export async function setupStripeBilling(secretKey: string, appUrl: string, opts: { keepWebhook?: boolean } = {}) {
   const sk = secretKey.trim();
@@ -200,7 +200,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
     let prod = products.data.find((x) => x.metadata?.nexus_plan === p.id);
     if (!prod) {
       prod = await call<SProduct>("/products", {
-        name: `Nexus Pulse ${p.name}`,
+        name: `Ghost Post ${p.name}`,
         description: p.blurb,
         statement_descriptor: STATEMENT_DESCRIPTOR,
         metadata: { nexus_plan: p.id, app: "nexus-pulse" },
@@ -266,7 +266,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
     hook = await call<SHook>("/webhook_endpoints", {
       url,
       enabled_events: ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"],
-      description: "Nexus Pulse subscriptions",
+      description: "Ghost Post subscriptions",
       metadata: { app: "nexus-pulse" },
     });
     if (!hook.secret) throw new Error("Stripe didn't return the webhook signing secret. Try again.");
@@ -275,7 +275,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
   // Customer portal: plan switching between the three paid plans (monthly/yearly), cards, invoices, cancel.
   const portalParams = {
     business_profile: {
-      headline: "Manage your Nexus Pulse subscription",
+      headline: "Manage your Ghost Post subscription",
       privacy_policy_url: `${base}/privacy`,
       terms_of_service_url: `${base}/terms`,
     },

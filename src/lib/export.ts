@@ -52,7 +52,7 @@ export const logRows = (ls: LogEntry[]) =>
 
 export function postsMarkdown(posts: Post[], s: Settings) {
   return [
-    `# Nexus Pulse — content export (${new Date().toISOString().slice(0, 10)})`,
+    `# Ghost Post — content export (${new Date().toISOString().slice(0, 10)})`,
     "",
     ...posts.map((p) =>
       [
@@ -70,12 +70,12 @@ export function postsMarkdown(posts: Post[], s: Settings) {
 
 export function repliesMarkdown(rs: Reply[]) {
   return [
-    `# Nexus Pulse — replies export`,
+    `# Ghost Post — replies export`,
     "",
     ...rs.map((r) => `### ${r.platform} · ${r.author} · ${r.status}\n> ${r.commentText.replace(/\n/g, "\n> ")}\n\n${r.text || "_(no reply)_"}\n`),
   ].join("\n");
 }
 
 export function logsMarkdown(ls: LogEntry[]) {
-  return [`# Nexus Pulse — activity log`, "", "| Time | Level | Kind | Platform | Message |", "|---|---|---|---|---|", ...ls.map((l) => `| ${l.at} | ${l.level} | ${l.kind} | ${l.platform ?? ""} | ${l.message.replace(/\|/g, "\\|")} |`)].join("\n");
+  return [`# Ghost Post — activity log`, "", "| Time | Level | Kind | Platform | Message |", "|---|---|---|---|---|", ...ls.map((l) => `| ${l.at} | ${l.level} | ${l.kind} | ${l.platform ?? ""} | ${l.message.replace(/\|/g, "\\|")} |`)].join("\n");
 }
