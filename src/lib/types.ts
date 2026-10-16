@@ -300,6 +300,10 @@ export interface CredentialStatus {
   mode?: "page" | "profile";
   /** Facebook: the person's profile name, when known, so they can switch between a Page and their profile. */
   profileName?: string;
+  /** "metricool" when this platform posts through the person's Metricool connection. */
+  via?: "metricool";
+  /** Connected directly in Nexus Pulse (its own sign-in or token), as opposed to only through Metricool. */
+  direct?: boolean;
 }
 
 /** Decrypted platform credential (server only). */

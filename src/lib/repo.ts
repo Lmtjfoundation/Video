@@ -18,6 +18,7 @@ import { PLATFORMS } from "./types";
 import { nowIso, uid } from "./utils";
 import { appKeyStatus } from "./app-keys";
 import { clearFacebookPages, listFacebookPages } from "./facebook-pages";
+import { getMetricool, isMcPlatform } from "./metricool";
 
 /* Settings */
 export async function getSettings(): Promise<Settings> {
@@ -145,14 +146,19 @@ export async function deleteCredential(platform: Platform) {
 export async function credentialStatuses(): Promise<CredentialStatus[]> {
   const rows = await db().all<CredRow>("credentials", 50);
   const fbPages = await listFacebookPages();
+  const mc = await getMetricool();
   const keys = Object.fromEntries(await Promise.all(PLATFORMS.map(async (p) => [p, await appKeyStatus(p)] as const)));
   return PLATFORMS.map((p) => {
     const r = rows.find((x) => x.id === p);
     // A Facebook profile connection has no token: Facebook doesn't let apps post to profiles, so those posts are handed to the person.
     const profile = p === "facebook" && r?.mode === "profile";
+    const direct = !!r && (r.fields.includes("accessToken") || profile);
+    const viaMc = !!mc && isMcPlatform(p) && !!mc.use[p];
     return {
       platform: p,
-      connected: !!r && (r.fields.includes("accessToken") || profile),
+      connected: direct || viaMc,
+      direct,
+      via: viaMc ? ("metricool" as const) : undefined,
       fields: r?.fields ?? [],
       updatedAt: r?.updatedAt,
       handle: r?.handle,

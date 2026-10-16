@@ -21,6 +21,7 @@ describe("profile links", () => {
     ["http://web.facebook.com/profile.php?id=100012345678901&ref=x", "https://www.facebook.com/profile.php?id=100012345678901"],
     ["https://www.facebook.com/people/Jane-Doe/100012345678901/", "https://www.facebook.com/people/Jane-Doe/100012345678901"],
     ["fb.com/janedoe", "https://www.facebook.com/janedoe"],
+    ["https://www.facebook.com/share/1AbCdEfGh2/?mibextid=wwXIfr", "https://www.facebook.com/share/1AbCdEfGh2/"],
   ])("accepts %s", (input, out) => expect(normalizeProfileUrl(input)).toBe(out));
 
   it.each([

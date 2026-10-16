@@ -104,7 +104,7 @@ export async function runEngage(opts: { manual?: boolean } = {}) {
       if (!cred) continue;
 
       const ids = posts
-        .filter((p) => p.platform === platform && p.status === "published" && p.externalId && Date.now() - new Date(p.publishedAt ?? 0).getTime() < 7 * 86400_000)
+        .filter((p) => p.platform === platform && p.status === "published" && p.externalId && !p.externalId.startsWith("metricool:") && Date.now() - new Date(p.publishedAt ?? 0).getTime() < 7 * 86400_000)
         .slice(0, 15)
         .map((p) => p.externalId!);
       if (!ids.length && platform !== "youtube") continue;

@@ -53,6 +53,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press 鈥
   const [busy, setBusy] = useState<string | null>(null);
   const [manual, setManual] = useState<Record<string, boolean>>({});
   const [confirmOff, setConfirmOff] = useState<string | null>(null);
+  const [directOpen, setDirectOpen] = useState<Record<string, boolean>>({});
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   async function saveCred(p: Platform) {
@@ -155,16 +156,26 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press 鈥
           }
           const o = OAUTH[p];
           const st = statuses.find((x) => x.platform === p) ?? { platform: p, connected: false, fields: [], oauthReady: false };
-          const note = st.connected ? expiryNote(st) : null;
+          const direct = !!st.direct;
+          const viaMc = st.via === "metricool";
+          const note = direct ? expiryNote(st) : null;
           return (
             <Card key={p}>
               <CardHeader
                 title={<span className="flex items-center gap-2"><PlatformChip platform={p} /> {spec.name}</span>}
-                subtitle={st.connected ? <span className="text-mint-300">Connected as {st.handle || "your account"}{p === "facebook" ? (st.mode === "profile" ? " 路 your profile" : " 路 Page") : ""}</span> : "Not connected"}
+                subtitle={
+                  direct ? (
+                    <span className="text-mint-300">Connected as {st.handle || "your account"}{p === "facebook" ? (st.mode === "profile" ? " 路 your profile" : " 路 Page") : ""}</span>
+                  ) : viaMc ? (
+                    <span className="text-mint-300">Connected through Metricool</span>
+                  ) : (
+                    "Not connected"
+                  )
+                }
                 action={<Switch checked={settings.platforms[p]} onChange={(v) => setSettings({ ...settings.platforms, [p]: v })} label={`Use ${spec.name}`} />}
               />
               <div className="grid gap-3 p-5">
-                {st.connected ? (
+                {direct ? (
                   <div className="flex flex-wrap items-center gap-2 rounded-xl bg-mint-400/[0.05] p-3 ring-1 ring-mint-400/20">
                     <Badge tone="mint">{st.mode === "profile" ? "Profile 路 one-tap posting" : st.method === "oauth" ? "Linked with " + o.label : "Manual token"}</Badge>
                     {note && <span className={cn("text-xs", /expired|Reconnect/.test(note) ? "text-gold-300" : "text-white/55")}>{note}</span>}
@@ -176,9 +187,20 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press 鈥
                     </div>
                   </div>
                 ) : null}
-                {p === "facebook" && st.connected && <FacebookTargets st={st} handoffEmail={settings.handoffEmail} onChanged={refresh} />}
+                {viaMc && !direct && (
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl bg-violet-500/[0.06] p-3 ring-1 ring-violet-400/20">
+                    <Badge tone="violet">Through Metricool</Badge>
+                    <span className="text-xs text-white/60">Posts go out through your Metricool brand. No setup needed here.</span>
+                    {!directOpen[p] && (
+                      <button className="focus-ring ml-auto text-xs text-white/50 hover:text-white" onClick={() => setDirectOpen({ ...directOpen, [p]: true })}>
+                        Connect directly instead
+                      </button>
+                    )}
+                  </div>
+                )}
+                {p === "facebook" && direct && <FacebookTargets st={st} handoffEmail={settings.handoffEmail} onChanged={refresh} />}
                 <AccountTypeNote platform={p} />
-                {st.connected ? null : p === "facebook" ? (
+                {direct || (viaMc && !directOpen[p]) ? null : p === "facebook" ? (
                   <FacebookChoice
                     oauthReady={st.oauthReady}
                     isAdmin={isAdmin}
@@ -196,7 +218,12 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press 鈥
                 ) : isAdmin ? (
                   <SetupWizard platform={p} origin={origin} onSaved={refresh} />
                 ) : (
-                  <p className="rounded-xl bg-white/[0.03] p-3 text-[13px] text-white/60 ring-1 ring-white/[0.06]">{o.label} linking isn't switched on yet. The workspace admin enables it once for everyone.</p>
+                  <p className="rounded-xl bg-white/[0.03] p-3 text-[13px] text-white/60 ring-1 ring-white/[0.06]">{o.label} sign-in isn't switched on yet. Use <b className="text-white/80">Quick connect with Metricool</b> at the top of this page instead, or ask the workspace admin.</p>
+                )}
+                {isAdmin && st.oauthReady && !direct && (!viaMc || directOpen[p]) && (
+                  <p className="text-[12px] leading-relaxed text-white/45">
+                    <span className="text-white/70">If {o.label} shows an error instead of its sign-in page:</span> {SETUP_GUIDES[p].testing} Or use Quick connect with Metricool at the top.
+                  </p>
                 )}
 
                 {st.oauthReady && isAdmin && (

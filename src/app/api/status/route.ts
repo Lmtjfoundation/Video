@@ -10,6 +10,7 @@ import { publicUser, trialActive, trialEligible, trialFreeLeft } from "@/lib/aut
 import { ownAiStatus } from "@/lib/ai-provider";
 import { TRIAL_DAILY_FREE_CREDITS } from "@/lib/plans";
 import { planById } from "@/lib/plans";
+import { getMetricool, metricoolStatus } from "@/lib/metricool";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,7 @@ export const GET = authed(async (_req, user) => {
     },
     upcoming: upcoming.slice(0, 6),
     readyForYou: readyForYou.slice(0, 5),
+    metricool: metricoolStatus(await getMetricool()),
     readyForYouCount: readyForYou.length,
     logs,
   });

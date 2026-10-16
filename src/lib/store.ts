@@ -4,6 +4,7 @@ import { api } from "./client";
 import type { CredentialStatus, LogEntry, Post, Settings } from "./types";
 import type { Plan } from "./plans";
 import type { OwnAiStatus } from "./ai-providers";
+import type { MetricoolStatus } from "./metricool";
 
 export interface Me {
   user: { id: string; email: string; name: string; role: "admin" | "user"; status: string; plan: string; requireApproval: boolean; usage: { period: string; credits: number; posts: number }; billing?: { status?: string; interval?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; customerId?: string; subscriptionId?: string; trialEnd?: string; trialUsed?: boolean } };
@@ -43,6 +44,8 @@ export interface StatusPayload {
   /** Posts ready for the person to post on their Facebook profile (Facebook doesn't let apps post to profiles). */
   readyForYou?: { id: string; hook: string; kind: string; readyAt: string }[];
   readyForYouCount?: number;
+  /** The person's Metricool connection (accounts connected there are used without developer setup). */
+  metricool?: MetricoolStatus;
   logs: LogEntry[];
 }
 

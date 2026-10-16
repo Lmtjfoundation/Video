@@ -37,6 +37,9 @@ export function normalizeProfileUrl(input: string): string | null {
     const id = u.searchParams.get("id");
     return id && /^\d{5,25}$/.test(id) ? `https://www.facebook.com/profile.php?id=${id}` : null;
   }
+  // "Copy link" on a profile in the Facebook app gives a short share link: facebook.com/share/AbC123xyZ/
+  const share = path.match(/^\/share\/([A-Za-z0-9_-]{6,40})$/);
+  if (share) return `https://www.facebook.com/share/${share[1]}/`;
   const people = path.match(/^\/people\/([^/]{1,100})\/(\d{5,25})$/i);
   if (people) return `https://www.facebook.com/people/${people[1]}/${people[2]}`;
   const name = path.match(/^\/([A-Za-z0-9.]{5,50})$/)?.[1];

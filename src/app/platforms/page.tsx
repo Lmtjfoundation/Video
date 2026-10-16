@@ -8,6 +8,7 @@ import type { Platform, Settings } from "@/lib/types";
 import { PLATFORMS } from "@/lib/types";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import { Accounts } from "@/components/accounts";
+import { MetricoolCard } from "@/components/metricool-card";
 import { Card, PageHeader, PlatformChip } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -19,9 +20,11 @@ export default function PlatformsPage() {
   const { status, toast, refresh } = useApp();
   const [platforms, setPlatforms] = useState<Settings["platforms"] | null>(null);
 
+  // Follow the server's switches whenever the status reloads (e.g. after Metricool turns platforms on).
+  const serverPlatforms = status?.settings.platforms;
   useEffect(() => {
-    if (status && !platforms) setPlatforms(status.settings.platforms);
-  }, [status, platforms]);
+    if (serverPlatforms) setPlatforms(serverPlatforms);
+  }, [serverPlatforms]);
 
   // Returning from a platform's sign-in page: ?connected=x, ?error=… or ?pick=facebook
   useEffect(() => {
@@ -80,6 +83,7 @@ export default function PlatformsPage() {
                 )}
               >
                 <PlatformChip platform={p} /> {linked.includes(p) ? (platforms[p] ? "posting" : "linked, off") : "not linked"}
+                {status.credentials.find((c) => c.platform === p)?.via === "metricool" && <span className="text-white/40">· Metricool</span>}
               </span>
             ))}
           </div>
@@ -90,6 +94,8 @@ export default function PlatformsPage() {
           </Link>
         )}
       </Card>
+
+      <MetricoolCard status={status.metricool} credentials={status.credentials} />
 
       <Accounts settings={{ ...status.settings, platforms }} setSettings={toggle} statuses={status.credentials} saveHint="It saves as soon as you flip it." />
     </>

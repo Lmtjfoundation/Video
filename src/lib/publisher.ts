@@ -16,6 +16,7 @@ import { firstImageUrl, readFile, remoteVideoMedia, signedUrl, trustedVideoUrl }
 import { db } from "./db";
 import type { MediaItem } from "./types";
 import { isProfileCred } from "./facebook-profile";
+import { isMcPlatform, metricoolFor, metricoolPublish, type MetricoolConn } from "./metricool";
 import { inQuietHours } from "./time";
 import { notifyHandoffs } from "./handoff";
 import type { User } from "./auth";
@@ -37,6 +38,15 @@ async function videoFor(userId: string, post: Post): Promise<VideoFile | null> {
     return { bytes, url: signedUrl(userId, m.id, 2 * 86400), mime: "video/mp4", size: bytes.length };
   }
   return null;
+}
+
+/** Posts through the person's Metricool: the HD video (or first image) goes as a public signed link Metricool copies. */
+async function sendViaMetricool(mc: MetricoolConn, post: Post, texts: string[], video: VideoFile | undefined, userId: string | null, settings: Settings) {
+  if (!isMcPlatform(post.platform)) throw new CopyReadyError("This platform can't post through Metricool.");
+  let image = post.imageUrl && /^https:\/\//.test(post.imageUrl) ? post.imageUrl : null;
+  if (!video && !image && post.mediaIds?.length && userId) image = await firstImageUrl(userId, post.mediaIds);
+  const media = video ? { url: video.url, video: true } : image ? { url: image, video: false } : null;
+  return metricoolPublish(mc, post.platform, post, texts, media, settings.timezone);
 }
 
 const STALE_MS = 12 * 3600_000;
@@ -131,7 +141,9 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
   }
 
   const can = adapter.publishable(post);
-  const cred = can === true ? await freshCredential(post.platform) : null;
+  // Accounts connected in the person's Metricool post through Metricool when switched on for this platform.
+  const mc = can === true ? await metricoolFor(post.platform) : null;
+  const cred = can === true && !mc ? await freshCredential(post.platform) : null;
   if (post.platform === "facebook" && cred && isProfileCred(cred)) {
     // Don't ask the person to post in the middle of the night: wait for quiet hours to end (Post now still works).
     const q = settings.quietHours;
@@ -141,9 +153,9 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
     }
     return handOffToProfile(post, userId, manual);
   }
-  if (can !== true || !cred) {
+  if (can !== true || (!cred && !mc)) {
     post.status = "copy_ready";
-    post.error = can !== true ? can : "No account connected — copy and post manually, or connect it in Settings.";
+    post.error = can !== true ? can : "No account connected — copy and post manually, or connect it on the Platforms tab.";
     await savePost(post);
     await log("info", "post", `Copy-ready: ${post.error}`, { platform: post.platform, postId: post.id });
     return { outcome: "copy_ready", message: post.error };
@@ -160,7 +172,7 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
   await savePost(post);
   try {
     const texts = renderPost(post, settings);
-    const res = await adapter.publish(post, texts, cred, video);
+    const res = mc ? await sendViaMetricool(mc, post, texts, video, userId, settings) : await adapter.publish(post, texts, cred!, video);
     post.status = "published";
     post.publishedAt = nowIso();
     post.externalId = res.externalId;
@@ -171,7 +183,7 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
     if (userId) await usePostAllowance(userId, true);
     await recordAction(post.platform, "post");
     await clearStrikes(post.platform);
-    await log("info", "post", `Published ${post.format} — “${post.hook.slice(0, 80)}”`, {
+    await log("info", "post", mc ? `Sent to Metricool, which publishes it in about 2 minutes — “${post.hook.slice(0, 80)}”` : `Published ${post.format} — “${post.hook.slice(0, 80)}”`, {
       platform: post.platform,
       postId: post.id,
       url: res.url,
@@ -190,7 +202,9 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
       await log("warn", "post", post.error, { platform: post.platform, postId: post.id });
     } else if (err instanceof AuthError) {
       post.status = "failed";
-      post.error = `Authorization failed — reconnect ${post.platform} in Settings. (${err.message.slice(0, 160)})`;
+      post.error = mc
+        ? `Metricool didn't accept the API token — reconnect Metricool on the Platforms tab. (${err.message.slice(0, 160)})`
+        : `Authorization failed — reconnect ${post.platform} on the Platforms tab. (${err.message.slice(0, 160)})`;
       await log("error", "post", post.error, { platform: post.platform, postId: post.id });
     } else {
       post.attempts = (post.attempts ?? 0) + 1;
