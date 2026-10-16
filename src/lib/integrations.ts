@@ -137,7 +137,7 @@ export const pexelsKey = () => pick("pexelsKey", "PEXELS_API_KEY");
 export const pexelsHeaders = (key: string) => ({
   Authorization: key,
   Accept: "application/json",
-  "User-Agent": `NexusPulse/1.0 (+${(process.env.APP_URL || "https://nexus-pulse.up.railway.app").replace(/\/$/, "")})`,
+  "User-Agent": `GhostPost/1.0 (+${(process.env.APP_URL || "https://ghost-post-autopilot.up.railway.app").replace(/\/$/, "")})`,
 });
 export const stripeSecretKey = () => pick("stripeSecretKey", "STRIPE_SECRET_KEY");
 export const stripeWebhookSecret = () => pick("stripeWebhookSecret", "STRIPE_WEBHOOK_SECRET");
