@@ -6,7 +6,8 @@ import { getLlmHealth } from "@/lib/llm-health";
 import { storageMode } from "@/lib/db";
 import { localParts } from "@/lib/time";
 import { kvGet } from "@/lib/repo";
-import { publicUser, trialActive, trialEligible, trialFreeLeft } from "@/lib/auth";
+import { publicUser, rollVault, trialActive, trialEligible, trialFreeLeft, vaultSummary } from "@/lib/auth";
+import { poolSnapshot } from "@/lib/credit-pool";
 import { ownAiStatus } from "@/lib/ai-provider";
 import { TRIAL_DAILY_FREE_CREDITS } from "@/lib/plans";
 import { planById } from "@/lib/plans";
@@ -35,13 +36,18 @@ export const GET = authed(async (_req, user) => {
     .filter((p) => p.status === "copy_ready" && p.handoff && !p.handoff.postedAt)
     .sort((a, b) => a.handoff!.readyAt.localeCompare(b.handoff!.readyAt))
     .map((p) => ({ id: p.id, hook: p.hook, kind: p.kind === "video" || p.videoUrl ? "video" : p.mediaIds?.length ? "media" : "text", readyAt: p.handoff!.readyAt }));
+  await rollVault(user); // adds this cycle's credits, moves expired ones to the community pool
   const plan = planById(user.plan);
+  const vault = vaultSummary(user);
+  const pool = await poolSnapshot();
   const [llm, stripe, llmHealth, ownAi] = await Promise.all([llmConfigured(), stripeReady(), user.role === "admin" ? getLlmHealth() : Promise.resolve(null), ownAiStatus()]);
   return ok({
     me: {
       user: publicUser(user),
       plan,
-      creditsLeft: Math.max(0, plan.credits - user.usage.credits),
+      creditsLeft: vault.balance,
+      vault,
+      pool: { balance: pool.balance, availableToday: pool.availableToday },
       postsLeft: plan.postsPerMonth === null ? null : Math.max(0, plan.postsPerMonth - user.usage.posts),
       trial: {
         active: trialActive(user),

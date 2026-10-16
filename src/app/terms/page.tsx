@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Contact, LegalShell, legalInfo } from "@/components/legal";
+import { planById } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Terms of Service · Nexus Pulse" };
@@ -29,13 +30,17 @@ export default async function TermsPage() {
       <ul>
         <li>The Free plan costs nothing. Paid plans and their prices, credits and posting limits are listed on the <Link href="/pricing">Pricing page</Link>. Prices are in US dollars and exclude any applicable taxes unless stated at checkout.</li>
         <li>Payments are processed by Stripe. We never see or store your full card number.</li>
-        <li><strong>Free trials.</strong> Pro and Unlimited start with a 14-day free trial (one per account). You add a card at checkout and nothing is charged during the trial. If you don&apos;t cancel before it ends, the subscription starts automatically: monthly plans charge the first-month price shown at checkout (currently $10 for Pro and $20 for Unlimited) when the trial ends, then the regular monthly price each month after that. Yearly plans charge the yearly price when the trial ends. You can cancel any time during the trial in Plans &amp; Billing → Manage billing.</li>
+        <li><strong>Free trials.</strong> Pro and Unlimited start with a 14-day free trial (one per account). You add a card at checkout and nothing is charged during the trial. If you don&apos;t cancel before it ends, the subscription starts automatically: monthly plans charge the first-month price shown at checkout (currently ${planById("pro").trial?.firstMonth} for Pro and ${planById("unlimited").trial?.firstMonth} for Unlimited) when the trial ends, then the regular monthly price each month after that. Yearly plans charge the yearly price when the trial ends. You can cancel any time during the trial in Plans &amp; Billing → Manage billing.</li>
         <li><strong>Paid plans renew automatically</strong> at the end of each monthly or yearly billing period, at the price then in effect, until you cancel. Your payment method is charged at the start of each period.</li>
         <li><strong>Cancel any time</strong> in the app under Plans &amp; Billing → Manage billing. Cancellation takes effect at the end of the current billing period: you keep your paid plan until then, and the account then moves to the Free plan.</li>
         <li>Upgrades and downgrades are made in the same billing portal. Stripe prorates the difference for the rest of the current period.</li>
         <li>We&apos;ll give you at least 30 days&apos; notice by email before a price change applies to your subscription.</li>
         <li>If a renewal payment fails, Stripe retries it. If it still can&apos;t be collected, your subscription may be cancelled and your account moved to the Free plan.</li>
-        <li>AI credits and post allowances reset on the 1st of each month. Unused credits don&apos;t roll over and have no cash value.</li>
+        <li>Post allowances reset on the 1st of each month.</li>
+        <li>
+          AI credits are an allowance of AI usage, not money. The credits included in your plan are added to your own credit vault each billing period (a yearly plan receives them every 30 days) and stay in the vault for 30 days from the day they are added. Credits that
+          expire unused have no cash value, are not refunded and are not carried over; they move to a shared community pool that tops up any account whose own vault has run out (a few credits per account per day).
+        </li>
       </ul>
 
       <h2 id="refunds">4. Refunds</h2>

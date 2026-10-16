@@ -1,7 +1,9 @@
 import "server-only";
 import { allOwners, asUser } from "./db";
 import { destroyAllSessions, getUser, hashPassword, listUsers, publicUser, saveUser, validatePassword, type User } from "./auth";
-import { PLANS, planById, type PlanId } from "./plans";
+import { EST_COST_CENTS_PER_CREDIT, PLANS, planById, type PlanId } from "./plans";
+import { poolSnapshot } from "./credit-pool";
+import { balance } from "./vault-core";
 import { getPost, getSettings, log, savePost } from "./repo";
 import { finalizePost } from "./generate";
 import type { Post } from "./types";
@@ -63,6 +65,8 @@ export async function adminUpdateUser(actor: User, p: UserPatch) {
   }
   if (p.resetUsage) {
     u.usage = { ...u.usage, credits: 0, posts: 0 };
+    // Also refills the vault: the plan's credits for this cycle are added again the next time the account is used.
+    if (u.vault) u.vault.cycle = { key: "", granted: 0 };
     changes.push("usage reset");
   }
   await saveUser(u);
@@ -141,7 +145,10 @@ export async function adminStats() {
   const byPlan = Object.fromEntries(PLANS.map((p) => [p.id, 0])) as Record<PlanId, number>;
   let mrr = 0;
   let creditsUsed = 0;
+  let vaultCredits = 0;
+  const now = Date.now();
   for (const u of users) {
+    if (u.vault) vaultCredits += balance(u.vault.lots, now);
     byPlan[u.plan] = (byPlan[u.plan] ?? 0) + 1;
     const plan = planById(u.plan);
     const paying = u.billing?.status ? ["active", "trialing", "past_due"].includes(u.billing.status) : false;
@@ -155,8 +162,11 @@ export async function adminStats() {
     byPlan,
     mrr,
     creditsUsed,
-    // At most ~1.1 cents of Claude cost per credit (see Plans), so this is a ceiling.
-    aiCostCeiling: Math.round(creditsUsed * 1.1) / 100,
+    // An estimate: about 2 cents of Claude usage per credit (measured from the app's prompt sizes; see plans.ts).
+    aiCostEstimate: Math.round(creditsUsed * EST_COST_CENTS_PER_CREDIT) / 100,
+    /** Credits sitting in vaults right now, and the community pool they expire into. */
+    vaultCredits,
+    pool: await poolSnapshot(),
     postsPublishedThisMonth: posts.filter(({ row }) => row.status === "published" && (row.publishedAt ?? "").startsWith(month)).length,
     awaitingReview: posts.filter(({ row }) => row.status === "pending_review").length,
   };

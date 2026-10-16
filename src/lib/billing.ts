@@ -4,7 +4,7 @@ import { gdb } from "./db";
 import { getUser, listUsers, saveUser, trialEligible, type User } from "./auth";
 import { PLANS, introDiscount, planById, type PlanId } from "./plans";
 import { nowIso } from "./utils";
-import { saveIntegrations, stripeIntroCoupon, stripePortalConfig, stripePriceId, stripeSecretKey } from "./integrations";
+import { getIntegrations, saveIntegrations, stripeIntroCoupon, stripePortalConfig, stripePriceId, stripeSecretKey } from "./integrations";
 
 /**
  * Stripe Billing over Stripe's REST API (no SDK needed).
@@ -147,13 +147,42 @@ interface SPortal {
   metadata?: Record<string, string>;
 }
 
+const planAmount = (p: { monthly: number; annual: number }, interval: Interval) => Math.round((interval === "month" ? p.monthly : p.annual * 12) * 100);
+
+/**
+ * True when the prices or first-month coupons saved by "Connect Stripe" no longer match plans.ts (the prices were
+ * changed), so checkout would still charge the old amounts. Prices managed through environment variables are left alone.
+ */
+export async function stripePricesStale(): Promise<boolean> {
+  const key = await stripeSecretKey();
+  const saved = await getIntegrations();
+  if (!key || !saved.stripePrices) return false;
+  const get = <T>(path: string) => stripeWith<T>(key, path, {}, "GET").catch(() => null);
+  for (const p of PLANS.filter((x) => x.monthly > 0)) {
+    for (const interval of ["month", "year"] as Interval[]) {
+      const id = saved.stripePrices[`${p.id}_${interval}`];
+      if (!id) return true;
+      const price = await get<{ unit_amount: number | null; active?: boolean }>(`/prices/${encodeURIComponent(id)}`);
+      if (!price || price.active === false || price.unit_amount !== planAmount(p, interval)) return true;
+    }
+    const off = introDiscount(p);
+    if (p.trial && off > 0) {
+      const id = saved.stripeCoupons?.[p.id];
+      if (!id) return true;
+      const coupon = await get<{ amount_off: number | null; valid?: boolean }>(`/coupons/${encodeURIComponent(id)}`);
+      if (!coupon || coupon.valid === false || coupon.amount_off !== Math.round(off * 100)) return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Creates (or reuses) everything subscriptions need in the owner's Stripe account:
  * one product per paid plan, a monthly and a yearly USD price each, a webhook pointed at this app (its signing
  * secret is captured on creation) and a customer-portal configuration that allows plan changes, card updates,
  * invoices and cancel-at-period-end. Safe to run again: existing Nexus Pulse products/prices are reused.
  */
-export async function setupStripeBilling(secretKey: string, appUrl: string) {
+export async function setupStripeBilling(secretKey: string, appUrl: string, opts: { keepWebhook?: boolean } = {}) {
   const sk = secretKey.trim();
   if (!/^(sk|rk)_(live|test)_[A-Za-z0-9]+/.test(sk)) throw new Error("That isn't a Stripe secret key. It starts with sk_live_ or sk_test_ (Stripe → Developers → API keys).");
   if (!/^https:\/\//.test(appUrl)) throw new Error("APP_URL must be your public https address so Stripe can reach the webhook.");
@@ -183,7 +212,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string) {
     const existing = await call<StripeList<SPrice>>(`/prices?product=${encodeURIComponent(prod.id)}&active=true&limit=100`, undefined, "GET");
     const ids: string[] = [];
     for (const interval of ["month", "year"] as Interval[]) {
-      const amount = Math.round((interval === "month" ? p.monthly : p.annual * 12) * 100);
+      const amount = planAmount(p, interval);
       let price = existing.data.find((x) => x.recurring?.interval === interval && x.unit_amount === amount && x.currency === "usd");
       if (!price) {
         price = await call<SPrice>("/prices", {
@@ -224,17 +253,24 @@ export async function setupStripeBilling(secretKey: string, appUrl: string) {
     }
   }
 
-  // Webhook: recreate ours so the signing secret (only returned at creation) is captured.
+  // Webhook: recreate ours so the signing secret (only returned at creation) is captured. An automatic price refresh
+  // (keepWebhook) leaves a working webhook alone, so no events are missed while it is swapped.
   const url = `${base}/api/stripe/webhook`;
-  const hooks = await call<StripeList<SHook>>("/webhook_endpoints?limit=100", undefined, "GET");
-  for (const h of hooks.data.filter((x) => x.url === url)) await call(`/webhook_endpoints/${h.id}`, {}, "DELETE");
-  const hook = await call<SHook>("/webhook_endpoints", {
-    url,
-    enabled_events: ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"],
-    description: "Nexus Pulse subscriptions",
-    metadata: { app: "nexus-pulse" },
-  });
-  if (!hook.secret) throw new Error("Stripe didn't return the webhook signing secret. Try again.");
+  const stored = await getIntegrations();
+  let hook: SHook;
+  if (opts.keepWebhook && stored.stripeWebhookId && stored.stripeWebhookSecret) {
+    hook = { id: stored.stripeWebhookId, url, secret: stored.stripeWebhookSecret };
+  } else {
+    const hooks = await call<StripeList<SHook>>("/webhook_endpoints?limit=100", undefined, "GET");
+    for (const h of hooks.data.filter((x) => x.url === url)) await call(`/webhook_endpoints/${h.id}`, {}, "DELETE");
+    hook = await call<SHook>("/webhook_endpoints", {
+      url,
+      enabled_events: ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"],
+      description: "Nexus Pulse subscriptions",
+      metadata: { app: "nexus-pulse" },
+    });
+    if (!hook.secret) throw new Error("Stripe didn't return the webhook signing secret. Try again.");
+  }
 
   // Customer portal: plan switching between the three paid plans (monthly/yearly), cards, invoices, cancel.
   const portalParams = {

@@ -9,7 +9,12 @@ import type { MetricoolStatus } from "./metricool";
 export interface Me {
   user: { id: string; email: string; name: string; role: "admin" | "user"; status: string; plan: string; requireApproval: boolean; usage: { period: string; credits: number; posts: number }; billing?: { status?: string; interval?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; customerId?: string; subscriptionId?: string; trialEnd?: string; trialUsed?: boolean } };
   plan: Plan;
+  /** Spendable credits across every lot in the vault. */
   creditsLeft: number;
+  /** The vault: each lot expires 30 days after it was added; expired credits move to the community pool. */
+  vault: { balance: number; lots: { credits: number; expiresAt: string; source: string }[]; nextGrantAt: string | null; nextGrantCredits: number; poolAllowanceLeft: number };
+  /** Credits in the community pool, and how many can still go out today. */
+  pool: { balance: number; availableToday: number };
   postsLeft: number | null;
   /** Free trial: whether it's running, when it ends, whether this account can still start one, and today's free AI left. */
   trial: { active: boolean; endsAt: string | null; eligible: boolean; freeLeftToday: number; freePerDay: number };

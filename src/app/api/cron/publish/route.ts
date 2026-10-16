@@ -1,12 +1,15 @@
 import { cronAuthorized, fail, handle, ok } from "@/lib/http-api";
 import { runPublish } from "@/lib/publisher";
 import { forEachActiveUser } from "@/lib/tenants";
+import { sweepVaults } from "@/lib/vault-sweep";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-/** Publishes every due post, for every active account. */
+/** Publishes every due post, for every active account, then keeps credit vaults current (at most every 30 minutes). */
 export const GET = handle(async (req: Request) => {
   if (!cronAuthorized(req)) return fail("Unauthorized", 401);
-  return ok(await forEachActiveUser((u) => runPublish(u)));
+  const result = await forEachActiveUser((u) => runPublish(u));
+  await sweepVaults().catch((e) => console.error("[vault] sweep failed:", (e as Error).message));
+  return ok(result);
 });

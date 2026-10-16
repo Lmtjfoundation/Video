@@ -4,6 +4,23 @@ import { promisify } from "util";
 import { gdb } from "./db";
 import { TRIAL_DAILY_FREE_CREDITS, planById, type PlanId } from "./plans";
 import { nowIso, uid } from "./utils";
+import { addToPool, takeFromPool } from "./credit-pool";
+import {
+  POOL_LOT_DAYS,
+  VAULT_DAYS,
+  balance,
+  debit,
+  emptyVault,
+  liveLots,
+  newLot,
+  planCycle,
+  planLotExpiry,
+  poolAllowanceLeft,
+  restore,
+  splitExpired,
+  utcDay as vaultDay,
+  type Vault,
+} from "./vault-core";
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
 
@@ -19,7 +36,10 @@ export interface User {
   plan: PlanId;
   /** Posts need admin approval before they can publish */
   requireApproval: boolean;
+  /** Credits spent / posts published this calendar month (statistics; the spendable balance lives in `vault`). */
   usage: { period: string; credits: number; posts: number };
+  /** Spendable credits: lots that each expire 30 days after they were added. See vault-core.ts. */
+  vault?: Vault;
   billing?: {
     customerId?: string;
     subscriptionId?: string;
@@ -141,6 +161,7 @@ export async function createUser(input: { email: string; password: string; name?
     plan: isFirst || adminEmails().includes(email) ? "unlimited" : "free",
     requireApproval: settings.requireApprovalForNewUsers && !isFirst,
     usage: { period: period(), credits: 0, posts: 0 },
+    vault: emptyVault(),
     createdAt: nowIso(),
   };
   await gdb().upsertMany("users", [user, { id: emailKey(email), kind: "email", userId: user.id } as EmailIndex]);
@@ -312,23 +333,108 @@ export class QuotaError extends Error {
   status = 402;
 }
 
+/* Credit vault */
+
+/**
+ * Brings an account's vault up to date, and saves it if anything changed:
+ * 1. Accounts from before the vault existed get what they had left this month, in one lot.
+ * 2. Lots past their 30 days are removed and their credits move to the community pool.
+ * 3. The plan's credits for the current billing cycle are added once (an upgrade adds the difference).
+ */
+export async function rollVault(u: User, now = Date.now()): Promise<User> {
+  await rollUsage(u);
+  const plan = planById(u.plan);
+  const cycle = planCycle(u, plan, now);
+  let changed = false;
+
+  if (!u.vault) {
+    const v = emptyVault();
+    if (cycle) {
+      v.cycle = { key: cycle.key, granted: cycle.credits };
+      const left = Math.max(0, plan.credits - u.usage.credits);
+      if (left > 0) v.lots.push(newLot(uid("lot"), left, "migration", now, now + VAULT_DAYS * 86_400_000));
+    }
+    u.vault = v;
+    changed = true;
+  }
+  const v = u.vault;
+
+  const { live, expired } = splitExpired(v.lots, now);
+  if (expired > 0 || live.length !== v.lots.length) {
+    v.lots = live;
+    changed = true;
+  }
+  if (cycle) {
+    if (v.cycle.key !== cycle.key) {
+      v.cycle = { key: cycle.key, granted: 0 };
+      changed = true;
+    }
+    if (cycle.credits > v.cycle.granted) {
+      v.lots.push(newLot(uid("lot"), cycle.credits - v.cycle.granted, "plan", now, planLotExpiry(cycle, now)));
+      v.cycle.granted = cycle.credits;
+      changed = true;
+    }
+  }
+  if (changed) await saveUser(u);
+  // After the save, so a failed save can never count the same expired credits twice.
+  if (expired > 0) await addToPool(expired, now);
+  return u;
+}
+
+/** What the browser shows about an account's vault (call rollVault first). */
+export function vaultSummary(u: User, now = Date.now()) {
+  const v = u.vault ?? emptyVault();
+  const cycle = planCycle(u, planById(u.plan), now);
+  return {
+    balance: balance(v.lots, now),
+    lots: liveLots(v.lots, now).map((l) => ({ credits: l.credits, expiresAt: l.expiresAt, source: l.source })),
+    nextGrantAt: cycle ? new Date(cycle.next).toISOString() : null,
+    nextGrantCredits: cycle?.credits ?? 0,
+    poolAllowanceLeft: poolAllowanceLeft(v, now),
+  };
+}
+
+const shortDate = (t: number) => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
 /** Deducts credits before an AI action. Call refundCredits if the action then fails. */
 export async function spendCredits(userId: string, n: number) {
   const u = await getUser(userId);
   if (!u) throw new AuthError("Account not found.");
-  await rollUsage(u);
-  const plan = planById(u.plan);
-  const left = plan.credits - u.usage.credits;
-  if (left < n) {
-    throw new QuotaError(`This needs ${n} credit${n === 1 ? "" : "s"} and you have ${Math.max(0, left)} left this month on ${plan.name}. Upgrade on the Plans page, or wait for the reset on the 1st.`);
+  const now = Date.now();
+  await rollVault(u, now);
+  const v = u.vault!;
+  let have = balance(v.lots, now);
+
+  // Short on credits: the community pool covers the gap (a few credits a day), all or nothing.
+  if (have < n) {
+    const need = n - have;
+    if (need <= poolAllowanceLeft(v, now) && (await takeFromPool(need, now))) {
+      v.lots.push(newLot(uid("lot"), need, "pool", now, now + POOL_LOT_DAYS * 86_400_000));
+      const day = vaultDay(now);
+      v.poolDay = { day, credits: (v.poolDay?.day === day ? v.poolDay.credits : 0) + need };
+      have += need;
+    }
   }
+  if (have < n) {
+    const plan = planById(u.plan);
+    const cycle = planCycle(u, plan, now);
+    const when = cycle
+      ? `Your next ${plan.credits.toLocaleString()} credits arrive ${shortDate(cycle.next)}.`
+      : trialActive(u)
+        ? `Your plan's credits arrive when your free trial ends (${shortDate(Date.parse(u.billing!.trialEnd!))}).`
+        : "Update your payment method on the Plans page to get your plan's credits.";
+    throw new QuotaError(`This needs ${n} credit${n === 1 ? "" : "s"} and your vault has ${have}. ${when} Upgrade on the Plans page for more.`);
+  }
+  v.lots = debit(v.lots, n, now)!;
   u.usage.credits += n;
   await saveUser(u);
-  return plan.credits - u.usage.credits;
+  return balance(v.lots, now);
 }
 export async function refundCredits(userId: string, n: number) {
   const u = await getUser(userId);
   if (!u) return;
+  u.vault = u.vault ?? emptyVault();
+  u.vault.lots = restore(u.vault.lots, n, Date.now(), uid("lot"));
   u.usage.credits = Math.max(0, u.usage.credits - n);
   await saveUser(u);
 }

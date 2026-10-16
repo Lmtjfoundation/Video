@@ -8,7 +8,8 @@ import { getOwnAi } from "./ai-provider";
  * Pays for an AI writing action, then runs it. In order:
  * 1. The subscriber connected their own AI (Settings → AI): their provider bills them, so no credits are used.
  * 2. They're on a free trial: the trial's free daily allowance is used instead of credits.
- * 3. Otherwise credits are charged up front and refunded if the AI action fails.
+ * 3. Otherwise credits are taken from the soonest-expiring lot of the person's vault (topped up from the community pool
+ *    when it runs short) and put back if the AI action fails.
  */
 export async function withCredits<T>(n: number, fn: () => Promise<T>, userId = currentUserId()): Promise<T> {
   if (!userId) throw new Error("No signed-in user.");

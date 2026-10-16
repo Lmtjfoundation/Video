@@ -4,12 +4,12 @@ import { AI_PROVIDER_IDS, AI_PROVIDERS, isAiProvider } from "@/lib/ai-providers"
 import { buildCall, isKeyProblem, readText } from "@/lib/llm-providers";
 
 describe("free trial", () => {
-  it("Pro and Unlimited get 14 free days, then a $10 / $20 first month, then the regular price", () => {
-    expect(planById("pro").trial).toEqual({ days: TRIAL_DAYS, firstMonth: 10 });
-    expect(planById("unlimited").trial).toEqual({ days: TRIAL_DAYS, firstMonth: 20 });
+  it("Pro and Unlimited get 14 free days, then a $19 / $49 first month, then the regular price", () => {
+    expect(planById("pro").trial).toEqual({ days: TRIAL_DAYS, firstMonth: 19 });
+    expect(planById("unlimited").trial).toEqual({ days: TRIAL_DAYS, firstMonth: 49 });
     expect(TRIAL_DAYS).toBe(14);
-    expect(introDiscount(planById("pro"))).toBe(planById("pro").monthly - 10);
-    expect(introDiscount(planById("unlimited"))).toBe(planById("unlimited").monthly - 20);
+    expect(introDiscount(planById("pro"))).toBe(planById("pro").monthly - 19);
+    expect(introDiscount(planById("unlimited"))).toBe(planById("unlimited").monthly - 49);
   });
 
   it("Free and Creator have no trial or intro discount", () => {

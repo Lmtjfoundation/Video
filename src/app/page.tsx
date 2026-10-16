@@ -182,7 +182,7 @@ export default function Dashboard() {
       </div>
 
       <Card className="mb-6 grid gap-4 p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
-        <UsageBar label={`AI credits · ${me.plan.name}`} used={me.plan.credits - me.creditsLeft} total={me.plan.credits} />
+        <UsageBar label={`AI credits · ${me.plan.name}`} used={Math.max(0, Math.max(me.plan.credits, me.creditsLeft) - me.creditsLeft)} total={Math.max(me.plan.credits, me.creditsLeft)} />
         <UsageBar label="Posts this month" used={me.user.usage.posts} total={me.plan.postsPerMonth} />
         <Link href="/plans"><Button size="sm" variant={me.creditsLeft < me.plan.credits * 0.15 ? "gold" : "secondary"}>{me.plan.id === "unlimited" ? "Plan & billing" : "Upgrade"}</Button></Link>
       </Card>

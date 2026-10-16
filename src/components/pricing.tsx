@@ -81,7 +81,7 @@ export function PricingTable({
         <div className="inline-flex rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/10">
           {(["month", "year"] as const).map((c) => (
             <button key={c} onClick={() => setCycle(c)} className={cn("focus-ring rounded-lg px-4 py-1.5 text-sm font-medium", cycle === c ? "bg-white/10 text-white" : "text-white/55")}>
-              {c === "month" ? "Monthly" : "Yearly · save ~17%"}
+              {c === "month" ? "Monthly" : "Yearly · save ~15%"}
             </button>
           ))}
         </div>
@@ -147,7 +147,7 @@ export function PricingTable({
               <thead className="text-[11px] uppercase tracking-wider text-white/40"><tr><th className="px-5 py-2.5">Action</th><th className="px-5 py-2.5">Credits</th><th className="px-5 py-2.5">Pro covers / month</th></tr></thead>
               <tbody className="divide-y divide-white/[0.05]">
                 {data.credits.map((c) => (
-                  <tr key={c.action}><td className="px-5 py-2.5 text-white/80">{c.label}</td><td className="px-5 py-2.5 tabular-nums">{c.credits}</td><td className="px-5 py-2.5 tabular-nums text-white/50">{Math.floor(1200 / c.credits).toLocaleString()}</td></tr>
+                  <tr key={c.action}><td className="px-5 py-2.5 text-white/80">{c.label}</td><td className="px-5 py-2.5 tabular-nums">{c.credits}</td><td className="px-5 py-2.5 tabular-nums text-white/50">{Math.floor((data.plans.find((p) => p.id === "pro")?.credits ?? 1000) / c.credits).toLocaleString()}</td></tr>
                 ))}
               </tbody>
             </table>

@@ -29,7 +29,7 @@ export default async function PricingPage() {
       <PricingTable signedIn={false} initial={initial} />
       <p className="mt-6 text-xs text-white/40">
         Prices in USD. Paid plans renew automatically each month or year until cancelled; cancel any time from Plans &amp; Billing and keep your plan until the end of the period.
-        AI credits and post allowances reset on the 1st of each month.
+        Post allowances reset on the 1st of each month. AI credits are added to your vault each billing period and stay there for 30 days; credits that expire unused move to a shared community pool that tops up other accounts.
       </p>
       <LegalFooter />
     </div>

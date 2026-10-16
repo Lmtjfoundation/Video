@@ -70,7 +70,8 @@ function AccountCard() {
   const { status, logout } = useApp();
   if (!status) return <div className="h-24 animate-pulse rounded-xl bg-white/[0.04]" />;
   const { me, settings } = status;
-  const used = me.plan.credits - me.creditsLeft;
+  const meterTotal = Math.max(me.plan.credits, me.creditsLeft, 1);
+  const used = meterTotal - me.creditsLeft;
   const state = settings.killSwitch ? ["bg-red-400", "Kill switch on"] : settings.autopilot ? ["bg-mint-400", "Autopilot live"] : ["bg-gold-400", "Manual mode"];
   return (
     <div className="grid gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
@@ -84,7 +85,7 @@ function AccountCard() {
           <span className="tabular-nums text-white/80">{me.creditsLeft.toLocaleString()} credits</span>
         </div>
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-          <div className="h-full rounded-full bg-gradient-to-r from-mint-400 to-gold-400" style={{ width: `${Math.max(2, 100 - (used / Math.max(1, me.plan.credits)) * 100)}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-mint-400 to-gold-400" style={{ width: `${Math.max(2, 100 - (used / meterTotal) * 100)}%` }} />
         </div>
       </div>
       {me.trial?.active && (
@@ -187,7 +188,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <div className="fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-white/[0.06] bg-ink-950/85 px-4 pb-2.5 pt-[calc(env(safe-area-inset-top)+10px)] backdrop-blur-xl lg:hidden">
         <Logo />
         <div className="flex items-center gap-2">
-          {status && <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] tabular-nums text-white/70">{status.me.creditsLeft} credits</span>}
+          {status && <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] tabular-nums text-white/70">{status.me.creditsLeft.toLocaleString()} credits</span>}
           <button className="focus-ring rounded-lg p-2 text-white/80" onClick={() => setOpen((v) => !v)} aria-label="Menu" aria-expanded={open}>
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>

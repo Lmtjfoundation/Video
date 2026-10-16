@@ -46,7 +46,7 @@ You pick a niche and a topic. Nexus Pulse, using Claude (an AI model from Anthro
 **Safety block:** Every post is checked before it goes out. A kill switch stops everything with one tap.
 
 **Pricing block** (from the app's Plans page; confirm before publishing):
-Free $0 · Creator $12/month · Pro $29/month · Unlimited $59/month. Paying yearly lowers the monthly price (Creator $10, Pro $24, Unlimited $49 per month). Pro and Unlimited write long scripts with our strongest model.
+Free $0 · Creator $15/month · Pro $39/month · Unlimited $99/month. Paying yearly lowers the monthly price (Creator $13, Pro $33, Unlimited $84 per month). AI credits stay in your vault for 30 days; credits that expire unused go to a community pool that tops up other accounts. Pro and Unlimited write long scripts with our strongest model.
 
 **FAQ**
 - *Does it post for me?* On Facebook Pages, X, LinkedIn, Instagram and webhooks, yes, once you connect the account. YouTube and TikTok are copy-ready because of those platforms' rules.

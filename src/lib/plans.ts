@@ -1,8 +1,17 @@
 /**
- * Subscription plans. Prices are set to undercut comparable tools while staying profitable:
- * every paid plan is profitable even if a subscriber uses every AI credit (see /admin → Revenue).
- * Competitor reference (2026 list prices): SocialBee $29/$49/$99, Later $25/$50/$110,
- * AutoShorts $19/$39/$69, OpusClip $15/$29.
+ * Subscription plans. Prices sit at or below comparable tools while every paid plan stays profitable even if a
+ * subscriber uses every AI credit (credits that expire unused move to the community pool and are spent by other
+ * people, so planning with 100% use is the honest worst case).
+ *
+ * Margin check, worst case = every credit used at EST_COST_CENTS_PER_CREDIT, after Stripe's 2.9% + 30¢ (card),
+ * excluding hosting, voice and video-render compute:
+ *   Creator   $15 / 400 credits   42% monthly · 35% yearly
+ *   Pro       $39 / 1,000 credits 45% monthly · 36% yearly
+ *   Unlimited $99 / 3,000 credits 36% monthly · 26% yearly
+ * At half the credits used (typical) every plan is above 60%.
+ *
+ * Competitor reference (list prices, costbench.com, Oct 2026): SocialBee $29/$49/$99, Later $25/$50/$110,
+ * Metricool $25/$67, ContentStudio $19/$49/$99, SocialPilot $20/$40/$100, Hootsuite $99+.
  */
 export type PlanId = "free" | "creator" | "pro" | "unlimited";
 
@@ -42,10 +51,11 @@ export interface Plan {
 /** Length of the free trial on plans that have one. */
 export const TRIAL_DAYS = 14;
 /**
- * During a free trial, AI writing doesn't use credits up to this many credits' worth a day (about 25–40 pieces).
- * Past it, the plan's normal credits are used, so a heavy user can't run up the AI bill.
+ * During a free trial, AI writing doesn't use credits up to this many credits' worth a day (about 25 text posts).
+ * The plan's own credits arrive in the vault when the first paid month starts, so a trial costs at most
+ * 14 days × this amount (350 credits, about $7 of Claude usage) and can't be run up.
  */
-export const TRIAL_DAILY_FREE_CREDITS = 40;
+export const TRIAL_DAILY_FREE_CREDITS = 25;
 /** What the intro month saves (dollars, monthly billing). 0 when the plan has no trial. */
 export const introDiscount = (p: Plan) => (p.trial ? Math.max(0, p.monthly - p.trial.firstMonth) : 0);
 
@@ -67,8 +77,8 @@ export const PLANS: Plan[] = [
   {
     id: "creator",
     name: "Creator",
-    monthly: 12,
-    annual: 10,
+    monthly: 15,
+    annual: 13,
     blurb: "One faceless channel, posting daily",
     credits: 400,
     postsPerMonth: 300,
@@ -81,33 +91,33 @@ export const PLANS: Plan[] = [
   {
     id: "pro",
     name: "Pro",
-    monthly: 29,
-    annual: 24,
+    monthly: 39,
+    annual: 33,
     blurb: "Grow on every platform at once",
-    credits: 1_200,
+    credits: 1_000,
     postsPerMonth: 1_500,
     maxPostsPerDay: 6,
     maxPlatforms: 7,
     storageMb: 10_000,
     popular: true,
-    trial: { days: TRIAL_DAYS, firstMonth: 10 },
+    trial: { days: TRIAL_DAYS, firstMonth: 19 },
     features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true, moneyStack: false },
-    highlights: ["1,200 AI credits a month", "1,500 posts a month, up to 6 a day", "All 6 platforms + any app via webhook", "Automatic comment replies", "8–10 minute scripts on our strongest model", "10 GB uploads"],
+    highlights: ["1,000 AI credits a month", "1,500 posts a month, up to 6 a day", "All 6 platforms + any app via webhook", "Automatic comment replies", "8–10 minute scripts on our strongest model", "10 GB uploads"],
   },
   {
     id: "unlimited",
     name: "Unlimited",
-    monthly: 59,
-    annual: 49,
+    monthly: 99,
+    annual: 84,
     blurb: "No posting limits — you set the pace",
-    credits: 3_500,
+    credits: 3_000,
     postsPerMonth: null,
     maxPostsPerDay: null,
     maxPlatforms: 7,
     storageMb: 50_000,
-    trial: { days: TRIAL_DAYS, firstMonth: 20 },
+    trial: { days: TRIAL_DAYS, firstMonth: 49 },
     features: { autoReplies: true, nicheResearch: true, longStories: true, bulkImport: true, repurpose: true, priorityModel: true, moneyStack: true },
-    highlights: ["Unlimited posts — you choose posts per day", "3,500 AI credits a month", "Money Stack on every piece: every ad, affiliate, sponsor and search lever", "All 6 platforms + any app via webhook", "Everything in Pro", "Strongest model for long scripts", "50 GB uploads"],
+    highlights: ["Unlimited posts — you choose posts per day", "3,000 AI credits a month", "Money Stack on every piece: every ad, affiliate, sponsor and search lever", "All 6 platforms + any app via webhook", "Everything in Pro", "Strongest model for long scripts", "50 GB uploads"],
   },
 ];
 
@@ -122,7 +132,13 @@ export function storyCredits(plan: Plan, long: boolean): number {
 
 export const planById = (id: string | undefined) => PLANS.find((p) => p.id === id) ?? PLANS[0];
 
-/** What each Claude-powered action costs in credits. ~1 credit ≈ 1 cent of AI cost at most. */
+/**
+ * Estimated Claude cost of one credit, in cents, used for the admin cost estimate and margin checks. Measured from
+ * the app's real prompt sizes at Claude Sonnet 5.5 prices ($2 / $10 per million tokens in / out): 1.6–2.2¢ per credit.
+ */
+export const EST_COST_CENTS_PER_CREDIT = 2;
+
+/** What each Claude-powered action costs in credits. About 1 credit ≈ 2 cents of Claude usage. */
 export const CREDIT_COST = {
   post: 1,
   videoShort: 2,
@@ -139,8 +155,8 @@ export const CREDIT_COST = {
   storyShort: 2,
   storyLong: 6,
   repurposePerPlatform: 1,
-  /** Added to a piece built from a live story: Claude checks the details against current newsroom coverage. */
-  liveCheck: 1,
+  /** Added to a piece built from a live story: Claude searches current newsroom coverage (about 9¢ of usage, so 4 credits). */
+  liveCheck: 4,
 } as const;
 export type CreditAction = keyof typeof CREDIT_COST;
 

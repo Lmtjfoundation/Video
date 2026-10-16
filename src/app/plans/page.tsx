@@ -4,6 +4,8 @@ import { CreditCard } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { Badge, Button, Card, PageHeader } from "@/components/ui";
+import type { Me } from "@/lib/store";
+import { POOL_PER_USER_DAILY } from "@/lib/vault-core";
 import { PricingTable, inNativeApp } from "@/components/pricing";
 
 export default function PlansPage() {
@@ -67,11 +69,11 @@ export default function PlansPage() {
               <p className="mt-2 max-w-[16rem] text-[12px] leading-snug text-white/55">
                 {me.ownAi
                   ? "You're on your own AI key, so generating uses no credits."
-                  : `Trial bonus: ${me.trial.freeLeftToday} of ${me.trial.freePerDay} free AI credits left today. After that, your plan credits are used.`}
+                  : `Trial bonus: ${me.trial.freeLeftToday} of ${me.trial.freePerDay} free AI credits left today. Your plan's credits arrive in your vault when the first paid month starts.`}
               </p>
             )}
           </div>
-          <Usage label="AI credits" used={me.plan.credits - me.creditsLeft} total={me.plan.credits} />
+          <Usage label="AI credits left in your vault" used={me.creditsLeft} total={Math.max(me.plan.credits, me.creditsLeft)} />
           <Usage label="Posts this month" used={me.user.usage.posts} total={me.plan.postsPerMonth} />
           {sub?.customerId && !inNativeApp() && (
             <Button
@@ -89,8 +91,9 @@ export default function PlansPage() {
           )}
         </Card>
       )}
+      {me && <VaultCard me={me} />}
       <PricingTable currentPlan={me?.plan.id} signedIn hasSubscription={!!sub?.subscriptionId && sub?.status !== "canceled"} trialEligible={me?.trial.eligible ?? false} />
-      <p className="mt-6 text-xs text-white/40">Credits and post counts reset on the 1st of each month. Unused credits don't roll over. Prices in USD; taxes may apply at checkout.</p>
+      <p className="mt-6 text-xs text-white/40">Post counts reset on the 1st of each month. AI credits stay in your vault for 30 days; credits that expire unused go to the community pool. Prices in USD; taxes may apply at checkout.</p>
     </>
   );
 }
@@ -107,5 +110,52 @@ function Usage({ label, used, total }: { label: string; used: number; total: num
         <div className="h-full rounded-full bg-gradient-to-r from-mint-400 to-gold-400" style={{ width: `${total === null ? 4 : Math.max(2, pct)}%` }} />
       </div>
     </div>
+  );
+}
+
+const SOURCE_LABEL: Record<string, string> = { plan: "Plan credits", migration: "Carried over", pool: "Community pool", refund: "Returned", bonus: "Bonus" };
+
+/** The credit vault: every batch of credits with the day it expires, plus the shared community pool. */
+function VaultCard({ me }: { me: Me }) {
+  const fmt = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const days = (iso: string) => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86400_000));
+  const { vault, pool } = me;
+  return (
+    <Card className="mb-6 p-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="label">Your credit vault</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-white">
+            {me.creditsLeft.toLocaleString()} <span className="text-sm font-normal text-white/50">credits</span>
+          </p>
+        </div>
+        <p className="max-w-xs text-right text-[12px] leading-snug text-white/55">
+          {vault.nextGrantAt
+            ? `Next ${vault.nextGrantCredits.toLocaleString()} credits arrive ${fmt(vault.nextGrantAt)}.`
+            : "Your plan's credits arrive when your first paid month starts."}
+        </p>
+      </div>
+      {vault.lots.length > 0 ? (
+        <ul className="mt-4 grid gap-2">
+          {vault.lots.map((l, i) => (
+            <li key={`${l.expiresAt}-${i}`} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 rounded-lg bg-white/[0.03] px-3 py-2 text-sm ring-1 ring-white/[0.06]">
+              <span className="text-white/80">
+                <span className="tabular-nums font-medium text-white">{l.credits.toLocaleString()}</span> · {SOURCE_LABEL[l.source] ?? l.source}
+              </span>
+              <span className={days(l.expiresAt) <= 3 ? "text-gold-300" : "text-white/50"}>
+                expires {fmt(l.expiresAt)} · {days(l.expiresAt)} day{days(l.expiresAt) === 1 ? "" : "s"} left
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-4 text-sm text-white/55">Your vault is empty right now.</p>
+      )}
+      <p className="mt-4 text-[12px] leading-relaxed text-white/50">
+        Each batch stays in your vault for 30 days, and the batch that expires first is used first. Credits that expire unused move to the shared community pool
+        (<b className="text-white/70">{pool.balance.toLocaleString()}</b> credits now), which tops up any account that has run out, up to {POOL_PER_USER_DAILY} credits a day each
+        {vault.poolAllowanceLeft < POOL_PER_USER_DAILY ? ` (you have ${vault.poolAllowanceLeft} left today)` : ""}.
+      </p>
+    </Card>
   );
 }

@@ -37,7 +37,9 @@ interface Stats {
   byPlan: Record<PlanId, number>;
   mrr: number;
   creditsUsed: number;
-  aiCostCeiling: number;
+  aiCostEstimate: number;
+  vaultCredits: number;
+  pool: { balance: number; availableToday: number; swept: number; drawn: number };
   postsPublishedThisMonth: number;
   awaitingReview: number;
 }
@@ -114,14 +116,20 @@ export default function AdminPage() {
 
 function Overview({ stats }: { stats: Stats | null }) {
   if (!stats) return <div className="glass h-64 animate-pulse" />;
-  const margin = stats.mrr > 0 ? Math.round(((stats.mrr - stats.aiCostCeiling) / stats.mrr) * 100) : null;
+  const margin = stats.mrr > 0 ? Math.round(((stats.mrr - stats.aiCostEstimate) / stats.mrr) * 100) : null;
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Monthly recurring revenue" value={<span className="text-gradient">{usd(stats.mrr)}</span>} sub={`From active Stripe subscriptions`} icon={<CircleDollarSign className="h-4 w-4" />} accent="gold" />
         <Stat label="Users" value={stats.users} sub={`${stats.active} active · ${stats.newThisMonth} new this month`} icon={<Users className="h-4 w-4" />} accent="violet" />
-        <Stat label="AI cost this month" value={`≤ ${usd(stats.aiCostCeiling)}`} sub={`${stats.creditsUsed.toLocaleString()} credits used${margin !== null ? ` · ≥${margin}% gross margin` : ""}`} accent="mint" />
+        <Stat label="AI cost this month (est.)" value={`≈ ${usd(stats.aiCostEstimate)}`} sub={`${stats.creditsUsed.toLocaleString()} credits used at ~2¢ each${margin !== null ? ` · ~${margin}% margin before fees` : ""}`} accent="mint" />
         <Stat label="Waiting for review" value={stats.awaitingReview} sub={`${stats.postsPublishedThisMonth.toLocaleString()} posts published this month`} accent={stats.awaitingReview ? "red" : "mint"} />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Credits in vaults" value={stats.vaultCredits.toLocaleString()} sub="unspent, each lot expires 30 days after it was added" accent="violet" />
+        <Stat label="Community pool" value={stats.pool.balance.toLocaleString()} sub={`${stats.pool.availableToday.toLocaleString()} can go out today`} accent="mint" />
+        <Stat label="Expired into the pool" value={stats.pool.swept.toLocaleString()} sub="all time" accent="gold" />
+        <Stat label="Given out from the pool" value={stats.pool.drawn.toLocaleString()} sub="all time, to accounts that ran out" accent="gold" />
       </div>
       <Card>
         <CardHeader title="Users by plan" />
