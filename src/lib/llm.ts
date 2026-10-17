@@ -117,7 +117,29 @@ async function onFreeTrial() {
  * Calls the app's own Gemini key (Admin → Integrations → Gemini). Errors are written for the owner, never the
  * subscriber, and don't touch Claude's health status. Web search isn't available here.
  */
-export async function callGemini(g: Pick<OwnerGemini, "key" | "model">, { system, user, maxTokens = 2500, temperature = 0.85, images }: CallOpts): Promise<string> {
+/** Stable Gemini models to try, in order, when the configured one is retired or unknown (404). */
+const GEMINI_FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
+
+export async function callGemini(g: Pick<OwnerGemini, "key" | "model">, opts: CallOpts): Promise<string> {
+  try {
+    return await callGeminiModel(g, opts);
+  } catch (e) {
+    const modelGone = e instanceof LLMError && /doesn't recognize the model/.test(e.ownerMessage ?? "");
+    if (!modelGone) throw e;
+    for (const model of GEMINI_FALLBACK_MODELS.filter((m) => m !== g.model)) {
+      try {
+        const text = await callGeminiModel({ key: g.key, model }, opts);
+        console.warn(`[llm] Gemini model "${g.model}" isn't available; used "${model}" instead. Update it in Admin → App settings → Integrations → Gemini.`);
+        return text;
+      } catch (e2) {
+        if (!(e2 instanceof LLMError && /doesn't recognize the model/.test(e2.ownerMessage ?? ""))) throw e2;
+      }
+    }
+    throw e;
+  }
+}
+
+async function callGeminiModel(g: Pick<OwnerGemini, "key" | "model">, { system, user, maxTokens = 2500, temperature = 0.85, images }: CallOpts): Promise<string> {
   const call = buildCall("gemini", g.key, g.model, { system, user, maxTokens, temperature, images });
   const attempts = 3;
   let lastErr = "";
@@ -265,6 +287,7 @@ export async function claude(opts: CallOpts): Promise<string> {
   if (configOnlyBackup) order.push("gemini");
 
   let claudeErr: LLMError | null = null;
+  let geminiErr: LLMError | null = null;
   let firstErr: unknown = null;
   for (let i = 0; i < order.length; i++) {
     const engine: Engine = order[i];
@@ -281,6 +304,7 @@ export async function claude(opts: CallOpts): Promise<string> {
       return text;
     } catch (e) {
       firstErr ??= e;
+      if (engine === "gemini" && e instanceof LLMError) geminiErr = e;
       if (engine === "claude" && e instanceof LLMError) {
         claudeErr = e;
         // Out of credits or key rejected: send the next requests straight to Gemini for a while.
@@ -291,8 +315,10 @@ export async function claude(opts: CallOpts): Promise<string> {
         (engine === "gemini" || (e instanceof LLMError && (configOnlyBackup ? e.kind === "config" : !!e.kind)));
       if (!canMove) {
         // Nothing could answer: a Claude problem the owner must fix goes on the dashboard.
-        if (claudeErr?.kind === "config") await recordLlmHealth(false, claudeErr.ownerMessage);
-        throw claudeErr ?? e;
+        // Say why the backup failed too, so the owner can fix whichever is quicker.
+        const both = claudeErr && geminiErr ? new LLMError(claudeErr.message, `${claudeErr.ownerMessage ?? claudeErr.message} Gemini couldn't cover either: ${geminiErr.ownerMessage ?? geminiErr.message}`, claudeErr.kind) : null;
+        if (claudeErr?.kind === "config") await recordLlmHealth(false, (both ?? claudeErr).ownerMessage);
+        throw both ?? claudeErr ?? e;
       }
       console.warn(`[llm] ${engine} couldn't answer (${e instanceof LLMError ? e.ownerMessage ?? e.message : (e as Error).message}); trying ${order[i + 1]}.`);
     }

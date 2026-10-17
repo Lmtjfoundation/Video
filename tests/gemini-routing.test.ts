@@ -256,7 +256,15 @@ describe("claude() routing", () => {
     const err = await ask(paidUser).catch((e) => e);
     expect(err.message).toBe("AI writing is temporarily unavailable. Please try again in a little while.");
     expect(err.ownerMessage).toMatch(/out of credits/);
+    expect(err.ownerMessage).toMatch(/Gemini couldn't cover either: Google rejected the Gemini key/);
     expect(calls).toEqual(["claude", "gemini"]);
+  });
+
+  it("a retired Gemini model falls back to a current one instead of failing", async () => {
+    anthropic = [noCredit];
+    gemini = [{ status: 404, body: { error: { message: "models/x is not found" } } }, geminiOk("from a newer gemini")];
+    expect(await ask(paidUser)).toBe("from a newer gemini");
+    expect(calls).toEqual(["claude", "gemini", "gemini"]);
   });
 
   it("with only a Gemini key (Claude not connected) everyone is written by Gemini", async () => {
