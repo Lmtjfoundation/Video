@@ -48,6 +48,11 @@ describe("which AI answers (pure rules)", () => {
     expect(engineOrder({ ...base, claudeConfigured: false, geminiBackup: false, geminiForTrials: false })).toEqual(["gemini"]);
   });
 
+  it("puts Gemini first while Claude is down, even with the backup off", () => {
+    expect(engineOrder({ ...base, claudeDown: true })).toEqual(["gemini", "claude"]);
+    expect(engineOrder({ ...base, claudeDown: true, geminiBackup: false })).toEqual(["gemini", "claude"]);
+  });
+
   it("fails over from Claude in seconds when a backup is waiting", () => {
     expect(CLAUDE_ATTEMPTS_WITH_BACKUP).toBeLessThan(CLAUDE_ATTEMPTS);
   });
@@ -127,6 +132,7 @@ beforeEach(async () => {
   anthropic = [claudeOk("from claude")];
   gemini = [geminiOk("from gemini")];
   vi.stubGlobal("fetch", fakeAi());
+  (await import("@/lib/llm")).resetClaudeDown();
   const { saveIntegrations } = await import("@/lib/integrations");
   await saveIntegrations({ anthropicKey: "sk-ant-test-key-0123456789abcdef", geminiKey: "AIza-test-key-0123456789abcdef", geminiModel: "", geminiForTrials: "", geminiBackup: "" });
 });
@@ -203,19 +209,45 @@ describe("claude() routing", () => {
     expect(calls.at(-1)).toBe("gemini");
   });
 
-  it("with the backup switched off, a Claude outage is an outage and says what to fix", async () => {
+  it("with the backup switched off, an overloaded Claude is an outage (no Gemini)", async () => {
     const { saveIntegrations } = await import("@/lib/integrations");
     await saveIntegrations({ geminiBackup: false });
-    anthropic = [noCredit];
+    anthropic = [{ status: 529, body: { error: { message: "Overloaded" } } }];
     const { LLMError } = await import("@/lib/llm");
     const err = await ask(paidUser).catch((e) => e);
     expect(err).toBeInstanceOf(LLMError);
-    expect(err.message).toMatch(/temporarily unavailable/);
-    expect(err.ownerMessage).toMatch(/out of credits/);
+    expect(calls).toEqual(Array(CLAUDE_ATTEMPTS).fill("claude"));
+  });
+
+  it("even with the backup switched off, Gemini covers when Claude is out of credits", async () => {
+    const { saveIntegrations } = await import("@/lib/integrations");
+    await saveIntegrations({ geminiBackup: false });
+    anthropic = [noCredit];
+    expect(await ask(paidUser)).toBe("from gemini");
+    expect(calls).toEqual(["claude", "gemini"]);
+  });
+
+  it("after Claude runs out of credits, the next requests go straight to Gemini", async () => {
+    anthropic = [noCredit];
+    expect(await ask(paidUser)).toBe("from gemini");
+    calls.length = 0;
+    expect(await ask(paidUser)).toBe("from gemini");
+    expect(calls).toEqual(["gemini"]);
+  });
+
+  it("while Claude is skipped, it is still tried if Gemini fails, so the app recovers by itself", async () => {
+    anthropic = [noCredit, claudeOk("claude is back")];
+    await ask(paidUser);
+    calls.length = 0;
+    gemini = [{ status: 403, body: {} }];
+    expect(await ask(paidUser)).toBe("claude is back");
+    expect(calls).toEqual(["gemini", "claude"]);
+    // Claude answered, so it goes first again.
+    calls.length = 0;
+    gemini = [geminiOk("from gemini")];
+    anthropic = [claudeOk("from claude")];
+    expect(await ask(paidUser)).toBe("from claude");
     expect(calls).toEqual(["claude"]);
-    const { getLlmHealth } = await import("@/lib/llm-health");
-    expect(await getLlmHealth()).toMatchObject({ ok: false });
-    expect((await getLlmHealth())!.covered).toBeFalsy();
   });
 
   it("when Claude and Gemini both fail the error is Claude's, and subscribers see only the safe message", async () => {

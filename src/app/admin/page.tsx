@@ -613,7 +613,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
               disabled={busy === "toggle:geminiBackup"}
               onChange={(e) => toggle("geminiBackup", e.target.checked)}
             />
-            <span>Use Gemini as the backup when Claude can't answer, so nobody is blocked.</span>
+            <span>Use Gemini as the backup when Claude is busy or down, so nobody is blocked. When Claude is out of credits or its key is rejected, Gemini always takes over (and goes first for 10 minutes), even with this off.</span>
           </label>
           <p className="text-[11px] leading-relaxed text-white/45">
             Use a key from a Google Cloud project with <b className="text-white/70">billing turned on</b>. On Google's free tier, prompts and answers may be used to improve Google's products, and daily limits are small. Gemini content is written by a different AI than Claude, so compare a few posts before relying on it for paying customers.

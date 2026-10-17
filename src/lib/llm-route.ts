@@ -7,6 +7,8 @@
  * - Everyone else: Claude first. If Claude can't answer (no credits, key rejected, overloaded) and the owner left
  *   "backup" on, Gemini answers instead, so a Claude outage never stops subscribers.
  * - Claude not connected at all but Gemini is: Gemini answers everything.
+ * - Claude recently failed in a way retrying won't fix (out of credits, key rejected): Gemini goes first for a while,
+ *   whatever the backup setting, with Claude tried again behind it so the app recovers on its own once Claude is fixed.
  */
 export type Engine = "claude" | "gemini";
 
@@ -21,11 +23,14 @@ export interface RouteInput {
   onTrial: boolean;
   /** The request asks for Claude's web search tool, which Gemini can't provide. */
   needsWebSearch: boolean;
+  /** Claude failed recently with a problem retrying won't fix (no credits, bad key), so skip ahead to Gemini. */
+  claudeDown?: boolean;
 }
 
 export function engineOrder(i: RouteInput): Engine[] {
   if (!i.geminiConfigured) return ["claude"];
   if (!i.claudeConfigured) return ["gemini"];
+  if (i.claudeDown) return ["gemini", "claude"];
   if (i.onTrial && i.geminiForTrials && !i.needsWebSearch) return ["gemini", "claude"];
   return i.geminiBackup ? ["claude", "gemini"] : ["claude"];
 }
@@ -33,6 +38,8 @@ export function engineOrder(i: RouteInput): Engine[] {
 /** Claude attempts when a backup is waiting: fail over after ~10 s instead of ~95 s of retries. */
 export const CLAUDE_ATTEMPTS_WITH_BACKUP = 3;
 export const CLAUDE_ATTEMPTS = 6;
+/** How long Gemini goes first after Claude runs out of credits or rejects its key. */
+export const CLAUDE_DOWN_MS = 10 * 60_000;
 
 /**
  * Plain-language explanation of a Gemini API error for the owner (never shown to subscribers).

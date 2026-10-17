@@ -5,7 +5,7 @@ import { recordLlmHealth } from "./llm-health";
 import { getOwnAi, type OwnAi } from "./ai-provider";
 import { AI_PROVIDERS } from "./ai-providers";
 import { buildCall, isKeyProblem, readText } from "./llm-providers";
-import { CLAUDE_ATTEMPTS, CLAUDE_ATTEMPTS_WITH_BACKUP, engineOrder, geminiBlockReason, geminiProblem, type Engine } from "./llm-route";
+import { CLAUDE_ATTEMPTS, CLAUDE_ATTEMPTS_WITH_BACKUP, CLAUDE_DOWN_MS, engineOrder, geminiBlockReason, geminiProblem, type Engine } from "./llm-route";
 import { currentUserId } from "./db";
 import { getUser, trialActive } from "./auth";
 
@@ -238,20 +238,31 @@ async function callClaude(opts: CallOpts, maxAttempts: number): Promise<string> 
  * their own AI if they connected one (Settings → AI); otherwise the app's Claude, with the app's Gemini key taking
  * free trials and stepping in whenever Claude can't answer (see llm-route.ts for the order).
  */
+/** Until when Claude is skipped in favour of Gemini after an out-of-credit or bad-key error (0 = Claude is fine). */
+let claudeDownUntil = 0;
+/** Tests only: forget a previous Claude failure. */
+export function resetClaudeDown() {
+  claudeDownUntil = 0;
+}
+
 export async function claude(opts: CallOpts): Promise<string> {
   const own = await getOwnAi();
   if (own) return callOwnAi(own, opts);
 
   const gemini = await ownerGemini();
   const claudeConfigured = !!(await anthropicKey());
-  const order = engineOrder({
+  const order: Engine[] = engineOrder({
     claudeConfigured,
     geminiConfigured: !!gemini,
     geminiForTrials: !!gemini?.forTrials,
     geminiBackup: !!gemini?.backup,
     onTrial: gemini ? await onFreeTrial() : false,
     needsWebSearch: !!opts.webSearch?.domains.length,
+    claudeDown: Date.now() < claudeDownUntil,
   });
+  // Even with the backup switched off, Gemini covers when Claude can't answer at all (no credits, bad key).
+  const configOnlyBackup = !!gemini && order.length === 1 && order[0] === "claude";
+  if (configOnlyBackup) order.push("gemini");
 
   let claudeErr: LLMError | null = null;
   let firstErr: unknown = null;
@@ -265,11 +276,19 @@ export async function claude(opts: CallOpts): Promise<string> {
         if (claudeErr?.kind === "config") await recordLlmHealth(false, `${claudeErr.ownerMessage} Gemini is covering for now, so subscribers can still generate.`, true);
         return text;
       }
-      return await callClaude(opts, hasNext ? CLAUDE_ATTEMPTS_WITH_BACKUP : CLAUDE_ATTEMPTS);
+      const text = await callClaude(opts, hasNext && !configOnlyBackup ? CLAUDE_ATTEMPTS_WITH_BACKUP : CLAUDE_ATTEMPTS);
+      claudeDownUntil = 0;
+      return text;
     } catch (e) {
       firstErr ??= e;
-      if (engine === "claude" && e instanceof LLMError) claudeErr = e;
-      const canMove = hasNext && (engine === "gemini" || (e instanceof LLMError && !!e.kind));
+      if (engine === "claude" && e instanceof LLMError) {
+        claudeErr = e;
+        // Out of credits or key rejected: send the next requests straight to Gemini for a while.
+        if (e.kind === "config" && gemini) claudeDownUntil = Date.now() + CLAUDE_DOWN_MS;
+      }
+      const canMove =
+        hasNext &&
+        (engine === "gemini" || (e instanceof LLMError && (configOnlyBackup ? e.kind === "config" : !!e.kind)));
       if (!canMove) {
         // Nothing could answer: a Claude problem the owner must fix goes on the dashboard.
         if (claudeErr?.kind === "config") await recordLlmHealth(false, claudeErr.ownerMessage);
