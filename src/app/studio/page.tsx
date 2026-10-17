@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Clapperboard, Download, FileText, FileUp, PenLine, Sparkles, WandSparkles } from "lucide-react";
+import { Clapperboard, Download, FileText, FileUp, PenLine, Send, Sparkles, WandSparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
@@ -31,6 +32,7 @@ const FILTERS: { key: PostStatus | "all" | "video"; label: string }[] = [
 
 export default function Studio() {
   const { status, toast, refresh } = useApp();
+  const router = useRouter();
   const settings = status?.settings;
   const [kind, setKind] = useState<"text" | "video" | null>(null);
   const [vNiche, setVNiche] = useState("edu");
@@ -58,6 +60,7 @@ export default function Studio() {
     api<{ items: (MediaItem & { url: string })[] }>("/api/media").then((r) => setMedia(r.items)).catch(() => {});
   }, []);
   const [busy, setBusy] = useState(false);
+  const [postingNow, setPostingNow] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [filter, setFilter] = useState<PostStatus | "all" | "video">("all");
   const inFilter = (p: Post, f: PostStatus | "all" | "video") => f === "all" || (f === "video" ? p.kind === "video" : p.status === f);
@@ -88,8 +91,9 @@ export default function Studio() {
     return [...list].sort((a, b) => (sort === "money" ? b.moneyScore - a.moneyScore : b.createdAt.localeCompare(a.createdAt)));
   }, [posts, filter, sort]);
 
-  async function generate() {
+  async function generate(postNow = false) {
     setBusy(true);
+    setPostingNow(postNow);
     try {
       const created = await api<Post[]>("/api/generate", {
         body: kind === "video"
@@ -98,13 +102,39 @@ export default function Studio() {
       });
       setPosts((p) => [...created, ...p]);
       setFilter("all");
+      if (postNow && kind !== "video") {
+        await publishNow(created);
+        refresh();
+        return;
+      }
       toast(kind === "video" ? `${created.length} video plan${created.length > 1 ? "s" : ""} ready` : `${created.length} draft${created.length > 1 ? "s" : ""} ready`, "success");
       refresh();
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
       setBusy(false);
+      setPostingNow(false);
     }
+  }
+
+  /** Publish freshly generated drafts straight away, through the same checks as the Post now button. */
+  async function publishNow(created: Post[]) {
+    let published = 0;
+    const notes: string[] = [];
+    for (const p of created) {
+      try {
+        const r = await api<{ outcome: string; message: string; post: Post; handoff?: boolean }>("/api/posts/publish", { body: { id: p.id } });
+        if (r.post) setPosts((list) => list.map((x) => (x.id === p.id ? r.post : x)));
+        // Facebook profile: open the one-tap posting screen for the first post.
+        if (r.handoff) return router.push(`/post/${p.id}`);
+        if (r.outcome === "published") published++;
+        else if (r.message) notes.push(r.message);
+      } catch (e) {
+        notes.push((e as Error).message);
+      }
+    }
+    if (published === created.length) toast(`Published ${published} post${published > 1 ? "s" : ""}`, "success");
+    else toast(`${published} of ${created.length} published. ${notes[0] ?? ""} The rest are saved as drafts below.`, published ? "info" : "error");
   }
 
   const onChange = (id: string) => (p: Post | null) => {
@@ -291,12 +321,24 @@ export default function Studio() {
                 <Switch checked={mature} onChange={setMature} label="Mature post" tone="red" />
               </div>
             )}
-            <Button variant="primary" size="lg" loading={busy} onClick={generate} disabled={!settings || (fromText && sourceText.trim().length < 40)}>
+            <Button variant="primary" size="lg" loading={busy && !postingNow} onClick={() => generate(false)} disabled={busy || !settings || (fromText && sourceText.trim().length < 40)}>
               <Sparkles className="h-4 w-4" />{" "}
               {kind === "video"
-                ? busy ? "Producing…" : `Generate video plan · ${videoCost} credit${videoCost > 1 ? "s" : ""}`
-                : busy ? "Writing…" : `Generate · ${count * CREDIT_COST.post} credit${count > 1 ? "s" : ""}`}
+                ? busy && !postingNow ? "Producing…" : `Generate video plan · ${videoCost} credit${videoCost > 1 ? "s" : ""}`
+                : busy && !postingNow ? "Writing…" : `Generate · ${count * CREDIT_COST.post} credit${count > 1 ? "s" : ""}`}
             </Button>
+            {kind === "text" && (
+              <>
+                <Button variant="gold" size="lg" loading={busy && postingNow} onClick={() => generate(true)} disabled={busy || !settings || (platform === "x" && mature) || (fromText && sourceText.trim().length < 40)}>
+                  <Send className="h-4 w-4" /> {busy && postingNow ? "Writing and posting…" : "Generate & post now"}
+                </Button>
+                <p className="-mt-2 text-[11px] text-white/40">
+                  {platform === "x" && mature
+                    ? "Mature posts are always reviewed and posted by hand."
+                    : "Publishes to your connected account the moment it's written. The kill switch, safety filter and rate limits still apply."}
+                </p>
+              </>
+            )}
           </div>
           )}
         </Card>
