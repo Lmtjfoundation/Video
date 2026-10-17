@@ -22,6 +22,7 @@ const PUBLIC = [
   "/sw.js",
   "/offline",
   "/icons/",
+  "/promo/", // public ad videos and images that Metricool and the social networks download without signing in
   "/icon",
   "/apple-icon",
 ];
