@@ -71,3 +71,21 @@
 2026-10-16 | tiktok | The 1971 Baker Street robbery heard live by a radio ham (bank)
 2026-10-16 | youtube | The 2025 Jaguar Land Rover cyberattack and the £1.5 billion government-backed loan (bank)
 2026-10-16 | instagram | The Pentium FDIV bug: five missing table entries cost Intel $475 million (1994) (bank)
+2026-10-17 | x | Anne Scheiber: an IRS auditor's $5,000 became a $22 million bequest (1995)
+2026-10-17 | x | Cursor's AI support bot 'Sam' invented a login policy and users cancelled (April 2025)
+2026-10-17 | linkedin | The Mechanical Turk: the 1770 'chess machine' with a human inside
+2026-10-17 | linkedin | Enron: $90.75 to $0.26, and the 401(k) plan that was 62% Enron stock (2000–2001)
+2026-10-17 | facebook | The pratfall effect: the quiz star who spilled coffee (Aronson, 1966)
+2026-10-17 | instagram | FDR's 300/190 blood pressure and the birth of the Framingham Heart Study (1945–1948)
+2026-10-17 | tiktok | Charlie Javice and Frank: JPMorgan paid $175M for 4 million users who mostly didn't exist (convicted 2025)
+2026-10-17 | instagram | Jeanne Calment's 1965 apartment deal: a notary paid her monthly for 30 years and died first
+2026-10-17 | youtube | Navinder Sarao and the 2010 Flash Crash: a trader in Hounslow and $1 trillion that vanished for minutes
+2026-10-17 | facebook | The Great Hanoi Rat Hunt: a one-cent bounty per tail made the rat problem worse (1902)
+2026-10-17 | x | Hetty Green, the 'Witch of Wall Street', turned a $6 million inheritance into about $100 million (died 1916) (bank)
+2026-10-17 | x | Google's AI Overviews told users to put glue on pizza, sourced from an 11-year-old Reddit joke (May 2024) (bank)
+2026-10-17 | linkedin | Abraham Wald and the planes that didn't come back (Statistical Research Group, 1943) (bank)
+2026-10-17 | facebook | The spotlight effect: the Barry Manilow T-shirt study (Cornell, 2000) (bank)
+2026-10-17 | instagram | Bernie Madoff: the confession to his sons, the ignored warnings and a 150-year sentence (2008–2009) (bank)
+2026-10-17 | tiktok | The Great Brink's Robbery: $2.7 million in 20 minutes, solved 5 days before the deadline (Boston, 1950–1956) (bank)
+2026-10-17 | youtube | Builder.ai: the Microsoft-backed AI unicorn that collapsed after revenue was revised from $220M to about $55M (May 2025) (bank)
+2026-10-17 | instagram | The Economist decoy: a $125 print-only option nobody chose moved choices from 32% to 84% (Ariely) (bank)
