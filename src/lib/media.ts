@@ -158,7 +158,20 @@ export function verifySignature(owner: string, id: string, exp: string | null, s
   return want.length === got.length && timingSafeEqual(want, got);
 }
 
-/** Public https URL of the first image attached to a post (for Instagram). */
+/** Public signed links to every attached picture, in order (up to 10, the most a carousel takes). */
+export async function imageUrls(owner: string, mediaIds: string[]) {
+  return asUser(owner, async () => {
+    const out: string[] = [];
+    for (const id of mediaIds) {
+      const m = await db().get<MediaItem>("media", id);
+      if (m?.kind === "image") out.push(signedUrl(owner, m.id, 2 * 86400));
+      if (out.length >= 10) break;
+    }
+    return out;
+  });
+}
+
+/** Public https URL of the first image attached to a post. */
 export async function firstImageUrl(owner: string, mediaIds: string[]) {
   return asUser(owner, async () => {
     for (const id of mediaIds) {

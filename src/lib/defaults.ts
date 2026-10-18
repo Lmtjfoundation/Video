@@ -57,6 +57,7 @@ export const DEFAULT_SETTINGS: Settings = {
   genres: ["trending", "black_america", "money", "tech_ai"],
   trendAutopilot: { enabled: false, mode: "schedule", videos: true, videoLength: "s90", autoRender: false },
   handoffEmail: true,
+  autoPost: { enabled: false, instagram: "auto", facebook: "auto" },
   pillarMix: {
     wealth_systems: 30,
     ai_leverage: 30,
@@ -88,5 +89,6 @@ export function mergeSettings(stored: Partial<Settings> | null | undefined): Set
     offers: Array.isArray(s.offers) ? s.offers : d.offers,
     genres: Array.isArray(s.genres) && s.genres.length ? s.genres : d.genres,
     trendAutopilot: { ...d.trendAutopilot, ...(s.trendAutopilot ?? {}) },
+    autoPost: { ...d.autoPost, ...(s.autoPost ?? {}) },
   };
 }

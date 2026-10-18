@@ -1,9 +1,10 @@
 import "server-only";
-import type { Credential, Platform, Post } from "../types";
+import type { Credential, Placement, Platform, Post } from "../types";
 import { AuthError, CopyReadyError, request } from "./http";
 import { sleep } from "../utils";
 import { postWebhook } from "./webhook-send";
 import { isProfileCred } from "../facebook-profile";
+import { CAROUSEL_MAX, resolveSurface, SURFACE_LABEL } from "./placement";
 
 export interface PublishResult {
   externalId: string;
@@ -17,6 +18,16 @@ export interface VideoFile {
   url: string;
   mime: string;
   size: number;
+  /** Known for videos the app rendered; decides Reel vs feed video on Facebook. */
+  durationSec?: number;
+  portrait?: boolean;
+}
+
+/** Extra media for platforms with several surfaces (Instagram, Facebook). */
+export interface PublishOptions {
+  /** Public image URLs, in order (attached pictures, then the post's image URL). */
+  images: string[];
+  placement?: Placement;
 }
 
 export interface RawComment {
@@ -32,7 +43,7 @@ export interface Adapter {
   platform: Platform;
   /** Whether autopilot can publish this post here (string = reason it can't). */
   publishable(post: Post): true | string;
-  publish(post: Post, texts: string[], cred: Credential, video?: VideoFile): Promise<PublishResult>;
+  publish(post: Post, texts: string[], cred: Credential, video?: VideoFile, opts?: PublishOptions): Promise<PublishResult>;
   engageable: boolean;
   fetchComments(cred: Credential, postExternalIds: string[]): Promise<RawComment[]>;
   reply(cred: Credential, target: { commentExternalId: string; postExternalId: string }, text: string): Promise<string>;
@@ -142,33 +153,72 @@ const x: Adapter = {
 };
 
 /* ───────────────────────────── Facebook Pages (Graph API) ───────────────────────────── */
-const fbGraph = () => `https://graph.facebook.com/${process.env.FACEBOOK_GRAPH_VERSION || "v25.0"}`;
+const fbVersion = () => process.env.FACEBOOK_GRAPH_VERSION || "v25.0";
+const fbGraph = () => `https://graph.facebook.com/${fbVersion()}`;
 
 const PROFILE_NO_API = "Facebook doesn't let apps read or reply to comments on personal profiles. Reply in the Facebook app.";
 
 const facebook: Adapter = {
   platform: "facebook",
   publishable: () => true,
-  async publish(_post, texts, cred, video) {
+  async publish(post, texts, cred, video, opts) {
     // The publisher hands profile posts to the person before reaching here; this guards any other caller.
     if (isProfileCred(cred)) throw new CopyReadyError("Ready for your Facebook profile — open it and tap Share to Facebook.");
     const pageId = need(cred, "accountId", "Facebook Page ID is missing — connect Facebook again.");
-    if (video) {
+    const token = cred.accessToken!;
+    const caption = texts.join("\n\n");
+    const images = opts?.images ?? [];
+    const surface = resolveSurface("facebook", opts?.placement ?? post.placement, { video: video && { durationSec: video.durationSec, portrait: video.portrait }, images: images.length });
+    if (typeof surface !== "string") throw new CopyReadyError(surface.error);
+    const form = (o: Record<string, string>) => ({ method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ ...o, access_token: token }) });
+
+    if (surface === "fb_reel" || surface === "fb_story_video") {
+      // Three steps (Meta "Reels Publishing" / "Page Stories"): start a session, let Facebook fetch the file, then finish.
+      const edge = surface === "fb_reel" ? "video_reels" : "video_stories";
+      const { data: s1 } = await request<{ video_id: string; upload_url?: string }>(`${fbGraph()}/${pageId}/${edge}`, { ...form({ upload_phase: "start" }), label: `Facebook ${SURFACE_LABEL[surface]} start` });
+      await request(s1.upload_url || `https://rupload.facebook.com/video-upload/${s1.video_id}`, {
+        method: "POST",
+        headers: { Authorization: `OAuth ${token}`, file_url: video!.url },
+        label: `Facebook ${SURFACE_LABEL[surface]} upload`,
+      });
+      const fin: Record<string, string> = surface === "fb_reel"
+        ? { upload_phase: "finish", video_id: s1.video_id, video_state: "PUBLISHED", description: caption }
+        : { upload_phase: "finish", video_id: s1.video_id };
+      const { data: s3 } = await request<{ post_id?: string }>(`${fbGraph()}/${pageId}/${edge}`, { ...form(fin), label: `Facebook ${SURFACE_LABEL[surface]} publish` });
+      const id = s3.post_id ?? s1.video_id;
+      return { externalId: id, externalIds: [id], url: surface === "fb_reel" ? `https://www.facebook.com/reel/${s1.video_id}` : `https://www.facebook.com/${pageId}` };
+    }
+    if (surface === "fb_video") {
       // Graph API video upload by URL: Facebook fetches the file from the signed link.
       const { data } = await request<{ id: string }>(`${fbGraph().replace("graph.facebook.com", "graph-video.facebook.com")}/${pageId}/videos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ file_url: video.url, description: texts.join("\n\n"), access_token: cred.accessToken! }),
+        ...form({ file_url: video!.url, description: caption }),
         label: "Facebook Page video",
       });
       return { externalId: data.id, externalIds: [data.id], url: `https://www.facebook.com/${pageId}/videos/${data.id}` };
     }
-    const { data } = await request<{ id: string }>(`${fbGraph()}/${pageId}/feed`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ message: texts.join("\n\n"), access_token: cred.accessToken! }),
-      label: "Facebook Page post",
-    });
+    if (surface === "fb_story_photo") {
+      const { data: photo } = await request<{ id: string }>(`${fbGraph()}/${pageId}/photos`, { ...form({ url: images[0], published: "false" }), label: "Facebook Story photo" });
+      const { data } = await request<{ post_id?: string }>(`${fbGraph()}/${pageId}/photo_stories`, { ...form({ photo_id: photo.id }), label: "Facebook photo Story" });
+      const id = data.post_id ?? photo.id;
+      return { externalId: id, externalIds: [id], url: `https://www.facebook.com/${pageId}` };
+    }
+    if (surface === "fb_photo") {
+      const { data } = await request<{ id: string; post_id?: string }>(`${fbGraph()}/${pageId}/photos`, { ...form({ url: images[0], caption }), label: "Facebook photo post" });
+      const id = data.post_id ?? data.id;
+      return { externalId: id, externalIds: [id], url: `https://www.facebook.com/${id}` };
+    }
+    if (surface === "fb_photos") {
+      // Multi-photo post: upload each picture unpublished, then one feed post that attaches them all.
+      const ids: string[] = [];
+      for (const url of images.slice(0, CAROUSEL_MAX)) {
+        const { data } = await request<{ id: string }>(`${fbGraph()}/${pageId}/photos`, { ...form({ url, published: "false" }), label: "Facebook photo upload" });
+        ids.push(data.id);
+      }
+      const attached = Object.fromEntries(ids.map((id, i) => [`attached_media[${i}]`, JSON.stringify({ media_fbid: id })]));
+      const { data } = await request<{ id: string }>(`${fbGraph()}/${pageId}/feed`, { ...form({ message: caption, ...attached }), label: "Facebook multi-photo post" });
+      return { externalId: data.id, externalIds: [data.id], url: `https://www.facebook.com/${data.id}` };
+    }
+    const { data } = await request<{ id: string }>(`${fbGraph()}/${pageId}/feed`, { ...form({ message: caption }), label: "Facebook Page post" });
     // Post ids look like {pageId}_{postId}; facebook.com/{id} opens the post.
     return { externalId: data.id, externalIds: [data.id], url: `https://www.facebook.com/${data.id}` };
   },
@@ -288,61 +338,56 @@ const graph = () =>
 const instagram: Adapter = {
   platform: "instagram",
   publishable: (post) =>
-    post.kind === "video" || (post.imageUrl && /^https:\/\//.test(post.imageUrl))
+    post.kind === "video" || (post.imageUrl && /^https:\/\//.test(post.imageUrl)) || post.mediaIds?.length
       ? true
-      : "Instagram requires a public https image URL — add one to the post, or post it manually.",
-  async publish(post, texts, cred, video) {
+      : "Instagram needs a picture or a video — attach one from the Media Library, or add an image URL.",
+  async publish(post, texts, cred, video, opts) {
     const ig = need(cred, "accountId", "Instagram Business/Creator user ID is missing.");
     const token = cred.accessToken!;
-    if (video) {
-      // Reels: create a container from the public video URL, wait for processing, then publish.
-      const box = await request<{ id: string }>(
-        `${graph()}/${ig}/media?` + new URLSearchParams({ media_type: "REELS", video_url: video.url, caption: texts.join("\n\n"), share_to_feed: "true", access_token: token }),
-        { method: "POST", label: "Instagram Reel container" },
-      );
-      let ready = false;
-      for (let i = 0; i < 30 && !ready; i++) {
-        await sleep(10_000);
-        const { data } = await request<{ status_code?: string }>(`${graph()}/${box.data.id}?fields=status_code&access_token=${encodeURIComponent(token)}`, { label: "Instagram Reel status" });
-        if (data.status_code === "FINISHED") ready = true;
-        else if (data.status_code === "ERROR" || data.status_code === "EXPIRED") throw new Error("Instagram couldn't process the video (check length 3 s–15 min, MP4/H.264).");
+    const caption = texts.join("\n\n");
+    const images = (opts?.images ?? (post.imageUrl ? [post.imageUrl] : [])).filter((u) => /^https:\/\//.test(u));
+    const surface = resolveSurface("instagram", opts?.placement ?? post.placement, { video: video && { durationSec: video.durationSec, portrait: video.portrait }, images: images.length });
+    if (typeof surface !== "string") throw new CopyReadyError(surface.error);
+
+    const container = async (params: Record<string, string>, label: string) =>
+      (await request<{ id: string }>(`${graph()}/${ig}/media?` + new URLSearchParams({ ...params, access_token: token }), { method: "POST", label })).data.id;
+    /** Containers process in the background; videos can take a few minutes. */
+    const ready = async (id: string, isVideo: boolean) => {
+      for (let i = 0; i < (isVideo ? 30 : 10); i++) {
+        const { data } = await request<{ status_code?: string }>(`${graph()}/${id}?fields=status_code&access_token=${encodeURIComponent(token)}`, { label: "Instagram media status" });
+        if (!data.status_code || data.status_code === "FINISHED") return;
+        if (data.status_code === "ERROR" || data.status_code === "EXPIRED") {
+          throw new Error(isVideo ? "Instagram couldn't process the video (check length 3 s–15 min, MP4/H.264)." : "Instagram rejected the picture (check the image URL / format).");
+        }
+        await sleep(isVideo ? 10_000 : 3000);
       }
-      if (!ready) throw new Error("Instagram is still processing the Reel — it will retry shortly.");
-      const pub = await request<{ id: string }>(`${graph()}/${ig}/media_publish?` + new URLSearchParams({ creation_id: box.data.id, access_token: token }), { method: "POST", label: "Instagram publish Reel" });
-      let url: string | undefined;
-      try {
-        url = (await request<{ permalink?: string }>(`${graph()}/${pub.data.id}?fields=permalink&access_token=${encodeURIComponent(token)}`, { label: "Instagram permalink" })).data.permalink;
-      } catch {
-        /* optional */
+      throw new Error("Instagram is still processing the media — it will retry shortly.");
+    };
+
+    let creation: string;
+    if (surface === "ig_reel") {
+      creation = await container({ media_type: "REELS", video_url: video!.url, caption, share_to_feed: "true" }, "Instagram Reel container");
+      await ready(creation, true);
+    } else if (surface === "ig_story_video" || surface === "ig_story_image") {
+      creation = await container(surface === "ig_story_video" ? { media_type: "STORIES", video_url: video!.url } : { media_type: "STORIES", image_url: images[0] }, "Instagram Story container");
+      await ready(creation, surface === "ig_story_video");
+    } else if (surface === "ig_carousel") {
+      const children: string[] = [];
+      for (const url of images.slice(0, CAROUSEL_MAX)) {
+        const id = await container({ image_url: url, is_carousel_item: "true" }, "Instagram carousel item");
+        await ready(id, false);
+        children.push(id);
       }
-      return { externalId: pub.data.id, externalIds: [pub.data.id], url };
+      creation = await container({ media_type: "CAROUSEL", children: children.join(","), caption }, "Instagram carousel container");
+      await ready(creation, false);
+    } else {
+      creation = await container({ image_url: images[0], caption }, "Instagram create container");
+      await ready(creation, false);
     }
-    const create = await request<{ id: string }>(
-      `${graph()}/${ig}/media?` +
-        new URLSearchParams({ image_url: post.imageUrl!, caption: texts.join("\n\n"), access_token: token }),
-      { method: "POST", label: "Instagram create container" },
-    );
-    // Containers can take a few seconds to finish processing.
-    for (let i = 0; i < 6; i++) {
-      const { data } = await request<{ status_code?: string }>(
-        `${graph()}/${create.data.id}?fields=status_code&access_token=${encodeURIComponent(token)}`,
-        { label: "Instagram container status" },
-      );
-      if (!data.status_code || data.status_code === "FINISHED") break;
-      if (data.status_code === "ERROR") throw new Error("Instagram rejected the media (check image URL / format).");
-      await sleep(3000);
-    }
-    const pub = await request<{ id: string }>(
-      `${graph()}/${ig}/media_publish?` + new URLSearchParams({ creation_id: create.data.id, access_token: token }),
-      { method: "POST", label: "Instagram publish" },
-    );
+    const pub = await request<{ id: string }>(`${graph()}/${ig}/media_publish?` + new URLSearchParams({ creation_id: creation, access_token: token }), { method: "POST", label: `Instagram publish (${SURFACE_LABEL[surface]})` });
     let url: string | undefined;
     try {
-      const { data } = await request<{ permalink?: string }>(
-        `${graph()}/${pub.data.id}?fields=permalink&access_token=${encodeURIComponent(token)}`,
-        { label: "Instagram permalink" },
-      );
-      url = data.permalink;
+      url = (await request<{ permalink?: string }>(`${graph()}/${pub.data.id}?fields=permalink&access_token=${encodeURIComponent(token)}`, { label: "Instagram permalink" })).data.permalink;
     } catch {
       /* permalink is optional */
     }

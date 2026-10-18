@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarClock, Check, ChevronDown, CircleDollarSign, Clapperboard, Copy, ExternalLink, Pencil, Repeat2, Send, Share, ShieldAlert, Trash2, Undo2 } from "lucide-react";
 import { describeFlag } from "@/lib/compliance";
 import { RepurposeDialog } from "./repurpose-dialog";
-import type { Post, Settings } from "@/lib/types";
+import type { Placement, Post, Settings } from "@/lib/types";
 import { api, copyToClipboard, fmtDateTime } from "@/lib/client";
 import { copyText, renderPost } from "@/lib/compose";
 import { NICHES } from "@/lib/niches";
@@ -261,6 +261,21 @@ export function PostCard({
                   </Button>
                 )}
               </>
+            )}
+            {(post.platform === "instagram" || post.platform === "facebook") && post.status !== "published" && post.status !== "publishing" && (
+              <select
+                aria-label="Post as"
+                title="Where this post goes"
+                value={post.placement ?? settings.autoPost?.[post.platform] ?? "auto"}
+                disabled={busy === "patch"}
+                onChange={(e) => patch({ placement: e.target.value as Placement }, "Placement saved")}
+                className="focus-ring h-8 rounded-xl border border-white/10 bg-white/[0.04] px-2 text-xs text-white/80"
+              >
+                <option value="auto">Post as: Auto</option>
+                <option value="reel">Post as: Reel</option>
+                <option value="feed">Post as: Feed{post.platform === "instagram" ? " / carousel" : ""}</option>
+                <option value="story">Post as: Story</option>
+              </select>
             )}
             {post.externalUrl && (
               <a href={post.externalUrl} target="_blank" rel="noreferrer" className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-xl px-3 text-xs text-mint-300 hover:bg-white/[0.05]">

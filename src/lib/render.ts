@@ -6,7 +6,8 @@ import path from "path";
 import { asUser, db } from "./db";
 import { readFile, storeFile } from "./media";
 import { log, savePost } from "./repo";
-import { refundCredits } from "./auth";
+import { getUser, refundCredits } from "./auth";
+import { autoPublish } from "./publisher";
 import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey, pixabayKey } from "./integrations";
 import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types";
 import { nowIso } from "./utils";
@@ -539,6 +540,12 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     await savePost(fresh);
     if (unused && credits) await refundCredits(userId, Math.min(unused, credits));
     await log("info", "generate", `Video rendered (${item.durationSec}s) — “${post.hook.slice(0, 60)}”`, { platform: post.platform, postId });
+    // "Post automatically": publish now that the video exists. Runs alongside the render queue (Instagram can take
+    // minutes to process a Reel), so the next video starts rendering straight away.
+    if (fresh.autoPost && fresh.status === "draft") {
+      const requireApproval = (await getUser(userId))?.requireApproval;
+      autoPublish(fresh, { requireApproval }).catch((e) => console.error(`[render] auto-post failed for ${postId}: ${(e as Error).message}`));
+    }
   } catch (e) {
     const msg = friendlyRenderError((e as Error).message);
     console.error(`[render] failed for ${postId}: ${(e as Error).message.slice(0, 600)}`);

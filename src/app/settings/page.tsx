@@ -100,6 +100,28 @@ export default function SettingsPage() {
 
       {tab === "general" && (
         <div className="grid gap-5 lg:grid-cols-2">
+          <Card className="lg:col-span-2">
+            <CardHeader title="Post automatically" subtitle="New posts publish the moment they're written, and videos as soon as they're rendered — Reels, feed posts, carousels and Stories. You can still turn it off for any single post in Content Studio." />
+            <div className="grid gap-4 p-5 sm:grid-cols-3">
+              <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06] sm:col-span-3">
+                <div>
+                  <p className="text-sm text-white">Post new content automatically</p>
+                  <p className="text-xs text-white/45">The kill switch, safety filter, rate limits and quiet hours still apply. Mature posts are always posted by hand.</p>
+                </div>
+                <Switch checked={s.autoPost.enabled} onChange={(v) => set("autoPost", { ...s.autoPost, enabled: v })} label="Post automatically" />
+              </div>
+              {(["instagram", "facebook"] as const).map((p) => (
+                <Field key={p} label={`${PLATFORM_SPECS[p].name} posts as`} hint={p === "facebook" ? "Auto: Reels up to 90 s, longer videos to the feed; pictures as photo posts" : "Auto: videos as Reels (also in the feed), pictures as posts or carousels"}>
+                  <Select value={s.autoPost[p]} onChange={(e) => set("autoPost", { ...s.autoPost, [p]: e.target.value as Settings["autoPost"]["instagram"] })}>
+                    <option value="auto">Auto (best fit)</option>
+                    <option value="reel">Reel</option>
+                    <option value="feed">Feed post{p === "instagram" ? " / carousel" : ""}</option>
+                    <option value="story">Story (up to 60 s)</option>
+                  </Select>
+                </Field>
+              ))}
+            </div>
+          </Card>
           <Card>
             <CardHeader title="Schedule" subtitle="Default cadence: 3 posts per day per platform." />
             <div className="grid gap-4 p-5">

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
-import type { Format, MediaItem, Pillar, Platform, Post, PostStatus } from "@/lib/types";
+import type { Format, MediaItem, Pillar, Placement, Platform, Post, PostStatus } from "@/lib/types";
 import { CREDIT_COST } from "@/lib/plans";
 import { PILLARS, PLATFORMS } from "@/lib/types";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
@@ -53,9 +53,18 @@ export default function Studio() {
   const [sourceText, setSourceText] = useState("");
   const [faceless, setFaceless] = useState(true);
   const [renderNow, setRenderNow] = useState(false);
+  const [autoPost, setAutoPost] = useState(false);
+  const [placement, setPlacement] = useState<Placement>("auto");
   useEffect(() => {
     if (settings) setFaceless(settings.faceless ?? true);
   }, [settings?.faceless]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (settings) setAutoPost(settings.autoPost?.enabled ?? false);
+  }, [settings?.autoPost?.enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hasPlacement = platform === "instagram" || platform === "facebook";
+  useEffect(() => {
+    if (settings && (platform === "instagram" || platform === "facebook")) setPlacement(settings.autoPost?.[platform] ?? "auto");
+  }, [platform, settings?.autoPost]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     api<{ items: (MediaItem & { url: string })[] }>("/api/media").then((r) => setMedia(r.items)).catch(() => {});
   }, []);
@@ -91,23 +100,32 @@ export default function Studio() {
     return [...list].sort((a, b) => (sort === "money" ? b.moneyScore - a.moneyScore : b.createdAt.localeCompare(a.createdAt)));
   }, [posts, filter, sort]);
 
-  async function generate(postNow = false) {
+  async function generate() {
+    const posting = autoPost && !(kind === "text" && platform === "x" && mature);
     setBusy(true);
-    setPostingNow(postNow);
+    setPostingNow(posting);
     try {
+      const shared = { autoPost: posting, placement: hasPlacement ? placement : undefined };
       const created = await api<Post[]>("/api/generate", {
         body: kind === "video"
-          ? { kind, platform, count, topic, niche: genre ? "auto" : vNiche, style: vStyle, length: vLen, mediaIds: attach.length ? attach : undefined, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, faceless, renderNow: fromText && renderNow }
-          : { kind, platform, pillar, format, count, topic, imageUrl: imageUrl || undefined, mediaIds: attach.length ? attach : undefined, mature: platform === "x" && mature, genre: genre || undefined, sourceText: fromText ? sourceText : undefined },
+          ? { kind, platform, count, topic, niche: genre ? "auto" : vNiche, style: vStyle, length: vLen, mediaIds: attach.length ? attach : undefined, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, faceless, renderNow: fromText && renderNow, ...shared }
+          : { kind, platform, pillar, format, count, topic, imageUrl: imageUrl || undefined, mediaIds: attach.length ? attach : undefined, mature: platform === "x" && mature, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, ...shared },
       });
       setPosts((p) => [...created, ...p]);
       setFilter("all");
-      if (postNow && kind !== "video") {
-        await publishNow(created);
+      if (posting && kind !== "video") {
+        reportPosting(created);
         refresh();
         return;
       }
-      toast(kind === "video" ? `${created.length} video plan${created.length > 1 ? "s" : ""} ready` : `${created.length} draft${created.length > 1 ? "s" : ""} ready`, "success");
+      toast(
+        kind === "video"
+          ? posting
+            ? `${created.length} video${created.length > 1 ? "s" : ""} rendering — ${created.length > 1 ? "each posts itself" : "it posts itself"} when ready`
+            : `${created.length} video plan${created.length > 1 ? "s" : ""} ready`
+          : `${created.length} draft${created.length > 1 ? "s" : ""} ready`,
+        "success",
+      );
       refresh();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -117,24 +135,16 @@ export default function Studio() {
     }
   }
 
-  /** Publish freshly generated drafts straight away, through the same checks as the Post now button. */
-  async function publishNow(created: Post[]) {
-    let published = 0;
-    const notes: string[] = [];
-    for (const p of created) {
-      try {
-        const r = await api<{ outcome: string; message: string; post: Post; handoff?: boolean }>("/api/posts/publish", { body: { id: p.id } });
-        if (r.post) setPosts((list) => list.map((x) => (x.id === p.id ? r.post : x)));
-        // Facebook profile: open the one-tap posting screen for the first post.
-        if (r.handoff) return router.push(`/post/${p.id}`);
-        if (r.outcome === "published") published++;
-        else if (r.message) notes.push(r.message);
-      } catch (e) {
-        notes.push((e as Error).message);
-      }
-    }
+  /** The server posted them as they were written (same checks as Post now); say how it went. */
+  function reportPosting(created: Post[]) {
+    // Facebook profile: open the one-tap posting screen.
+    const handoff = created.find((p) => p.handoff && p.status === "copy_ready");
+    if (handoff) return router.push(`/post/${handoff.id}`);
+    const published = created.filter((p) => p.status === "published").length;
+    const queued = created.filter((p) => p.status === "scheduled" || p.status === "pending_review").length;
+    const note = created.find((p) => p.status !== "published" && p.error)?.error;
     if (published === created.length) toast(`Published ${published} post${published > 1 ? "s" : ""}`, "success");
-    else toast(`${published} of ${created.length} published. ${notes[0] ?? ""} The rest are saved as drafts below.`, published ? "info" : "error");
+    else toast(`${published} of ${created.length} published${queued ? `, ${queued} queued to post shortly` : ""}. ${note ?? ""}`, published || queued ? "info" : "error");
   }
 
   const onChange = (id: string) => (p: Post | null) => {
@@ -321,24 +331,38 @@ export default function Studio() {
                 <Switch checked={mature} onChange={setMature} label="Mature post" tone="red" />
               </div>
             )}
-            <Button variant="primary" size="lg" loading={busy && !postingNow} onClick={() => generate(false)} disabled={busy || !settings || (fromText && sourceText.trim().length < 40)}>
-              <Sparkles className="h-4 w-4" />{" "}
+            <div className="grid gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[13px] font-medium text-white">Post automatically</p>
+                  <p className="text-xs text-white/50">
+                    {kind === "video"
+                      ? `Renders each video (${videoCredits(vLen, "render")} more credits), then posts it to your connected account.`
+                      : platform === "x" && mature
+                        ? "Mature posts are always reviewed and posted by hand."
+                        : "Posts to your connected account the moment it's written."}{" "}
+                    The kill switch, safety filter and rate limits still apply.
+                  </p>
+                </div>
+                <Switch checked={autoPost} onChange={setAutoPost} label="Post automatically" />
+              </div>
+              {hasPlacement && (
+                <Field label="Post as" hint={platform === "facebook" ? "Auto: Reels up to 90 s, longer videos to the feed" : "Auto: videos as Reels, pictures as posts or carousels"}>
+                  <Select value={placement} onChange={(e) => setPlacement(e.target.value as Placement)}>
+                    <option value="auto">Auto (best fit)</option>
+                    <option value="reel">Reel</option>
+                    <option value="feed">Feed post{platform === "instagram" ? " / carousel" : ""}</option>
+                    <option value="story">Story (up to 60 s)</option>
+                  </Select>
+                </Field>
+              )}
+            </div>
+            <Button variant={autoPost ? "gold" : "primary"} size="lg" loading={busy} onClick={generate} disabled={busy || !settings || (fromText && sourceText.trim().length < 40)}>
+              {autoPost ? <Send className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}{" "}
               {kind === "video"
-                ? busy && !postingNow ? "Producing…" : `Generate video plan · ${videoCost} credit${videoCost > 1 ? "s" : ""}`
-                : busy && !postingNow ? "Writing…" : `Generate · ${count * CREDIT_COST.post} credit${count > 1 ? "s" : ""}`}
+                ? busy ? "Producing…" : `${autoPost ? "Generate, render & post" : "Generate video plan"} · ${videoCost + (autoPost ? count * videoCredits(vLen, "render") : 0)} credits`
+                : busy ? (postingNow ? "Writing and posting…" : "Writing…") : `${autoPost && !(platform === "x" && mature) ? "Generate & post" : "Generate"} · ${count * CREDIT_COST.post} credit${count > 1 ? "s" : ""}`}
             </Button>
-            {kind === "text" && (
-              <>
-                <Button variant="gold" size="lg" loading={busy && postingNow} onClick={() => generate(true)} disabled={busy || !settings || (platform === "x" && mature) || (fromText && sourceText.trim().length < 40)}>
-                  <Send className="h-4 w-4" /> {busy && postingNow ? "Writing and posting…" : "Generate & post now"}
-                </Button>
-                <p className="-mt-2 text-[11px] text-white/40">
-                  {platform === "x" && mature
-                    ? "Mature posts are always reviewed and posted by hand."
-                    : "Publishes to your connected account the moment it's written. The kill switch, safety filter and rate limits still apply."}
-                </p>
-              </>
-            )}
           </div>
           )}
         </Card>

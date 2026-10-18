@@ -10,6 +10,14 @@ export type Format = (typeof FORMATS)[number];
 export const REPLY_MODES = ["auto", "quick_witty", "deep_insight", "supportive", "candid", "value_add"] as const;
 export type ReplyMode = (typeof REPLY_MODES)[number];
 
+/**
+ * Where a post goes on platforms with more than one surface (Instagram, Facebook Pages).
+ * "auto" picks for you: videos become Reels (Facebook: Reels up to 90 seconds, longer videos post to the feed),
+ * pictures go to the feed (several pictures become a carousel / multi-photo post).
+ */
+export const PLACEMENTS = ["auto", "reel", "feed", "story"] as const;
+export type Placement = (typeof PLACEMENTS)[number];
+
 export type PostStatus =
   | "draft"
   | "pending_review" // waiting for an admin to approve
@@ -69,6 +77,10 @@ export interface Post {
    * so at its time the post is prepared (HD video + caption) and handed to the person to post with one tap.
    */
   handoff?: { to: "facebook_profile"; readyAt: string; notifiedAt?: string; postedAt?: string };
+  /** Instagram / Facebook surface: Reel, feed post or Story. Missing = the account's default (Settings → Auto-post). */
+  placement?: Placement;
+  /** Publish as soon as it's ready: text right after it's written, videos as soon as the render finishes. */
+  autoPost?: boolean;
   /** "video" posts carry a full production plan in `video` */
   kind?: "text" | "video";
   video?: VideoPlan;
@@ -196,6 +208,16 @@ export interface Settings {
   trendAutopilot: TrendAutopilotSettings;
   /** Email me when a post for my Facebook profile is ready to post. */
   handoffEmail: boolean;
+  autoPost: AutoPostSettings;
+}
+
+/** Post new content automatically the moment it's generated (videos: as soon as they're rendered). */
+export interface AutoPostSettings {
+  /** Default for the "Post automatically" switch in Content Studio and Movie Studio. */
+  enabled: boolean;
+  /** Default placement for Instagram and Facebook posts. */
+  instagram: Placement;
+  facebook: Placement;
 }
 
 /** Trend Autopilot: writes posts (and optionally videos) from live news in the chosen genres into open slots. */

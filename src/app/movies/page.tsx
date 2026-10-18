@@ -6,7 +6,7 @@ import { useApp } from "@/lib/store";
 import { api, EXPLAIN_HANDOFF } from "@/lib/client";
 import { CREDIT_COST } from "@/lib/plans";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
-import type { Character, Platform, Post } from "@/lib/types";
+import type { Character, Placement, Platform, Post } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { lengthAllowed, MAX_VEO_SCENES, MOVIE_LENGTHS, MOVIE_SHAPE, movieEstimate, renderCredits, type MovieLength } from "@/lib/video-spec";
 import { Badge, Button, Card, CardHeader, Empty, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
@@ -234,8 +234,18 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
   const [length, setLength] = useState<MovieLength>("s60");
   const [veo, setVeo] = useState(3);
   const [renderNow, setRenderNow] = useState(true);
+  const settings = useApp((s) => s.status?.settings);
+  const [autoPost, setAutoPost] = useState(false);
+  const [placement, setPlacement] = useState<Placement>("auto");
   const [busy, setBusy] = useState(false);
   const [made, setMade] = useState<{ post: Post; note: string } | null>(null);
+  const hasPlacement = platform === "instagram" || platform === "facebook";
+  useEffect(() => {
+    if (settings) setAutoPost(settings.autoPost?.enabled ?? false);
+  }, [settings?.autoPost?.enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (settings && (platform === "instagram" || platform === "facebook")) setPlacement(settings.autoPost?.[platform] ?? "auto");
+  }, [platform, settings?.autoPost]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     try {
@@ -259,10 +269,10 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
     setBusy(true);
     setMade(null);
     try {
-      const r = await api<{ post: Post; note: string }>("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: veo, renderNow } });
+      const r = await api<{ post: Post; note: string }>("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: veo, renderNow: renderNow || autoPost, autoPost, placement: hasPlacement ? placement : undefined } });
       setMade(r);
       onMade(r.post);
-      toast(r.post.render?.status === "queued" ? "Script written. Rendering has started." : "Script written and saved as a draft.", "success");
+      toast(r.post.render?.status === "queued" ? (r.post.autoPost ? "Script written. Rendering — it posts itself when ready." : "Script written. Rendering has started.") : "Script written and saved as a draft.", "success");
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
@@ -333,9 +343,23 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
         </div>
         {!lengthOk && <p className="text-xs text-red-300">X allows videos up to 2 minutes 20 seconds. Pick a shorter length for X.</p>}
         <label className="flex items-center gap-2 text-sm text-white/70">
-          <input type="checkbox" className="accent-mint-400" checked={renderNow} onChange={(e) => setRenderNow(e.target.checked)} />
+          <input type="checkbox" className="accent-mint-400" checked={renderNow || autoPost} disabled={autoPost} onChange={(e) => setRenderNow(e.target.checked)} />
           Render the video right after writing it
         </label>
+        <label className="flex items-center gap-2 text-sm text-white/70">
+          <input type="checkbox" className="accent-mint-400" checked={autoPost} onChange={(e) => setAutoPost(e.target.checked)} />
+          Post automatically when it&apos;s rendered (to your connected {PLATFORM_SPECS[platform].name})
+        </label>
+        {autoPost && hasPlacement && (
+          <Field label="Post as" hint={platform === "facebook" ? "Auto: Reels up to 90 s, longer videos to the feed" : "Auto: Reel, shown in Reels and the feed"}>
+            <Select value={placement} onChange={(e) => setPlacement(e.target.value as Placement)}>
+              <option value="auto">Auto (best fit)</option>
+              <option value="reel">Reel</option>
+              <option value="feed">Feed video</option>
+              <option value="story">Story (up to 60 s)</option>
+            </Select>
+          </Field>
+        )}
         <p className="text-xs leading-relaxed text-white/40">
           Each scene picture is {CREDIT_COST.aiImage} credits; each Veo scene is {CREDIT_COST.veoSecond} credits a second (4–8 seconds). Scenes Google can&apos;t make are refunded automatically. Rendering takes a few minutes; Veo adds about 1–3 minutes a clip.
         </p>

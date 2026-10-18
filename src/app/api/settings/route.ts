@@ -4,7 +4,7 @@ import { isValidTimeZone } from "@/lib/time";
 import type { Settings } from "@/lib/types";
 import { clamp, uid } from "@/lib/utils";
 import { ABSOLUTE_MAX_POSTS_PER_DAY, planById } from "@/lib/plans";
-import { PLATFORMS } from "@/lib/types";
+import { PLACEMENTS, PLATFORMS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +43,11 @@ export const PUT = authed(async (req, user) => {
     }
   }
 
+  if (patch.autoPost) {
+    const place = (v: unknown) => (PLACEMENTS as readonly string[]).includes(v as string) ? (v as Settings["autoPost"]["instagram"]) : "auto";
+    patch.autoPost = { enabled: !!patch.autoPost.enabled, instagram: place(patch.autoPost.instagram), facebook: place(patch.autoPost.facebook) };
+  }
+
   const next = await saveSettings(patch);
   if (patch.killSwitch !== undefined && patch.killSwitch !== before.killSwitch) {
     await log(patch.killSwitch ? "warn" : "info", "system", patch.killSwitch ? "KILL SWITCH ENGAGED — all posting and replying stopped" : "Kill switch released");
@@ -52,6 +57,9 @@ export const PUT = authed(async (req, user) => {
   }
   if (patch.matureX !== undefined && patch.matureX !== before.matureX) {
     await log("warn", "safety", `Mature (18+) mode for X ${patch.matureX ? "ON — posts stay non-explicit and need manual publishing" : "OFF"}`, { platform: "x" });
+  }
+  if (patch.autoPost && patch.autoPost.enabled !== before.autoPost.enabled) {
+    await log("info", "system", `Post automatically ${patch.autoPost.enabled ? "ON — new posts publish as soon as they're written (videos as soon as they're rendered)" : "OFF"}`);
   }
   if (patch.autoReply !== undefined && patch.autoReply !== before.autoReply) {
     await log("info", "system", `Auto-engagement ${patch.autoReply ? "ON" : "OFF"}`);

@@ -6,7 +6,7 @@ import { mediaKey } from "@/lib/gemini-media";
 import { writeMovie } from "@/lib/movie";
 import { enqueueRender, ffmpegAvailable } from "@/lib/render";
 import { getSettings, log, savePost } from "@/lib/repo";
-import { PLATFORMS, type Platform } from "@/lib/types";
+import { PLACEMENTS, PLATFORMS, type Placement, type Platform } from "@/lib/types";
 import { clamp, nowIso } from "@/lib/utils";
 import { lengthAllowed, MAX_VEO_SCENES, MOVIE_LENGTHS, renderCredits, videoCredits, type MovieLength } from "@/lib/video-spec";
 
@@ -18,7 +18,7 @@ export const maxDuration = 180;
  * With `renderNow`, it also starts the render (pictures, Veo clips, voice and captions) straight away.
  */
 export const POST = authed(async (req, user) => {
-  const b = await body<{ kind?: "movie" | "explainer"; brief?: string; characterIds?: string[]; look?: string; platform?: Platform; length?: MovieLength; veoScenes?: number; renderNow?: boolean }>(req);
+  const b = await body<{ kind?: "movie" | "explainer"; brief?: string; characterIds?: string[]; look?: string; platform?: Platform; length?: MovieLength; veoScenes?: number; renderNow?: boolean; autoPost?: boolean; placement?: Placement }>(req);
   const kind = b.kind === "explainer" ? "explainer" : "movie";
   const brief = String(b.brief ?? "").trim();
   if (brief.length < (kind === "movie" ? 10 : 40)) return fail(kind === "movie" ? "Describe the story in a sentence or two." : "Paste the text to explain (at least a few sentences).");
@@ -33,8 +33,12 @@ export const POST = authed(async (req, user) => {
   const post = await withCredits(videoCredits(length, "plan"), () =>
     writeMovie({ kind, brief: brief.slice(0, 12_000), characters, look, platform, length, veoScenes: clamp(Number(b.veoScenes) || 0, 0, MAX_VEO_SCENES) }, settings),
   );
+  if (PLACEMENTS.includes(b.placement as Placement)) post.placement = b.placement;
+  // "Post automatically": the movie publishes itself as soon as its render finishes.
+  const autoPost = typeof b.autoPost === "boolean" ? b.autoPost : settings.autoPost.enabled;
+  if (autoPost) post.autoPost = true;
   let note = "";
-  if (b.renderNow) {
+  if (b.renderNow || autoPost) {
     if (!(await ffmpegAvailable())) note = "Saved. Video rendering isn't switched on for this server yet (ffmpeg missing).";
     else {
       const credits = renderCredits(post.video);

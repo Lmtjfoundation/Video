@@ -1,5 +1,5 @@
 import "server-only";
-import { ADAPTERS, type VideoFile } from "./platforms/adapters";
+import { ADAPTERS, type PublishOptions, type VideoFile } from "./platforms/adapters";
 import { freshCredential } from "./platforms/auth";
 import { AuthError, CopyReadyError, RateLimitError } from "./platforms/http";
 import { renderPost } from "./compose";
@@ -12,7 +12,7 @@ import { finalizePost } from "./generate";
 import { describeFlag, historyFlags } from "./compliance";
 import { usePostAllowance } from "./auth";
 import { currentUserId } from "./db";
-import { firstImageUrl, readFile, remoteVideoMedia, signedUrl, trustedVideoUrl } from "./media";
+import { firstImageUrl, imageUrls, readFile, remoteVideoMedia, signedUrl, trustedVideoUrl } from "./media";
 import { db } from "./db";
 import type { MediaItem } from "./types";
 import { isProfileCred } from "./facebook-profile";
@@ -27,7 +27,9 @@ async function videoFor(userId: string, post: Post): Promise<VideoFile | null> {
     const m = await db().get<MediaItem>("media", id);
     if (m?.kind !== "video") continue;
     const bytes = await readFile(m);
-    return { bytes, url: signedUrl(userId, m.id, 2 * 86400), mime: m.type === "video/quicktime" ? "video/quicktime" : "video/mp4", size: bytes.length };
+    // Videos the app rendered are vertical unless the plan was 16:9 long-form.
+    const portrait = m.rendered ? post.video?.length !== "long" : undefined;
+    return { bytes, url: signedUrl(userId, m.id, 2 * 86400), mime: m.type === "video/quicktime" ? "video/quicktime" : "video/mp4", size: bytes.length, durationSec: m.durationSec, portrait };
   }
   // A finished video hosted elsewhere (an episode from Claude's content inbox): store it once, then attach it.
   if (post.videoUrl && trustedVideoUrl(post.videoUrl)) {
@@ -35,7 +37,7 @@ async function videoFor(userId: string, post: Post): Promise<VideoFile | null> {
     post.mediaIds = [m.id, ...(post.mediaIds ?? []).filter((x) => x !== m.id)];
     await savePost(post);
     const bytes = await readFile(m);
-    return { bytes, url: signedUrl(userId, m.id, 2 * 86400), mime: "video/mp4", size: bytes.length };
+    return { bytes, url: signedUrl(userId, m.id, 2 * 86400), mime: "video/mp4", size: bytes.length, durationSec: m.durationSec };
   }
   return null;
 }
@@ -47,6 +49,16 @@ async function sendViaMetricool(mc: MetricoolConn, post: Post, texts: string[], 
   if (!video && !image && post.mediaIds?.length && userId) image = await firstImageUrl(userId, post.mediaIds);
   const media = video ? { url: video.url, video: true } : image ? { url: image, video: false } : null;
   return metricoolPublish(mc, post.platform, post, texts, media, settings.timezone);
+}
+
+/** Pictures and placement for Instagram / Facebook: every attached picture plus the image URL, and Reel / feed / Story. */
+async function publishOptions(post: Post, settings: Settings, userId: string | null): Promise<PublishOptions> {
+  const images = userId && post.mediaIds?.length ? await imageUrls(userId, post.mediaIds) : [];
+  // The image URL counts unless it's one of the attached pictures already (a signed link to our own media).
+  const ownMedia = (u: string) => (post.mediaIds ?? []).some((id) => u.includes(`/api/media/file/`) && u.includes(`/${id}?`));
+  if (post.imageUrl && /^https:\/\//.test(post.imageUrl) && !ownMedia(post.imageUrl)) images.push(post.imageUrl);
+  const fallback = post.platform === "instagram" ? settings.autoPost.instagram : post.platform === "facebook" ? settings.autoPost.facebook : "auto";
+  return { images, placement: post.placement ?? fallback };
 }
 
 const STALE_MS = 12 * 3600_000;
@@ -172,7 +184,7 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
   await savePost(post);
   try {
     const texts = renderPost(post, settings);
-    const res = mc ? await sendViaMetricool(mc, post, texts, video, userId, settings) : await adapter.publish(post, texts, cred!, video);
+    const res = mc ? await sendViaMetricool(mc, post, texts, video, userId, settings) : await adapter.publish(post, texts, cred!, video, await publishOptions(post, settings, userId));
     post.status = "published";
     post.publishedAt = nowIso();
     post.externalId = res.externalId;
@@ -221,6 +233,37 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
     await savePost(post);
     return { outcome: post.status === "scheduled" ? "retry" : post.status === "copy_ready" ? "copy_ready" : "failed", message: post.error ?? "" };
   }
+}
+
+/**
+ * "Post automatically": publishes a freshly written (or freshly rendered) post straight away, through every check
+ * Post now uses (kill switch, safety filter, rate limits, monthly allowance). Anything that has to wait — quiet
+ * hours, a rate limit, a retry — is scheduled for now so the scheduler posts it as soon as it can. Mature posts and
+ * accounts that need approval are never posted automatically.
+ */
+export async function autoPublish(post: Post, opts: { requireApproval?: boolean } = {}): Promise<PublishResultInfo> {
+  const settings = await getSettings();
+  if (opts.requireApproval) {
+    post.status = "pending_review";
+    post.scheduledAt = nowIso();
+    await savePost(post);
+    return { outcome: "waiting", message: "Sent for approval — it posts once an admin approves it." };
+  }
+  if (settings.killSwitch) {
+    await setWaiting(post, "Kill switch is on, so it wasn't posted. Release the kill switch and press Post now.");
+    return { outcome: "waiting", message: post.error ?? "" };
+  }
+  if (post.mature) {
+    await setWaiting(post, "Mature posts are never posted automatically. Review it and press Post now.");
+    return { outcome: "waiting", message: post.error ?? "" };
+  }
+  const r = await publishOne(post, settings, false);
+  if (r.outcome === "waiting" && post.status === "draft") {
+    post.status = "scheduled";
+    post.scheduledAt = nowIso();
+    await savePost(post);
+  }
+  return r;
 }
 
 /** Cron entry: publish everything that's due. `user` (when given) gets one email for posts handed to their Facebook profile. */
