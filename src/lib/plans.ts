@@ -157,6 +157,15 @@ export const CREDIT_COST = {
   repurposePerPlatform: 1,
   /** Added to a piece built from a live story: Claude searches current newsroom coverage (about 9¢ of usage, so 4 credits). */
   liveCheck: 4,
+  /**
+   * Media made on the app's Gemini key, priced from Google's paid-tier list prices (Oct 2026):
+   * a 2K Nano Banana 2.1 picture is $0.0504, so 4 credits (8¢); Veo 3.1 Fast at 720p is $0.10 a second, so 7 credits (14¢).
+   */
+  aiImage: 4,
+  veoSecond: 7,
+  /** A character portrait: one 2K picture plus a short description written from the photo. */
+  character: 5,
+  explain: 1,
 } as const;
 export type CreditAction = keyof typeof CREDIT_COST;
 
@@ -177,6 +186,10 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   storyLong: "Long story script (8–10 min)",
   repurposePerPlatform: "Repurpose to one platform",
   liveCheck: "Live fact-check of a news piece (added to the post or video)",
+  aiImage: "AI picture for one movie or explainer scene",
+  veoSecond: "Each second of a Veo-animated scene (4–8 seconds per scene)",
+  character: "Create a character from a photo or description",
+  explain: "Explain a text in plain language (2 credits over 8,000 characters)",
 };
 
 /** Hard safety ceiling even on Unlimited: beyond this, platforms treat accounts as spam. */

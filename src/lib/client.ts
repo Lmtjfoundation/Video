@@ -25,6 +25,9 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
   return data as T;
 }
 
+/** "Make an explainer video" on the Explain page hands its text to Movie Studio through sessionStorage. */
+export const EXPLAIN_HANDOFF = "ghostpost:explain-to-video";
+
 export async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(text);

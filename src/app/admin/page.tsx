@@ -581,7 +581,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Sparkles className="h-4 w-4" />}
           title="Gemini — free trials & backup"
-          desc="Your own Google Gemini key. Free-trial accounts write with it, and it steps in automatically whenever Claude can't answer (no credits, overloaded), so subscribers never need an AI account of their own. Optional."
+          desc="Your own Google Gemini key. Free-trial accounts write with it, and it steps in automatically whenever Claude can't answer (no credits, overloaded), so subscribers never need an AI account of their own. It also powers Movie Studio: character portraits and scene pictures (Nano Banana) and animated scenes (Veo 3.1), billed by Google on this key's project. Optional."
           link={{ href: "https://aistudio.google.com/apikey", label: "Get a key" }}
           state={st.gemini}
           result={results.gemini}

@@ -1,4 +1,4 @@
-import type { Platform, VideoPlan } from "./types";
+import type { Platform, VideoPlan, VideoScene } from "./types";
 import { CREDIT_COST } from "./plans";
 
 type LengthTier = "short" | "mid" | "long";
@@ -29,6 +29,59 @@ export function videoCredits(length: VideoPlan["length"] | undefined, action: "p
   const tier = VIDEO_LENGTHS[length ?? "s60"]?.tier ?? "short";
   if (action === "plan") return tier === "long" ? CREDIT_COST.videoLong : tier === "mid" ? CREDIT_COST.videoMid : CREDIT_COST.videoShort;
   return tier === "long" ? CREDIT_COST.renderLong : tier === "mid" ? CREDIT_COST.renderMid : CREDIT_COST.renderShort;
+}
+
+/** Scenes the renderer turns into video (blank scenes are skipped), with their index in `plan.scenes`. */
+export function renderableScenes(plan: Pick<VideoPlan, "scenes">) {
+  return plan.scenes.map((scene, index) => ({ scene, index })).filter(({ scene }) => scene.narration.trim() || scene.onScreen.trim());
+}
+
+/** Planned length of a scene: narration read at a natural pace (about 2.6 words a second), never under 1.8 s. */
+export const sceneSeconds = (scene: Pick<VideoScene, "narration">) => Math.max(1.8, scene.narration.split(/\s+/).filter(Boolean).length / 2.6);
+
+/** Veo makes 4, 6 or 8 second clips: the shortest that covers the scene (the last frame holds if the voice runs longer). */
+export const veoSeconds = (scene: Pick<VideoScene, "narration">): 4 | 6 | 8 => {
+  const s = sceneSeconds(scene);
+  return s <= 4 ? 4 : s <= 6 ? 6 : 8;
+};
+
+/** Credits for the AI pictures and Veo clips of a plan with `ai` visuals (0 for stock-footage videos). */
+export function aiVisualCredits(plan: Pick<VideoPlan, "scenes" | "ai">) {
+  if (!plan.ai) return 0;
+  const veo = new Set(plan.ai.veoScenes);
+  return renderableScenes(plan).reduce(
+    (sum, { scene, index }) => sum + CREDIT_COST.aiImage + (veo.has(index) ? veoSeconds(scene) * CREDIT_COST.veoSecond : 0),
+    0,
+  );
+}
+
+/** Everything a render costs: voice, assembly and captions by length, plus any AI pictures and Veo clips. */
+export const renderCredits = (plan: Pick<VideoPlan, "length" | "scenes" | "ai"> | undefined) =>
+  videoCredits(plan?.length, "render") + (plan ? aiVisualCredits(plan) : 0);
+
+/* Movies and explainers with AI visuals (Movie Studio). */
+export const MOVIE_LENGTHS = ["s30", "s60", "s90", "m3"] as const;
+export type MovieLength = (typeof MOVIE_LENGTHS)[number];
+
+/** Fewer, longer scenes than a stock-footage video: each scene is a picture (and maybe a Veo clip) that costs credits. */
+export const MOVIE_SHAPE: Record<MovieLength, { label: string; words: string; scenes: string; min: number; max: number }> = {
+  s30: { label: "About 30 seconds", words: "65–90 words", scenes: "6–8", min: 6, max: 8 },
+  s60: { label: "About 1 minute", words: "120–150 words", scenes: "9–12", min: 9, max: 12 },
+  s90: { label: "About 90 seconds", words: "170–230 words", scenes: "12–16", min: 12, max: 16 },
+  m3: { label: "About 3 minutes", words: "430–480 words", scenes: "24–30", min: 24, max: 30 },
+};
+export const MAX_VEO_SCENES = 8;
+
+/**
+ * Credits range for a movie before it's written (the exact render price shows on the post once the script exists):
+ * the script, plus a picture per scene and the Veo clips at 6 seconds each on average.
+ */
+export function movieEstimate(length: MovieLength, veoScenes: number) {
+  const s = MOVIE_SHAPE[length];
+  const veo = Math.min(veoScenes, MAX_VEO_SCENES, s.max);
+  const fixed = videoCredits(length, "plan") + videoCredits(length, "render");
+  const at = (scenes: number, sec: number) => fixed + scenes * CREDIT_COST.aiImage + veo * sec * CREDIT_COST.veoSecond;
+  return { low: at(s.min, 4), high: at(s.max, 8) };
 }
 
 export const VIDEO_STYLES: Record<VideoPlan["style"], string> = {

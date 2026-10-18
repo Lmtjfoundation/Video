@@ -334,6 +334,32 @@ export interface VideoScene {
   visual: string;
   motion: string;
   sfx: string;
+  /** Names of library characters who appear in this scene (AI-pictured videos only). */
+  cast?: string[];
+}
+
+/** AI-made visuals for a video: every scene is pictured with Gemini, and chosen scenes are animated with Google Veo. */
+export interface AiVisuals {
+  /** Characters (Characters library ids) who appear in this video. */
+  characterIds: string[];
+  /** Art direction used for every picture, e.g. "Pixar-style 3D animation". */
+  look: string;
+  /** Indexes into `scenes` that are animated with Veo; the rest are AI pictures with a slow camera move. */
+  veoScenes: number[];
+}
+
+/** A reusable character for movies and explainers, made from a photo or a description. */
+export interface Character {
+  id: string;
+  name: string;
+  /** Appearance, outfit and personality, used to keep the character the same in every scene. */
+  description: string;
+  look: string;
+  /** The character portrait (Media library id) used as the reference picture in every scene. */
+  imageMediaId: string;
+  /** The photo it was made from, when there was one. */
+  sourceMediaId?: string;
+  createdAt: string;
 }
 
 /** Production-ready plan for a faceless video post. */
@@ -349,4 +375,6 @@ export interface VideoPlan {
   scenes: VideoScene[];
   loopLine: string;
   factCheck: string[];
+  /** Set when the visuals are AI pictures and Veo clips instead of stock footage. */
+  ai?: AiVisuals;
 }

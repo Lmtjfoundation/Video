@@ -7,7 +7,7 @@ import { clamp } from "@/lib/utils";
 import { withCredits } from "@/lib/credits";
 import { CREDIT_COST } from "@/lib/plans";
 import { generateVideoPosts } from "@/lib/video";
-import { lengthAllowed, videoCredits, VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
+import { lengthAllowed, renderCredits, videoCredits, VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
 import type { Platform as P, Post, Settings, VideoPlan } from "@/lib/types";
 import { LLMError } from "@/lib/llm";
 import { takeFromBank } from "@/lib/inbox";
@@ -63,7 +63,7 @@ export const POST = authed(async (req: Request, user) => {
     // "Render it now": turn the plan straight into an MP4 (render credits as usual).
     if (b.renderNow && (await ffmpegAvailable())) {
       for (const v of videos) {
-        const credits = videoCredits(v.video?.length, "render");
+        const credits = renderCredits(v.video);
         try {
           await spendCredits(user.id, credits);
         } catch {

@@ -8,15 +8,20 @@ import { readFile, storeFile } from "./media";
 import { log, savePost } from "./repo";
 import { refundCredits } from "./auth";
 import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey, pixabayKey } from "./integrations";
-import type { MediaItem, Post, VideoScene } from "./types";
+import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types";
 import { nowIso } from "./utils";
+import { characterRef, getCharacters } from "./characters";
+import { geminiImage, MediaGenError, veoClip, type RefImage } from "./gemini-media";
+import { CREDIT_COST } from "./plans";
+import { aiVisualCredits, renderableScenes, veoSeconds } from "./video-spec";
 
 /**
  * Turns a video plan into a finished MP4 on the server with ffmpeg:
  *  - Voiceover: ElevenLabs text-to-speech per scene (ELEVENLABS_API_KEY). Without a key the video is a
  *    "text story" — captions carry the narration and each scene is timed to a natural reading pace.
  *  - Visuals per scene, in order of preference: the user's attached images/clips, Pixabay (or Pexels) stock
- *    footage matching the scene's visual note, or a moving brand gradient.
+ *    footage matching the scene's visual note, or a moving brand gradient. Movies and explainers (`plan.ai`) are
+ *    pictured with Gemini instead, using the characters' portraits, and their key scenes are animated with Veo.
  *  - On-screen text (top) and word-group captions (bottom), burned in with a bundled font.
  * Output: 1080×1920 vertical (Shorts/Reels/TikTok) or 1920×1080 for YouTube long-form, H.264 + AAC, saved to
  * the user's Media Library and attached to the post.
@@ -256,7 +261,8 @@ interface SceneJob {
   scene: VideoScene;
   dur: number;
   audio?: string;
-  visual: { kind: "image" | "video"; file: string } | { kind: "gradient"; colors: [string, string] };
+  /** `hold`: a clip shorter than the scene freezes on its last frame instead of looping (Veo clips). */
+  visual: { kind: "image" | "video"; file: string; hold?: boolean } | { kind: "gradient"; colors: [string, string] };
 }
 
 async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H: number): Promise<string> {
@@ -269,6 +275,7 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
   const vis = job.visual;
   if (vis.kind === "gradient") args.push("-f", "lavfi", "-t", job.dur.toFixed(3), "-i", `gradients=s=${W}x${H}:c0=${vis.colors[0]}:c1=${vis.colors[1]}:speed=0.015:r=${FPS}`);
   else if (vis.kind === "image") args.push("-i", vis.file);
+  else if (vis.hold) args.push("-i", vis.file);
   else args.push("-stream_loop", "-1", "-t", job.dur.toFixed(3), "-i", vis.file);
   args.push("-threads", THREADS);
   if (job.audio) args.push("-i", job.audio);
@@ -282,6 +289,7 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
     v = `[0:v]scale=${Math.round(W * 1.5)}:${Math.round(H * 1.5)}:force_original_aspect_ratio=increase,crop=${Math.round(W * 1.5)}:${Math.round(H * 1.5)},zoompan=z='${z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${F}:s=${W}x${H}:fps=${FPS}`;
   } else if (job.visual.kind === "video") {
     v = `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},fps=${FPS}`;
+    if (job.visual.hold) v += `,tpad=stop_mode=clone:stop_duration=${job.dur.toFixed(3)}`;
   } else {
     v = `[0:v]format=yuv420p`;
   }
@@ -315,6 +323,106 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
   );
   await run("ffmpeg", args);
   return out;
+}
+
+/* ───────────── AI visuals (movies and explainers) ───────────── */
+
+/** Runs `fn` over `items` with at most `limit` running at once, keeping order. */
+/** Runs `fn` over `items` with at most `limit` running at once, keeping order. After one throws, no new item starts. */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, i: number) => Promise<R>): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  let failed = false;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (next < items.length && !failed) {
+        const i = next++;
+        try {
+          out[i] = await fn(items[i], i);
+        } catch (e) {
+          failed = true;
+          throw e;
+        }
+      }
+    }),
+  );
+  return out;
+}
+
+const extFor = (mime: string) => (mime === "image/jpeg" ? "jpg" : mime === "image/webp" ? "webp" : "png");
+
+function scenePrompt(scene: VideoScene, ai: NonNullable<VideoPlan["ai"]>, cast: Character[], portrait: boolean) {
+  return [
+    `A single ${portrait ? "vertical 9:16" : "widescreen 16:9"} film frame in this art style: ${ai.look}.`,
+    `Shot: ${scene.visual || scene.narration}`,
+    cast.length ? `Characters in frame (each must match their attached reference picture exactly — same face, hair, build, outfit and colors): ${cast.map((c) => `${c.name} — ${c.description}`.slice(0, 400)).join("; ")}.` : "",
+    "Cinematic composition, clear focal point, rich lighting. Leave the lower third uncluttered for captions. No text, letters, subtitles, signs, logos or watermarks.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/**
+ * Pictures every scene with Gemini (3 at a time), then animates the chosen scenes with Veo (2 at a time).
+ * A scene Google can't make falls back to stock footage or a background, and its credits are counted as unused
+ * so the caller refunds them. Errors the owner must fix (key, billing) stop the render.
+ */
+async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes: number[], jobs: SceneJob[], dir: string, long: boolean): Promise<number> {
+  const cast = await getCharacters(ai.characterIds);
+  const refs = new Map<string, RefImage>();
+  for (const c of cast) {
+    const r = await characterRef(c).catch(() => null);
+    if (r) refs.set(c.name.toLowerCase(), r);
+  }
+  const portrait = !long;
+  let unused = 0;
+  let done = 0;
+  const stills: (RefImage | null)[] = await mapLimit(jobs, 3, async (job, i) => {
+    const inScene = cast.filter((c) => (job.scene.cast ?? []).some((n) => n.toLowerCase() === c.name.toLowerCase()));
+    const sceneRefs = inScene.map((c) => refs.get(c.name.toLowerCase())).filter((r): r is RefImage => !!r);
+    try {
+      const img = await geminiImage({ prompt: scenePrompt(job.scene, ai, inScene, portrait), refs: sceneRefs, aspect: portrait ? "9:16" : "16:9", size: "2K" });
+      const file = path.join(dir, `ai${i}.${extFor(img.mimeType)}`);
+      await fs.writeFile(file, img.bytes);
+      job.visual = { kind: "image", file };
+      return { mimeType: img.mimeType, base64: img.bytes.toString("base64") };
+    } catch (e) {
+      if (e instanceof MediaGenError && e.kind === "config") throw e;
+      console.warn(`[render] AI picture for scene ${i + 1} failed: ${(e as Error).message.slice(0, 200)}`);
+      unused += CREDIT_COST.aiImage;
+      const clip = path.join(dir, `stock${i}.mp4`);
+      const q = cleanQuery(job.scene.visual);
+      if ((await pixabayClip(q, portrait, clip)) || (await pexelsClip(q, portrait, clip))) job.visual = { kind: "video", file: clip };
+      return null;
+    } finally {
+      done++;
+      await setRender(post, { progress: Math.round(15 + (25 * done) / jobs.length), message: `Painting scene ${done} of ${jobs.length} with Gemini…` });
+    }
+  });
+
+  const veo = jobs.map((job, i) => ({ job, i, original: indexes[i] })).filter(({ original }) => ai.veoScenes.includes(original));
+  let animated = 0;
+  await mapLimit(veo, 2, async ({ job, i }) => {
+    const seconds = veoSeconds(job.scene);
+    const still = stills[i];
+    try {
+      if (!still) throw new MediaGenError("No picture to animate.");
+      await setRender(post, { message: `Animating scene ${i + 1} with Veo (about 1–3 minutes a clip)…` });
+      const prompt = `${job.scene.motion || "Subtle, natural movement with a slow cinematic camera move."} ${job.scene.visual}`.slice(0, 1500) + ` Art style: ${ai.look}. Keep the characters exactly as they appear in the starting frame. No text or captions.`;
+      const bytes = await veoClip({ prompt, start: still, aspect: portrait ? "9:16" : "16:9", seconds });
+      const file = path.join(dir, `veo${i}.mp4`);
+      await fs.writeFile(file, bytes);
+      job.visual = { kind: "video", file, hold: true };
+    } catch (e) {
+      if (e instanceof MediaGenError && e.kind === "config") throw e;
+      console.warn(`[render] Veo clip for scene ${i + 1} failed, keeping the picture: ${(e as Error).message.slice(0, 200)}`);
+      unused += seconds * CREDIT_COST.veoSecond;
+    } finally {
+      animated++;
+      await setRender(post, { progress: Math.round(40 + (10 * animated) / Math.max(1, veo.length)) });
+    }
+  });
+  return unused;
 }
 
 /* ───────────── Main ───────────── */
@@ -366,8 +474,10 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
 
     const voice = !!(await elevenlabsKey());
     const jobs: SceneJob[] = [];
-    const scenes = plan.scenes.filter((s) => s.narration.trim() || s.onScreen.trim());
+    const planned = renderableScenes(plan);
+    const scenes = planned.map((p) => p.scene);
     if (!scenes.length) throw new Error("This plan has no scenes to render.");
+    const ai = plan.ai && !mediaFiles.length ? plan.ai : null;
     for (const [i, scene] of scenes.entries()) {
       let audio: string | undefined;
       let dur = Math.max(1.8, scene.narration.split(/\s+/).filter(Boolean).length / 2.6);
@@ -378,6 +488,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       }
       let visual: SceneJob["visual"];
       if (mediaFiles.length) visual = mediaFiles[i % mediaFiles.length];
+      else if (ai) visual = { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] }; // pictured below
       else {
         const clip = path.join(dir, `stock${i}.mp4`);
         const q = cleanQuery(scene.visual);
@@ -386,8 +497,12 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
           : { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] };
       }
       jobs.push({ scene, dur, audio, visual });
-      await setRender(post, { progress: Math.round(5 + (35 * (i + 1)) / scenes.length), message: voice ? "Recording voiceover and gathering visuals…" : "Gathering visuals…" });
+      const share = ai ? 10 : 35;
+      await setRender(post, { progress: Math.round(5 + (share * (i + 1)) / scenes.length), message: voice ? "Recording voiceover and gathering visuals…" : "Gathering visuals…" });
     }
+    // Attached media replaces the AI pictures, so their credits go back.
+    let unused = plan.ai && !ai ? aiVisualCredits(plan) : 0;
+    if (ai) unused = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long);
 
     const segs: string[] = [];
     for (const [i, job] of jobs.entries()) {
@@ -401,7 +516,8 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
         job.visual = { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] };
         segs.push(await renderSegment(job, i, dir, W, H));
       }
-      await setRender(post, { progress: Math.round(40 + (55 * (i + 1)) / jobs.length), message: `Rendering scene ${i + 1} of ${jobs.length}…` });
+      const [from, span] = ai ? [50, 45] : [40, 55];
+      await setRender(post, { progress: Math.round(from + (span * (i + 1)) / jobs.length), message: `Rendering scene ${i + 1} of ${jobs.length}…` });
     }
 
     const list = path.join(dir, "list.txt");
@@ -417,9 +533,11 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
 
     const fresh = (await db().get<Post>("posts", postId)) ?? post;
     fresh.mediaIds = [item.id, ...(fresh.mediaIds ?? []).filter((id) => id !== fresh.render?.mediaId)];
-    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${voice ? "voiceover" : "captions only"} · ${(bytes.length / 1048576).toFixed(1)} MB`, mediaId: item.id, updatedAt: nowIso() };
+    const refunded = unused && credits ? ` · ${unused} credits refunded for ${ai ? "scenes Google couldn't make" : "AI scenes replaced by your media"}` : "";
+    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${voice ? "voiceover" : "captions only"}${ai ? " · AI visuals" : ""} · ${(bytes.length / 1048576).toFixed(1)} MB${refunded}`, mediaId: item.id, updatedAt: nowIso() };
     if (fresh.status === "copy_ready") { fresh.status = "draft"; fresh.error = undefined; }
     await savePost(fresh);
+    if (unused && credits) await refundCredits(userId, Math.min(unused, credits));
     await log("info", "generate", `Video rendered (${item.durationSec}s) — “${post.hook.slice(0, 60)}”`, { platform: post.platform, postId });
   } catch (e) {
     const msg = friendlyRenderError((e as Error).message);

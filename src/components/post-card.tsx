@@ -9,7 +9,7 @@ import type { Post, Settings } from "@/lib/types";
 import { api, copyToClipboard, fmtDateTime } from "@/lib/client";
 import { copyText, renderPost } from "@/lib/compose";
 import { NICHES } from "@/lib/niches";
-import { videoCredits, VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
+import { renderCredits, VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
 import type { VideoPlan } from "@/lib/types";
 import { localParts, addDays } from "@/lib/time";
 import { useApp } from "@/lib/store";
@@ -346,7 +346,7 @@ function VideoPlanView({ plan, caption }: { plan: VideoPlan; caption: string }) 
   );
 }
 
-type RenderInfo = { render: Post["render"] | null; url: string | null; voice: boolean; stock: boolean };
+type RenderInfo = { render: Post["render"] | null; url: string | null; voice: boolean; stock: boolean; ai?: boolean };
 
 /** Render the plan into an MP4 on the server, show progress, then preview the finished video. */
 function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; onChange: (p: Post | null) => void }) {
@@ -355,7 +355,7 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
   const [starting, setStarting] = useState(false);
   const status = info?.render?.status ?? post.render?.status;
   const active = status === "queued" || status === "rendering";
-  const cost = videoCredits(post.video?.length, "render");
+  const cost = renderCredits(post.video);
   // A finished episode delivered by Claude's content inbox: voices, music and captions are already in the file.
   const finished = !!post.videoUrl && !post.render?.mediaId;
 
@@ -407,7 +407,7 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
           <p className="text-xs text-white/50">
             {finished
               ? "Finished episode from Claude: character voices, narration, music and captions are already in the video."
-              : info ? `${info.voice ? "AI voiceover" : "Captions only (add an ElevenLabs key for voiceover)"} · ${info.stock ? "stock footage" : "your media or animated backgrounds"} · burned-in captions` : "Voiceover, visuals and captions, rendered on the server."}
+              : info ? `${info.voice ? "AI voiceover" : "Captions only (add an ElevenLabs key for voiceover)"} · ${post.video?.ai ? `AI pictures${post.video.ai.veoScenes.length ? ` + ${post.video.ai.veoScenes.length} Veo-animated scene${post.video.ai.veoScenes.length > 1 ? "s" : ""}` : ""}` : info.stock ? "stock footage" : "your media or animated backgrounds"} · burned-in captions` : "Voiceover, visuals and captions, rendered on the server."}
           </p>
         </div>
         {!locked && !active && !finished && (

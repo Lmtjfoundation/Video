@@ -7,7 +7,8 @@ import { enqueueRender, ffmpegAvailable, releaseOrphanedRender } from "@/lib/ren
 import type { MediaItem } from "@/lib/types";
 import { nowIso } from "@/lib/utils";
 import { elevenlabsKey, stockReady } from "@/lib/integrations";
-import { videoCredits } from "@/lib/video-spec";
+import { renderCredits } from "@/lib/video-spec";
+import { mediaKey } from "@/lib/gemini-media";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,8 @@ export const POST = authed(async (req, user) => {
   await releaseOrphanedRender(user.id, post);
   if (post.render && (post.render.status === "queued" || post.render.status === "rendering")) return ok(post);
   if (!(await ffmpegAvailable())) return fail("Video rendering isn't switched on for this server yet (ffmpeg missing). Ask the admin to add it.", 503);
-  const credits = videoCredits(post.video.length, "render");
+  if (post.video.ai && !(await mediaKey())) return fail("This video's pictures and Veo clips need the app's Gemini key. Ask the admin to add it in Admin → App settings → Integrations.", 503);
+  const credits = renderCredits(post.video);
   await spendCredits(user.id, credits);
   post.render = { status: "queued", progress: 0, message: "Waiting to render…", credits, updatedAt: nowIso() };
   await savePost(post);
@@ -39,5 +41,5 @@ export const GET = authed(async (req, user) => {
     if (m) url = signedUrl(user.id, m.id, 6 * 3600);
   }
   if (!url && post.videoUrl) url = `/api/media/remote?u=${encodeURIComponent(post.videoUrl)}`;
-  return ok({ render: post.render ?? null, url, voice: !!(await elevenlabsKey()), stock: await stockReady() });
+  return ok({ render: post.render ?? null, url, voice: !!(await elevenlabsKey()), stock: await stockReady(), ai: !!post.video?.ai });
 });
