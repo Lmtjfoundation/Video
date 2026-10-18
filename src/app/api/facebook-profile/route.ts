@@ -1,5 +1,6 @@
 import { body, fail, authed, ok } from "@/lib/http-api";
 import { isProfileCred } from "@/lib/facebook-profile";
+import { metricoolFor } from "@/lib/metricool";
 import { cleanProfileName, normalizeProfileUrl } from "@/lib/facebook-profile";
 import { credentialStatuses, getCredential, log, saveCredential } from "@/lib/repo";
 
@@ -43,8 +44,8 @@ export const PATCH = authed(async (req: Request) => {
   const input = await body<{ viaInstagram?: boolean }>(req);
   const cur = await getCredential("facebook");
   if (!cur || !isProfileCred(cur)) return fail("Add your Facebook profile first.");
-  if (input.viaInstagram && !(await getCredential("instagram"))?.accessToken) {
-    return fail("Connect Instagram in Ghost Post first (Platforms → Instagram), then switch this on.");
+  if (input.viaInstagram && !(await getCredential("instagram"))?.accessToken && !(await metricoolFor("instagram"))) {
+    return fail("Connect Instagram first — in Ghost Post (Platforms → Instagram) or through Metricool — then switch this on.");
   }
   await saveCredential("facebook", { ...cur, viaInstagram: input.viaInstagram ? "1" : undefined });
   await log("info", "system", input.viaInstagram ? "Facebook profile on autopilot: posts go out through Instagram's sharing to Facebook" : "Facebook profile back to one-tap posting", { platform: "facebook" });

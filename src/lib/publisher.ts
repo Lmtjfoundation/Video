@@ -115,11 +115,14 @@ async function shareThroughInstagram(post: Post, settings: Settings, userId: str
   }
 
   const igPost: Post = { ...post, platform: "instagram" };
-  const ig = await freshCredential("instagram");
+  // Instagram connected in the person's Metricool works too: no developer account needed.
+  const mc = await metricoolFor("instagram");
+  const ig = mc ? null : await freshCredential("instagram");
+  const linked = !!mc || !!ig?.accessToken;
   const can = ADAPTERS.instagram.publishable(igPost);
-  if (!ig?.accessToken || can !== true) {
+  if (!linked || can !== true) {
     const r = await handOffToProfile(post, userId, manual);
-    post.error = !ig?.accessToken ? "Instagram isn't connected, so this one is ready for you to post. Reconnect Instagram on the Platforms tab." : "Text-only posts can't go through Instagram, so this one is ready for you to post.";
+    post.error = !linked ? "Instagram isn't connected, so this one is ready for you to post. Reconnect Instagram on the Platforms tab." : "Text-only posts can't go through Instagram, so this one is ready for you to post.";
     await savePost(post);
     return r;
   }
@@ -133,7 +136,7 @@ async function shareThroughInstagram(post: Post, settings: Settings, userId: str
   await savePost(post);
   try {
     const texts = renderPost(igPost, settings);
-    const res = await ADAPTERS.instagram.publish(igPost, texts, ig, video, await publishOptions(igPost, settings, userId));
+    const res = mc ? await sendViaMetricool(mc, igPost, texts, video, userId, settings) : await ADAPTERS.instagram.publish(igPost, texts, ig!, video, await publishOptions(igPost, settings, userId));
     post.status = "published";
     post.publishedAt = nowIso();
     post.externalId = res.externalId;
@@ -143,7 +146,7 @@ async function shareThroughInstagram(post: Post, settings: Settings, userId: str
     await savePost(post);
     if (userId) await usePostAllowance(userId, true);
     await recordAction("instagram", "post");
-    await log("info", "post", `Posted to Instagram, which shares it to your Facebook profile — “${post.hook.slice(0, 80)}”`, { platform: post.platform, postId: post.id, url: res.url });
+    await log("info", "post", `${mc ? "Sent to Instagram through Metricool" : "Posted to Instagram"}, which shares it to your Facebook profile — “${post.hook.slice(0, 80)}”`, { platform: post.platform, postId: post.id, url: res.url });
     return { outcome: "published", message: res.url ?? "Published" };
   } catch (e) {
     // Never lose a post: hand it over to post with one tap, and say why.

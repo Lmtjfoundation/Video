@@ -200,3 +200,34 @@ describe("Facebook profile on autopilot through Instagram", () => {
     });
   });
 });
+
+describe("Facebook profile autopilot with Instagram through Metricool (no developer account)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("sends the post to Instagram via Metricool", async () => {
+    process.env.SETUP_CODE = "test-setup-code";
+    const { asUser } = await import("@/lib/db");
+    const { createUser } = await import("@/lib/auth");
+    const owner = await createUser({ email: "profile-mc@example.com", password: "Correct-horse-battery-9", setupCode: "test-setup-code" });
+    const { saveCredential, savePost } = await import("@/lib/repo");
+    const { saveMetricool } = await import("@/lib/metricool");
+    const { autoPublish } = await import("@/lib/publisher");
+    const calls: { url: string; body: string }[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      calls.push({ url, body: String(init?.body ?? "") });
+      return new Response(JSON.stringify({ data: { id: 77 } }), { headers: { "content-type": "application/json" } });
+    }));
+    const t = new Date().toISOString();
+    await asUser(owner.id, async () => {
+      await saveMetricool({ token: "tok", userId: "5713986", blogId: "7360508", brand: "My Brand", found: ["instagram"], use: { instagram: true }, connectedAt: t, checkedAt: t });
+      await saveCredential("facebook", { mode: "profile", method: "profile", profileName: "Arthur Hamilton", viaInstagram: "1" });
+      const p: Post = {
+        id: "mcpic", platform: "facebook", pillar: "ai_leverage", format: "short", hook: "Chapter two drops now", body: "Watch.", parts: [], hashtags: [],
+        imageUrl: "https://cdn.example/c2.jpg", status: "draft", moneyScore: 0, revenue: { low: 0, high: 0, basis: "" }, scoreNotes: [], safetyFlags: [], attempts: 0, createdAt: t, updatedAt: t,
+      };
+      await savePost(p);
+      expect((await autoPublish(p)).outcome).toBe("published");
+      const sent = calls.find((c) => c.url.includes("/v2/scheduler/posts"));
+      expect(sent?.body).toMatch(/instagram/i);
+    });
+  });
+});

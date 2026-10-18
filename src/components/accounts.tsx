@@ -198,7 +198,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
                     )}
                   </div>
                 )}
-                {p === "facebook" && direct && <FacebookTargets st={st} handoffEmail={settings.handoffEmail} igConnected={!!statuses.find((x) => x.platform === "instagram")?.direct} onChanged={refresh} />}
+                {p === "facebook" && direct && <FacebookTargets st={st} handoffEmail={settings.handoffEmail} igConnected={!!statuses.find((x) => x.platform === "instagram")?.connected} onChanged={refresh} />}
                 <AccountTypeNote platform={p} />
                 {direct || (viaMc && !directOpen[p]) ? null : p === "facebook" ? (
                   <FacebookChoice
@@ -545,7 +545,7 @@ function FacebookTargets({ st, handoffEmail, igConnected, onChanged }: { st: Cre
             Text-only posts still come to you for one tap.
           </p>
           <ol className="list-decimal space-y-1 pl-5 text-[12.5px] leading-relaxed text-white/60">
-            <li className={igConnected ? "text-mint-300" : ""}>{igConnected ? "Instagram is connected." : "Connect Instagram above (professional account)."}</li>
+            <li className={igConnected ? "text-mint-300" : ""}>{igConnected ? "Instagram is connected." : "Connect Instagram above, or through Metricool (no developer account needed)."}</li>
             <li>
               Once, in Instagram: Profile → ☰ → Accounts Center → <b className="text-white/80">Sharing across profiles</b> → your Instagram → your Facebook profile → turn on automatic sharing for posts and reels.{" "}
               <a className="inline-flex items-center gap-1 text-mint-300 underline" href="https://accountscenter.instagram.com/" target="_blank" rel="noreferrer">Open Accounts Center <ExternalLink className="h-3 w-3" /></a>
