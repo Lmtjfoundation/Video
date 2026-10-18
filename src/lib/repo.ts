@@ -170,6 +170,7 @@ export async function credentialStatuses(): Promise<CredentialStatus[]> {
       choices: p === "facebook" && fbPages.length ? fbPages.map(({ id, name }) => ({ id, name })) : undefined,
       mode: p === "facebook" && r ? (profile ? "profile" : "page") : undefined,
       profileName: p === "facebook" ? r?.profileName : undefined,
+      viaInstagram: profile && r!.fields.includes("viaInstagram") ? true : undefined,
     };
   });
 }

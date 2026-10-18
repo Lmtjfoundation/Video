@@ -158,3 +158,45 @@ describe("posting automatically keeps the safety rules", () => {
     });
   });
 });
+
+describe("Facebook profile on autopilot through Instagram", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("posts pictures/videos to Instagram (which shares to the profile) and hands text-only posts over", async () => {
+    process.env.SETUP_CODE = "test-setup-code";
+    const { asUser } = await import("@/lib/db");
+    const { createUser } = await import("@/lib/auth");
+    const owner = await createUser({ email: "profile-auto@example.com", password: "Correct-horse-battery-9", setupCode: "test-setup-code" });
+    const { saveCredential, savePost, credentialStatuses } = await import("@/lib/repo");
+    const { autoPublish } = await import("@/lib/publisher");
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      calls.push(url);
+      const json = (b: unknown) => new Response(JSON.stringify(b), { headers: { "content-type": "application/json" } });
+      if (url.includes("fields=status_code")) return json({ status_code: "FINISHED" });
+      if (url.includes("fields=permalink")) return json({ permalink: "https://instagram.com/p/abc" });
+      return json({ id: "c1" });
+    }));
+    const t = new Date().toISOString();
+    const mk = (id: string, o: Partial<Post> = {}): Post => ({
+      id, platform: "facebook", pillar: "ai_leverage", format: "short", hook: "How we met", body: "Chapter 2.", parts: [], hashtags: [],
+      status: "draft", moneyScore: 0, revenue: { low: 0, high: 0, basis: "" }, scoreNotes: [], safetyFlags: [], attempts: 0, createdAt: t, updatedAt: t, ...o,
+    });
+    await asUser(owner.id, async () => {
+      await saveCredential("instagram", { accessToken: "tok", accountId: "ig1", method: "oauth" });
+      await saveCredential("facebook", { mode: "profile", method: "profile", profileName: "Arthur Hamilton", viaInstagram: "1" });
+      expect((await credentialStatuses()).find((s) => s.platform === "facebook")?.viaInstagram).toBe(true);
+
+      const pic = mk("pic", { imageUrl: "https://cdn.example/cover.jpg" });
+      await savePost(pic);
+      const r = await autoPublish(pic);
+      expect(r.outcome).toBe("published");
+      expect(calls.some((u) => u.includes("/ig1/media?") && u.includes("image_url="))).toBe(true);
+      expect(pic.externalUrl).toBe("https://instagram.com/p/abc");
+
+      const text = mk("text", { hook: "Who is ready for chapter three tonight?", body: "Tell me below." });
+      await savePost(text);
+      expect((await autoPublish(text)).outcome).toBe("copy_ready");
+      expect(text.handoff?.to).toBe("facebook_profile");
+    });
+  });
+});

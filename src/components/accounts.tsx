@@ -198,7 +198,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
                     )}
                   </div>
                 )}
-                {p === "facebook" && direct && <FacebookTargets st={st} handoffEmail={settings.handoffEmail} onChanged={refresh} />}
+                {p === "facebook" && direct && <FacebookTargets st={st} handoffEmail={settings.handoffEmail} igConnected={!!statuses.find((x) => x.platform === "instagram")?.direct} onChanged={refresh} />}
                 <AccountTypeNote platform={p} />
                 {direct || (viaMc && !directOpen[p]) ? null : p === "facebook" ? (
                   <FacebookChoice
@@ -480,8 +480,9 @@ function FacebookChoice({ oauthReady, isAdmin, origin, onSaved }: { oauthReady: 
 }
 
 /** Connected: switch between a Page and your profile, edit the profile, and choose whether to get an email when a post is ready. */
-function FacebookTargets({ st, handoffEmail, onChanged }: { st: CredentialStatus; handoffEmail: boolean; onChanged: () => void }) {
+function FacebookTargets({ st, handoffEmail, igConnected, onChanged }: { st: CredentialStatus; handoffEmail: boolean; igConnected: boolean; onChanged: () => void }) {
   const toast = useApp((x) => x.toast);
+  const [viaIg, setViaIg] = useState(!!st.viaInstagram);
   const [form, setForm] = useState(false);
   const [email, setEmail] = useState(handoffEmail);
   const pages = st.choices ?? [];
@@ -512,6 +513,18 @@ function FacebookTargets({ st, handoffEmail, onChanged }: { st: CredentialStatus
     }
   }
 
+  async function setAutopilot(v: boolean) {
+    setViaIg(v);
+    try {
+      await api("/api/facebook-profile", { method: "PATCH", body: { viaInstagram: v } });
+      toast(v ? "Facebook profile on autopilot through Instagram" : "Back to one-tap posting", "success");
+      onChanged();
+    } catch (e) {
+      setViaIg(!v);
+      toast((e as Error).message, "error");
+    }
+  }
+
   return (
     <div className="grid gap-3">
       {options.length > 1 && (
@@ -522,6 +535,26 @@ function FacebookTargets({ st, handoffEmail, onChanged }: { st: CredentialStatus
         </Field>
       )}
       {st.mode === "profile" && (
+        <div className="grid gap-2.5 rounded-xl bg-mint-400/[0.04] p-3 ring-1 ring-mint-400/20">
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-1.5 text-[13px] font-medium text-white"><Zap className="h-4 w-4 text-mint-300" /> Autopilot through Instagram</span>
+            <Switch checked={viaIg} onChange={setAutopilot} label="Post to my Facebook profile automatically through Instagram" />
+          </div>
+          <p className="text-[12.5px] leading-relaxed text-white/60">
+            Facebook doesn't let any app post to a profile, but Instagram can share to it. Ghost Post posts each video or picture to your Instagram, and Instagram puts it on your Facebook profile — no taps.
+            Text-only posts still come to you for one tap.
+          </p>
+          <ol className="list-decimal space-y-1 pl-5 text-[12.5px] leading-relaxed text-white/60">
+            <li className={igConnected ? "text-mint-300" : ""}>{igConnected ? "Instagram is connected." : "Connect Instagram above (professional account)."}</li>
+            <li>
+              Once, in Instagram: Profile → ☰ → Accounts Center → <b className="text-white/80">Sharing across profiles</b> → your Instagram → your Facebook profile → turn on automatic sharing for posts and reels.{" "}
+              <a className="inline-flex items-center gap-1 text-mint-300 underline" href="https://accountscenter.instagram.com/" target="_blank" rel="noreferrer">Open Accounts Center <ExternalLink className="h-3 w-3" /></a>
+            </li>
+            <li>Switch this on. Check your Facebook profile after the first post — if it didn't appear, Instagram's sharing setting is off.</li>
+          </ol>
+        </div>
+      )}
+      {st.mode === "profile" && !viaIg && (
         <div className="grid gap-2.5 rounded-xl bg-gold-400/[0.04] p-3 ring-1 ring-gold-400/20">
           <p className="text-[13px] leading-relaxed text-white/70">
             At each post's time it's marked <b className="text-white">Ready for you</b> on your dashboard. Open it on your phone, tap <b className="text-white">Share to Facebook</b>, paste the caption (already copied), done.

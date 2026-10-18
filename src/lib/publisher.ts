@@ -85,6 +85,76 @@ async function handOffToProfile(post: Post, userId: string | null, manual: boole
   return { outcome: "copy_ready", message: "Ready for your Facebook profile. Open it and tap Share to Facebook.", handoff: true };
 }
 
+/** Same finished video or picture: an episode's hosted MP4, or the first file attached from the Media Library. */
+const mediaKey = (p: Post) => p.videoUrl || p.mediaIds?.[0] || "";
+
+/**
+ * Facebook profile on autopilot: Facebook doesn't let apps post to profiles, but Instagram's own "Share to Facebook"
+ * setting (Accounts Center → Sharing across profiles) copies Instagram posts to the person's Facebook profile.
+ * So the post goes to Instagram and Instagram puts it on the profile. When an Instagram post of the same video is
+ * already planned, that one carries it (no duplicate on Instagram). Text-only posts, or a missing Instagram
+ * connection, fall back to the one-tap handoff, so nothing is lost.
+ */
+async function shareThroughInstagram(post: Post, settings: Settings, userId: string | null, manual: boolean, video?: VideoFile): Promise<PublishResultInfo> {
+  const key = mediaKey(post);
+  const twin = key
+    ? (await listPosts()).find((p) => p.platform === "instagram" && p.id !== post.id && mediaKey(p) === key && !["rejected", "failed"].includes(p.status))
+    : undefined;
+  if (twin?.status === "published") {
+    post.status = "published";
+    post.publishedAt = nowIso();
+    post.externalUrl = twin.externalUrl;
+    post.error = undefined;
+    await savePost(post);
+    await log("info", "post", `Shared to your Facebook profile with the Instagram post — “${post.hook.slice(0, 80)}”`, { platform: post.platform, postId: post.id, url: twin.externalUrl });
+    return { outcome: "published", message: "Shared to your Facebook profile through Instagram." };
+  }
+  if (twin) {
+    await setWaiting(post, "Goes out with the Instagram post of the same video — Instagram shares it to your profile.");
+    return { outcome: "waiting", message: post.error ?? "" };
+  }
+
+  const igPost: Post = { ...post, platform: "instagram" };
+  const ig = await freshCredential("instagram");
+  const can = ADAPTERS.instagram.publishable(igPost);
+  if (!ig?.accessToken || can !== true) {
+    const r = await handOffToProfile(post, userId, manual);
+    post.error = !ig?.accessToken ? "Instagram isn't connected, so this one is ready for you to post. Reconnect Instagram on the Platforms tab." : "Text-only posts can't go through Instagram, so this one is ready for you to post.";
+    await savePost(post);
+    return r;
+  }
+  const gate = await canAct("instagram", "post", settings);
+  if (!gate.ok) {
+    if (manual) return { outcome: "waiting", message: gate.reason ?? "Blocked by limits" };
+    await setWaiting(post, gate.reason ?? "Rate limits");
+    return { outcome: "waiting", message: post.error ?? "" };
+  }
+  post.status = "publishing";
+  await savePost(post);
+  try {
+    const texts = renderPost(igPost, settings);
+    const res = await ADAPTERS.instagram.publish(igPost, texts, ig, video, await publishOptions(igPost, settings, userId));
+    post.status = "published";
+    post.publishedAt = nowIso();
+    post.externalId = res.externalId;
+    post.externalIds = res.externalIds;
+    post.externalUrl = res.url;
+    post.error = undefined;
+    await savePost(post);
+    if (userId) await usePostAllowance(userId, true);
+    await recordAction("instagram", "post");
+    await log("info", "post", `Posted to Instagram, which shares it to your Facebook profile — “${post.hook.slice(0, 80)}”`, { platform: post.platform, postId: post.id, url: res.url });
+    return { outcome: "published", message: res.url ?? "Published" };
+  } catch (e) {
+    // Never lose a post: hand it over to post with one tap, and say why.
+    const r = await handOffToProfile(post, userId, manual);
+    post.error = `Instagram didn't take it (${(e as Error).message.slice(0, 200)}), so it's ready for you to post.`;
+    await savePost(post);
+    await log("warn", "post", post.error, { platform: post.platform, postId: post.id });
+    return r;
+  }
+}
+
 async function setWaiting(post: Post, reason: string) {
   if (post.error !== reason) {
     post.error = reason;
@@ -163,6 +233,7 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
       await setWaiting(post, "Quiet hours — it will be ready for you when they end.");
       return { outcome: "waiting", message: post.error ?? "" };
     }
+    if (cred.viaInstagram) return shareThroughInstagram(post, settings, userId, manual, video);
     return handOffToProfile(post, userId, manual);
   }
   if (can !== true || (!cred && !mc)) {

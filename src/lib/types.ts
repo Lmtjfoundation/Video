@@ -322,6 +322,8 @@ export interface CredentialStatus {
   mode?: "page" | "profile";
   /** Facebook: the person's profile name, when known, so they can switch between a Page and their profile. */
   profileName?: string;
+  /** Facebook profile: posts go out automatically through Instagram's own sharing to Facebook. */
+  viaInstagram?: boolean;
   /** "metricool" when this platform posts through the person's Metricool connection. */
   via?: "metricool";
   /** Connected directly in Ghost Post (its own sign-in or token), as opposed to only through Metricool. */
@@ -344,6 +346,8 @@ export interface Credential {
   profileId?: string;
   profileName?: string;
   profileUrl?: string;
+  /** Facebook profile: "1" when posts go out through Instagram, whose own "Share to Facebook" setting puts them on the profile. */
+  viaInstagram?: string;
   scopes?: string;
   refreshExpiresAt?: string;
   connectedAt?: string;

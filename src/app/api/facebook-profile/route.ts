@@ -1,4 +1,5 @@
 import { body, fail, authed, ok } from "@/lib/http-api";
+import { isProfileCred } from "@/lib/facebook-profile";
 import { cleanProfileName, normalizeProfileUrl } from "@/lib/facebook-profile";
 import { credentialStatuses, getCredential, log, saveCredential } from "@/lib/repo";
 
@@ -31,5 +32,21 @@ export const POST = authed(async (req: Request) => {
     accountId: undefined,
   });
   await log("info", "system", `Facebook profile “${name}” added — posts are prepared for you to share with one tap`, { platform: "facebook" });
+  return ok(await credentialStatuses());
+});
+
+/**
+ * Autopilot for the profile: posts go to Instagram, and Instagram's own "Share to Facebook" setting puts them on
+ * the profile. Needs Instagram connected directly in Ghost Post.
+ */
+export const PATCH = authed(async (req: Request) => {
+  const input = await body<{ viaInstagram?: boolean }>(req);
+  const cur = await getCredential("facebook");
+  if (!cur || !isProfileCred(cur)) return fail("Add your Facebook profile first.");
+  if (input.viaInstagram && !(await getCredential("instagram"))?.accessToken) {
+    return fail("Connect Instagram in Ghost Post first (Platforms → Instagram), then switch this on.");
+  }
+  await saveCredential("facebook", { ...cur, viaInstagram: input.viaInstagram ? "1" : undefined });
+  await log("info", "system", input.viaInstagram ? "Facebook profile on autopilot: posts go out through Instagram's sharing to Facebook" : "Facebook profile back to one-tap posting", { platform: "facebook" });
   return ok(await credentialStatuses());
 });
