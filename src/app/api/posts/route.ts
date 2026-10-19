@@ -1,5 +1,5 @@
 import { body, fail, authed, ok } from "@/lib/http-api";
-import { deletePost, getPost, getSettings, listPosts, log, savePost } from "@/lib/repo";
+import { credentialStatuses, deletePost, getPost, getSettings, listPosts, log, savePost } from "@/lib/repo";
 import { finalizePost } from "@/lib/generate";
 import { zonedToUtc, localParts } from "@/lib/time";
 import { PLACEMENTS, type Post, type PostStatus } from "@/lib/types";
@@ -16,7 +16,7 @@ export const GET = authed(async (req: Request) => {
   return ok(posts);
 });
 
-type Patch = Partial<Pick<Post, "hook" | "body" | "parts" | "hashtags" | "cta" | "offerId" | "imageUrl" | "topic" | "mediaIds" | "mature" | "placement">> & {
+type Patch = Partial<Pick<Post, "hook" | "body" | "parts" | "hashtags" | "cta" | "offerId" | "imageUrl" | "topic" | "mediaIds" | "mature" | "placement" | "account">> & {
   id: string;
   status?: PostStatus;
   /** Local date + time in the user's timezone */
@@ -53,6 +53,15 @@ export const PATCH = authed(async (req, user) => {
   if (patch.placement !== undefined) {
     if (!(PLACEMENTS as readonly string[]).includes(patch.placement)) return fail("Choose Auto, Reel, Feed or Story.");
     post.placement = patch.placement;
+  }
+  // Which account on the network posts it: "" = the main account, otherwise an extra account's id.
+  if (patch.account !== undefined) {
+    if (!patch.account) post.account = undefined;
+    else {
+      const st = (await credentialStatuses()).find((s) => s.platform === post.platform);
+      if (!st?.accounts?.some((a) => a.id === patch.account)) return fail("That account isn't connected on this network.");
+      post.account = patch.account;
+    }
   }
   // Users on approval go to the review queue instead of straight to the schedule.
   const scheduleStatus = user.requireApproval ? "pending_review" : "scheduled";

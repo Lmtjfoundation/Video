@@ -1,4 +1,7 @@
 export const PLATFORMS = ["x", "facebook", "linkedin", "instagram", "youtube", "tiktok", "webhook"] as const;
+/** Networks that can hold extra accounts besides the main one (Facebook switches between Pages and the profile on its card). */
+export const MULTI_ACCOUNT: readonly Platform[] = ["instagram", "tiktok", "youtube", "x", "linkedin"];
+export const MAX_EXTRA_ACCOUNTS = 9;
 export type Platform = (typeof PLATFORMS)[number];
 
 export const PILLARS = ["ai_leverage", "high_agency", "wealth_systems", "relationships", "longevity"] as const;
@@ -77,6 +80,8 @@ export interface Post {
    * so at its time the post is prepared (HD video + caption) and handed to the person to post with one tap.
    */
   handoff?: { to: "facebook_profile"; readyAt: string; notifiedAt?: string; postedAt?: string };
+  /** Which account on the network posts it: an extra account's id (Platforms tab). Missing = the main account. */
+  account?: string;
   /** Instagram / Facebook surface: Reel, feed post or Story. Missing = the account's default (Settings → Auto-post). */
   placement?: Placement;
   /** Publish as soon as it's ready: text right after it's written, videos as soon as the render finishes. */
@@ -324,6 +329,8 @@ export interface CredentialStatus {
   profileName?: string;
   /** Facebook profile: posts go out automatically through Instagram's own sharing to Facebook. */
   viaInstagram?: boolean;
+  /** Extra accounts on this network besides the main one (Metricool-style), e.g. a second Instagram. */
+  accounts?: { id: string; handle?: string; method?: string; updatedAt?: string }[];
   /** "metricool" when this platform posts through the person's Metricool connection. */
   via?: "metricool";
   /** Connected directly in Ghost Post (its own sign-in or token), as opposed to only through Metricool. */

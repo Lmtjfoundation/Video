@@ -18,6 +18,7 @@ import type { MediaItem } from "./types";
 import { isProfileCred } from "./facebook-profile";
 import { isMcPlatform, metricoolFor, metricoolPublish, type MetricoolConn } from "./metricool";
 import { inQuietHours } from "./time";
+import { withAccount } from "./account-slot";
 import { notifyHandoffs } from "./handoff";
 import type { User } from "./auth";
 
@@ -227,8 +228,9 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
 
   const can = adapter.publishable(post);
   // Accounts connected in the person's Metricool post through Metricool when switched on for this platform.
-  const mc = can === true ? await metricoolFor(post.platform) : null;
-  const cred = can === true && !mc ? await freshCredential(post.platform) : null;
+  // An extra account on the network (post.account) always posts with its own sign-in, never through Metricool.
+  const mc = can === true && !post.account ? await metricoolFor(post.platform) : null;
+  const cred = can === true && !mc ? await withAccount(post.account, () => freshCredential(post.platform)) : null;
   if (post.platform === "facebook" && cred && isProfileCred(cred)) {
     // Don't ask the person to post in the middle of the night: wait for quiet hours to end (Post now still works).
     const q = settings.quietHours;
@@ -241,7 +243,7 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
   }
   if (can !== true || (!cred && !mc)) {
     post.status = "copy_ready";
-    post.error = can !== true ? can : "No account connected — copy and post manually, or connect it on the Platforms tab.";
+    post.error = can !== true ? can : post.account ? "The account picked for this post isn't connected anymore — choose another account on the post, or reconnect it on the Platforms tab." : "No account connected — copy and post manually, or connect it on the Platforms tab.";
     await savePost(post);
     await log("info", "post", `Copy-ready: ${post.error}`, { platform: post.platform, postId: post.id });
     return { outcome: "copy_ready", message: post.error };

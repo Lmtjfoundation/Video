@@ -1,6 +1,6 @@
 import { body, fail, authed, ok } from "@/lib/http-api";
 import { generatePosts } from "@/lib/generate";
-import { getSettings, log, savePosts } from "@/lib/repo";
+import { credentialStatuses, getSettings, log, savePosts } from "@/lib/repo";
 import type { Format, Pillar, Placement, Platform } from "@/lib/types";
 import { FORMATS, PILLARS, PLACEMENTS, PLATFORMS } from "@/lib/types";
 import { autoPublish } from "@/lib/publisher";
@@ -39,7 +39,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export const POST = authed(async (req: Request, user) => {
-  const b = await body<{ kind?: "text" | "video"; platform: Platform; pillar?: Pillar | "auto"; format?: Format | "auto"; topic?: string; count?: number; imageUrl?: string; mediaIds?: string[]; mature?: boolean; niche?: string; style?: VideoPlan["style"]; length?: VideoPlan["length"]; genre?: string; sourceText?: string; faceless?: boolean; renderNow?: boolean; autoPost?: boolean; placement?: Placement }>(req);
+  const b = await body<{ kind?: "text" | "video"; platform: Platform; pillar?: Pillar | "auto"; format?: Format | "auto"; topic?: string; count?: number; imageUrl?: string; mediaIds?: string[]; mature?: boolean; niche?: string; style?: VideoPlan["style"]; length?: VideoPlan["length"]; genre?: string; sourceText?: string; faceless?: boolean; renderNow?: boolean; autoPost?: boolean; placement?: Placement; account?: string }>(req);
   const genre = genreById(b.genre) ? b.genre : undefined;
   // Text to video / text to post: build only from pasted material.
   const sourceText = typeof b.sourceText === "string" && b.sourceText.trim().length >= 40 ? b.sourceText.trim().slice(0, 15000) : undefined;
@@ -49,6 +49,8 @@ export const POST = authed(async (req: Request, user) => {
   // "Post automatically": text posts publish as soon as they're written, videos as soon as they're rendered.
   const autoPost = typeof b.autoPost === "boolean" ? b.autoPost : s.autoPost.enabled;
   const placement = PLACEMENTS.includes(b.placement as Placement) ? b.placement : undefined;
+  // An extra account on this network (Platforms tab). Unknown ids fall back to the main account.
+  const account = b.account && (await credentialStatuses()).find((c) => c.platform === b.platform)?.accounts?.some((a) => a.id === b.account) ? b.account : undefined;
 
   if (b.kind === "video") {
     const length = b.length && b.length in VIDEO_LENGTHS ? b.length : "s60";
@@ -66,6 +68,7 @@ export const POST = authed(async (req: Request, user) => {
     if (fromBank && mediaIds?.length) videos.forEach((p) => (p.mediaIds = mediaIds));
     for (const v of videos) {
       if (placement) v.placement = placement;
+      if (account) v.account = account;
       if (autoPost) v.autoPost = true;
     }
     // "Render it now": turn the plan straight into an MP4 (render credits as usual). Auto-posted videos always render.
@@ -97,6 +100,7 @@ export const POST = authed(async (req: Request, user) => {
   if (b.imageUrl) posts.forEach((p) => (p.imageUrl = b.imageUrl));
   if (Array.isArray(b.mediaIds) && b.mediaIds.length) posts.forEach((p) => (p.mediaIds = b.mediaIds!.slice(0, 10)));
   if (placement) posts.forEach((p) => (p.placement = placement));
+  if (account) posts.forEach((p) => (p.account = account));
   await savePosts(posts);
   await log("info", "generate", fromBank ? `Gave ${posts.length} ${b.platform} draft(s) from Claude's daily batch (API out of credits)` : `Generated ${posts.length} ${b.platform} draft(s)`, { platform: b.platform, topic: b.topic });
   if (autoPost) {

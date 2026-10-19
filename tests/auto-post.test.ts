@@ -231,3 +231,46 @@ describe("Facebook profile autopilot with Instagram through Metricool (no develo
     });
   });
 });
+
+describe("more than one account per network (Metricool-style)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("keeps a second Instagram beside the main one and posts with whichever the post picks", async () => {
+    process.env.SETUP_CODE = "test-setup-code";
+    const { asUser } = await import("@/lib/db");
+    const { createUser } = await import("@/lib/auth");
+    const owner = await createUser({ email: "two-ig@example.com", password: "Correct-horse-battery-9", setupCode: "test-setup-code" });
+    const { saveCredential, savePost, credentialStatuses, deleteCredential, getCredential } = await import("@/lib/repo");
+    const { withAccount } = await import("@/lib/account-slot");
+    const { autoPublish } = await import("@/lib/publisher");
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      calls.push(url);
+      const json = (b: unknown) => new Response(JSON.stringify(b), { headers: { "content-type": "application/json" } });
+      if (url.includes("fields=status_code")) return json({ status_code: "FINISHED" });
+      if (url.includes("fields=permalink")) return json({ permalink: "https://instagram.com/p/second" });
+      return json({ id: "c9" });
+    }));
+    const t = new Date().toISOString();
+    await asUser(owner.id, async () => {
+      await saveCredential("instagram", { accessToken: "main-tok", accountId: "igMain", handle: "@bino_da_producer", method: "manual" });
+      await withAccount("a0000beef", () => saveCredential("instagram", { accessToken: "second-tok", accountId: "igSecond", handle: "@1120_ics", method: "manual" }));
+      const st = (await credentialStatuses()).find((s) => s.platform === "instagram")!;
+      expect(st.handle).toBe("@bino_da_producer");
+      expect(st.accounts).toEqual([expect.objectContaining({ id: "a0000beef", handle: "@1120_ics" })]);
+
+      const p: Post = {
+        id: "two", platform: "instagram", pillar: "ai_leverage", format: "short", hook: "Second account post", body: "Hi.", parts: [], hashtags: [],
+        imageUrl: "https://cdn.example/x.jpg", account: "a0000beef", status: "draft", moneyScore: 0, revenue: { low: 0, high: 0, basis: "" }, scoreNotes: [], safetyFlags: [], attempts: 0, createdAt: t, updatedAt: t,
+      };
+      await savePost(p);
+      expect((await autoPublish(p)).outcome).toBe("published");
+      expect(calls.some((u) => u.includes("/igSecond/media?") && u.includes("second-tok"))).toBe(true);
+      expect(calls.some((u) => u.includes("igMain"))).toBe(false);
+
+      // Removing the extra account leaves the main one alone.
+      await withAccount("a0000beef", () => deleteCredential("instagram"));
+      expect((await getCredential("instagram"))?.accountId).toBe("igMain");
+      expect((await credentialStatuses()).find((s) => s.platform === "instagram")?.accounts).toEqual([]);
+    });
+  });
+});

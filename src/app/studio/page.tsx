@@ -55,6 +55,9 @@ export default function Studio() {
   const [renderNow, setRenderNow] = useState(false);
   const [autoPost, setAutoPost] = useState(false);
   const [placement, setPlacement] = useState<Placement>("auto");
+  const [account, setAccount] = useState("");
+  const conn = status?.credentials.find((c) => c.platform === platform);
+  useEffect(() => setAccount(""), [platform]);
   useEffect(() => {
     if (settings) setFaceless(settings.faceless ?? true);
   }, [settings?.faceless]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -105,7 +108,7 @@ export default function Studio() {
     setBusy(true);
     setPostingNow(posting);
     try {
-      const shared = { autoPost: posting, placement: hasPlacement ? placement : undefined };
+      const shared = { autoPost: posting, placement: hasPlacement ? placement : undefined, account: account || undefined };
       const created = await api<Post[]>("/api/generate", {
         body: kind === "video"
           ? { kind, platform, count, topic, niche: genre ? "auto" : vNiche, style: vStyle, length: vLen, mediaIds: attach.length ? attach : undefined, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, faceless, renderNow: fromText && renderNow, ...shared }
@@ -346,6 +349,14 @@ export default function Studio() {
                 </div>
                 <Switch checked={autoPost} onChange={setAutoPost} label="Post automatically" />
               </div>
+              {!!conn?.accounts?.length && (
+                <Field label="Account" hint="Which account posts it">
+                  <Select value={account} onChange={(e) => setAccount(e.target.value)}>
+                    <option value="">{conn.handle || "Main account"}</option>
+                    {conn.accounts.map((a) => <option key={a.id} value={a.id}>{a.handle || "Another account"}</option>)}
+                  </Select>
+                </Field>
+              )}
               {hasPlacement && (
                 <Field label="Post as" hint={platform === "facebook" ? "Auto: Reels up to 90 s, longer videos to the feed" : "Auto: videos as Reels, pictures as posts or carousels"}>
                   <Select value={placement} onChange={(e) => setPlacement(e.target.value as Placement)}>

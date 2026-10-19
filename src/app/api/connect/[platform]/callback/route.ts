@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { userFromRequest } from "@/lib/auth";
 import { asUser } from "@/lib/db";
-import { appOrigin, finishAuth } from "@/lib/oauth";
+import { appOrigin, finishAuth, pendingAccount } from "@/lib/oauth";
+import { withAccount } from "@/lib/account-slot";
 import { OAUTH, isOAuthPlatform } from "@/lib/oauth-config";
-import { log, saveCredential } from "@/lib/repo";
+import { credentialStatuses, log, saveCredential } from "@/lib/repo";
 import { listFacebookPages } from "@/lib/facebook-pages";
 import type { Platform } from "@/lib/types";
 import { PLATFORMS } from "@/lib/types";
@@ -37,7 +38,16 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
   if (!code || !state) return back({ error: `${label} didn't return a sign-in code. Try again.` });
 
   try {
+    const account = await pendingAccount(state);
     const cred = await finishAuth(p, code, state);
+    if (account) {
+      // An extra account: save it beside the main one. Signing in to an account that's already here just refreshes it.
+      const all = (await credentialStatuses()).find((s) => s.platform === p);
+      const same = cred.handle && all ? [{ id: undefined as string | undefined, handle: all.handle }, ...(all.accounts ?? [])].find((a) => a.handle === cred.handle) : undefined;
+      await withAccount(same ? same.id : account, () => saveCredential(p, cred));
+      await log("info", "system", same ? `${label} account ${cred.handle} was already connected — refreshed it` : `Added another ${label} account ${cred.handle ?? ""}`.trim(), { platform: p });
+      return back({ connected: p });
+    }
     await saveCredential(p, cred);
     if (p === "facebook" && cred.mode === "profile") {
       await log("info", "system", `Linked Facebook profile ${cred.handle ?? ""} — posts are prepared for you to share with one tap`.trim(), { platform: p });

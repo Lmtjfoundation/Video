@@ -28,6 +28,7 @@ export function PostCard({
   compact?: boolean;
 }) {
   const toast = useApp((s) => s.toast);
+  const conn = useApp((s) => s.status?.credentials.find((c) => c.platform === post.platform));
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [open, setOpen] = useState(!compact);
@@ -275,6 +276,19 @@ export function PostCard({
                 <option value="reel">Post as: Reel</option>
                 <option value="feed">Post as: Feed{post.platform === "instagram" ? " / carousel" : ""}</option>
                 <option value="story">Post as: Story</option>
+              </select>
+            )}
+            {!!conn?.accounts?.length && post.status !== "published" && post.status !== "publishing" && (
+              <select
+                aria-label="Account"
+                title="Which account posts it"
+                value={post.account ?? ""}
+                disabled={busy === "patch"}
+                onChange={(e) => patch({ account: e.target.value }, "Account saved")}
+                className="focus-ring h-8 max-w-[11rem] truncate rounded-xl border border-white/10 bg-white/[0.04] px-2 text-xs text-white/80"
+              >
+                <option value="">{conn.handle || "Main account"}</option>
+                {conn.accounts.map((a) => <option key={a.id} value={a.id}>{a.handle || "Another account"}</option>)}
               </select>
             )}
             {post.externalUrl && (

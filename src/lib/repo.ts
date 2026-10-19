@@ -1,4 +1,5 @@
 import "server-only";
+import { credKey, currentAccount, MULTI_ACCOUNT } from "./account-slot";
 import { db } from "./db";
 import { decrypt, encrypt } from "./crypto";
 import { mergeSettings } from "./defaults";
@@ -102,7 +103,7 @@ interface CredRow {
 }
 
 export async function getCredential(platform: Platform): Promise<Credential | null> {
-  const row = await db().get<CredRow>("credentials", platform);
+  const row = await db().get<CredRow>("credentials", credKey(platform));
   if (!row) return null;
   try {
     return JSON.parse(decrypt(row.cipher)) as Credential;
@@ -119,7 +120,7 @@ export async function saveCredential(platform: Platform, cred: Credential) {
     if (typeof v === "string" && v.trim()) clean[k] = v.trim();
   });
   const row: CredRow = {
-    id: platform,
+    id: credKey(platform),
     cipher: encrypt(JSON.stringify(clean)),
     fields: Object.keys(clean),
     updatedAt: nowIso(),
@@ -139,12 +140,12 @@ export async function patchCredential(platform: Platform, patch: Partial<Credent
 }
 
 export async function deleteCredential(platform: Platform) {
-  await db().remove("credentials", platform);
-  if (platform === "facebook") await clearFacebookPages();
+  await db().remove("credentials", credKey(platform));
+  if (platform === "facebook" && !currentAccount()) await clearFacebookPages();
 }
 
 export async function credentialStatuses(): Promise<CredentialStatus[]> {
-  const rows = await db().all<CredRow>("credentials", 50);
+  const rows = await db().all<CredRow>("credentials", 200);
   const fbPages = await listFacebookPages();
   const mc = await getMetricool();
   const keys = Object.fromEntries(await Promise.all(PLATFORMS.map(async (p) => [p, await appKeyStatus(p)] as const)));
@@ -171,6 +172,9 @@ export async function credentialStatuses(): Promise<CredentialStatus[]> {
       mode: p === "facebook" && r ? (profile ? "profile" : "page") : undefined,
       profileName: p === "facebook" ? r?.profileName : undefined,
       viaInstagram: profile && r!.fields.includes("viaInstagram") ? true : undefined,
+      accounts: MULTI_ACCOUNT.includes(p)
+        ? rows.filter((x) => x.id.startsWith(`${p}:`)).map((x) => ({ id: x.id.slice(p.length + 1), handle: x.handle, method: x.method, updatedAt: x.updatedAt }))
+        : undefined,
     };
   });
 }

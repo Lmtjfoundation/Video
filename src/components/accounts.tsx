@@ -4,7 +4,7 @@ import { Check, Copy, ExternalLink, KeyRound, Link2, UserRound, Zap } from "luci
 import { useApp } from "@/lib/store";
 import { api, copyToClipboard } from "@/lib/client";
 import type { CredentialStatus, Platform, Settings } from "@/lib/types";
-import { PLATFORMS } from "@/lib/types";
+import { MAX_EXTRA_ACCOUNTS, MULTI_ACCOUNT, PLATFORMS } from "@/lib/types";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import { OAUTH, type OAuthPlatform } from "@/lib/oauth-config";
 import { COPY_LABELS, SETUP_GUIDES, type CopyKey } from "@/lib/setup-guides";
@@ -199,6 +199,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press â€
                   </div>
                 )}
                 {p === "facebook" && direct && <FacebookTargets st={st} handoffEmail={settings.handoffEmail} igConnected={!!statuses.find((x) => x.platform === "instagram")?.connected} onChanged={refresh} />}
+                {direct && MULTI_ACCOUNT.includes(p) && <ExtraAccounts platform={p} st={st} label={o.label} onChanged={refresh} />}
                 <AccountTypeNote platform={p} />
                 {direct || (viaMc && !directOpen[p]) ? null : p === "facebook" ? (
                   <FacebookChoice
@@ -445,6 +446,84 @@ function AccountTypeNote({ platform }: { platform: string }) {
 }
 
 
+
+/** More accounts on the same network, like Metricool's brands: each post then picks which account posts it. */
+function ExtraAccounts({ platform, st, label, onChanged }: { platform: Platform; st: CredentialStatus; label: string; onChanged: () => void }) {
+  const toast = useApp((x) => x.toast);
+  const [paste, setPaste] = useState(false);
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const extras = st.accounts ?? [];
+  const full = extras.length >= MAX_EXTRA_ACCOUNTS;
+
+  async function remove(id: string) {
+    if (confirm !== id) return setConfirm(id);
+    setBusy(id);
+    try {
+      await api(`/api/credentials?platform=${platform}&account=${id}`, { method: "DELETE" });
+      toast("Account removed", "success");
+      onChanged();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(null);
+      setConfirm(null);
+    }
+  }
+  async function save() {
+    setBusy("new");
+    try {
+      await api("/api/credentials", { body: { platform, account: "new", ...form } });
+      toast("Account added", "success");
+      setForm({});
+      setPaste(false);
+      onChanged();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="grid gap-2.5 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[13px] font-medium text-white">Accounts</span>
+        <span className="text-[11.5px] text-white/45">{extras.length + 1} of {MAX_EXTRA_ACCOUNTS + 1}</span>
+      </div>
+      <ul className="grid gap-1.5 text-[13px]">
+        <li className="flex items-center gap-2 text-white/80"><Check className="h-3.5 w-3.5 text-mint-300" /> {st.handle || "Main account"} <span className="text-[11px] text-white/40">main</span></li>
+        {extras.map((a) => (
+          <li key={a.id} className="flex items-center gap-2 text-white/80">
+            <Check className="h-3.5 w-3.5 text-mint-300" /> {a.handle || "Another account"}
+            <span className="text-[11px] text-white/40">{a.method === "oauth" ? `linked with ${label}` : "token"}</span>
+            <Button size="sm" variant="ghost" className="ml-auto" loading={busy === a.id} onClick={() => remove(a.id)}>{confirm === a.id ? "Confirm remove" : "Remove"}</Button>
+          </li>
+        ))}
+      </ul>
+      {!full && (
+        <div className="flex flex-wrap gap-2">
+          {st.oauthReady && (
+            <a href={`/api/connect/${platform}?account=new`}><Button size="sm" variant="secondary"><Link2 className="h-3.5 w-3.5" /> Add another account</Button></a>
+          )}
+          <Button size="sm" variant="ghost" onClick={() => setPaste((v) => !v)}>{paste ? "Close" : "Add one with a token"}</Button>
+        </div>
+      )}
+      {paste && (
+        <div className="grid gap-3 rounded-xl bg-ink-900/80 p-3 ring-1 ring-white/[0.08]">
+          {CRED_FIELDS[platform].map((f) => (
+            <Field key={f.key} label={f.label}>
+              <Input type={f.secret ? "password" : "text"} autoComplete="off" value={form[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+            </Field>
+          ))}
+          <Button size="sm" variant="primary" className="w-fit" loading={busy === "new"} disabled={!form.accessToken?.trim()} onClick={save}><KeyRound className="h-3.5 w-3.5" /> Add account</Button>
+        </div>
+      )}
+      <p className="text-[11.5px] leading-relaxed text-white/45">Each post has an account picker. Posts without one use the main account.{st.oauthReady ? ` To add an account, sign out of ${label} in this browser first (or use a private window), then sign in as the other account.` : ""}</p>
+    </div>
+  );
+}
 
 /** Not connected yet: pick a Page (automatic posting) or your own profile (one-tap posting, no Facebook Login needed). */
 function FacebookChoice({ oauthReady, isAdmin, origin, onSaved }: { oauthReady: boolean; isAdmin: boolean; origin: string; onSaved: () => void }) {

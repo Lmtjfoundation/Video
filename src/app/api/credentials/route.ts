@@ -3,6 +3,7 @@ import { credentialStatuses, deleteCredential, getCredential, log, saveCredentia
 import type { Credential, Platform } from "@/lib/types";
 import { PLATFORMS } from "@/lib/types";
 import { webhookUrlProblem } from "@/lib/platforms/webhook-guard";
+import { isAccountId, MAX_EXTRA_ACCOUNTS, MULTI_ACCOUNT, newAccountId, withAccount } from "@/lib/account-slot";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +11,24 @@ export const dynamic = "force-dynamic";
 export const GET = authed(async () => ok(await credentialStatuses()));
 
 export const POST = authed(async (req: Request) => {
-  const { platform, ...fields } = await body<{ platform: Platform } & Credential>(req);
+  const { platform, account: rawAccount, ...fields } = await body<{ platform: Platform; account?: string } & Credential>(req);
   if (!PLATFORMS.includes(platform)) return fail("Unknown platform");
+  // account: "new" adds another account on this network with a pasted token; an existing id updates that account.
+  let account: string | undefined;
+  if (rawAccount) {
+    if (!MULTI_ACCOUNT.includes(platform)) return fail("This network holds one account.");
+    const st = (await credentialStatuses()).find((s) => s.platform === platform);
+    if (rawAccount === "new") {
+      if (!st?.direct) return fail("Connect your main account first, then add more.");
+      if ((st.accounts?.length ?? 0) >= MAX_EXTRA_ACCOUNTS) return fail(`Up to ${MAX_EXTRA_ACCOUNTS + 1} accounts per network.`);
+      account = newAccountId();
+    } else if (isAccountId(rawAccount) && st?.accounts?.some((a) => a.id === rawAccount)) account = rawAccount;
+    else return fail("That account isn't connected anymore.");
+  }
+  return withAccount(account, () => saveFields(platform, fields));
+});
+
+async function saveFields(platform: Platform, fields: Credential) {
   const existing = (await getCredential(platform)) ?? {};
   // Blank inputs keep the stored value, so users can update one field at a time.
   const merged: Credential = { ...existing };
@@ -29,14 +46,24 @@ export const POST = authed(async (req: Request) => {
   // A pasted Page token switches Facebook to automatic Page posting.
   if (platform === "facebook") merged.mode = "page";
   await saveCredential(platform, merged);
-  await log("info", "system", `Credentials updated for ${platform}`, { platform });
-  return ok(await credentialStatuses());
-});
+  await log("info", "system", `Credentials updated for ${platform}${merged.handle ? ` (${merged.handle})` : ""}`, { platform });
+  return ok(await withAccount(undefined, credentialStatuses));
+}
 
 export const DELETE = authed(async (req: Request) => {
-  const platform = new URL(req.url).searchParams.get("platform") as Platform;
+  const q = new URL(req.url).searchParams;
+  const platform = q.get("platform") as Platform;
   if (!PLATFORMS.includes(platform)) return fail("Unknown platform");
-  await deleteCredential(platform);
-  await log("info", "system", `Disconnected ${platform}`, { platform });
+  const account = q.get("account");
+  if (account && !isAccountId(account)) return fail("Unknown account");
+  await withAccount(account ?? undefined, () => deleteCredential(platform));
+  // Disconnecting the main account: the next extra account becomes the main one, so none are hidden.
+  const next = !account ? (await credentialStatuses()).find((s) => s.platform === platform)?.accounts?.[0] : undefined;
+  if (next) {
+    const cred = await withAccount(next.id, () => getCredential(platform));
+    if (cred) await saveCredential(platform, cred);
+    await withAccount(next.id, () => deleteCredential(platform));
+  }
+  await log("info", "system", `Disconnected ${account ? "an extra" : "the main"} ${platform} account`, { platform });
   return ok(await credentialStatuses());
 });

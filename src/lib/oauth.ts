@@ -16,6 +16,8 @@ interface PendingState {
   verifier?: string;
   redirectUri: string;
   createdAt: number;
+  /** Set when this sign-in adds an extra account on the network instead of replacing the main one. */
+  account?: string;
 }
 
 export function appOrigin(req: Request) {
@@ -30,14 +32,14 @@ export function appOrigin(req: Request) {
 export const redirectUriFor = (origin: string, platform: Platform) => `${origin}/api/connect/${platform}/callback`;
 
 /** Step 1: build the platform's sign-in URL and remember the state (and PKCE verifier) for 10 minutes. */
-export async function startAuth(platform: Platform, origin: string) {
+export async function startAuth(platform: Platform, origin: string, account?: string) {
   if (!isOAuthPlatform(platform)) throw new Error("This connection doesn't use a sign-in page. Paste its URL on the Platforms tab instead.");
   const keys = await getAppKeys(platform);
   if (!keys) throw new Error(`${OAUTH[platform].label} linking isn't set up yet. Open the Platforms tab and follow the setup steps on the ${OAUTH[platform].label} card.`);
   const p = OAUTH[platform];
   const state = b64url(randomBytes(24));
   const redirectUri = redirectUriFor(origin, platform);
-  const pending: PendingState = { id: `oauth_${state}`, platform, redirectUri, createdAt: Date.now() };
+  const pending: PendingState = { id: `oauth_${state}`, platform, redirectUri, createdAt: Date.now(), account };
 
   const params = new URLSearchParams({
     [p.clientIdParam]: keys.id,
@@ -57,6 +59,12 @@ export async function startAuth(platform: Platform, origin: string) {
 }
 
 /** Step 2: validate state, exchange the code for tokens, and look up who the account is. */
+/** The extra-account id a sign-in was started for, if any (read before finishAuth, which uses the state up). */
+export async function pendingAccount(state: string) {
+  const row = await db().get<{ id: string; value: PendingState }>("kv", `oauth_${state}`);
+  return row?.value.account;
+}
+
 export async function finishAuth(platform: Platform, code: string, state: string): Promise<Credential> {
   const row = await db().get<{ id: string; value: PendingState }>("kv", `oauth_${state}`);
   await db().remove("kv", `oauth_${state}`); // single use
