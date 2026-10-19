@@ -10,7 +10,7 @@ import { getUser, refundCredits } from "./auth";
 import { autoPublish } from "./publisher";
 import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey, pixabayKey } from "./integrations";
 import { freeVoice, freeVoiceEnabled } from "./free-voice";
-import { drawShapes, isGraphicsLook, motionGraph, MOTION_PALETTES, SHAPE_INPUTS } from "./motion-graphics";
+import { drawShapes, isGraphicsLook, motionGraph, MOTION_PALETTES, roundPortrait, SHAPE_INPUTS } from "./motion-graphics";
 import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types";
 import { nowIso } from "./utils";
 import { characterRef, getCharacters, isRealisticLook, REALISM_DIRECTION } from "./characters";
@@ -288,7 +288,7 @@ interface SceneJob {
   dur: number;
   audio?: string;
   /** `hold`: a clip shorter than the scene freezes on its last frame instead of looping (Veo clips). */
-  visual: { kind: "image" | "video"; file: string; hold?: boolean } | { kind: "gradient"; colors: [string, string] } | { kind: "motion" };
+  visual: { kind: "image" | "video"; file: string; hold?: boolean } | { kind: "gradient"; colors: [string, string] } | { kind: "motion"; portrait?: string; name?: string };
 }
 
 async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H: number): Promise<string> {
@@ -314,6 +314,10 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
     // Motion graphics: the shapes [2]…[6], drawn once per render, held for the scene's length.
     const shapes = await drawShapes(dir, W, H, i);
     for (const k of SHAPE_INPUTS) args.push("-loop", "1", "-framerate", String(FPS), "-t", job.dur.toFixed(3), "-i", shapes[k]);
+    if (vis.portrait) {
+      const card = await roundPortrait(vis.portrait, path.join(dir, `cast${i % MOTION_PALETTES.length}-${path.basename(vis.portrait)}.png`), Math.round(Math.min(W, H) * 0.5), i);
+      args.push("-loop", "1", "-framerate", String(FPS), "-t", job.dur.toFixed(3), "-i", card);
+    }
   }
 
   let v: string;
@@ -329,9 +333,17 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
     // Motion graphics: shapes over the moving gradient; the on-screen words slide up and an underline wipes in.
     const lines = job.scene.onScreen ? wrap(job.scene.onScreen.toUpperCase(), H > W ? 16 : 30).split("\n").length : 0;
     const fsz = Math.round(W * (H > W ? 0.085 : 0.05));
-    v = `${motionGraph({ i, W, H, underlineY: lines ? H * 0.11 + lines * (fsz + 8) + fsz * 0.35 : undefined })};[mg]format=yuv420p`;
+    const vis = job.visual;
+    v = `${motionGraph({ i, W, H, underlineY: lines ? H * 0.11 + lines * (fsz + 8) + fsz * 0.35 : undefined, portrait: !!vis.portrait })};[mg]format=yuv420p`;
     const font = FONT.replace(/:/g, "\\:");
-    v += `,drawtext=fontfile='${font}':text='${String(i + 1).padStart(2, "0")}':fontsize=${Math.round(W * 0.42)}:fontcolor=white@0.07:x=w*0.04:y=h*0.27`;
+    if (!vis.portrait) v += `,drawtext=fontfile='${font}':text='${String(i + 1).padStart(2, "0")}':fontsize=${Math.round(W * 0.42)}:fontcolor=white@0.07:x=w*0.04:y=h*0.27`;
+    else if (vis.name) {
+      // The character's name under their portrait card.
+      const nf = path.join(dir, `name${i}.txt`);
+      await fs.writeFile(nf, vis.name.toUpperCase().slice(0, 30));
+      const card = Math.round(Math.min(W, H) * 0.5);
+      v += `,drawtext=fontfile='${font}':textfile='${nf}':expansion=none:fontsize=${Math.round(W * 0.05)}:fontcolor=white:borderw=5:bordercolor=black@0.7:x=(w-text_w)/2:y=${Math.round(H * 0.25 + card + H * 0.03)}:alpha='min(1,max(0,(t-0.35)/0.3))'`;
+    }
   } else {
     v = `[0:v]format=yuv420p`;
   }
@@ -554,6 +566,23 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       jobs.push({ scene, dur, audio, visual });
       const share = ai ? 10 : 35;
       await setRender(post, { progress: Math.round(5 + (share * (i + 1)) / scenes.length), message: voice ? "Recording voiceover and gathering visuals…" : "Gathering visuals…" });
+    }
+    // Motion-graphics scenes show the cast member who is in them: their portrait as a round card with their name.
+    if (plan.ai?.characterIds.length && jobs.some((j) => j.visual.kind === "motion")) {
+      const cast = await getCharacters(plan.ai.characterIds);
+      const files = new Map<string, string>();
+      for (const c of cast) {
+        const m = await db().get<MediaItem>("media", c.imageMediaId);
+        if (!m) continue;
+        const f = path.join(dir, `char-${c.id}.${m.type.split("/")[1] || "png"}`);
+        const ok = await readFile(m).then((b) => fs.writeFile(f, b)).then(() => true, () => false);
+        if (ok) files.set(c.name.toLowerCase(), f);
+      }
+      for (const job of jobs) {
+        if (job.visual.kind !== "motion") continue;
+        const who = (job.scene.cast ?? []).map((n) => n.toLowerCase()).find((n) => files.has(n));
+        if (who) job.visual = { kind: "motion", portrait: files.get(who), name: cast.find((c) => c.name.toLowerCase() === who)?.name };
+      }
     }
     // Attached media (or choosing motion graphics) replaces the AI pictures, so their credits go back.
     let unused = plan.ai && !ai ? aiVisualCredits({ ...plan, visuals: "auto" }) : 0;

@@ -159,6 +159,53 @@ describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Veo clip",
     }
   }, 120_000);
 
+  it("shows the cast member's portrait card in their motion-graphics scenes", async () => {
+    const { asUser, db } = await import("@/lib/db");
+    const { renderVideoPost } = await import("@/lib/render");
+    const { savePost, kvSet } = await import("@/lib/repo");
+    const { storeFile } = await import("@/lib/media");
+    const prev = globalThis.fetch;
+    globalThis.fetch = (async () => new Response("unexpected", { status: 500 })) as typeof fetch;
+    const face = path.join(dir, "face.png");
+    execFileSync("ffmpeg", ["-hide_banner", "-y", "-f", "lavfi", "-i", "color=c=red:s=400x400", "-frames:v", "1", face], { stdio: "ignore" });
+    try {
+      await asUser("usr_movie_test", async () => {
+        const img = await storeFile("usr_movie_test", { name: "marcus.png", type: "image/png", bytes: readFileSync(face) });
+        await kvSet("characters", [{ id: "chr_marcus", name: "Marcus", description: "HVAC repairman", look: "Photorealistic film still", imageMediaId: img.id, createdAt: new Date().toISOString() }]);
+        const t = new Date().toISOString();
+        const scene = (narration: string, cast: string[]): VideoScene => ({ time: "", narration, onScreen: "THE OFFER", visual: "", motion: "", sfx: "", cast });
+        const post: Post = {
+          id: "post_cast", platform: "tiktok", pillar: "ai_leverage", format: "video_script", kind: "video", hook: "Cast", body: "", parts: [], hashtags: [],
+          status: "draft", moneyScore: 0, revenue: { low: 0, high: 0, basis: "" }, scoreNotes: [], safetyFlags: [], attempts: 0, createdAt: t, updatedAt: t,
+          video: {
+            niche: "Short film", style: "fiction", length: "s30", titles: ["Cast"], thumbnail: {}, voice: "", music: "", loopLine: "", factCheck: [],
+            scenes: [scene("Marcus reads the letter.", ["Marcus"]), scene("Nobody else is home.", [])],
+            ai: { characterIds: ["chr_marcus"], look: "Photorealistic film still", veoScenes: [] },
+            visuals: "motion",
+          },
+        };
+        await savePost(post);
+        await renderVideoPost("usr_movie_test", post.id, 0);
+        const done = await db().get<Post>("posts", post.id);
+        expect(done?.render?.status, done?.render?.message).toBe("done");
+        const item = await db().get<import("@/lib/types").MediaItem>("media", done!.render!.mediaId!);
+        const { readFile } = await import("@/lib/media");
+        const mp4 = path.join(dir, "cast.mp4");
+        (await import("node:fs")).writeFileSync(mp4, await readFile(item!));
+        // Centre of the card, one second in (after it has slid in): the portrait's red shows through in scene 1 only.
+        const pixel = (t: number) => execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-ss", String(t), "-i", mp4, "-vf", "crop=4:4:538:686,scale=1:1", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]);
+        const [r, g, b] = pixel(1);
+        expect(r).toBeGreaterThan(180);
+        expect(g + b).toBeLessThan(120);
+        const total = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp4]).toString());
+        const [r2] = pixel(total - 0.3);
+        expect(r2).toBeLessThan(180);
+      });
+    } finally {
+      globalThis.fetch = prev;
+    }
+  }, 120_000);
+
   it("honours the render choices: motion graphics instead of AI pictures, and no voiceover", async () => {
     const { asUser, db } = await import("@/lib/db");
     const { renderVideoPost } = await import("@/lib/render");

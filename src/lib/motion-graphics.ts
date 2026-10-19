@@ -64,6 +64,21 @@ export async function drawShapes(dir: string, W: number, H: number, paletteIndex
   return out;
 }
 
+/**
+ * A cast member's portrait as a round card with an accent ring, drawn once per character and render (input [7]).
+ * The square is the portrait's centre crop.
+ */
+export async function roundPortrait(src: string, dst: string, size: number, paletteIndex: number) {
+  if (await fs.stat(dst).then(() => true, () => false)) return dst;
+  const c = rgb(MOTION_PALETTES[paletteIndex % MOTION_PALETTES.length].accent);
+  const r = size / 2, ring = Math.max(6, Math.round(size * 0.025));
+  // Inside the ring: the photo; on the ring: the accent colour; outside: transparent.
+  const inside = `lte(hypot(X-${r},Y-${r}),${r - ring})`, onRing = `between(hypot(X-${r},Y-${r}),${r - ring},${r - 1})`;
+  const vf = `scale=${size}:${size}:force_original_aspect_ratio=increase,crop=${size}:${size},format=rgba,geq=r='if(${onRing},${c.r},r(X,Y))':g='if(${onRing},${c.g},g(X,Y))':b='if(${onRing},${c.b},b(X,Y))':a='255*(${inside}+${onRing})'`;
+  await promisify(execFile)("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", src, "-vf", vf, "-frames:v", "1", dst], { timeout: 60_000 });
+  return dst;
+}
+
 /** Input order the scene renderer passes after its visual [0] and audio [1]. */
 export const SHAPE_INPUTS: (keyof MotionShapes)[] = ["dots", "glow", "ring", "bar", "underline"];
 
@@ -71,7 +86,7 @@ export const SHAPE_INPUTS: (keyof MotionShapes)[] = ["dots", "glow", "ring", "ba
  * Filter chains that animate input [0:v] (the scene's gradient) with the shape inputs [2]…[6] into label [mg].
  * `underlineY` puts the accent bar under the on-screen words (omit when there are none).
  */
-export function motionGraph(o: { i: number; W: number; H: number; underlineY?: number }): string {
+export function motionGraph(o: { i: number; W: number; H: number; underlineY?: number; portrait?: boolean }): string {
   const { i, W } = o;
   const s = sizes(W, o.H);
   const phase = (i * 1.7).toFixed(2);
@@ -83,8 +98,11 @@ export function motionGraph(o: { i: number; W: number; H: number; underlineY?: n
     `[b2][4:v]overlay=x='W*0.22-w/2+W*0.06*cos(t*0.7+${phase})':y='H*0.47-h/2+H*0.04*sin(t*0.6+${phase})':${ov}[b3]`,
     `[b3][5:v]overlay=x='W-mod(t*W*0.22+${(i * 0.37 * W).toFixed(0)},W+w*2)+w':y='H*0.38':${ov}[b4]`,
   ];
-  if (o.underlineY !== undefined) chains.push(`[b4][6:v]overlay=x='(W-w)/2-W*pow(max(0,1-t/0.6),3)':y=${Math.round(o.underlineY)}:${ov}[mg]`);
-  else chains.push(`[b4]null[mg]`);
+  // The cast member's portrait card [7] slides in from the side and floats gently.
+  if (o.portrait) chains.push(`[b4][7:v]overlay=x='(W-w)/2+W*0.9*pow(max(0,1-t/0.55),3)*${i % 2 ? -1 : 1}':y='H*0.25+H*0.006*sin(t*1.3)':${ov}[b5]`);
+  else chains.push(`[b4]null[b5]`);
+  if (o.underlineY !== undefined) chains.push(`[b5][6:v]overlay=x='(W-w)/2-W*pow(max(0,1-t/0.6),3)':y=${Math.round(o.underlineY)}:${ov}[mg]`);
+  else chains.push(`[b5]null[mg]`);
   return chains.join(";");
 }
 
