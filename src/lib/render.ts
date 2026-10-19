@@ -291,7 +291,11 @@ interface SceneJob {
   visual: { kind: "image" | "video"; file: string; hold?: boolean } | { kind: "gradient"; colors: [string, string] } | { kind: "motion"; portrait?: string; name?: string };
 }
 
-async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H: number): Promise<string> {
+/**
+ * `film`: a fiction video's pictures and clips get a film finish: a different camera move per shot, grain, a vignette
+ * and grade, movie-style subtitles low in the frame, and a dip through black between shots.
+ */
+async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H: number, film = false): Promise<string> {
   const out = path.join(dir, `seg${String(i).padStart(3, "0")}.mp4`);
   const F = Math.max(1, Math.round(job.dur * FPS));
   const args: string[] = ["-hide_banner", "-y", "-filter_complex_threads", THREADS];
@@ -321,7 +325,19 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
   }
 
   let v: string;
-  if (job.visual.kind === "image") {
+  const cinema = film && (vis.kind === "image" || vis.kind === "video");
+  if (job.visual.kind === "image" && cinema) {
+    // A camera move per shot, eased, on a 2× frame so the motion stays smooth.
+    const e = `(0.5-0.5*cos(PI*on/${F}))`;
+    const [z, x, y] = [
+      [`1+0.14*${e}`, "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)"], // push in
+      ["1.16", "iw/2-(iw/zoom/2)", `(ih-ih/zoom)*(1-${e})`], // tilt up
+      [`1.16-0.14*${e}`, "iw/2-(iw/zoom/2)", "ih*0.42-(ih/zoom/2)"], // pull out
+      ["1.16", `(iw-iw/zoom)*${e}`, "ih/2-(ih/zoom/2)"], // drift right
+      [`1.06+0.1*${e}`, `(iw-iw/zoom)*(1-${e})`, "ih*0.45-(ih/zoom/2)"], // push in, drifting left
+    ][i % 5];
+    v = `[0:v]scale=${W * 2}:${H * 2}:force_original_aspect_ratio=increase,crop=${W * 2}:${H * 2},zoompan=z='${z}':x='${x}':y='${y}':d=${F}:s=${W}x${H}:fps=${FPS}`;
+  } else if (job.visual.kind === "image") {
     // Slow Ken Burns push-in, alternating direction per scene.
     const zin = i % 2 === 0;
     const z = zin ? `1+0.12*on/${F}` : `1.12-0.12*on/${F}`;
@@ -347,14 +363,24 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
   } else {
     v = `[0:v]format=yuv420p`;
   }
-  v += `,eq=brightness=-0.04:saturation=1.08,setsar=1`;
-
-  // Readability band behind captions + on-screen text.
-  v += `,drawbox=x=0:y=ih*0.60:w=iw:h=ih*0.28:color=black@0.28:t=fill`;
+  if (cinema) {
+    // Film finish: teal shadows, warm highlights, a vignette, moving grain, and a soft fade at the bottom for subtitles.
+    v += `,eq=contrast=1.06:brightness=-0.02:saturation=0.95,colorbalance=rs=-0.04:bs=0.05:rh=0.05:bh=-0.04,vignette=angle=PI/4.2,noise=alls=4:allf=t,setsar=1`;
+    for (const [y, a] of [[0.72, 0.12], [0.78, 0.16], [0.84, 0.2]]) v += `,drawbox=x=0:y=ih*${y}:w=iw:h=ih*${(1 - y).toFixed(2)}:color=black@${a}:t=fill`;
+  } else {
+    v += `,eq=brightness=-0.04:saturation=1.08,setsar=1`;
+    // Readability band behind captions + on-screen text.
+    v += `,drawbox=x=0:y=ih*0.60:w=iw:h=ih*0.28:color=black@0.28:t=fill`;
+  }
   const portrait = H > W;
   const writes: Promise<void>[] = [];
   const font = FONT.replace(/:/g, "\\:");
-  if (job.scene.onScreen) {
+  if (job.scene.onScreen && cinema) {
+    // A quiet chapter line at the top, faded in and out, instead of a big headline.
+    const f = path.join(dir, `os${i}.txt`);
+    await fs.writeFile(f, wrap(job.scene.onScreen.toUpperCase(), portrait ? 28 : 44));
+    v += `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.048 : 0.03))}:fontcolor=white@0.92:shadowcolor=black@0.6:shadowx=2:shadowy=2:line_spacing=6:text_align=C:x=(w-text_w)/2:y=h*0.075:alpha='min(1,max(0,(t-0.3)/0.4))*min(1,max(0,(${job.dur.toFixed(3)}-0.3-t)/0.4))'`;
+  } else if (job.scene.onScreen) {
     const f = path.join(dir, `os${i}.txt`);
     await fs.writeFile(f, wrap(job.scene.onScreen.toUpperCase(), portrait ? 16 : 30));
     const y = job.visual.kind === "motion" ? `h*0.11+${Math.round(H * 0.03)}*pow(max(0,1-t/0.5),2)` : "h*0.11";
@@ -363,16 +389,22 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
   captionGroups(job.scene.narration, job.dur).forEach((c, k) => {
     const f = path.join(dir, `cap${i}_${k}.txt`);
     writes.push(fs.writeFile(f, wrap(c.text, portrait ? 22 : 42)));
-    v += `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.06 : 0.036))}:fontcolor=0xFFE14D:borderw=${portrait ? 6 : 4}:bordercolor=black:line_spacing=10:text_align=C:x=(w-text_w)/2:y=h*0.66:enable='between(t,${c.start.toFixed(3)},${c.end.toFixed(3)})'`;
+    v += cinema
+      ? `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.05 : 0.032))}:fontcolor=white:borderw=3:bordercolor=black@0.8:line_spacing=8:text_align=C:x=(w-text_w)/2:y=h*0.80:enable='between(t,${c.start.toFixed(3)},${c.end.toFixed(3)})'`
+      : `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.06 : 0.036))}:fontcolor=0xFFE14D:borderw=${portrait ? 6 : 4}:bordercolor=black:line_spacing=10:text_align=C:x=(w-text_w)/2:y=h*0.66:enable='between(t,${c.start.toFixed(3)},${c.end.toFixed(3)})'`;
   });
   await Promise.all(writes);
-  v += `,fade=t=in:st=0:d=0.15,format=yuv420p[v]`;
+  v += cinema
+    ? `,fade=t=in:st=0:d=0.3,fade=t=out:st=${Math.max(0, job.dur - 0.25).toFixed(3)}:d=0.25,format=yuv420p[v]`
+    : `,fade=t=in:st=0:d=0.15,format=yuv420p[v]`;
 
   args.push(
     "-filter_complex", `${v};[1:a]aresample=44100,apad,atrim=0:${job.dur.toFixed(3)}[a]`,
     "-map", "[v]", "-map", "[a]",
     "-frames:v", String(F),
     "-c:v", "libx264", "-preset", process.env.RENDER_PRESET || "veryfast", "-crf", "20", "-r", String(FPS), "-pix_fmt", "yuv420p", "-threads", THREADS,
+    // Grain barely compresses: cap film shots at a rate that still beats what the platforms stream.
+    ...(cinema ? ["-maxrate", "8M", "-bufsize", "16M"] : []),
     "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-ac", "2",
     out,
   );
@@ -592,14 +624,14 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     const segs: string[] = [];
     for (const [i, job] of jobs.entries()) {
       try {
-        segs.push(await renderSegment(job, i, dir, W, H));
+        segs.push(await renderSegment(job, i, dir, W, H, plan.style === "fiction"));
       } catch (e) {
         // A visual that ffmpeg can't handle (e.g. an iPhone HEIC photo or a damaged clip) shouldn't sink the whole
         // video: redo this scene on an animated background and keep going.
         if (job.visual.kind === "gradient") throw e;
         console.warn(`[render] scene ${i + 1} visual failed, using a background instead: ${(e as Error).message.slice(0, 200)}`);
         job.visual = { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] };
-        segs.push(await renderSegment(job, i, dir, W, H));
+        segs.push(await renderSegment(job, i, dir, W, H, plan.style === "fiction"));
       }
       const [from, span] = ai ? [50, 45] : [40, 55];
       await setRender(post, { progress: Math.round(from + (span * (i + 1)) / jobs.length), message: `Rendering scene ${i + 1} of ${jobs.length}…` });
