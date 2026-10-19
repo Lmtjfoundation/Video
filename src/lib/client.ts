@@ -27,6 +27,8 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
 
 /** "Make an explainer video" on the Explain page hands its text to Movie Studio through sessionStorage. */
 export const EXPLAIN_HANDOFF = "ghostpost:explain-to-video";
+/** "Open in Movie Studio" in the Writers' Room hands the film's story and cast over the same way. */
+export const FILM_HANDOFF = "ghostpost:film-to-movie";
 
 export async function copyToClipboard(text: string) {
   try {

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Clapperboard, Film, ImagePlus, Lightbulb, Sparkles, Trash2, UserRound, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { api, EXPLAIN_HANDOFF } from "@/lib/client";
+import { api, EXPLAIN_HANDOFF, FILM_HANDOFF } from "@/lib/client";
 import { CREDIT_COST } from "@/lib/plans";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import type { Character, Placement, Platform, Post } from "@/lib/types";
@@ -254,6 +254,12 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
         sessionStorage.removeItem(EXPLAIN_HANDOFF);
         setKind("explainer");
         setBrief(text);
+      }
+      const film = sessionStorage.getItem(FILM_HANDOFF);
+      if (film) {
+        sessionStorage.removeItem(FILM_HANDOFF);
+        setKind("movie");
+        setBrief(String((JSON.parse(film) as { brief?: string }).brief ?? ""));
       }
     } catch {
       /* storage unavailable */

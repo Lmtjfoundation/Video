@@ -166,6 +166,12 @@ export const CREDIT_COST = {
   /** A character portrait: one 2K picture plus a short description written from the photo. */
   character: 5,
   explain: 1,
+  /** Writers' Room: long structured writing, priced like the long story script (feature and series outlines run about twice as long). */
+  filmDevelop: 6,
+  filmDevelopLong: 10,
+  filmPage: 2,
+  filmReview: 3,
+  filmPromo: 2,
 } as const;
 export type CreditAction = keyof typeof CREDIT_COST;
 
@@ -190,6 +196,11 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   veoSecond: "Each second of a Veo-animated scene (4–8 seconds per scene)",
   character: "Create a character from a photo or description",
   explain: "Explain a text in plain language (2 credits over 8,000 characters)",
+  filmDevelop: "Writers' Room: develop or revise a short film (titles, characters, world, structure, scene outline)",
+  filmDevelopLong: "Writers' Room: develop or revise a feature film or series pilot",
+  filmPage: "Writers' Room: screenplay pages, per scene",
+  filmReview: "Writers' Room: awards-readiness review",
+  filmPromo: "Writers' Room: promotion kit",
 };
 
 /** Hard safety ceiling even on Unlimited: beyond this, platforms treat accounts as spam. */
