@@ -5,6 +5,7 @@ import { Clapperboard, Film, ImagePlus, Lightbulb, Sparkles, Trash2, UserRound, 
 import { useApp } from "@/lib/store";
 import { api, EXPLAIN_HANDOFF, FILM_HANDOFF } from "@/lib/client";
 import { briefFor } from "@/lib/film-brief";
+import { isGraphicsLook } from "@/lib/motion-graphics";
 import type { FilmProject } from "@/lib/writers-room";
 import { CREDIT_COST } from "@/lib/plans";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
@@ -315,16 +316,17 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
     setFilmCast(null);
   }, [filmCast, lib]);
 
-  const est = movieEstimate(length, veo, engine);
   const chars = lib?.characters ?? [];
   const firstLook = chars.find((c) => cast.includes(c.id))?.look ?? lib?.looks[0] ?? "";
+  const graphics = isGraphicsLook(look || firstLook);
+  const est = movieEstimate(length, graphics ? 0 : veo, engine, look || firstLook);
   const lengthOk = lengthAllowed(length, platform);
 
   async function make() {
     setBusy(true);
     setMade(null);
     try {
-      const r = await api<{ post: Post; note: string }>("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: veo, engine, renderNow: renderNow || autoPost, autoPost, placement: hasPlacement ? placement : undefined } });
+      const r = await api<{ post: Post; note: string }>("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: graphics ? 0 : veo, engine, renderNow: renderNow || autoPost, autoPost, placement: hasPlacement ? placement : undefined } });
       setMade(r);
       onMade(r.post);
       toast(r.post.render?.status === "queued" ? (r.post.autoPost ? "Script written. Rendering — it posts itself when ready." : "Script written. Rendering has started.") : "Script written and saved as a draft.", "success");
@@ -392,6 +394,12 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
               {MOVIE_LENGTHS.map((l) => <option key={l} value={l}>{MOVIE_SHAPE[l].label} · {MOVIE_SHAPE[l].scenes} scenes</option>)}
             </Select>
           </Field>
+          {graphics ? (
+            <p className="rounded-xl bg-mint-400/[0.06] p-3 text-[13px] leading-relaxed text-white/70 ring-1 ring-mint-400/20 sm:col-span-2">
+              <b className="text-white">Motion graphics:</b> every scene is animated by Ghost Post's own graphics engine — moving shapes, a living background and the key words sliding in. No AI pictures, so no picture or animation credits.
+            </p>
+          ) : (
+          <>
           <Field label="Animate with" hint={!lib?.replicate ? "Seedance 2.5 and Wan 2.2 switch on when the admin adds a Replicate token" : engine === "wan" ? "Open-weight model: the lowest cost, about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice Veo's price" : "Google's model: strong motion and lighting"}>
             <Select value={engine} onChange={(e) => setEngine(e.target.value as AnimationEngine)}>
               <option value="veo">Google Veo 3.1 · {CREDIT_COST.veoSecond} credits a second</option>
@@ -402,6 +410,8 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
           <Field label={`Animated scenes: ${veo}`} hint={veo ? "Real motion for the key moments; other scenes get a slow camera move." : "Pictures with slow camera moves only (cheapest)."}>
             <input type="range" min={0} max={MAX_VEO_SCENES} value={veo} onChange={(e) => setVeo(Number(e.target.value))} className="mt-2 w-full accent-mint-400" />
           </Field>
+          </>
+          )}
         </div>
         {!lengthOk && <p className="text-xs text-red-300">X allows videos up to 2 minutes 20 seconds. Pick a shorter length for X.</p>}
         <label className="flex items-center gap-2 text-sm text-white/70">
@@ -426,7 +436,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
           Each scene picture is {CREDIT_COST.aiImage} credits; each {engineName} scene is {engine === "seedance" ? CREDIT_COST.seedanceSecond : engine === "wan" ? CREDIT_COST.wanSecond : CREDIT_COST.veoSecond} credits a second (4–8 seconds). Scenes that can&apos;t be made are refunded automatically. Rendering takes a few minutes; animation adds about 1–3 minutes a clip.
         </p>
         <div className="flex justify-end">
-          <Button variant="primary" size="lg" loading={busy} disabled={!lib?.ready || !lengthOk || brief.trim().length < (kind === "movie" ? 10 : 40)} onClick={make}>
+          <Button variant="primary" size="lg" loading={busy} disabled={(!lib?.ready && !graphics) || !lengthOk || brief.trim().length < (kind === "movie" ? 10 : 40)} onClick={make}>
             <Film className="h-4 w-4" /> {kind === "movie" ? "Write the movie" : "Write the explainer"}
           </Button>
         </div>

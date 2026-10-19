@@ -10,6 +10,7 @@ import { getUser, refundCredits } from "./auth";
 import { autoPublish } from "./publisher";
 import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey, pixabayKey } from "./integrations";
 import { freeVoice, freeVoiceEnabled } from "./free-voice";
+import { drawShapes, isGraphicsLook, motionGraph, MOTION_PALETTES, SHAPE_INPUTS } from "./motion-graphics";
 import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types";
 import { nowIso } from "./utils";
 import { characterRef, getCharacters, isRealisticLook, REALISM_DIRECTION } from "./characters";
@@ -287,7 +288,7 @@ interface SceneJob {
   dur: number;
   audio?: string;
   /** `hold`: a clip shorter than the scene freezes on its last frame instead of looping (Veo clips). */
-  visual: { kind: "image" | "video"; file: string; hold?: boolean } | { kind: "gradient"; colors: [string, string] };
+  visual: { kind: "image" | "video"; file: string; hold?: boolean } | { kind: "gradient"; colors: [string, string] } | { kind: "motion" };
 }
 
 async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H: number): Promise<string> {
@@ -299,12 +300,21 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
   args.push("-threads", THREADS);
   const vis = job.visual;
   if (vis.kind === "gradient") args.push("-f", "lavfi", "-t", job.dur.toFixed(3), "-i", `gradients=s=${W}x${H}:c0=${vis.colors[0]}:c1=${vis.colors[1]}:speed=0.015:r=${FPS}`);
+  else if (vis.kind === "motion") {
+    const p = MOTION_PALETTES[i % MOTION_PALETTES.length];
+    args.push("-f", "lavfi", "-t", job.dur.toFixed(3), "-i", `gradients=s=${W}x${H}:c0=${p.bg[0]}:c1=${p.bg[1]}:speed=0.02:r=${FPS}`);
+  }
   else if (vis.kind === "image") args.push("-i", vis.file);
   else if (vis.hold) args.push("-i", vis.file);
   else args.push("-stream_loop", "-1", "-t", job.dur.toFixed(3), "-i", vis.file);
   args.push("-threads", THREADS);
   if (job.audio) args.push("-i", job.audio);
   else args.push("-f", "lavfi", "-t", job.dur.toFixed(3), "-i", "anullsrc=r=44100:cl=stereo");
+  if (vis.kind === "motion") {
+    // Motion graphics: the shapes [2]…[6], drawn once per render, held for the scene's length.
+    const shapes = await drawShapes(dir, W, H, i);
+    for (const k of SHAPE_INPUTS) args.push("-loop", "1", "-framerate", String(FPS), "-t", job.dur.toFixed(3), "-i", shapes[k]);
+  }
 
   let v: string;
   if (job.visual.kind === "image") {
@@ -315,6 +325,13 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
   } else if (job.visual.kind === "video") {
     v = `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},fps=${FPS}`;
     if (job.visual.hold) v += `,tpad=stop_mode=clone:stop_duration=${job.dur.toFixed(3)}`;
+  } else if (job.visual.kind === "motion") {
+    // Motion graphics: shapes over the moving gradient; the on-screen words slide up and an underline wipes in.
+    const lines = job.scene.onScreen ? wrap(job.scene.onScreen.toUpperCase(), H > W ? 16 : 30).split("\n").length : 0;
+    const fsz = Math.round(W * (H > W ? 0.085 : 0.05));
+    v = `${motionGraph({ i, W, H, underlineY: lines ? H * 0.11 + lines * (fsz + 8) + fsz * 0.35 : undefined })};[mg]format=yuv420p`;
+    const font = FONT.replace(/:/g, "\\:");
+    v += `,drawtext=fontfile='${font}':text='${String(i + 1).padStart(2, "0")}':fontsize=${Math.round(W * 0.42)}:fontcolor=white@0.07:x=w*0.04:y=h*0.27`;
   } else {
     v = `[0:v]format=yuv420p`;
   }
@@ -328,7 +345,8 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
   if (job.scene.onScreen) {
     const f = path.join(dir, `os${i}.txt`);
     await fs.writeFile(f, wrap(job.scene.onScreen.toUpperCase(), portrait ? 16 : 30));
-    v += `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.085 : 0.05))}:fontcolor=white:borderw=${portrait ? 7 : 5}:bordercolor=black:line_spacing=8:text_align=C:x=(w-text_w)/2:y=h*0.11:alpha='min(1,t/0.25)'`;
+    const y = job.visual.kind === "motion" ? `h*0.11+${Math.round(H * 0.03)}*pow(max(0,1-t/0.5),2)` : "h*0.11";
+    v += `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.085 : 0.05))}:fontcolor=white:borderw=${portrait ? 7 : 5}:bordercolor=black:line_spacing=8:text_align=C:x=(w-text_w)/2:y='${y}':alpha='min(1,t/0.25)'`;
   }
   captionGroups(job.scene.narration, job.dur).forEach((c, k) => {
     const f = path.join(dir, `cap${i}_${k}.txt`);
@@ -523,13 +541,13 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       }
       let visual: SceneJob["visual"];
       if (mediaFiles.length) visual = mediaFiles[i % mediaFiles.length];
-      else if (ai) visual = { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] }; // pictured below
+      else if (ai) visual = { kind: "motion" }; // pictured below (graphics styles keep the motion graphics)
       else {
         const clip = path.join(dir, `stock${i}.mp4`);
         const q = cleanQuery(scene.visual);
         visual = (await pixabayClip(q, !long, clip)) || (await pexelsClip(q, !long, clip))
           ? { kind: "video", file: clip }
-          : { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] };
+          : { kind: "motion" };
       }
       jobs.push({ scene, dur, audio, visual });
       const share = ai ? 10 : 35;
@@ -538,7 +556,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     // Attached media replaces the AI pictures, so their credits go back.
     let unused = plan.ai && !ai ? aiVisualCredits(plan) : 0;
     let aiBlocked: string | undefined;
-    if (ai) ({ unused, blocked: aiBlocked } = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long));
+    if (ai && !isGraphicsLook(ai.look)) ({ unused, blocked: aiBlocked } = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long));
 
     const segs: string[] = [];
     for (const [i, job] of jobs.entries()) {
@@ -571,7 +589,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     fresh.mediaIds = [item.id, ...(fresh.mediaIds ?? []).filter((id) => id !== fresh.render?.mediaId)];
     const refunded = unused && credits ? ` · ${unused} credits refunded for ${ai ? "scenes Google couldn't make" : "AI scenes replaced by your media"}` : "";
     const note = aiBlocked ? ` · AI visuals were unavailable (${aiBlocked}), so scenes use stock footage or backgrounds` : "";
-    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${voice ? "voiceover" : "captions only"}${ai && !aiBlocked ? " · AI visuals" : ""} · ${(bytes.length / 1048576).toFixed(1)} MB${refunded}${note}`.slice(0, 600), mediaId: item.id, updatedAt: nowIso() };
+    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${voice ? "voiceover" : "captions only"}${ai && isGraphicsLook(ai.look) ? " · motion graphics" : ai && !aiBlocked ? " · AI visuals" : ""} · ${(bytes.length / 1048576).toFixed(1)} MB${refunded}${note}`.slice(0, 600), mediaId: item.id, updatedAt: nowIso() };
     if (fresh.status === "copy_ready") { fresh.status = "draft"; fresh.error = undefined; }
     await savePost(fresh);
     if (unused && credits) await refundCredits(userId, Math.min(unused, credits));

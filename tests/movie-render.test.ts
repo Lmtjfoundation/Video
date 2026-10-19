@@ -123,4 +123,39 @@ describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Veo clip",
       globalThis.fetch = prev;
     }
   }, 120_000);
+
+  it("draws Graphics-style movies with the free motion-graphics engine, without calling Google", async () => {
+    const { asUser, db } = await import("@/lib/db");
+    const { renderVideoPost } = await import("@/lib/render");
+    const { savePost } = await import("@/lib/repo");
+    const prev = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      return new Response("unexpected", { status: 500 });
+    }) as typeof fetch;
+    try {
+      await asUser("usr_movie_test", async () => {
+        const t = new Date().toISOString();
+        const scene = (narration: string, onScreen: string): VideoScene => ({ time: "", narration, onScreen, visual: "", motion: "", sfx: "", cast: [] });
+        const post: Post = {
+          id: "post_motion", platform: "tiktok", pillar: "ai_leverage", format: "video_script", kind: "video", hook: "Motion", body: "", parts: [], hashtags: [],
+          status: "draft", moneyScore: 0, revenue: { low: 0, high: 0, basis: "" }, scoreNotes: [], safetyFlags: [], attempts: 0, createdAt: t, updatedAt: t,
+          video: {
+            niche: "Explainer", style: "explainer", length: "s30", titles: ["Motion"], thumbnail: {}, voice: "", music: "", loopLine: "", factCheck: [],
+            scenes: [scene("Credit scores run from 300 to 850.", "300 TO 850"), scene("Payment history counts most.", "PAY ON TIME")],
+            ai: { characterIds: [], look: "Motion-graphics explainer, clean flat shapes and icons, bold color blocks", veoScenes: [] },
+          },
+        };
+        await savePost(post);
+        await renderVideoPost("usr_movie_test", post.id, 0);
+        const done = await db().get<Post>("posts", post.id);
+        expect(done?.render?.status, done?.render?.message).toBe("done");
+        expect(done?.render?.message).toContain("motion graphics");
+      });
+      expect(calls).toBe(0);
+    } finally {
+      globalThis.fetch = prev;
+    }
+  }, 120_000);
 });
