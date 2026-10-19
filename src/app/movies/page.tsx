@@ -12,7 +12,24 @@ import { lengthAllowed, MAX_VEO_SCENES, MOVIE_LENGTHS, MOVIE_SHAPE, movieEstimat
 import { Badge, Button, Card, CardHeader, Empty, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
 
 type CharacterWithUrl = Character & { imageUrl: string };
-type Library = { characters: CharacterWithUrl[]; looks: string[]; ready: boolean; replicate?: boolean };
+type Library = { characters: CharacterWithUrl[]; looks: string[]; lookGroups?: { label: string; looks: string[] }[]; ready: boolean; replicate?: boolean };
+
+/** The art styles, grouped (Realistic people, Graphics, Animated), plus any extra looks in use. */
+function LookOptions({ lib, extra = [] }: { lib: Library | null; extra?: string[] }) {
+  const groups = lib?.lookGroups ?? [{ label: "Styles", looks: lib?.looks ?? [] }];
+  const known = new Set(groups.flatMap((g) => g.looks));
+  const others = [...new Set(extra.filter((l) => l && !known.has(l)))];
+  return (
+    <>
+      {groups.map((g) => (
+        <optgroup key={g.label} label={g.label}>
+          {g.looks.map((l) => <option key={l} value={l}>{l}</option>)}
+        </optgroup>
+      ))}
+      {!!others.length && <optgroup label="Your characters' styles">{others.map((l) => <option key={l} value={l}>{l}</option>)}</optgroup>}
+    </>
+  );
+}
 
 const MOVIE_PLATFORMS: Platform[] = ["tiktok", "instagram", "youtube", "facebook", "x", "linkedin"];
 
@@ -196,7 +213,7 @@ function CharactersCard({ lib, admin, creditsLeft, onChange }: { lib: Library | 
               </Field>
               <Field label="Art style">
                 <Select value={look || looks[0] || ""} onChange={(e) => setLook(e.target.value)}>
-                  {looks.map((l) => <option key={l} value={l}>{l}</option>)}
+                  <LookOptions lib={lib} />
                   <option value="custom">Something else…</option>
                 </Select>
               </Field>
@@ -332,7 +349,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Art style">
             <Select value={look || firstLook} onChange={(e) => setLook(e.target.value)}>
-              {[...new Set([firstLook, ...(lib?.looks ?? []), ...chars.map((c) => c.look)].filter(Boolean))].map((l) => <option key={l} value={l}>{l}</option>)}
+              <LookOptions lib={lib} extra={[firstLook, ...chars.map((c) => c.look)]} />
             </Select>
           </Field>
           <Field label="Platform">

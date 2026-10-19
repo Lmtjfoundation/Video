@@ -169,3 +169,14 @@ describe("explanations", () => {
     expect(() => cleanExplanation({ title: "x" })).toThrow(/came back empty/);
   });
 });
+
+describe("art styles", () => {
+  it("offers realistic people first, then graphics and animation, and gives realistic looks extra direction", async () => {
+    const { CHARACTER_LOOK_GROUPS, CHARACTER_LOOKS, isRealisticLook } = await import("@/lib/characters");
+    expect(CHARACTER_LOOK_GROUPS.map((g) => g.label)).toEqual(["Realistic people", "Graphics", "Animated and illustrated"]);
+    expect(isRealisticLook(CHARACTER_LOOKS[0])).toBe(true); // the default is photorealistic
+    for (const l of CHARACTER_LOOK_GROUPS[0].looks) expect(isRealisticLook(l)).toBe(true);
+    for (const l of [...CHARACTER_LOOK_GROUPS[1].looks, ...CHARACTER_LOOK_GROUPS[2].looks]) expect(isRealisticLook(l)).toBe(false);
+    expect(isRealisticLook("Cinematic photorealistic film still")).toBe(true); // characters saved with the old look keep realism
+  });
+});

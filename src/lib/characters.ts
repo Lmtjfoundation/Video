@@ -15,15 +15,44 @@ import { nowIso, uid } from "./utils";
 const ROW = "characters";
 export const MAX_CHARACTERS = 40;
 
-/** Art styles offered in the app. Free text is accepted too. */
-export const CHARACTER_LOOKS = [
-  "Pixar-style 3D animation, soft cinematic lighting",
-  "Anime, clean line art, vivid colors",
-  "Comic book, bold ink and halftone shading",
-  "Storybook watercolor illustration",
-  "Claymation stop-motion",
-  "Cinematic photorealistic film still",
+/** Art styles offered in the app, grouped as the picker shows them; the first is the default. Free text is accepted too. */
+export const CHARACTER_LOOK_GROUPS = [
+  {
+    label: "Realistic people",
+    looks: [
+      "Photorealistic film still, true-to-life human faces, natural skin texture, 85mm lens, cinematic lighting",
+      "Cinematic realism, anamorphic 35mm film, shallow depth of field, warm practical light",
+      "Documentary realism, handheld 35mm, natural daylight, unretouched faces",
+      "Gritty urban night realism, sodium streetlights, wet asphalt, film grain",
+      "High-end commercial photography, studio lighting, crisp 4K detail",
+      "Black-and-white photorealistic film, high contrast, classic cinema",
+    ],
+  },
+  {
+    label: "Graphics",
+    looks: [
+      "Motion-graphics explainer, clean flat shapes and icons, bold color blocks",
+      "Infographic style, diagrams, icons and simple charts on a clean background",
+      "Cinematic title-sequence graphics, bold geometric shapes, dramatic light",
+    ],
+  },
+  {
+    label: "Animated and illustrated",
+    looks: [
+      "Pixar-style 3D animation, soft cinematic lighting",
+      "Anime, clean line art, vivid colors",
+      "Comic book, bold ink and halftone shading",
+      "Storybook watercolor illustration",
+      "Claymation stop-motion",
+    ],
+  },
 ] as const;
+export const CHARACTER_LOOKS: readonly string[] = CHARACTER_LOOK_GROUPS.flatMap((g) => g.looks);
+
+/** Realistic looks get extra direction so faces and hands read as real people, not renders or illustrations. */
+export const isRealisticLook = (look: string) => /photo|realis|documentary|film still|35mm|4k|cinema/i.test(look) && !/anime|cartoon|pixar|comic|illustrat|clay|watercolor|graphic/i.test(look);
+export const REALISM_DIRECTION =
+  "Photorealistic real people: natural, anatomically correct faces with real skin texture, pores and subtle imperfections, natural eyes and teeth, correct hands with five fingers, realistic hair and fabric. It must look like a frame from a real film shot on a cinema camera, never a cartoon, 3D render, painting or illustration.";
 
 export async function listCharacters(): Promise<Character[]> {
   return (await kvGet<Character[]>(ROW)) ?? [];
@@ -101,6 +130,7 @@ export async function createCharacter(userId: string, input: NewCharacter): Prom
       ? "Base the character on the main subject of the attached photo: keep their face shape, hair, skin tone, build and clothing recognisable, translated into the art style."
       : "",
     description ? `Appearance: ${description}` : "",
+    isRealisticLook(look) ? `A photographic casting portrait. ${REALISM_DIRECTION}` : "",
     "Full body, standing in a relaxed three-quarter pose, facing the viewer, plain soft neutral studio background, even lighting, the whole figure in frame.",
     "No text, no logos, no watermark, one character only.",
   ]

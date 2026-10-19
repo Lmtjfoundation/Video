@@ -11,7 +11,7 @@ import { autoPublish } from "./publisher";
 import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey, pixabayKey } from "./integrations";
 import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types";
 import { nowIso } from "./utils";
-import { characterRef, getCharacters } from "./characters";
+import { characterRef, getCharacters, isRealisticLook, REALISM_DIRECTION } from "./characters";
 import { geminiImage, MediaGenError, veoClip, type RefImage } from "./gemini-media";
 import { seedanceClip, wanClip } from "./replicate-video";
 import { CREDIT_COST } from "./plans";
@@ -358,6 +358,7 @@ function scenePrompt(scene: VideoScene, ai: NonNullable<VideoPlan["ai"]>, cast: 
     `A single ${portrait ? "vertical 9:16" : "widescreen 16:9"} film frame in this art style: ${ai.look}.`,
     `Shot: ${scene.visual || scene.narration}`,
     cast.length ? `Characters in frame (each must match their attached reference picture exactly — same face, hair, build, outfit and colors): ${cast.map((c) => `${c.name} — ${c.description}`.slice(0, 400)).join("; ")}.` : "",
+    isRealisticLook(ai.look) ? REALISM_DIRECTION : "",
     "Cinematic composition, clear focal point, rich lighting. Leave the lower third uncluttered for captions. No text, letters, subtitles, signs, logos or watermarks.",
   ]
     .filter(Boolean)
@@ -411,7 +412,7 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
     try {
       if (!still) throw new MediaGenError("No picture to animate.");
       await setRender(post, { message: `Animating scene ${i + 1} with ${engine} (about 1–3 minutes a clip)…` });
-      const prompt = `${job.scene.motion || "Subtle, natural movement with a slow cinematic camera move."} ${job.scene.visual}`.slice(0, 1500) + ` Art style: ${ai.look}. Keep the characters exactly as they appear in the starting frame. No text or captions.`;
+      const prompt = `${job.scene.motion || "Subtle, natural movement with a slow cinematic camera move."} ${job.scene.visual}`.slice(0, 1500) + ` Art style: ${ai.look}. Keep the characters exactly as they appear in the starting frame.${isRealisticLook(ai.look) ? " Real people moving naturally: realistic faces, blinking, breathing and natural body weight; no morphing." : ""} No text or captions.`;
       const clip = { prompt, start: still, aspect: portrait ? ("9:16" as const) : ("16:9" as const), seconds };
       const bytes = engine === "Seedance" ? await seedanceClip(clip) : engine === "Wan" ? await wanClip(clip) : await veoClip(clip);
       const file = path.join(dir, `veo${i}.mp4`);

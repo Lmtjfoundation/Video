@@ -1,6 +1,6 @@
 import { authed, body, fail, ok } from "@/lib/http-api";
 import { refundCredits, spendCredits } from "@/lib/auth";
-import { CHARACTER_LOOKS, createCharacter, deleteCharacter, listCharacters } from "@/lib/characters";
+import { CHARACTER_LOOK_GROUPS, CHARACTER_LOOKS, createCharacter, deleteCharacter, listCharacters } from "@/lib/characters";
 import { mediaKey, MediaGenError } from "@/lib/gemini-media";
 import { signedUrl } from "@/lib/media";
 import { CREDIT_COST } from "@/lib/plans";
@@ -16,6 +16,7 @@ export const GET = authed(async (_req, user) => {
   return ok({
     characters: list.map((c) => ({ ...c, imageUrl: signedUrl(user.id, c.imageMediaId, 6 * 3600) })),
     looks: CHARACTER_LOOKS,
+    lookGroups: CHARACTER_LOOK_GROUPS,
     ready: !!(await mediaKey()),
     replicate: await replicateReady(),
   });
