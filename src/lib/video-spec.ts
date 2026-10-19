@@ -1,6 +1,6 @@
 import type { AnimationEngine, Platform, VideoPlan, VideoScene } from "./types";
 import { CREDIT_COST } from "./plans";
-import { isGraphicsLook } from "./motion-graphics";
+import { isGraphicsLook } from "./looks";
 
 type LengthTier = "short" | "mid" | "long";
 

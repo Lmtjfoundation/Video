@@ -5,7 +5,7 @@ import { Clapperboard, Film, ImagePlus, Lightbulb, Sparkles, Trash2, UserRound, 
 import { useApp } from "@/lib/store";
 import { api, EXPLAIN_HANDOFF, FILM_HANDOFF } from "@/lib/client";
 import { briefFor } from "@/lib/film-brief";
-import { isGraphicsLook } from "@/lib/motion-graphics";
+import { isGraphicsLook } from "@/lib/looks";
 import type { FilmProject } from "@/lib/writers-room";
 import { CREDIT_COST } from "@/lib/plans";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";

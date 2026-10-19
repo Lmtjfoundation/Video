@@ -3,7 +3,7 @@ import { spendCredits } from "@/lib/auth";
 import { CHARACTER_LOOKS, getCharacters } from "@/lib/characters";
 import { withCredits } from "@/lib/credits";
 import { mediaKey } from "@/lib/gemini-media";
-import { isGraphicsLook } from "@/lib/motion-graphics";
+import { isGraphicsLook } from "@/lib/looks";
 import { writeMovie } from "@/lib/movie";
 import { enqueueRender, ffmpegAvailable } from "@/lib/render";
 import { getSettings, log, savePost } from "@/lib/repo";

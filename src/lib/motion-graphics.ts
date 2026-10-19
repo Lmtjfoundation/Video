@@ -88,5 +88,4 @@ export function motionGraph(o: { i: number; W: number; H: number; underlineY?: n
   return chains.join(";");
 }
 
-/** Graphics art styles are drawn by the motion-graphics engine instead of AI pictures. */
-export const isGraphicsLook = (look?: string) => !!look && /motion[- ]graphics|infographic|title[- ]sequence|graphic/i.test(look) && !/photo|realis/i.test(look);
+export { isGraphicsLook } from "./looks";

@@ -10,7 +10,7 @@ import { nowIso } from "@/lib/utils";
 import { elevenlabsKey, stockReady } from "@/lib/integrations";
 import { renderCredits } from "@/lib/video-spec";
 import { mediaKey } from "@/lib/gemini-media";
-import { isGraphicsLook } from "@/lib/motion-graphics";
+import { isGraphicsLook } from "@/lib/looks";
 
 export const dynamic = "force-dynamic";
 
