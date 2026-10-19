@@ -436,7 +436,7 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
           <p className="text-xs text-white/50">
             {finished
               ? "Finished episode from Claude: character voices, narration, music and captions are already in the video."
-              : info ? `${info.voice ? "AI voiceover" : "Captions only (add an ElevenLabs key for voiceover)"} · ${post.video?.ai ? `AI pictures${post.video.ai.veoScenes.length ? ` + ${post.video.ai.veoScenes.length} Veo-animated scene${post.video.ai.veoScenes.length > 1 ? "s" : ""}` : ""}` : info.stock ? "stock footage" : "your media or animated backgrounds"} · burned-in captions` : "Voiceover, visuals and captions, rendered on the server."}
+              : info ? `${info.voice ? "AI voiceover" : "Captions only"} · ${post.video?.ai ? `AI pictures${post.video.ai.veoScenes.length ? ` + ${post.video.ai.veoScenes.length} Veo-animated scene${post.video.ai.veoScenes.length > 1 ? "s" : ""}` : ""}` : info.stock ? "stock footage" : "your media or animated backgrounds"} · burned-in captions` : "Voiceover, visuals and captions, rendered on the server."}
           </p>
         </div>
         {!locked && !active && !finished && (

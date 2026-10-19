@@ -9,6 +9,7 @@ import { log, savePost } from "./repo";
 import { getUser, refundCredits } from "./auth";
 import { autoPublish } from "./publisher";
 import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey, pixabayKey } from "./integrations";
+import { freeVoice, freeVoiceEnabled } from "./free-voice";
 import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types";
 import { nowIso } from "./utils";
 import { characterRef, getCharacters, isRealisticLook, REALISM_DIRECTION } from "./characters";
@@ -119,6 +120,28 @@ async function duration(file: string) {
 }
 
 /* ───────────── Voice ───────────── */
+
+/**
+ * Narration for one scene: ElevenLabs when its key is set, otherwise (or when ElevenLabs fails) the free Kokoro voice
+ * that runs on this server. Returns the file written (the free voice writes WAV).
+ */
+async function narrate(text: string, base: string, note?: string): Promise<string> {
+  if (await elevenlabsKey()) {
+    try {
+      await tts(text, `${base}.mp3`);
+      return `${base}.mp3`;
+    } catch (e) {
+      if (!freeVoiceEnabled()) throw e;
+      console.warn(`[render] ElevenLabs failed, using the free voice: ${(e as Error).message.slice(0, 200)}`);
+    }
+  }
+  try {
+    await freeVoice(text, `${base}.wav`, note);
+  } catch (e) {
+    throw new Error(`Voiceover failed (free voice): ${(e as Error).message.slice(0, 200)}`);
+  }
+  return `${base}.wav`;
+}
 
 async function tts(text: string, file: string) {
   const key = await elevenlabsKey();
@@ -370,7 +393,10 @@ function scenePrompt(scene: VideoScene, ai: NonNullable<VideoPlan["ai"]>, cast: 
  * A scene Google can't make falls back to stock footage or a background, and its credits are counted as unused
  * so the caller refunds them. Errors the owner must fix (key, billing) stop the render.
  */
-async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes: number[], jobs: SceneJob[], dir: string, long: boolean): Promise<number> {
+async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes: number[], jobs: SceneJob[], dir: string, long: boolean): Promise<{ unused: number; blocked?: string }> {
+  // A key or billing problem (e.g. a free-tier Gemini key) is the same for every scene: note it once, stop asking,
+  // and finish the video with stock footage or designed backgrounds instead of failing the whole render.
+  let blocked: string | undefined;
   const cast = await getCharacters(ai.characterIds);
   const refs = new Map<string, RefImage>();
   for (const c of cast) {
@@ -384,14 +410,15 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
     const inScene = cast.filter((c) => (job.scene.cast ?? []).some((n) => n.toLowerCase() === c.name.toLowerCase()));
     const sceneRefs = inScene.map((c) => refs.get(c.name.toLowerCase())).filter((r): r is RefImage => !!r);
     try {
+      if (blocked) throw new MediaGenError(blocked, "config");
       const img = await geminiImage({ prompt: scenePrompt(job.scene, ai, inScene, portrait), refs: sceneRefs, aspect: portrait ? "9:16" : "16:9", size: "2K" });
       const file = path.join(dir, `ai${i}.${extFor(img.mimeType)}`);
       await fs.writeFile(file, img.bytes);
       job.visual = { kind: "image", file };
       return { mimeType: img.mimeType, base64: img.bytes.toString("base64") };
     } catch (e) {
-      if (e instanceof MediaGenError && e.kind === "config") throw e;
-      console.warn(`[render] AI picture for scene ${i + 1} failed: ${(e as Error).message.slice(0, 200)}`);
+      if (e instanceof MediaGenError && e.kind === "config") blocked ??= e.message;
+      else console.warn(`[render] AI picture for scene ${i + 1} failed: ${(e as Error).message.slice(0, 200)}`);
       unused += CREDIT_COST.aiImage;
       const clip = path.join(dir, `stock${i}.mp4`);
       const q = cleanQuery(job.scene.visual);
@@ -406,11 +433,13 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
   const veo = jobs.map((job, i) => ({ job, i, original: indexes[i] })).filter(({ original }) => ai.veoScenes.includes(original));
   let animated = 0;
   const engine = ai.engine === "seedance" ? "Seedance" : ai.engine === "wan" ? "Wan" : "Veo";
+  let animBlocked: string | undefined;
   await mapLimit(veo, 2, async ({ job, i }) => {
     const seconds = veoSeconds(job.scene);
     const still = stills[i];
     try {
       if (!still) throw new MediaGenError("No picture to animate.");
+      if (animBlocked) throw new MediaGenError(animBlocked, "config");
       await setRender(post, { message: `Animating scene ${i + 1} with ${engine} (about 1–3 minutes a clip)…` });
       const prompt = `${job.scene.motion || "Subtle, natural movement with a slow cinematic camera move."} ${job.scene.visual}`.slice(0, 1500) + ` Art style: ${ai.look}. Keep the characters exactly as they appear in the starting frame.${isRealisticLook(ai.look) ? " Real people moving naturally: realistic faces, blinking, breathing and natural body weight; no morphing." : ""} No text or captions.`;
       const clip = { prompt, start: still, aspect: portrait ? ("9:16" as const) : ("16:9" as const), seconds };
@@ -419,15 +448,17 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
       await fs.writeFile(file, bytes);
       job.visual = { kind: "video", file, hold: true };
     } catch (e) {
-      if (e instanceof MediaGenError && e.kind === "config") throw e;
-      console.warn(`[render] ${engine} clip for scene ${i + 1} failed, keeping the picture: ${(e as Error).message.slice(0, 200)}`);
+      if (e instanceof MediaGenError && e.kind === "config") animBlocked ??= e.message;
+      else console.warn(`[render] ${engine} clip for scene ${i + 1} failed, keeping the picture: ${(e as Error).message.slice(0, 200)}`);
       unused += seconds * animationSecondCredits(ai.engine);
     } finally {
       animated++;
       await setRender(post, { progress: Math.round(40 + (10 * animated) / Math.max(1, veo.length)) });
     }
   });
-  return unused;
+  if (blocked) console.warn(`[render] AI pictures unavailable, used stock footage or backgrounds: ${blocked}`);
+  if (animBlocked) console.warn(`[render] ${engine} unavailable, kept the pictures: ${animBlocked}`);
+  return { unused, blocked: blocked ?? (animBlocked ? `${engine}: ${animBlocked}` : undefined) };
 }
 
 /* ───────────── Main ───────────── */
@@ -477,7 +508,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       mediaFiles.push({ kind: m.kind, file: f });
     }
 
-    const voice = !!(await elevenlabsKey());
+    const voice = !!(await elevenlabsKey()) || freeVoiceEnabled();
     const jobs: SceneJob[] = [];
     const planned = renderableScenes(plan);
     const scenes = planned.map((p) => p.scene);
@@ -487,8 +518,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       let audio: string | undefined;
       let dur = Math.max(1.8, scene.narration.split(/\s+/).filter(Boolean).length / 2.6);
       if (voice && scene.narration.trim()) {
-        audio = path.join(dir, `vo${i}.mp3`);
-        await tts(scene.narration, audio);
+        audio = await narrate(scene.narration, path.join(dir, `vo${i}`), plan.voice);
         dur = (await duration(audio)) + 0.25;
       }
       let visual: SceneJob["visual"];
@@ -507,7 +537,8 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     }
     // Attached media replaces the AI pictures, so their credits go back.
     let unused = plan.ai && !ai ? aiVisualCredits(plan) : 0;
-    if (ai) unused = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long);
+    let aiBlocked: string | undefined;
+    if (ai) ({ unused, blocked: aiBlocked } = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long));
 
     const segs: string[] = [];
     for (const [i, job] of jobs.entries()) {
@@ -539,7 +570,8 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     const fresh = (await db().get<Post>("posts", postId)) ?? post;
     fresh.mediaIds = [item.id, ...(fresh.mediaIds ?? []).filter((id) => id !== fresh.render?.mediaId)];
     const refunded = unused && credits ? ` · ${unused} credits refunded for ${ai ? "scenes Google couldn't make" : "AI scenes replaced by your media"}` : "";
-    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${voice ? "voiceover" : "captions only"}${ai ? " · AI visuals" : ""} · ${(bytes.length / 1048576).toFixed(1)} MB${refunded}`, mediaId: item.id, updatedAt: nowIso() };
+    const note = aiBlocked ? ` · AI visuals were unavailable (${aiBlocked}), so scenes use stock footage or backgrounds` : "";
+    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${voice ? "voiceover" : "captions only"}${ai && !aiBlocked ? " · AI visuals" : ""} · ${(bytes.length / 1048576).toFixed(1)} MB${refunded}${note}`.slice(0, 600), mediaId: item.id, updatedAt: nowIso() };
     if (fresh.status === "copy_ready") { fresh.status = "draft"; fresh.error = undefined; }
     await savePost(fresh);
     if (unused && credits) await refundCredits(userId, Math.min(unused, credits));

@@ -1,3 +1,4 @@
+import { freeVoiceEnabled } from "@/lib/free-voice";
 import { authed, body, fail, ok } from "@/lib/http-api";
 import { getPost, savePost } from "@/lib/repo";
 import { spendCredits } from "@/lib/auth";
@@ -41,5 +42,5 @@ export const GET = authed(async (req, user) => {
     if (m) url = signedUrl(user.id, m.id, 6 * 3600);
   }
   if (!url && post.videoUrl) url = `/api/media/remote?u=${encodeURIComponent(post.videoUrl)}`;
-  return ok({ render: post.render ?? null, url, voice: !!(await elevenlabsKey()), stock: await stockReady(), ai: !!post.video?.ai });
+  return ok({ render: post.render ?? null, url, voice: !!(await elevenlabsKey()) || freeVoiceEnabled(), stock: await stockReady(), ai: !!post.video?.ai });
 });
