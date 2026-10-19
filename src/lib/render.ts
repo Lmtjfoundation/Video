@@ -13,8 +13,9 @@ import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types"
 import { nowIso } from "./utils";
 import { characterRef, getCharacters } from "./characters";
 import { geminiImage, MediaGenError, veoClip, type RefImage } from "./gemini-media";
+import { seedanceClip } from "./seedance";
 import { CREDIT_COST } from "./plans";
-import { aiVisualCredits, renderableScenes, veoSeconds } from "./video-spec";
+import { aiVisualCredits, animationSecondCredits, renderableScenes, veoSeconds } from "./video-spec";
 
 /**
  * Turns a video plan into a finished MP4 on the server with ffmpeg:
@@ -403,21 +404,23 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
 
   const veo = jobs.map((job, i) => ({ job, i, original: indexes[i] })).filter(({ original }) => ai.veoScenes.includes(original));
   let animated = 0;
+  const engine = ai.engine === "seedance" ? "Seedance" : "Veo";
   await mapLimit(veo, 2, async ({ job, i }) => {
     const seconds = veoSeconds(job.scene);
     const still = stills[i];
     try {
       if (!still) throw new MediaGenError("No picture to animate.");
-      await setRender(post, { message: `Animating scene ${i + 1} with Veo (about 1–3 minutes a clip)…` });
+      await setRender(post, { message: `Animating scene ${i + 1} with ${engine} (about 1–3 minutes a clip)…` });
       const prompt = `${job.scene.motion || "Subtle, natural movement with a slow cinematic camera move."} ${job.scene.visual}`.slice(0, 1500) + ` Art style: ${ai.look}. Keep the characters exactly as they appear in the starting frame. No text or captions.`;
-      const bytes = await veoClip({ prompt, start: still, aspect: portrait ? "9:16" : "16:9", seconds });
+      const clip = { prompt, start: still, aspect: portrait ? ("9:16" as const) : ("16:9" as const), seconds };
+      const bytes = engine === "Seedance" ? await seedanceClip(clip) : await veoClip(clip);
       const file = path.join(dir, `veo${i}.mp4`);
       await fs.writeFile(file, bytes);
       job.visual = { kind: "video", file, hold: true };
     } catch (e) {
       if (e instanceof MediaGenError && e.kind === "config") throw e;
-      console.warn(`[render] Veo clip for scene ${i + 1} failed, keeping the picture: ${(e as Error).message.slice(0, 200)}`);
-      unused += seconds * CREDIT_COST.veoSecond;
+      console.warn(`[render] ${engine} clip for scene ${i + 1} failed, keeping the picture: ${(e as Error).message.slice(0, 200)}`);
+      unused += seconds * animationSecondCredits(ai.engine);
     } finally {
       animated++;
       await setRender(post, { progress: Math.round(40 + (10 * animated) / Math.max(1, veo.length)) });

@@ -6,13 +6,13 @@ import { useApp } from "@/lib/store";
 import { api, EXPLAIN_HANDOFF, FILM_HANDOFF } from "@/lib/client";
 import { CREDIT_COST } from "@/lib/plans";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
-import type { Character, Placement, Platform, Post } from "@/lib/types";
+import type { AnimationEngine, Character, Placement, Platform, Post } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { lengthAllowed, MAX_VEO_SCENES, MOVIE_LENGTHS, MOVIE_SHAPE, movieEstimate, renderCredits, type MovieLength } from "@/lib/video-spec";
 import { Badge, Button, Card, CardHeader, Empty, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
 
 type CharacterWithUrl = Character & { imageUrl: string };
-type Library = { characters: CharacterWithUrl[]; looks: string[]; ready: boolean };
+type Library = { characters: CharacterWithUrl[]; looks: string[]; ready: boolean; seedance?: boolean };
 
 const MOVIE_PLATFORMS: Platform[] = ["tiktok", "instagram", "youtube", "facebook", "x", "linkedin"];
 
@@ -233,6 +233,8 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
   const [platform, setPlatform] = useState<Platform>("tiktok");
   const [length, setLength] = useState<MovieLength>("s60");
   const [veo, setVeo] = useState(3);
+  const [engine, setEngine] = useState<AnimationEngine>("veo");
+  const engineName = engine === "seedance" ? "Seedance 2.5" : "Veo";
   const [renderNow, setRenderNow] = useState(true);
   const settings = useApp((s) => s.status?.settings);
   const [autoPost, setAutoPost] = useState(false);
@@ -266,7 +268,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
     }
   }, []);
 
-  const est = movieEstimate(length, veo);
+  const est = movieEstimate(length, veo, engine);
   const chars = lib?.characters ?? [];
   const firstLook = chars.find((c) => cast.includes(c.id))?.look ?? lib?.looks[0] ?? "";
   const lengthOk = lengthAllowed(length, platform);
@@ -275,7 +277,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
     setBusy(true);
     setMade(null);
     try {
-      const r = await api<{ post: Post; note: string }>("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: veo, renderNow: renderNow || autoPost, autoPost, placement: hasPlacement ? placement : undefined } });
+      const r = await api<{ post: Post; note: string }>("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: veo, engine, renderNow: renderNow || autoPost, autoPost, placement: hasPlacement ? placement : undefined } });
       setMade(r);
       onMade(r.post);
       toast(r.post.render?.status === "queued" ? (r.post.autoPost ? "Script written. Rendering — it posts itself when ready." : "Script written. Rendering has started.") : "Script written and saved as a draft.", "success");
@@ -343,7 +345,13 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
               {MOVIE_LENGTHS.map((l) => <option key={l} value={l}>{MOVIE_SHAPE[l].label} · {MOVIE_SHAPE[l].scenes} scenes</option>)}
             </Select>
           </Field>
-          <Field label={`Veo-animated scenes: ${veo}`} hint={veo ? "Real motion for the key moments; other scenes get a slow camera move." : "Pictures with slow camera moves only (cheapest)."}>
+          <Field label="Animate with" hint={lib?.seedance ? "Seedance 2.5 makes longer, richer motion; it costs about twice as much" : "Seedance 2.5 switches on when the admin adds a Replicate token"}>
+            <Select value={engine} onChange={(e) => setEngine(e.target.value as AnimationEngine)}>
+              <option value="veo">Google Veo 3.1 · {CREDIT_COST.veoSecond} credits a second</option>
+              <option value="seedance" disabled={!lib?.seedance}>ByteDance Seedance 2.5 · {CREDIT_COST.seedanceSecond} credits a second{lib?.seedance ? "" : " (not connected)"}</option>
+            </Select>
+          </Field>
+          <Field label={`Animated scenes: ${veo}`} hint={veo ? "Real motion for the key moments; other scenes get a slow camera move." : "Pictures with slow camera moves only (cheapest)."}>
             <input type="range" min={0} max={MAX_VEO_SCENES} value={veo} onChange={(e) => setVeo(Number(e.target.value))} className="mt-2 w-full accent-mint-400" />
           </Field>
         </div>
@@ -367,7 +375,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
           </Field>
         )}
         <p className="text-xs leading-relaxed text-white/40">
-          Each scene picture is {CREDIT_COST.aiImage} credits; each Veo scene is {CREDIT_COST.veoSecond} credits a second (4–8 seconds). Scenes Google can&apos;t make are refunded automatically. Rendering takes a few minutes; Veo adds about 1–3 minutes a clip.
+          Each scene picture is {CREDIT_COST.aiImage} credits; each {engineName} scene is {engine === "seedance" ? CREDIT_COST.seedanceSecond : CREDIT_COST.veoSecond} credits a second (4–8 seconds). Scenes that can&apos;t be made are refunded automatically. Rendering takes a few minutes; animation adds about 1–3 minutes a clip.
         </p>
         <div className="flex justify-end">
           <Button variant="primary" size="lg" loading={busy} disabled={!lib?.ready || !lengthOk || brief.trim().length < (kind === "movie" ? 10 : 40)} onClick={make}>
@@ -378,7 +386,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
           <div className="rounded-xl bg-mint-400/[0.06] p-4 text-sm ring-1 ring-mint-300/20">
             <p className="font-medium text-white">{made.post.hook}</p>
             <p className="mt-1 text-xs text-white/55">
-              {made.post.video?.scenes.length} scenes · {made.post.video?.ai?.veoScenes.length ?? 0} animated with Veo · render {renderCredits(made.post.video)} credits
+              {made.post.video?.scenes.length} scenes · {made.post.video?.ai?.veoScenes.length ?? 0} animated · render {renderCredits(made.post.video)} credits
               {made.note ? ` · ${made.note}` : ""}
             </p>
             <Link href={`/post/${made.post.id}`} className="mt-2 inline-block text-xs text-sky-300 hover:underline">Open it to watch the render, edit and schedule →</Link>

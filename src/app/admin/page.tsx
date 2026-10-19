@@ -65,6 +65,7 @@ interface IntegrationStatus {
   anthropic: KeyState & { workspaceId: string };
   gemini: KeyState & { model: string; forTrials: boolean; backup: boolean };
   elevenlabs: KeyState & { voiceId: string };
+  replicate: KeyState;
   pixabay: KeyState;
   pexels: KeyState;
   email: KeyState & { from: string };
@@ -461,7 +462,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email") {
+  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -507,7 +508,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email") {
+  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -626,6 +627,26 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             )}
             {st.gemini.set && (
               <Button size="sm" variant="ghost" loading={busy === "rm:geminiModel"} onClick={resetGeminiModel}>Reset model</Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Sparkles className="h-4 w-4" />}
+          title="Replicate — Seedance 2.5 video"
+          desc="Adds ByteDance's Seedance 2.5 as a second engine for animating Movie Studio scenes, next to Veo. Replicate bills this token's account per second of video ($0.2312 a second at 720p, Oct 2026); subscribers pay in credits. Scene pictures still use the Gemini key. Optional."
+          link={{ href: "https://replicate.com/account/api-tokens", label: "Get a token" }}
+          state={st.replicate}
+          result={results.replicate}
+        >
+          {st.replicate.source === "server" && <ServerNote />}
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="Replicate API token (r8_…)" value={vals.replicateKey ?? ""} onChange={set("replicateKey")} />
+          <p className="text-[11px] leading-relaxed text-white/45">Turn on billing at replicate.com → Account → Billing first; Seedance won't run on an account without it.</p>
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Replicate"} onClick={() => save(["replicateKey"], "Replicate", "replicate")}>Save &amp; test</Button>
+            <Button size="sm" loading={busy === "test:replicate"} disabled={!st.replicate.set} onClick={() => check("replicate")}>Test</Button>
+            {st.replicate.set && st.replicate.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:replicateKey"} onClick={() => remove("replicateKey", "Replicate")}><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
           </Actions>
         </Service>

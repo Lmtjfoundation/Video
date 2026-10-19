@@ -3,7 +3,7 @@ import { claudeJson } from "./llm";
 import { videoPost, type RawVideo } from "./video";
 import { PLATFORM_SPECS } from "./platforms/specs";
 import { MAX_VEO_SCENES, MOVIE_SHAPE, VIDEO_TARGET, renderableScenes, type MovieLength } from "./video-spec";
-import type { Character, Platform, Post, Settings, VideoPlan } from "./types";
+import type { AnimationEngine, Character, Platform, Post, Settings, VideoPlan } from "./types";
 
 /**
  * Movies and explainer videos with AI visuals: Claude writes the script with one shot description per scene and
@@ -20,8 +20,10 @@ export interface MovieInput {
   look: string;
   platform: Platform;
   length: MovieLength;
-  /** How many scenes Veo animates (0 = pictures with camera moves only). */
+  /** How many scenes are animated (0 = pictures with camera moves only). */
   veoScenes: number;
+  /** Which model animates them. Missing = Veo. */
+  engine?: AnimationEngine;
 }
 
 interface RawMovie extends RawVideo {
@@ -97,7 +99,7 @@ ${settings.brandVoiceNotes ? `CREATOR NOTES: ${settings.brandVoiceNotes}\n` : ""
     ...s,
     cast: (raw.scenes?.[i]?.cast ?? []).map((n) => names.get(String(n).trim().toLowerCase())).filter((n): n is string => !!n),
   }));
-  plan.ai = { characterIds: o.characters.map((c) => c.id), look: o.look, veoScenes: [] };
+  plan.ai = { characterIds: o.characters.map((c) => c.id), look: o.look, veoScenes: [], ...(o.engine === "seedance" ? { engine: "seedance" as const } : {}) };
   plan.ai.veoScenes = pickVeoScenes(plan, raw.keyScenes, o.veoScenes);
   return post;
 }

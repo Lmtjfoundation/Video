@@ -163,6 +163,8 @@ export const CREDIT_COST = {
    */
   aiImage: 4,
   veoSecond: 7,
+  /** Seedance 2.5 on Replicate is $0.2312 a second at 720p from an image (Oct 2026), so 16 credits (32¢). */
+  seedanceSecond: 16,
   /** A character portrait: one 2K picture plus a short description written from the photo. */
   character: 5,
   explain: 1,
@@ -194,6 +196,7 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   liveCheck: "Live fact-check of a news piece (added to the post or video)",
   aiImage: "AI picture for one movie or explainer scene",
   veoSecond: "Each second of a Veo-animated scene (4–8 seconds per scene)",
+  seedanceSecond: "Each second of a Seedance 2.5-animated scene (4–8 seconds per scene)",
   character: "Create a character from a photo or description",
   explain: "Explain a text in plain language (2 credits over 8,000 characters)",
   filmDevelop: "Writers' Room: develop or revise a short film (titles, characters, world, structure, scene outline)",

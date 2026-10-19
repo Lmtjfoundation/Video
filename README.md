@@ -75,6 +75,7 @@ npm run gen:key        # paste the output into ENCRYPTION_KEY
 | `ANTHROPIC_API_KEY` | ✅ | Claude API key from console.anthropic.com |
 | `ANTHROPIC_MODEL` | | Defaults to `claude-sonnet-5-5` |
 | `GEMINI_API_KEY` | | The app's own Gemini key (free trials + backup when Claude can't answer). Can also be pasted in Admin → Integrations |
+| `REPLICATE_API_TOKEN` | | Optional. Seedance 2.5 (ByteDance) as a second engine for animated Movie Studio scenes, billed on the Replicate account. Can also be pasted in Admin → Integrations |
 | `GEMINI_MODEL` | | Defaults to `gemini-3.8-flash` |
 | `GEMINI_IMAGE_MODEL` | | Movie Studio pictures. Defaults to `gemini-nano-banana-2.1`, then `gemini-3.1-flash-image` |
 | `VEO_MODEL` | | Movie Studio clips. Defaults to `veo-3.1-fast-generate-preview`, then `veo-3.1-generate-preview` |

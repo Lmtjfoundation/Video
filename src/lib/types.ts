@@ -377,9 +377,13 @@ export interface AiVisuals {
   characterIds: string[];
   /** Art direction used for every picture, e.g. "Pixar-style 3D animation". */
   look: string;
-  /** Indexes into `scenes` that are animated with Veo; the rest are AI pictures with a slow camera move. */
+  /** Indexes into `scenes` that are animated (with Veo, or Seedance); the rest are AI pictures with a slow camera move. */
   veoScenes: number[];
+  /** Which model animates those scenes. Missing = Veo. */
+  engine?: AnimationEngine;
 }
+export const ANIMATION_ENGINES = ["veo", "seedance"] as const;
+export type AnimationEngine = (typeof ANIMATION_ENGINES)[number];
 
 /** A reusable character for movies and explainers, made from a photo or a description. */
 export interface Character {

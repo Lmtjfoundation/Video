@@ -1,4 +1,4 @@
-import type { Platform, VideoPlan, VideoScene } from "./types";
+import type { AnimationEngine, Platform, VideoPlan, VideoScene } from "./types";
 import { CREDIT_COST } from "./plans";
 
 type LengthTier = "short" | "mid" | "long";
@@ -45,12 +45,16 @@ export const veoSeconds = (scene: Pick<VideoScene, "narration">): 4 | 6 | 8 => {
   return s <= 4 ? 4 : s <= 6 ? 6 : 8;
 };
 
+/** Credits per second of an animated scene, by engine. */
+export const animationSecondCredits = (engine?: AnimationEngine) => (engine === "seedance" ? CREDIT_COST.seedanceSecond : CREDIT_COST.veoSecond);
+
 /** Credits for the AI pictures and Veo clips of a plan with `ai` visuals (0 for stock-footage videos). */
 export function aiVisualCredits(plan: Pick<VideoPlan, "scenes" | "ai">) {
   if (!plan.ai) return 0;
   const veo = new Set(plan.ai.veoScenes);
+  const perSecond = animationSecondCredits(plan.ai.engine);
   return renderableScenes(plan).reduce(
-    (sum, { scene, index }) => sum + CREDIT_COST.aiImage + (veo.has(index) ? veoSeconds(scene) * CREDIT_COST.veoSecond : 0),
+    (sum, { scene, index }) => sum + CREDIT_COST.aiImage + (veo.has(index) ? veoSeconds(scene) * perSecond : 0),
     0,
   );
 }
@@ -76,11 +80,11 @@ export const MAX_VEO_SCENES = 8;
  * Credits range for a movie before it's written (the exact render price shows on the post once the script exists):
  * the script, plus a picture per scene and the Veo clips at 6 seconds each on average.
  */
-export function movieEstimate(length: MovieLength, veoScenes: number) {
+export function movieEstimate(length: MovieLength, veoScenes: number, engine?: AnimationEngine) {
   const s = MOVIE_SHAPE[length];
   const veo = Math.min(veoScenes, MAX_VEO_SCENES, s.max);
   const fixed = videoCredits(length, "plan") + videoCredits(length, "render");
-  const at = (scenes: number, sec: number) => fixed + scenes * CREDIT_COST.aiImage + veo * sec * CREDIT_COST.veoSecond;
+  const at = (scenes: number, sec: number) => fixed + scenes * CREDIT_COST.aiImage + veo * sec * animationSecondCredits(engine);
   return { low: at(s.min, 4), high: at(s.max, 8) };
 }
 

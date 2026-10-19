@@ -5,6 +5,7 @@ import { mediaKey, MediaGenError } from "@/lib/gemini-media";
 import { signedUrl } from "@/lib/media";
 import { CREDIT_COST } from "@/lib/plans";
 import { log } from "@/lib/repo";
+import { seedanceReady } from "@/lib/seedance";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
@@ -16,6 +17,7 @@ export const GET = authed(async (_req, user) => {
     characters: list.map((c) => ({ ...c, imageUrl: signedUrl(user.id, c.imageMediaId, 6 * 3600) })),
     looks: CHARACTER_LOOKS,
     ready: !!(await mediaKey()),
+    seedance: await seedanceReady(),
   });
 });
 

@@ -31,6 +31,8 @@ export interface Integrations {
   geminiBackup?: boolean;
   elevenlabsKey?: string;
   elevenlabsVoiceId?: string;
+  /** Replicate (https://replicate.com) API token: Seedance 2.5 animated scenes in Movie Studio, billed on that account. */
+  replicateKey?: string;
   /** Pixabay (https://pixabay.com/api/docs/) — free stock video, the main footage source. */
   pixabayKey?: string;
   /** Pexels — optional second footage source. */
@@ -128,6 +130,7 @@ export async function ownerGemini(): Promise<OwnerGemini | null> {
 }
 
 export const elevenlabsKey = () => pick("elevenlabsKey", "ELEVENLABS_API_KEY");
+export const replicateKey = () => pick("replicateKey", "REPLICATE_API_TOKEN");
 export const elevenlabsVoice = () => pick("elevenlabsVoiceId", "ELEVENLABS_VOICE_ID");
 export const pixabayKey = () => pick("pixabayKey", "PIXABAY_API_KEY");
 /** True when any stock-footage source is connected. */
@@ -178,6 +181,7 @@ export async function integrationStatus() {
       backup: i.geminiBackup !== false,
     },
     elevenlabs: { ...entry("ELEVENLABS_API_KEY", i.elevenlabsKey), voiceId: i.elevenlabsVoiceId || process.env.ELEVENLABS_VOICE_ID || "" },
+    replicate: entry("REPLICATE_API_TOKEN", i.replicateKey),
     pixabay: entry("PIXABAY_API_KEY", i.pixabayKey),
     pexels: entry("PEXELS_API_KEY", i.pexelsKey),
     email: { ...entry("RESEND_API_KEY", i.resendKey), from: i.emailFrom || process.env.EMAIL_FROM || "" },
