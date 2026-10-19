@@ -51,8 +51,8 @@ export const animationSecondCredits = (engine?: AnimationEngine) =>
   engine === "seedance" ? CREDIT_COST.seedanceSecond : engine === "wan" ? CREDIT_COST.wanSecond : CREDIT_COST.veoSecond;
 
 /** Credits for the AI pictures and Veo clips of a plan with `ai` visuals (0 for stock-footage videos). */
-export function aiVisualCredits(plan: Pick<VideoPlan, "scenes" | "ai">) {
-  if (!plan.ai || isGraphicsLook(plan.ai.look)) return 0; // graphics styles are drawn by the free motion-graphics engine
+export function aiVisualCredits(plan: Pick<VideoPlan, "scenes" | "ai" | "visuals">) {
+  if (!plan.ai || plan.visuals === "motion" || isGraphicsLook(plan.ai.look)) return 0; // graphics styles are drawn by the free motion-graphics engine
   const veo = new Set(plan.ai.veoScenes);
   const perSecond = animationSecondCredits(plan.ai.engine);
   return renderableScenes(plan).reduce(
@@ -62,7 +62,7 @@ export function aiVisualCredits(plan: Pick<VideoPlan, "scenes" | "ai">) {
 }
 
 /** Everything a render costs: voice, assembly and captions by length, plus any AI pictures and Veo clips. */
-export const renderCredits = (plan: Pick<VideoPlan, "length" | "scenes" | "ai"> | undefined) =>
+export const renderCredits = (plan: Pick<VideoPlan, "length" | "scenes" | "ai" | "visuals"> | undefined) =>
   videoCredits(plan?.length, "render") + (plan ? aiVisualCredits(plan) : 0);
 
 /* Movies and explainers with AI visuals (Movie Studio). */

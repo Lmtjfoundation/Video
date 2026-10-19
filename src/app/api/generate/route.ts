@@ -2,7 +2,7 @@ import { body, fail, authed, ok } from "@/lib/http-api";
 import { generatePosts } from "@/lib/generate";
 import { credentialStatuses, getSettings, log, savePosts } from "@/lib/repo";
 import type { Format, Pillar, Placement, Platform } from "@/lib/types";
-import { FORMATS, PILLARS, PLACEMENTS, PLATFORMS } from "@/lib/types";
+import { FORMATS, PILLARS, PLACEMENTS, PLATFORMS, VIDEO_VISUALS, type VideoVisuals } from "@/lib/types";
 import { autoPublish } from "@/lib/publisher";
 import { clamp } from "@/lib/utils";
 import { withCredits } from "@/lib/credits";
@@ -39,7 +39,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export const POST = authed(async (req: Request, user) => {
-  const b = await body<{ kind?: "text" | "video"; platform: Platform; pillar?: Pillar | "auto"; format?: Format | "auto"; topic?: string; count?: number; imageUrl?: string; mediaIds?: string[]; mature?: boolean; niche?: string; style?: VideoPlan["style"]; length?: VideoPlan["length"]; genre?: string; sourceText?: string; faceless?: boolean; renderNow?: boolean; autoPost?: boolean; placement?: Placement; account?: string }>(req);
+  const b = await body<{ kind?: "text" | "video"; platform: Platform; pillar?: Pillar | "auto"; format?: Format | "auto"; topic?: string; count?: number; imageUrl?: string; mediaIds?: string[]; mature?: boolean; niche?: string; style?: VideoPlan["style"]; length?: VideoPlan["length"]; genre?: string; sourceText?: string; faceless?: boolean; renderNow?: boolean; autoPost?: boolean; placement?: Placement; account?: string; voiceover?: boolean; visuals?: VideoVisuals }>(req);
   const genre = genreById(b.genre) ? b.genre : undefined;
   // Text to video / text to post: build only from pasted material.
   const sourceText = typeof b.sourceText === "string" && b.sourceText.trim().length >= 40 ? b.sourceText.trim().slice(0, 15000) : undefined;
@@ -67,6 +67,8 @@ export const POST = authed(async (req: Request, user) => {
     );
     if (fromBank && mediaIds?.length) videos.forEach((p) => (p.mediaIds = mediaIds));
     for (const v of videos) {
+      if (v.video && b.voiceover === false) v.video.voiceover = false;
+      if (v.video && VIDEO_VISUALS.includes(b.visuals as VideoVisuals)) v.video.visuals = b.visuals;
       if (placement) v.placement = placement;
       if (account) v.account = account;
       if (autoPost) v.autoPost = true;

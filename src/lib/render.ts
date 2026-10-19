@@ -526,12 +526,13 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       mediaFiles.push({ kind: m.kind, file: f });
     }
 
-    const voice = !!(await elevenlabsKey()) || freeVoiceEnabled();
+    const voice = plan.voiceover !== false && (!!(await elevenlabsKey()) || freeVoiceEnabled());
+    const motionOnly = plan.visuals === "motion";
     const jobs: SceneJob[] = [];
     const planned = renderableScenes(plan);
     const scenes = planned.map((p) => p.scene);
     if (!scenes.length) throw new Error("This plan has no scenes to render.");
-    const ai = plan.ai && !mediaFiles.length ? plan.ai : null;
+    const ai = plan.ai && !mediaFiles.length && !motionOnly ? plan.ai : null;
     for (const [i, scene] of scenes.entries()) {
       let audio: string | undefined;
       let dur = Math.max(1.8, scene.narration.split(/\s+/).filter(Boolean).length / 2.6);
@@ -541,6 +542,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       }
       let visual: SceneJob["visual"];
       if (mediaFiles.length) visual = mediaFiles[i % mediaFiles.length];
+      else if (motionOnly) visual = { kind: "motion" };
       else if (ai) visual = { kind: "motion" }; // pictured below (graphics styles keep the motion graphics)
       else {
         const clip = path.join(dir, `stock${i}.mp4`);
@@ -553,8 +555,8 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       const share = ai ? 10 : 35;
       await setRender(post, { progress: Math.round(5 + (share * (i + 1)) / scenes.length), message: voice ? "Recording voiceover and gathering visuals…" : "Gathering visuals…" });
     }
-    // Attached media replaces the AI pictures, so their credits go back.
-    let unused = plan.ai && !ai ? aiVisualCredits(plan) : 0;
+    // Attached media (or choosing motion graphics) replaces the AI pictures, so their credits go back.
+    let unused = plan.ai && !ai ? aiVisualCredits({ ...plan, visuals: "auto" }) : 0;
     let aiBlocked: string | undefined;
     if (ai && !isGraphicsLook(ai.look)) ({ unused, blocked: aiBlocked } = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long));
 
@@ -589,7 +591,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     fresh.mediaIds = [item.id, ...(fresh.mediaIds ?? []).filter((id) => id !== fresh.render?.mediaId)];
     const refunded = unused && credits ? ` · ${unused} credits refunded for ${ai ? "scenes Google couldn't make" : "AI scenes replaced by your media"}` : "";
     const note = aiBlocked ? ` · AI visuals were unavailable (${aiBlocked}), so scenes use stock footage or backgrounds` : "";
-    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${voice ? "voiceover" : "captions only"}${ai && isGraphicsLook(ai.look) ? " · motion graphics" : ai && !aiBlocked ? " · AI visuals" : ""} · ${(bytes.length / 1048576).toFixed(1)} MB${refunded}${note}`.slice(0, 600), mediaId: item.id, updatedAt: nowIso() };
+    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${voice ? "voiceover" : "captions only"}${motionOnly || (ai && isGraphicsLook(ai.look)) ? " · motion graphics" : ai && !aiBlocked ? " · AI visuals" : ""} · ${(bytes.length / 1048576).toFixed(1)} MB${refunded}${note}`.slice(0, 600), mediaId: item.id, updatedAt: nowIso() };
     if (fresh.status === "copy_ready") { fresh.status = "draft"; fresh.error = undefined; }
     await savePost(fresh);
     if (unused && credits) await refundCredits(userId, Math.min(unused, credits));

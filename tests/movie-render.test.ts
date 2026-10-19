@@ -158,4 +158,44 @@ describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Veo clip",
       globalThis.fetch = prev;
     }
   }, 120_000);
+
+  it("honours the render choices: motion graphics instead of AI pictures, and no voiceover", async () => {
+    const { asUser, db } = await import("@/lib/db");
+    const { renderVideoPost } = await import("@/lib/render");
+    const { savePost } = await import("@/lib/repo");
+    const { renderCredits } = await import("@/lib/video-spec");
+    const prev = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      return new Response("unexpected", { status: 500 });
+    }) as typeof fetch;
+    delete process.env.FREE_VOICE; // the voice would be on, but this video turns it off
+    try {
+      await asUser("usr_movie_test", async () => {
+        const t = new Date().toISOString();
+        const scene = (narration: string): VideoScene => ({ time: "", narration, onScreen: "BIG IDEA", visual: "a city", motion: "", sfx: "", cast: [] });
+        const video = {
+          niche: "Short film", style: "fiction" as const, length: "s30" as const, titles: ["Choices"], thumbnail: {}, voice: "", music: "", loopLine: "", factCheck: [],
+          scenes: [scene("One choice changes everything.")],
+          ai: { characterIds: [], look: "Photorealistic film still", veoScenes: [0] },
+          voiceover: false, visuals: "motion" as const,
+        };
+        expect(renderCredits(video)).toBeLessThan(renderCredits({ ...video, visuals: "auto" })); // no AI picture or Veo credits
+        const post: Post = {
+          id: "post_choices", platform: "tiktok", pillar: "ai_leverage", format: "video_script", kind: "video", hook: "Choices", body: "", parts: [], hashtags: [],
+          status: "draft", moneyScore: 0, revenue: { low: 0, high: 0, basis: "" }, scoreNotes: [], safetyFlags: [], attempts: 0, createdAt: t, updatedAt: t, video,
+        };
+        await savePost(post);
+        await renderVideoPost("usr_movie_test", post.id, 0);
+        const done = await db().get<Post>("posts", post.id);
+        expect(done?.render?.status, done?.render?.message).toBe("done");
+        expect(done?.render?.message).toMatch(/captions only · motion graphics/);
+      });
+      expect(calls).toBe(0);
+    } finally {
+      globalThis.fetch = prev;
+      process.env.FREE_VOICE = "off";
+    }
+  }, 120_000);
 });

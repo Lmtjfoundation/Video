@@ -256,6 +256,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
   const [engine, setEngine] = useState<AnimationEngine>("veo");
   const engineName = engine === "seedance" ? "Seedance 2.5" : engine === "wan" ? "Wan 2.2" : "Veo";
   const [renderNow, setRenderNow] = useState(true);
+  const [voiceover, setVoiceover] = useState(true);
   const settings = useApp((s) => s.status?.settings);
   const [autoPost, setAutoPost] = useState(false);
   const [placement, setPlacement] = useState<Placement>("auto");
@@ -326,7 +327,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
     setBusy(true);
     setMade(null);
     try {
-      const r = await api<{ post: Post; note: string }>("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: graphics ? 0 : veo, engine, renderNow: renderNow || autoPost, autoPost, placement: hasPlacement ? placement : undefined } });
+      const r = await api<{ post: Post; note: string }>("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: graphics ? 0 : veo, engine, voiceover, renderNow: renderNow || autoPost, autoPost, placement: hasPlacement ? placement : undefined } });
       setMade(r);
       onMade(r.post);
       toast(r.post.render?.status === "queued" ? (r.post.autoPost ? "Script written. Rendering — it posts itself when ready." : "Script written. Rendering has started.") : "Script written and saved as a draft.", "success");
@@ -414,6 +415,10 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
           )}
         </div>
         {!lengthOk && <p className="text-xs text-red-300">X allows videos up to 2 minutes 20 seconds. Pick a shorter length for X.</p>}
+        <label className="flex items-center gap-2 text-sm text-white/70">
+          <input type="checkbox" className="accent-mint-400" checked={voiceover} onChange={(e) => setVoiceover(e.target.checked)} />
+          Voiceover (a narrator reads the script; off: captions and music only)
+        </label>
         <label className="flex items-center gap-2 text-sm text-white/70">
           <input type="checkbox" className="accent-mint-400" checked={renderNow || autoPost} disabled={autoPost} onChange={(e) => setRenderNow(e.target.checked)} />
           Render the video right after writing it

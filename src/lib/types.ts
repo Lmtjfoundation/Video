@@ -414,4 +414,10 @@ export interface VideoPlan {
   factCheck: string[];
   /** Set when the visuals are AI pictures and Veo clips instead of stock footage. */
   ai?: AiVisuals;
+  /** false = no narration audio (captions, visuals and music only). Missing = on. */
+  voiceover?: boolean;
+  /** "motion" = Ghost Post's motion graphics for every scene; "auto" (or missing) = stock footage or AI pictures. */
+  visuals?: VideoVisuals;
 }
+export const VIDEO_VISUALS = ["auto", "motion"] as const;
+export type VideoVisuals = (typeof VIDEO_VISUALS)[number];

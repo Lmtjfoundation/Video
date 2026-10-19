@@ -53,6 +53,8 @@ export default function Studio() {
   const [sourceText, setSourceText] = useState("");
   const [faceless, setFaceless] = useState(true);
   const [renderNow, setRenderNow] = useState(false);
+  const [voiceover, setVoiceover] = useState(true);
+  const [motion, setMotion] = useState(false);
   const [autoPost, setAutoPost] = useState(false);
   const [placement, setPlacement] = useState<Placement>("auto");
   const [account, setAccount] = useState("");
@@ -111,7 +113,7 @@ export default function Studio() {
       const shared = { autoPost: posting, placement: hasPlacement ? placement : undefined, account: account || undefined };
       const created = await api<Post[]>("/api/generate", {
         body: kind === "video"
-          ? { kind, platform, count, topic, niche: genre ? "auto" : vNiche, style: vStyle, length: vLen, mediaIds: attach.length ? attach : undefined, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, faceless, renderNow: fromText && renderNow, ...shared }
+          ? { kind, platform, count, topic, niche: genre ? "auto" : vNiche, style: vStyle, length: vLen, mediaIds: attach.length ? attach : undefined, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, faceless, renderNow: fromText && renderNow, voiceover, visuals: motion ? "motion" : "auto", ...shared }
           : { kind, platform, pillar, format, count, topic, imageUrl: imageUrl || undefined, mediaIds: attach.length ? attach : undefined, mature: platform === "x" && mature, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, ...shared },
       });
       setPosts((p) => [...created, ...p]);
@@ -244,6 +246,22 @@ export default function Studio() {
                     <p className="text-xs text-white/50">Voiceover over stock footage, maps, documents and AI scenes. Nobody on camera.</p>
                   </div>
                   <Switch checked={faceless} onChange={setFaceless} label="Faceless video" />
+                </div>
+                <div className="grid gap-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[13px] font-medium text-white">Voiceover</p>
+                      <p className="text-xs text-white/50">A narrator reads the script. Off: captions and music only.</p>
+                    </div>
+                    <Switch checked={voiceover} onChange={setVoiceover} label="Voiceover" />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[13px] font-medium text-white">Motion graphics</p>
+                      <p className="text-xs text-white/50">Animated shapes and kinetic words in every scene, instead of stock footage. Free.</p>
+                    </div>
+                    <Switch checked={motion} onChange={setMotion} label="Motion graphics" />
+                  </div>
                 </div>
               </>
             ) : (

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarClock, Check, ChevronDown, CircleDollarSign, Clapperboard, Copy, ExternalLink, Pencil, Repeat2, Send, Share, ShieldAlert, Trash2, Undo2 } from "lucide-react";
 import { describeFlag } from "@/lib/compliance";
 import { RepurposeDialog } from "./repurpose-dialog";
-import type { Placement, Post, Settings } from "@/lib/types";
+import type { Placement, Post, Settings, VideoVisuals } from "@/lib/types";
 import { api, copyToClipboard, fmtDateTime } from "@/lib/client";
 import { copyText, renderPost } from "@/lib/compose";
 import { NICHES } from "@/lib/niches";
@@ -14,7 +14,7 @@ import type { VideoPlan } from "@/lib/types";
 import { localParts, addDays } from "@/lib/time";
 import { useApp } from "@/lib/store";
 import { cn, FORMAT_LABEL, PILLAR_LABEL, usd } from "@/lib/utils";
-import { Badge, Button, Input, PlatformChip, ScoreRing, StatusBadge, Textarea } from "./ui";
+import { Badge, Button, Input, PlatformChip, ScoreRing, StatusBadge, Switch, Textarea } from "./ui";
 
 export function PostCard({
   post,
@@ -382,9 +382,11 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
   const toast = useApp((s) => s.toast);
   const [info, setInfo] = useState<RenderInfo | null>(null);
   const [starting, setStarting] = useState(false);
+  const [voiceover, setVoiceover] = useState(post.video?.voiceover !== false);
+  const [visuals, setVisuals] = useState<VideoVisuals>(post.video?.visuals ?? "auto");
   const status = info?.render?.status ?? post.render?.status;
   const active = status === "queued" || status === "rendering";
-  const cost = renderCredits(post.video);
+  const cost = renderCredits(post.video && { ...post.video, visuals });
   // A finished episode delivered by Claude's content inbox: voices, music and captions are already in the file.
   const finished = !!post.videoUrl && !post.render?.mediaId;
 
@@ -417,7 +419,7 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
   async function start() {
     setStarting(true);
     try {
-      const p = await api<Post>("/api/video/render", { body: { id: post.id } });
+      const p = await api<Post>("/api/video/render", { body: { id: post.id, voiceover, visuals } });
       setInfo((i) => ({ ...(i ?? { url: null, voice: false, stock: false }), render: p.render }));
       onChange(p);
     } catch (e) {
@@ -445,6 +447,24 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
           </Button>
         )}
       </div>
+      {!locked && !active && !finished && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <label className="flex items-center gap-2 text-xs text-white/75">
+            <Switch checked={voiceover} onChange={setVoiceover} label="Voiceover" /> Voiceover
+          </label>
+          <label className="flex items-center gap-2 text-xs text-white/75">
+            Visuals
+            <select
+              value={visuals}
+              onChange={(e) => setVisuals(e.target.value as VideoVisuals)}
+              className="focus-ring h-8 rounded-xl border border-white/10 bg-white/[0.04] px-2 text-xs text-white/85"
+            >
+              <option value="auto">{post.video?.ai ? "AI pictures" : "Stock footage"}</option>
+              <option value="motion">Motion graphics (free)</option>
+            </select>
+          </label>
+        </div>
+      )}
       {active && (
         <div>
           <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">

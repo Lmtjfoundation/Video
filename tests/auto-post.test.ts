@@ -166,7 +166,7 @@ describe("Facebook profile on autopilot through Instagram", () => {
     const { asUser } = await import("@/lib/db");
     const { createUser } = await import("@/lib/auth");
     const owner = await createUser({ email: "profile-auto@example.com", password: "Correct-horse-battery-9", setupCode: "test-setup-code" });
-    const { saveCredential, savePost, credentialStatuses } = await import("@/lib/repo");
+    const { saveCredential, savePost, credentialStatuses, saveSettings } = await import("@/lib/repo");
     const { autoPublish } = await import("@/lib/publisher");
     const calls: string[] = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
@@ -182,6 +182,7 @@ describe("Facebook profile on autopilot through Instagram", () => {
       status: "draft", moneyScore: 0, revenue: { low: 0, high: 0, basis: "" }, scoreNotes: [], safetyFlags: [], attempts: 0, createdAt: t, updatedAt: t, ...o,
     });
     await asUser(owner.id, async () => {
+      await saveSettings({ quietHours: { enabled: false, start: "22:00", end: "07:00" } }); // posts at any hour in tests
       await saveCredential("instagram", { accessToken: "tok", accountId: "ig1", method: "oauth" });
       await saveCredential("facebook", { mode: "profile", method: "profile", profileName: "Arthur Hamilton", viaInstagram: "1" });
       expect((await credentialStatuses()).find((s) => s.platform === "facebook")?.viaInstagram).toBe(true);
@@ -208,7 +209,7 @@ describe("Facebook profile autopilot with Instagram through Metricool (no develo
     const { asUser } = await import("@/lib/db");
     const { createUser } = await import("@/lib/auth");
     const owner = await createUser({ email: "profile-mc@example.com", password: "Correct-horse-battery-9", setupCode: "test-setup-code" });
-    const { saveCredential, savePost } = await import("@/lib/repo");
+    const { saveCredential, savePost, saveSettings } = await import("@/lib/repo");
     const { saveMetricool } = await import("@/lib/metricool");
     const { autoPublish } = await import("@/lib/publisher");
     const calls: { url: string; body: string }[] = [];
@@ -218,6 +219,7 @@ describe("Facebook profile autopilot with Instagram through Metricool (no develo
     }));
     const t = new Date().toISOString();
     await asUser(owner.id, async () => {
+      await saveSettings({ quietHours: { enabled: false, start: "22:00", end: "07:00" } }); // posts at any hour in tests
       await saveMetricool({ token: "tok", userId: "5713986", blogId: "7360508", brand: "My Brand", found: ["instagram"], use: { instagram: true }, connectedAt: t, checkedAt: t });
       await saveCredential("facebook", { mode: "profile", method: "profile", profileName: "Arthur Hamilton", viaInstagram: "1" });
       const p: Post = {
@@ -239,7 +241,7 @@ describe("more than one account per network (Metricool-style)", () => {
     const { asUser } = await import("@/lib/db");
     const { createUser } = await import("@/lib/auth");
     const owner = await createUser({ email: "two-ig@example.com", password: "Correct-horse-battery-9", setupCode: "test-setup-code" });
-    const { saveCredential, savePost, credentialStatuses, deleteCredential, getCredential } = await import("@/lib/repo");
+    const { saveCredential, savePost, credentialStatuses, deleteCredential, getCredential, saveSettings } = await import("@/lib/repo");
     const { withAccount } = await import("@/lib/account-slot");
     const { autoPublish } = await import("@/lib/publisher");
     const calls: string[] = [];
@@ -252,6 +254,7 @@ describe("more than one account per network (Metricool-style)", () => {
     }));
     const t = new Date().toISOString();
     await asUser(owner.id, async () => {
+      await saveSettings({ quietHours: { enabled: false, start: "22:00", end: "07:00" } }); // posts at any hour in tests
       await saveCredential("instagram", { accessToken: "main-tok", accountId: "igMain", handle: "@bino_da_producer", method: "manual" });
       await withAccount("a0000beef", () => saveCredential("instagram", { accessToken: "second-tok", accountId: "igSecond", handle: "@1120_ics", method: "manual" }));
       const st = (await credentialStatuses()).find((s) => s.platform === "instagram")!;
