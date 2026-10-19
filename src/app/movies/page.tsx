@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Clapperboard, Film, ImagePlus, Lightbulb, Sparkles, Trash2, UserRound, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api, EXPLAIN_HANDOFF, FILM_HANDOFF } from "@/lib/client";
+import { briefFor } from "@/lib/film-brief";
+import type { FilmProject } from "@/lib/writers-room";
 import { CREDIT_COST } from "@/lib/plans";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import type { AnimationEngine, Character, Placement, Platform, Post } from "@/lib/types";
@@ -266,6 +268,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
     if (settings && (platform === "instagram" || platform === "facebook")) setPlacement(settings.autoPost?.[platform] ?? "auto");
   }, [platform, settings?.autoPost]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [filmCast, setFilmCast] = useState<string[] | null>(null);
   useEffect(() => {
     try {
       const text = sessionStorage.getItem(EXPLAIN_HANDOFF);
@@ -283,7 +286,34 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
     } catch {
       /* storage unavailable */
     }
-  }, []);
+    // "Make it in Movie Studio" from the Writers' Room opens /movies?film=<id>: load the story and cast from the server.
+    const filmId = new URLSearchParams(window.location.search).get("film");
+    if (!filmId) return;
+    api<{ films: FilmProject[] }>("/api/films")
+      .then(({ films }) => {
+        const f = films.find((x) => x.id === filmId);
+        if (!f) return toast("That Writers' Room project wasn't found.", "error");
+        setKind("movie");
+        setBrief(briefFor(f));
+        setLength("m3");
+        setFilmCast(f.characters.map((c) => c.name.toLowerCase()));
+        toast(`“${f.title}” is ready to make. Check the cast and press Write the movie.`, "success");
+        setTimeout(() => document.getElementById("new-movie")?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+        window.history.replaceState(null, "", "/movies");
+      })
+      .catch((e: Error) => toast(e.message, "error"));
+  }, [toast]);
+
+  // Pick the film's cast from the Characters library once it has loaded (names match the Writers' Room characters).
+  useEffect(() => {
+    if (!filmCast || !lib) return;
+    const picked = lib.characters.filter((c) => filmCast.includes(c.name.toLowerCase()));
+    if (picked.length) {
+      setCast(picked.slice(0, 6).map((c) => c.id));
+      setLook(picked[0].look);
+    }
+    setFilmCast(null);
+  }, [filmCast, lib]);
 
   const est = movieEstimate(length, veo, engine);
   const chars = lib?.characters ?? [];
@@ -306,7 +336,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
   }
 
   return (
-    <Card>
+    <Card id="new-movie">
       <CardHeader
         title={kind === "movie" ? "Make a movie" : "Make an explainer video"}
         subtitle={costLine(admin, creditsLeft, `about ${est.low}–${est.high} credits${renderNow ? "" : ` (script only: a few credits now, the rest when you render)`}`)}

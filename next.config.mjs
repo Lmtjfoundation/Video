@@ -3,6 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   eslint: { ignoreDuringBuilds: true },
+  // The Media Library takes files up to 100 MB; Next.js cuts request bodies passing through middleware at 10 MB by default.
+  experimental: { middlewareClientMaxBodySize: "105mb" },
   async headers() {
     return [
       {

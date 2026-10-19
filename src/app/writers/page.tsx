@@ -1,9 +1,9 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Award, BookOpen, Clapperboard, Copy, Feather, Globe2, Megaphone, PenLine, Sparkles, Trash2, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { api, copyToClipboard, FILM_HANDOFF } from "@/lib/client";
+import { api, copyToClipboard } from "@/lib/client";
 import { CREDIT_COST } from "@/lib/plans";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import type { Platform } from "@/lib/types";
@@ -195,7 +195,8 @@ function Project({ film, onChange, onDeleted }: { film: FilmProject; onChange: (
           <Badge tone="violet">{film.genre}</Badge>
           <Badge>{FORMAT_LABEL[film.format]} · {FORMAT_HINT[film.format]}</Badge>
           {film.review && <Badge tone="gold">Review {avg(film)}/10</Badge>}
-          <Button size="sm" variant="ghost" className="ml-auto" onClick={remove}><Trash2 className="h-3.5 w-3.5" /> {confirmDel ? "Confirm delete" : "Delete"}</Button>
+          <Link href={`/movies?film=${film.id}`} className="ml-auto"><Button size="sm" variant="primary"><Clapperboard className="h-3.5 w-3.5" /> Make it in Movie Studio</Button></Link>
+          <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="h-3.5 w-3.5" /> {confirmDel ? "Confirm delete" : "Delete"}</Button>
         </div>
         <Field label="Title">
           <Select value={film.title} onChange={(e) => patch({ title: e.target.value }, "Title chosen")} className="text-lg font-semibold">
@@ -398,7 +399,6 @@ function ReviewTab({ film, busy, act }: { film: FilmProject; busy: string | null
 
 function PromoteTab({ film, busy, act }: { film: FilmProject; busy: string | null; act: Act }) {
   const { toast, refresh } = useApp();
-  const router = useRouter();
   const [platforms, setPlatforms] = useState<Platform[]>(["instagram", "facebook", "tiktok"]);
   const [posting, setPosting] = useState(false);
   const p = film.promo;
@@ -406,14 +406,6 @@ function PromoteTab({ film, busy, act }: { film: FilmProject; busy: string | nul
     await copyToClipboard(t);
     toast("Copied", "success");
   };
-  function makeMovie() {
-    try {
-      sessionStorage.setItem(FILM_HANDOFF, JSON.stringify({ brief: briefFor(film) }));
-    } catch {
-      /* storage unavailable */
-    }
-    router.push("/movies");
-  }
   async function promoPosts() {
     setPosting(true);
     try {
@@ -428,11 +420,7 @@ function PromoteTab({ film, busy, act }: { film: FilmProject; busy: string | nul
   }
   return (
     <div className="grid gap-5">
-      <div className="grid gap-3 rounded-xl bg-mint-400/[0.05] p-4 ring-1 ring-mint-400/20">
-        <p className="flex items-center gap-2 text-sm font-medium text-white"><Clapperboard className="h-4 w-4 text-mint-300" /> Make it</p>
-        <p className="text-[13px] leading-relaxed text-white/65">Sends the story and cast to Movie Studio. Create each character's portrait there (from a photo or their look below) so they stay the same in every scene.</p>
-        <Button variant="primary" className="w-fit" onClick={makeMovie}>Open in Movie Studio</Button>
-      </div>
+      <MakeIt film={film} />
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-[13px] text-white/60">Tagline, synopsis, poster art, trailer beats and a spotlight post for every character.</p>
         <Button size="sm" variant="primary" className="ml-auto" loading={busy === "promo"} onClick={() => act("promo", { action: "promo" }, "Promotion kit ready")}>
@@ -486,12 +474,67 @@ function Copyable({ label, text, onCopy }: { label: string; text: string; onCopy
   );
 }
 
-/** Same shape as the server's movieBrief: the story and cast in order, for Movie Studio. */
-function briefFor(f: FilmProject) {
-  return `"${f.title}" — ${f.logline}
-Theme: ${f.theme}
-World: ${f.world.setting}. ${f.world.look}
-Cast: ${f.characters.map((c) => `${c.name} (${c.role}; ${c.look})`).join("; ")}
-Story, in order:
-${f.scenes.map((s) => `${s.number}. ${s.summary}`).join("\n")}`.slice(0, 11_500);
+type Lib = { characters: { id: string; name: string }[]; lookGroups?: { label: string; looks: string[] }[]; looks: string[]; ready: boolean };
+
+/**
+ * Make it: creates any cast member Movie Studio doesn't have yet (a portrait from their look, in the chosen art style),
+ * then opens Movie Studio with the story and cast filled in.
+ */
+function MakeIt({ film }: { film: FilmProject }) {
+  const { toast, refresh } = useApp();
+  const [lib, setLib] = useState<Lib | null>(null);
+  const [style, setStyle] = useState("");
+  const [progress, setProgress] = useState<string | null>(null);
+  const load = useCallback(() => api<Lib>("/api/characters").then(setLib).catch((e: Error) => toast(e.message, "error")), [toast]);
+  useEffect(() => {
+    load();
+  }, [load]);
+  const have = new Set((lib?.characters ?? []).map((c) => c.name.toLowerCase()));
+  const missing = film.characters.filter((c) => !have.has(c.name.slice(0, 40).toLowerCase()));
+  const groups = lib?.lookGroups ?? [{ label: "Styles", looks: lib?.looks ?? [] }];
+  const chosen = style || groups[0]?.looks[0] || "";
+
+  async function createCast() {
+    let made = 0;
+    try {
+      for (const c of missing) {
+        setProgress(`Creating ${c.name} (${made + 1} of ${missing.length})…`);
+        await api("/api/characters", { body: { name: c.name.slice(0, 40), description: `${c.look}. ${c.role}.`.slice(0, 900), look: chosen } });
+        made++;
+      }
+      toast(`${made} cast portrait${made === 1 ? "" : "s"} created in Movie Studio`, "success");
+    } catch (e) {
+      toast(`${made ? `${made} created, then: ` : ""}${(e as Error).message}`, "error");
+    } finally {
+      setProgress(null);
+      load();
+      refresh();
+    }
+  }
+
+  return (
+    <div className="grid gap-3 rounded-xl bg-mint-400/[0.05] p-4 ring-1 ring-mint-400/20">
+      <p className="flex items-center gap-2 text-sm font-medium text-white"><Clapperboard className="h-4 w-4 text-mint-300" /> Make it</p>
+      <p className="text-[13px] leading-relaxed text-white/65">
+        Movie Studio keeps each character looking the same in every scene from their portrait. {missing.length ? `${missing.length} of ${film.characters.length} cast members don't have one yet.` : "Every cast member has a portrait."} For real actors, create their characters from photos in Movie Studio instead.
+      </p>
+      {!!missing.length && lib?.ready && (
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <Field label="Art style for the cast">
+            <Select value={chosen} onChange={(e) => setStyle(e.target.value)}>
+              {groups.map((g) => (
+                <optgroup key={g.label} label={g.label}>{g.looks.map((l) => <option key={l} value={l}>{l}</option>)}</optgroup>
+              ))}
+            </Select>
+          </Field>
+          <Button variant="secondary" loading={!!progress} onClick={createCast}>
+            <Users className="h-4 w-4" /> Create {missing.length} portrait{missing.length === 1 ? "" : "s"} · {CREDIT_COST.character * missing.length} credits
+          </Button>
+        </div>
+      )}
+      {progress && <p className="text-[12px] text-white/55">{progress} Each takes about 20 seconds.</p>}
+      {lib && !lib.ready && <p className="text-[12px] text-gold-300">Portraits need the app's Gemini key (Admin → Integrations).</p>}
+      <Link href={`/movies?film=${film.id}`} className="w-fit"><Button variant="primary"><Clapperboard className="h-4 w-4" /> Open in Movie Studio</Button></Link>
+    </div>
+  );
 }

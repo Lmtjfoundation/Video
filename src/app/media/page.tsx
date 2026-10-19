@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Copy, Images, Trash2, Upload } from "lucide-react";
+import { Copy, Download, Images, Play, Trash2, Upload, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api, copyToClipboard } from "@/lib/client";
 import type { MediaItem } from "@/lib/types";
@@ -17,6 +17,7 @@ export default function MediaPage() {
   const [limit, setLimit] = useState(1);
   const [busy, setBusy] = useState(false);
   const [drag, setDrag] = useState(false);
+  const [playing, setPlaying] = useState<Item | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -84,7 +85,13 @@ export default function MediaPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={m.url} alt={m.name} className="h-full w-full object-cover" loading="lazy" />
                 ) : (
-                  <video src={m.url} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+                  <button className="focus-ring group relative block h-full w-full" onClick={() => setPlaying(m)} aria-label={`Play ${m.name}`}>
+                    {/* #t=0.1 makes iPhones show the first frame as the thumbnail. */}
+                    <video src={`${m.url}#t=0.1`} className="pointer-events-none h-full w-full object-cover" muted playsInline preload="metadata" />
+                    <span className="absolute inset-0 grid place-items-center bg-black/25 transition group-hover:bg-black/40">
+                      <span className="grid h-12 w-12 place-items-center rounded-full bg-white/90 text-ink-950 shadow-lg"><Play className="ml-0.5 h-5 w-5 fill-current" /></span>
+                    </span>
+                  </button>
                 )}
               </div>
               <div className="grid gap-2 p-3">
@@ -118,6 +125,20 @@ export default function MediaPage() {
         </div>
       ) : (
         <Card><Empty icon={<Images className="h-6 w-6" />} title="No uploads yet" body="Upload images and clips here, then attach them to posts in Content Studio." /></Card>
+      )}
+      {playing && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-label={playing.name} onClick={() => setPlaying(null)}>
+          <div className="grid w-full max-w-3xl gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm text-white">{playing.name}</p>
+              <a href={`${playing.url}&dl=${encodeURIComponent(playing.name.replace(/[^A-Za-z0-9._-]/g, "_"))}`} className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-white/80 ring-1 ring-white/15 hover:text-white">
+                <Download className="h-3.5 w-3.5" /> Download
+              </a>
+              <button className="focus-ring rounded-lg p-1.5 text-white/70 hover:text-white" onClick={() => setPlaying(null)} aria-label="Close"><X className="h-5 w-5" /></button>
+            </div>
+            <video key={playing.id} src={playing.url} controls autoPlay playsInline className="max-h-[80vh] w-full rounded-lg bg-black" />
+          </div>
+        </div>
       )}
     </>
   );
