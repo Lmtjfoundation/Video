@@ -99,7 +99,7 @@ ${settings.brandVoiceNotes ? `CREATOR NOTES: ${settings.brandVoiceNotes}\n` : ""
     ...s,
     cast: (raw.scenes?.[i]?.cast ?? []).map((n) => names.get(String(n).trim().toLowerCase())).filter((n): n is string => !!n),
   }));
-  plan.ai = { characterIds: o.characters.map((c) => c.id), look: o.look, veoScenes: [], ...(o.engine === "seedance" ? { engine: "seedance" as const } : {}) };
+  plan.ai = { characterIds: o.characters.map((c) => c.id), look: o.look, veoScenes: [], ...(o.engine && o.engine !== "veo" ? { engine: o.engine } : {}) };
   plan.ai.veoScenes = pickVeoScenes(plan, raw.keyScenes, o.veoScenes);
   return post;
 }

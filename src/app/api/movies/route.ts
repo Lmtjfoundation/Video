@@ -7,7 +7,7 @@ import { writeMovie } from "@/lib/movie";
 import { enqueueRender, ffmpegAvailable } from "@/lib/render";
 import { getSettings, log, savePost } from "@/lib/repo";
 import { ANIMATION_ENGINES, PLACEMENTS, PLATFORMS, type AnimationEngine, type Placement, type Platform } from "@/lib/types";
-import { seedanceReady } from "@/lib/seedance";
+import { replicateReady } from "@/lib/replicate-video";
 import { clamp, nowIso } from "@/lib/utils";
 import { lengthAllowed, MAX_VEO_SCENES, MOVIE_LENGTHS, renderCredits, videoCredits, type MovieLength } from "@/lib/video-spec";
 
@@ -28,8 +28,8 @@ export const POST = authed(async (req, user) => {
   if (!lengthAllowed(length, platform)) return fail("X allows videos up to 2 minutes 20 seconds. Pick a shorter length for X.");
   if (!(await mediaKey())) return fail("AI movies need the app's Gemini key for pictures and Veo clips. Ask the admin to add it in Admin → App settings → Integrations.", 503);
   const engine: AnimationEngine = ANIMATION_ENGINES.includes(b.engine as AnimationEngine) ? (b.engine as AnimationEngine) : "veo";
-  if (engine === "seedance" && Number(b.veoScenes) > 0 && !(await seedanceReady())) {
-    return fail("Seedance 2.5 isn't connected yet. Ask the admin to add a Replicate API token in Admin → App settings → Integrations, or choose Veo.", 503);
+  if (engine !== "veo" && Number(b.veoScenes) > 0 && !(await replicateReady())) {
+    return fail(`${engine === "wan" ? "Wan 2.2" : "Seedance 2.5"} isn't connected yet. Ask the admin to add a Replicate API token in Admin → App settings → Integrations, or choose Veo.`, 503);
   }
   const characters = await getCharacters(Array.isArray(b.characterIds) ? b.characterIds.slice(0, 6) : []);
   const look = String(b.look ?? "").trim().slice(0, 160) || characters[0]?.look || CHARACTER_LOOKS[0];

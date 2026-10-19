@@ -12,7 +12,7 @@ import { lengthAllowed, MAX_VEO_SCENES, MOVIE_LENGTHS, MOVIE_SHAPE, movieEstimat
 import { Badge, Button, Card, CardHeader, Empty, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
 
 type CharacterWithUrl = Character & { imageUrl: string };
-type Library = { characters: CharacterWithUrl[]; looks: string[]; ready: boolean; seedance?: boolean };
+type Library = { characters: CharacterWithUrl[]; looks: string[]; ready: boolean; replicate?: boolean };
 
 const MOVIE_PLATFORMS: Platform[] = ["tiktok", "instagram", "youtube", "facebook", "x", "linkedin"];
 
@@ -234,7 +234,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
   const [length, setLength] = useState<MovieLength>("s60");
   const [veo, setVeo] = useState(3);
   const [engine, setEngine] = useState<AnimationEngine>("veo");
-  const engineName = engine === "seedance" ? "Seedance 2.5" : "Veo";
+  const engineName = engine === "seedance" ? "Seedance 2.5" : engine === "wan" ? "Wan 2.2" : "Veo";
   const [renderNow, setRenderNow] = useState(true);
   const settings = useApp((s) => s.status?.settings);
   const [autoPost, setAutoPost] = useState(false);
@@ -345,10 +345,11 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
               {MOVIE_LENGTHS.map((l) => <option key={l} value={l}>{MOVIE_SHAPE[l].label} · {MOVIE_SHAPE[l].scenes} scenes</option>)}
             </Select>
           </Field>
-          <Field label="Animate with" hint={lib?.seedance ? "Seedance 2.5 makes longer, richer motion; it costs about twice as much" : "Seedance 2.5 switches on when the admin adds a Replicate token"}>
+          <Field label="Animate with" hint={!lib?.replicate ? "Seedance 2.5 and Wan 2.2 switch on when the admin adds a Replicate token" : engine === "wan" ? "Open-weight model: the lowest cost, about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice Veo's price" : "Google's model: strong motion and lighting"}>
             <Select value={engine} onChange={(e) => setEngine(e.target.value as AnimationEngine)}>
               <option value="veo">Google Veo 3.1 · {CREDIT_COST.veoSecond} credits a second</option>
-              <option value="seedance" disabled={!lib?.seedance}>ByteDance Seedance 2.5 · {CREDIT_COST.seedanceSecond} credits a second{lib?.seedance ? "" : " (not connected)"}</option>
+              <option value="seedance" disabled={!lib?.replicate}>ByteDance Seedance 2.5 · {CREDIT_COST.seedanceSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
+              <option value="wan" disabled={!lib?.replicate}>Wan 2.2, open model · {CREDIT_COST.wanSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
             </Select>
           </Field>
           <Field label={`Animated scenes: ${veo}`} hint={veo ? "Real motion for the key moments; other scenes get a slow camera move." : "Pictures with slow camera moves only (cheapest)."}>
@@ -375,7 +376,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
           </Field>
         )}
         <p className="text-xs leading-relaxed text-white/40">
-          Each scene picture is {CREDIT_COST.aiImage} credits; each {engineName} scene is {engine === "seedance" ? CREDIT_COST.seedanceSecond : CREDIT_COST.veoSecond} credits a second (4–8 seconds). Scenes that can&apos;t be made are refunded automatically. Rendering takes a few minutes; animation adds about 1–3 minutes a clip.
+          Each scene picture is {CREDIT_COST.aiImage} credits; each {engineName} scene is {engine === "seedance" ? CREDIT_COST.seedanceSecond : engine === "wan" ? CREDIT_COST.wanSecond : CREDIT_COST.veoSecond} credits a second (4–8 seconds). Scenes that can&apos;t be made are refunded automatically. Rendering takes a few minutes; animation adds about 1–3 minutes a clip.
         </p>
         <div className="flex justify-end">
           <Button variant="primary" size="lg" loading={busy} disabled={!lib?.ready || !lengthOk || brief.trim().length < (kind === "movie" ? 10 : 40)} onClick={make}>

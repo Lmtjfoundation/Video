@@ -633,8 +633,8 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
 
         <Service
           icon={<Sparkles className="h-4 w-4" />}
-          title="Replicate — Seedance 2.5 video"
-          desc="Adds ByteDance's Seedance 2.5 as a second engine for animating Movie Studio scenes, next to Veo. Replicate bills this token's account per second of video ($0.2312 a second at 720p, Oct 2026); subscribers pay in credits. Scene pictures still use the Gemini key. Optional."
+          title="Replicate — Seedance 2.5 and Wan 2.2 video"
+          desc="Adds two engines for animating Movie Studio scenes, next to Veo: ByteDance's Seedance 2.5 ($0.2312 a second at 720p) and the open-weight Wan 2.2 (at most $0.145 a 5-second clip), prices as of Oct 2026. Replicate bills this token's account; subscribers pay in credits. Scene pictures still use the Gemini key. Optional."
           link={{ href: "https://replicate.com/account/api-tokens", label: "Get a token" }}
           state={st.replicate}
           result={results.replicate}

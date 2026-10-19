@@ -3,7 +3,7 @@ import { integrationStatus, saveIntegrations, stripeSecretKey, testIntegration, 
 import { disconnectStripe, setupStripeBilling } from "@/lib/billing";
 import { appOrigin } from "@/lib/oauth";
 import { emailLayout, emailReady, sendEmail, validFrom } from "@/lib/email";
-import { testReplicate } from "@/lib/seedance";
+import { testReplicate } from "@/lib/replicate-video";
 
 export const dynamic = "force-dynamic";
 

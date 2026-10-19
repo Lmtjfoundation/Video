@@ -379,10 +379,10 @@ export interface AiVisuals {
   look: string;
   /** Indexes into `scenes` that are animated (with Veo, or Seedance); the rest are AI pictures with a slow camera move. */
   veoScenes: number[];
-  /** Which model animates those scenes. Missing = Veo. */
+  /** Which model animates those scenes: Veo (Google), Seedance 2.5 (ByteDance) or Wan 2.2 (open weights). Missing = Veo. */
   engine?: AnimationEngine;
 }
-export const ANIMATION_ENGINES = ["veo", "seedance"] as const;
+export const ANIMATION_ENGINES = ["veo", "seedance", "wan"] as const;
 export type AnimationEngine = (typeof ANIMATION_ENGINES)[number];
 
 /** A reusable character for movies and explainers, made from a photo or a description. */
