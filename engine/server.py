@@ -1,20 +1,24 @@
 """
 Ghost Post Video Engine — Ghost Post's own text- and image-to-video model server.
 
-Runs Wan 2.2 TI2V-5B (Alibaba, open weights, Apache 2.0) on your GPU so Ghost Post's Film Engine can make moving
-footage without Seedance, Replicate or any per-clip fee. One clip is up to about 5 seconds of 720p at 24 fps; the Film
-Engine chains clips from each last frame to make longer beats, and adds voices and score itself.
+Runs Alibaba's open Wan 2.2 models (Apache 2.0) on your GPU so Ghost Post's Film Engine can make moving footage
+without Seedance, Replicate or any per-clip fee. Two quality profiles (ENGINE_QUALITY):
+  best (default)  Wan 2.2 I2V-A14B: the strongest open model, two 14B experts (high-noise layout, low-noise detail).
+                  720p, 81 frames at 16 fps (about 5 seconds) from a first frame. Needs an 80 GB GPU.
+                  Clips with no first frame use TI2V-5B (loaded only when first needed).
+  fast            Wan 2.2 TI2V-5B: 720p, 121 frames at 24 fps (5 seconds), from text or a first frame. 24 GB and up.
+The Film Engine chains clips from each last frame into beats of up to 30 seconds and adds voices and score itself.
 
 API (every call except /health needs `Authorization: Bearer <ENGINE_TOKEN>`):
   GET  /health                 -> {"ok": true}                      (for the host's health check)
-  GET  /v1/info                -> model, GPU, whether the model is loaded, queue length
+  GET  /v1/info                -> profile, models, GPU, whether loaded, queue length
   POST /v1/videos              -> {"id": ...}                       start a clip
   GET  /v1/videos/{id}         -> {"status": queued|running|succeeded|failed, "progress": 0..1, "error"?}
   GET  /v1/videos/{id}/file    -> the MP4
 
-Settings (environment): ENGINE_TOKEN (required in production), ENGINE_MODEL (default Wan-AI/Wan2.2-TI2V-5B-Diffusers;
-"tiny" builds a tiny random model for tests), ENGINE_OFFLOAD (auto|on|off: move idle parts to CPU memory, needed under
-about 40 GB of video memory), ENGINE_STEPS (default 40), HF_HOME (where the 30 GB of weights are cached).
+Settings (environment): ENGINE_TOKEN (required in production), ENGINE_QUALITY (best|fast), ENGINE_OFFLOAD
+(auto|on|off: keep idle model parts in CPU memory), ENGINE_STEPS (default 40), HF_HOME (model cache).
+ENGINE_MODEL=tiny / tiny-best build tiny random models of each profile for tests.
 """
 
 from __future__ import annotations
@@ -22,6 +26,7 @@ from __future__ import annotations
 import base64
 import io
 import logging
+import math
 import os
 import queue
 import secrets
@@ -41,16 +46,16 @@ from pydantic import BaseModel, Field
 log = logging.getLogger("engine")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-MODEL_ID = os.environ.get("ENGINE_MODEL", "Wan-AI/Wan2.2-TI2V-5B-Diffusers")
+TINY = os.environ.get("ENGINE_MODEL", "") in ("tiny", "tiny-best")
+QUALITY = "best" if os.environ.get("ENGINE_MODEL") == "tiny-best" else ("fast" if TINY else os.environ.get("ENGINE_QUALITY", "best"))
 TOKEN = os.environ.get("ENGINE_TOKEN") or ""
 if not TOKEN:
     TOKEN = secrets.token_urlsafe(24)
     log.warning("ENGINE_TOKEN is not set; using a one-time token for this run: %s", TOKEN)
 OUT_DIR = os.environ.get("ENGINE_OUT") or os.path.join(tempfile.gettempdir(), "ghost-post-engine")
-STEPS = int(os.environ.get("ENGINE_STEPS", "40"))
-FPS = 24
-MAX_FRAMES = 121  # 5 seconds at 24 fps, the length Wan 2.2 TI2V is trained for
 KEEP_SECONDS = 3 * 3600
+FIVE_B = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
+A14B = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 # Wan's own default negative prompt (it was trained with it): garish colours, overexposure, static frames, blur,
 # subtitles, low quality, JPEG artefacts, ugly or deformed faces and hands, extra fingers, fused fingers, still
 # images, cluttered backgrounds, three legs, crowds, walking backwards.
@@ -58,8 +63,46 @@ NEGATIVE = (
     "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，"
     "多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走"
 )
-# 720p sizes for each frame shape; both sides are multiples of 32 as the model needs.
-SIZES = {"9:16": (704, 1280), "16:9": (1280, 704), "1:1": (960, 960), "21:9": (1280, 544), "4:3": (1088, 832), "3:4": (832, 1088)}
+ASPECTS = {"9:16": 9 / 16, "16:9": 16 / 9, "1:1": 1.0, "21:9": 21 / 9, "4:3": 4 / 3, "3:4": 3 / 4}
+
+
+@dataclass(frozen=True)
+class Profile:
+    """How one model is driven, from its model card."""
+
+    model: str
+    fps: int
+    max_frames: int  # 4n+1
+    area: int  # pixels per frame at 720p
+    mod: int  # both sides must be multiples of this
+    guidance: float
+    steps: int
+
+
+PROFILES = {
+    "best": Profile(A14B, fps=16, max_frames=81, area=1280 * 720, mod=16, guidance=3.5, steps=40),
+    "fast": Profile(FIVE_B, fps=24, max_frames=121, area=1280 * 704, mod=32, guidance=5.0, steps=40),
+}
+if QUALITY not in PROFILES:
+    raise SystemExit(f"ENGINE_QUALITY must be best or fast, not {QUALITY!r}")
+MAIN = PROFILES[QUALITY]
+TEXT = PROFILES["fast"]  # clips with no first frame (the A14B model needs one)
+
+
+def size_for(aspect: str, p: Profile) -> tuple[int, int]:
+    """Width and height for a frame shape at the profile's 720p pixel count, rounded to the model's grid."""
+    if TINY:
+        return (32, 32)
+    r = ASPECTS[aspect]
+    width = round(math.sqrt(p.area * r) / p.mod) * p.mod
+    height = round(math.sqrt(p.area / r) / p.mod) * p.mod
+    return width, height
+
+
+def clip_frames(seconds: float, p: Profile) -> int:
+    """Wan needs 4n+1 frames."""
+    n = round(seconds * p.fps / 4)
+    return max(17, min(p.max_frames, 4 * n + 1))
 
 
 class VideoRequest(BaseModel):
@@ -68,9 +111,9 @@ class VideoRequest(BaseModel):
     # The first frame, base64 (PNG/JPEG/WebP). Without it the clip is made from the prompt alone.
     image: str | None = None
     aspect: str = "16:9"
-    seconds: float = Field(default=5, gt=0, le=5.05)
-    steps: int | None = Field(default=None, ge=4, le=80)
-    guidance: float = Field(default=5.0, ge=1, le=12)
+    seconds: float = Field(default=5, gt=0, le=5.1)
+    steps: int | None = Field(default=None, ge=2, le=80)
+    guidance: float | None = Field(default=None, ge=1, le=12)
     seed: int | None = None
 
 
@@ -87,12 +130,16 @@ class Job:
 
 class Engine:
     def __init__(self) -> None:
-        self.t2v = None
-        self.i2v = None
+        self.i2v = None  # first frame -> video (best: A14B; fast: TI2V-5B)
+        self.t2v = None  # text -> video (TI2V-5B; in "best" loaded when first needed)
         self.ready = False
         self.load_error: str | None = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.offload = False
+        self.dtype = torch.bfloat16 if self.device == "cuda" else torch.float32
+        mode = os.environ.get("ENGINE_OFFLOAD", "auto")
+        # The A14B pair (two 14B experts plus the text encoder) doesn't fit on one GPU at once, even at 80 GB:
+        # Alibaba runs it with offloading. TI2V-5B fits on 40 GB and up.
+        self.offload = self.device == "cuda" and (mode == "on" or (mode == "auto" and (QUALITY == "best" or gpu_memory_gb() < 40)))
         self.jobs: dict[str, Job] = {}
         self.q: queue.Queue[str] = queue.Queue()
         self.lock = threading.Lock()
@@ -100,28 +147,38 @@ class Engine:
     # ── Loading ──────────────────────────────────────────────────────────────
     def load(self) -> None:
         try:
-            from diffusers import AutoencoderKLWan, WanImageToVideoPipeline, WanPipeline
+            from diffusers import WanImageToVideoPipeline
 
-            if MODEL_ID == "tiny":
-                comps = tiny_components()
+            if QUALITY == "best":
+                self.i2v = WanImageToVideoPipeline(**tiny_a14b()) if TINY else WanImageToVideoPipeline.from_pretrained(A14B, torch_dtype=self.dtype)
+                self.place(self.i2v)
             else:
-                dtype = torch.bfloat16 if self.device == "cuda" else torch.float32
-                vae = AutoencoderKLWan.from_pretrained(MODEL_ID, subfolder="vae", torch_dtype=torch.float32)
-                t2v = WanPipeline.from_pretrained(MODEL_ID, vae=vae, torch_dtype=dtype)
-                comps = {k: getattr(t2v, k) for k in ("tokenizer", "text_encoder", "transformer", "vae", "scheduler")}
-            # One set of weights, two ways in: from text, or from a first frame (TI2V's expand-timesteps mode).
-            self.t2v = WanPipeline(**comps, transformer_2=None, boundary_ratio=None, expand_timesteps=True)
-            self.i2v = WanImageToVideoPipeline(**comps, transformer_2=None, image_encoder=None, image_processor=None, boundary_ratio=None, expand_timesteps=True)
-            mode = os.environ.get("ENGINE_OFFLOAD", "auto")
-            vram = gpu_memory_gb()
-            self.offload = self.device == "cuda" and (mode == "on" or (mode == "auto" and vram < 40))
-            if not self.offload:
-                self.t2v.to(self.device)  # the i2v pipeline shares the same modules
-            log.info("Model %s loaded on %s (%.0f GB, offload=%s)", MODEL_ID, self.device, vram, self.offload)
+                self.t2v = self.five_b()
+                comps = {k: getattr(self.t2v, k) for k in ("tokenizer", "text_encoder", "transformer", "vae", "scheduler")}
+                self.i2v = WanImageToVideoPipeline(**comps, transformer_2=None, image_encoder=None, image_processor=None, boundary_ratio=None, expand_timesteps=True)
+            log.info("Ready: %s on %s (%.0f GB, offload=%s)", MAIN.model, self.device, gpu_memory_gb(), self.offload)
             self.ready = True
         except Exception as e:  # noqa: BLE001 - reported to Ghost Post through /v1/info
             self.load_error = f"{type(e).__name__}: {e}"
             log.exception("Model failed to load")
+
+    def five_b(self):
+        """TI2V-5B as a text-to-video pipeline (its VAE stays in float32, as the model card does)."""
+        from diffusers import AutoencoderKLWan, WanPipeline
+
+        if TINY:
+            pipe = WanPipeline(**tiny_5b(), transformer_2=None, boundary_ratio=None, expand_timesteps=True)
+        else:
+            vae = AutoencoderKLWan.from_pretrained(FIVE_B, subfolder="vae", torch_dtype=torch.float32)
+            pipe = WanPipeline.from_pretrained(FIVE_B, vae=vae, torch_dtype=self.dtype)
+        self.place(pipe)
+        return pipe
+
+    def place(self, pipe) -> None:
+        if self.offload:
+            pipe.enable_model_cpu_offload()
+        else:
+            pipe.to(self.device)
 
     # ── Jobs ─────────────────────────────────────────────────────────────────
     def submit(self, req: VideoRequest) -> Job:
@@ -156,15 +213,19 @@ class Engine:
         from diffusers.utils import export_to_video
 
         r = job.req
-        width, height = SIZES.get(r.aspect, SIZES["16:9"])
-        if MODEL_ID == "tiny":
-            width, height = 32, 32
-        frames = clip_frames(r.seconds)
-        steps = r.steps or STEPS
-        image = first_frame(r.image, width, height) if r.image else None
-        pipe = self.i2v if image is not None else self.t2v
-        if self.offload:
-            pipe.enable_model_cpu_offload()  # also clears hooks left by the other pipeline
+        has_image = bool(r.image)
+        p = MAIN if has_image else TEXT
+        if has_image:
+            pipe = self.i2v
+        else:
+            if self.t2v is None:
+                log.info("First clip without a starting picture: loading TI2V-5B")
+                self.t2v = self.five_b()
+            pipe = self.t2v
+        if self.offload and QUALITY == "fast":
+            pipe.enable_model_cpu_offload()  # the two "fast" pipelines share modules; this moves the hooks across
+        width, height = size_for(r.aspect, p)
+        steps = r.steps or int(os.environ.get("ENGINE_STEPS", p.steps))
 
         def on_step(_pipe, i, _t, kwargs):
             job.progress = min(0.99, (i + 1) / steps)
@@ -175,21 +236,21 @@ class Engine:
             negative_prompt=r.negative_prompt or NEGATIVE,
             height=height,
             width=width,
-            num_frames=frames,
+            num_frames=clip_frames(r.seconds, p),
             num_inference_steps=steps,
-            guidance_scale=r.guidance,
+            guidance_scale=r.guidance or p.guidance,
             generator=torch.Generator(device="cpu").manual_seed(r.seed if r.seed is not None else secrets.randbelow(2**31)),
             callback_on_step_end=on_step,
         )
-        if MODEL_ID == "tiny":
+        if TINY:
             args["max_sequence_length"] = 16
-        if image is not None:
-            args["image"] = image
+        if has_image:
+            args["image"] = first_frame(r.image, width, height)
         with torch.inference_mode():
             video = pipe(**args).frames[0]
         os.makedirs(OUT_DIR, exist_ok=True)
         path = os.path.join(OUT_DIR, f"{job.id}.mp4")
-        export_to_video(video, path, fps=FPS)
+        export_to_video(video, path, fps=p.fps)
         return path
 
     def cleanup(self) -> None:
@@ -201,14 +262,8 @@ class Engine:
                     os.remove(job.file)
 
 
-def clip_frames(seconds: float) -> int:
-    """Wan needs 4n+1 frames; 5 seconds at 24 fps is 121."""
-    n = round(seconds * FPS / 4)
-    return max(17, min(MAX_FRAMES, 4 * n + 1))
-
-
 def first_frame(b64: str, width: int, height: int) -> Image.Image:
-    """Decodes the starting picture and crops it to fill the frame (centre), as the model expects."""
+    """Decodes the starting picture and crops it to fill the frame (centre), as the models expect."""
     try:
         raw = base64.b64decode(b64.split(",", 1)[-1], validate=False)
         img = Image.open(io.BytesIO(raw))
@@ -224,25 +279,50 @@ def gpu_memory_gb() -> float:
     return torch.cuda.get_device_properties(0).total_memory / 1024**3
 
 
-def tiny_components() -> dict:
-    """A tiny random Wan 2.2 TI2V (diffusers' own test configuration) to check the server without a GPU."""
-    from diffusers import AutoencoderKLWan, UniPCMultistepScheduler, WanTransformer3DModel
+def _tiny_text():
     from transformers import AutoConfig, AutoTokenizer, T5EncoderModel
+
+    config = AutoConfig.from_pretrained("hf-internal-testing/tiny-random-t5")
+    return T5EncoderModel(config).eval(), AutoTokenizer.from_pretrained("hf-internal-testing/tiny-random-t5")
+
+
+def _tiny_transformer(in_channels: int, out_channels: int):
+    from diffusers import WanTransformer3DModel
+
+    torch.manual_seed(0)
+    return WanTransformer3DModel(
+        patch_size=(1, 2, 2), num_attention_heads=2, attention_head_dim=12, in_channels=in_channels, out_channels=out_channels, text_dim=32,
+        freq_dim=256, ffn_dim=32, num_layers=2, cross_attn_norm=True, qk_norm="rms_norm_across_heads", rope_max_seq_len=32,
+    )
+
+
+def tiny_5b() -> dict:
+    """A tiny random TI2V-5B (diffusers' own test configuration) to check the server without a GPU."""
+    from diffusers import AutoencoderKLWan, UniPCMultistepScheduler
 
     torch.manual_seed(0)
     vae = AutoencoderKLWan(
         base_dim=3, z_dim=48, in_channels=12, out_channels=12, is_residual=True, patch_size=2, latents_mean=[0.0] * 48, latents_std=[1.0] * 48,
         dim_mult=[1, 1, 1, 1], num_res_blocks=1, scale_factor_spatial=16, scale_factor_temporal=4, temperal_downsample=[False, True, True],
     )
+    text_encoder, tokenizer = _tiny_text()
     scheduler = UniPCMultistepScheduler(prediction_type="flow_prediction", use_flow_sigmas=True, flow_shift=3.0)
-    config = AutoConfig.from_pretrained("hf-internal-testing/tiny-random-t5")
-    text_encoder = T5EncoderModel(config).eval()
-    tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/tiny-random-t5")
-    transformer = WanTransformer3DModel(
-        patch_size=(1, 2, 2), num_attention_heads=2, attention_head_dim=12, in_channels=48, out_channels=48, text_dim=32, freq_dim=256,
-        ffn_dim=32, num_layers=2, cross_attn_norm=True, qk_norm="rms_norm_across_heads", rope_max_seq_len=32,
-    )
-    return {"tokenizer": tokenizer, "text_encoder": text_encoder, "transformer": transformer, "vae": vae, "scheduler": scheduler}
+    return {"tokenizer": tokenizer, "text_encoder": text_encoder, "transformer": _tiny_transformer(48, 48), "vae": vae, "scheduler": scheduler}
+
+
+def tiny_a14b() -> dict:
+    """A tiny random I2V-A14B (two experts with a switch-over boundary), diffusers' own test configuration."""
+    from diffusers import AutoencoderKLWan, UniPCMultistepScheduler
+
+    torch.manual_seed(0)
+    vae = AutoencoderKLWan(base_dim=3, z_dim=16, dim_mult=[1, 1, 1, 1], num_res_blocks=1, temperal_downsample=[False, True, True])
+    text_encoder, tokenizer = _tiny_text()
+    scheduler = UniPCMultistepScheduler(prediction_type="flow_prediction", use_flow_sigmas=True, flow_shift=3.0)
+    return {
+        "tokenizer": tokenizer, "text_encoder": text_encoder, "vae": vae, "scheduler": scheduler,
+        "transformer": _tiny_transformer(36, 16), "transformer_2": _tiny_transformer(36, 16),
+        "image_encoder": None, "image_processor": None, "boundary_ratio": 0.875,
+    }
 
 
 engine = Engine()
@@ -256,7 +336,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Ghost Post Video Engine", version="1.0", lifespan=lifespan)
+app = FastAPI(title="Ghost Post Video Engine", version="1.1", lifespan=lifespan)
 
 
 def authorised(authorization: str = Header(default="")) -> None:
@@ -273,16 +353,18 @@ def health() -> dict:
 def info() -> dict:
     return {
         "engine": "Ghost Post Video Engine",
-        "model": MODEL_ID,
+        "quality": QUALITY,
+        "model": MAIN.model,
+        "text_model": TEXT.model,
         "ready": engine.ready,
         "error": engine.load_error,
         "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
         "vram_gb": round(gpu_memory_gb(), 1),
         "offload": engine.offload,
         "queue": engine.q.qsize(),
-        "max_seconds": MAX_FRAMES / FPS,
-        "fps": FPS,
-        "aspects": list(SIZES),
+        "max_seconds": round(MAIN.max_frames / MAIN.fps, 2),
+        "fps": MAIN.fps,
+        "aspects": list(ASPECTS),
     }
 
 
@@ -290,8 +372,8 @@ def info() -> dict:
 def create(req: VideoRequest) -> dict:
     if engine.load_error:
         raise HTTPException(503, f"The model couldn't load: {engine.load_error}")
-    if req.aspect not in SIZES:
-        raise HTTPException(400, f"aspect must be one of {', '.join(SIZES)}")
+    if req.aspect not in ASPECTS:
+        raise HTTPException(400, f"aspect must be one of {', '.join(ASPECTS)}")
     if req.image:
         first_frame(req.image, 32, 32)  # reject an unreadable picture now, not minutes later
     job = engine.submit(req)

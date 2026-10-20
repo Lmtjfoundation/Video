@@ -6,7 +6,8 @@ import os
 import subprocess
 import time
 
-os.environ["ENGINE_MODEL"] = "tiny"
+# Run once per profile: ENGINE_MODEL=tiny (fast, TI2V-5B) and ENGINE_MODEL=tiny-best (I2V-A14B, two experts).
+os.environ.setdefault("ENGINE_MODEL", "tiny")
 os.environ["ENGINE_TOKEN"] = "test-token-123456"
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -52,6 +53,7 @@ def test_engine_end_to_end(tmp_path):
             {"prompt": "she turns toward the window, rain outside", "image": picture(), "aspect": "9:16", "seconds": 1, "steps": 4, "seed": 1},
             {"prompt": "a truck's headlights in the rain", "aspect": "16:9", "seconds": 1, "steps": 4},
         ):
+            profile = server.MAIN if body.get("image") else server.TEXT
             job = client.post("/v1/videos", headers=AUTH, json=body).json()
             s = wait(client, job["id"])
             assert s["status"] == "succeeded", s
@@ -60,10 +62,14 @@ def test_engine_end_to_end(tmp_path):
             out = tmp_path / f"{job['id']}.mp4"
             out.write_bytes(mp4.content)
             probe = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v", "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", str(out)], capture_output=True, text=True)
-            assert int(probe.stdout.strip()) == 25  # 1 second at 24 fps, rounded to 4n+1 frames
+            assert int(probe.stdout.strip()) == server.clip_frames(1, profile)  # 4n+1 frames at the profile's fps
 
 
-def test_clip_lengths():
-    assert server.clip_frames(5) == 121
-    assert server.clip_frames(0.2) == 17
-    assert server.clip_frames(2) == 49
+def test_clip_lengths_and_sizes():
+    best, fast = server.PROFILES["best"], server.PROFILES["fast"]
+    assert server.clip_frames(5, best) == 81 and server.clip_frames(5, fast) == 121
+    assert server.clip_frames(0.2, fast) == 17 and server.clip_frames(2, fast) == 49
+    if not server.TINY:
+        # The models' native 720p sizes.
+        assert server.size_for("9:16", best) == (720, 1280) and server.size_for("16:9", best) == (1280, 720)
+        assert server.size_for("9:16", fast) == (704, 1280) and server.size_for("16:9", fast) == (1280, 704)

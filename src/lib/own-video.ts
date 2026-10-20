@@ -4,9 +4,9 @@ import { MediaGenError } from "./gemini-media";
 import { sleep } from "./utils";
 
 /**
- * Ghost Post Video Engine: the app's own video model (Wan 2.2 TI2V-5B, open weights) running on the owner's GPU
- * server from engine/ in this repo. No per-clip fee: the owner pays only for the GPU while it runs.
- * One clip is up to 5 seconds of 720p at 24 fps, from a prompt alone or from a first frame.
+ * Ghost Post Video Engine: the app's own video model (Wan 2.2 I2V-A14B by default, or TI2V-5B; open weights) running
+ * on the owner's GPU server from engine/ in this repo. No per-clip fee: the owner pays only for the GPU while it runs.
+ * One clip is about 5 seconds of 720p, from a first frame (or the prompt alone).
  */
 export const ENGINE_CLIP_SECONDS = 5;
 
