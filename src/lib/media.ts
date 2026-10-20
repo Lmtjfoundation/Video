@@ -20,7 +20,9 @@ export const ALLOWED_TYPES: Record<string, { ext: string; kind: "image" | "video
   "video/mp4": { ext: "mp4", kind: "video" },
   "video/quicktime": { ext: "mov", kind: "video" },
 };
-export const MAX_FILE_BYTES = 100 * 1024 * 1024;
+/** Largest file a person can upload or link (MAX_UPLOAD_MB, 2 GB by default). Videos Ghost Post makes itself have no cap. */
+export const MAX_FILE_BYTES = Math.max(1, Number(process.env.MAX_UPLOAD_MB) || 2048) * 1024 * 1024;
+export const MAX_FILE_LABEL = MAX_FILE_BYTES >= 1024 ** 3 ? `${+(MAX_FILE_BYTES / 1024 ** 3).toFixed(1)} GB` : `${Math.round(MAX_FILE_BYTES / 1024 ** 2)} MB`;
 
 const supa = () =>
   process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -28,10 +30,10 @@ const supa = () =>
     : null;
 const localDir = (owner: string) => path.join(process.env.DATA_DIR || path.join(process.cwd(), ".data"), "uploads", owner.replace(/[^\w-]/g, ""));
 
-export async function storeFile(owner: string, file: { name: string; type: string; bytes: Buffer }): Promise<MediaItem> {
+export async function storeFile(owner: string, file: { name: string; type: string; bytes: Buffer }, opts: { uncapped?: boolean } = {}): Promise<MediaItem> {
   const t = ALLOWED_TYPES[file.type];
   if (!t) throw new Error("That file type isn't supported. Use JPG, PNG, WebP, GIF, MP4 or MOV.");
-  if (file.bytes.length > MAX_FILE_BYTES) throw new Error("Files can be up to 100 MB.");
+  if (!opts.uncapped && file.bytes.length > MAX_FILE_BYTES) throw new Error(`Files can be up to ${MAX_FILE_LABEL}.`);
   const id = uid("med");
   const storagePath = `${owner}/${id}.${t.ext}`;
   const sb = supa();
@@ -122,7 +124,7 @@ export async function remoteVideoMedia(owner: string, rawUrl: string): Promise<M
     const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
     if (!res.ok) throw new Error(`Couldn't download the video (HTTP ${res.status}).`);
     const len = Number(res.headers.get("content-length") ?? 0);
-    if (len > MAX_FILE_BYTES) throw new Error("The video is over 100 MB.");
+    if (len > MAX_FILE_BYTES) throw new Error(`The video is over ${MAX_FILE_LABEL}.`);
     bytes = Buffer.from(await res.arrayBuffer());
   } finally {
     clearTimeout(timer);

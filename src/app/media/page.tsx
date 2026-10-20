@@ -70,7 +70,7 @@ export default function MediaPage() {
         >
           <Upload className="h-6 w-6 text-mint-300" />
           <span className="font-medium text-white">{busy ? "Uploading…" : "Drop files here or tap to upload"}</span>
-          <span className="text-xs text-white/45">JPG, PNG, WebP, GIF, MP4, MOV · up to 100 MB each · 20 at a time</span>
+          <span className="text-xs text-white/45">JPG, PNG, WebP, GIF, MP4, MOV · up to 2 GB each · 20 at a time</span>
           <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime" className="sr-only" disabled={busy} onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
         </label>
         <p className="mt-3 text-xs text-white/40">Only upload content you own or have rights to, and that follows each platform's rules. Explicit or nude media is never published automatically.</p>

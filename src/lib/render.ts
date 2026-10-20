@@ -643,7 +643,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     await run("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out]);
     const bytes = await fs.readFile(out);
     const slug = (post.hook || "video").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "video";
-    const item = await storeFile(userId, { name: `${slug}.mp4`, type: "video/mp4", bytes });
+    const item = await storeFile(userId, { name: `${slug}.mp4`, type: "video/mp4", bytes }, { uncapped: true });
     item.rendered = true;
     item.durationSec = Math.round(await duration(out));
     await db().upsert("media", item);
