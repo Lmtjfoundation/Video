@@ -33,6 +33,9 @@ export interface Integrations {
   elevenlabsVoiceId?: string;
   /** Replicate (https://replicate.com) API token: Seedance 2.5 animated scenes in Movie Studio, billed on that account. */
   replicateKey?: string;
+  /** Ghost Post Video Engine (engine/ in this repo) on the owner's GPU: its address and the ENGINE_TOKEN it was started with. */
+  videoEngineUrl?: string;
+  videoEngineToken?: string;
   /** Pixabay (https://pixabay.com/api/docs/) — free stock video, the main footage source. */
   pixabayKey?: string;
   /** Pexels — optional second footage source. */
@@ -131,6 +134,8 @@ export async function ownerGemini(): Promise<OwnerGemini | null> {
 
 export const elevenlabsKey = () => pick("elevenlabsKey", "ELEVENLABS_API_KEY");
 export const replicateKey = () => pick("replicateKey", "REPLICATE_API_TOKEN");
+export const videoEngineUrl = () => pick("videoEngineUrl", "VIDEO_ENGINE_URL");
+export const videoEngineToken = () => pick("videoEngineToken", "VIDEO_ENGINE_TOKEN");
 export const elevenlabsVoice = () => pick("elevenlabsVoiceId", "ELEVENLABS_VOICE_ID");
 export const pixabayKey = () => pick("pixabayKey", "PIXABAY_API_KEY");
 /** True when any stock-footage source is connected. */
@@ -182,6 +187,7 @@ export async function integrationStatus() {
     },
     elevenlabs: { ...entry("ELEVENLABS_API_KEY", i.elevenlabsKey), voiceId: i.elevenlabsVoiceId || process.env.ELEVENLABS_VOICE_ID || "" },
     replicate: entry("REPLICATE_API_TOKEN", i.replicateKey),
+    videoEngine: { ...entry("VIDEO_ENGINE_TOKEN", i.videoEngineToken), url: i.videoEngineUrl || process.env.VIDEO_ENGINE_URL || "" },
     pixabay: entry("PIXABAY_API_KEY", i.pixabayKey),
     pexels: entry("PEXELS_API_KEY", i.pexelsKey),
     email: { ...entry("RESEND_API_KEY", i.resendKey), from: i.emailFrom || process.env.EMAIL_FROM || "" },

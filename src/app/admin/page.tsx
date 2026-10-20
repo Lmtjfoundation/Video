@@ -66,6 +66,7 @@ interface IntegrationStatus {
   gemini: KeyState & { model: string; forTrials: boolean; backup: boolean };
   elevenlabs: KeyState & { voiceId: string };
   replicate: KeyState;
+  videoEngine: KeyState & { url: string };
   pixabay: KeyState;
   pexels: KeyState;
   email: KeyState & { from: string };
@@ -462,7 +463,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate") {
+  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -508,7 +509,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate") {
+  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -647,6 +648,26 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             <Button size="sm" loading={busy === "test:replicate"} disabled={!st.replicate.set} onClick={() => check("replicate")}>Test</Button>
             {st.replicate.set && st.replicate.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:replicateKey"} onClick={() => remove("replicateKey", "Replicate")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Film className="h-4 w-4" />}
+          title="Ghost Post Video Engine — your own video model"
+          desc="Ghost Post's own filmmaking model (Wan 2.2 TI2V-5B, open weights) on a GPU server you rent. The Film Engine makes moving footage with it: no Seedance, no Replicate, no per-clip fee; you pay only for the GPU while it runs. Set it up from engine/README.md in the repo, then paste the server's address and its ENGINE_TOKEN here."
+          link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/engine/README.md", label: "Setup guide" }}
+          state={st.videoEngine}
+          result={results.videoEngine}
+        >
+          {st.videoEngine.source === "server" && <ServerNote />}
+          <Input autoComplete="off" spellCheck={false} placeholder={st.videoEngine.url || "Engine address, e.g. https://abc123-8000.proxy.runpod.net"} value={vals.videoEngineUrl ?? ""} onChange={set("videoEngineUrl")} />
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="ENGINE_TOKEN" value={vals.videoEngineToken ?? ""} onChange={set("videoEngineToken")} />
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Video engine"} onClick={() => save(["videoEngineUrl", "videoEngineToken"], "Video engine", "videoEngine")}>Save &amp; test</Button>
+            <Button size="sm" loading={busy === "test:videoEngine"} disabled={!st.videoEngine.set} onClick={() => check("videoEngine")}>Test</Button>
+            {st.videoEngine.set && st.videoEngine.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:videoEngineToken"} onClick={() => remove("videoEngineToken", "Video engine")}><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
           </Actions>
         </Service>

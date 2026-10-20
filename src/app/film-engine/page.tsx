@@ -10,19 +10,20 @@ type Kind = "image" | "video" | "audio";
 type Ref = { id: string; kind: Kind; mediaId: string; label: string; url: string | null };
 type Status = "draft" | "queued" | "generating" | "done" | "failed";
 type Seg = { id: string; title: string; seconds: number; shots: string; continueFrom: boolean; status: Status; message?: string; clipMediaId?: string; clipUrl?: string | null; history?: string[]; cost?: number };
-type Engine = "seedance" | "wan" | "free";
+type Engine = "own" | "seedance" | "wan" | "free";
+const ENGINES: Engine[] = ["own", "seedance", "wan", "free"];
 type Cut = {
   id: string; title: string; logline: string; style: string; aspect: string; engine: Engine; nativeAudio: boolean; score: boolean;
   refs: Ref[]; segments: Seg[]; final?: { status: Status; mediaId?: string; message?: string }; finalUrl?: string | null;
 };
 type Data = {
   cuts: Cut[]; films: { id: string; title: string; logline: string }[]; engines: Record<Engine, boolean>; voice: boolean; ffmpeg: boolean;
-  limits: { cuts: number; segments: number; refs: Record<Kind, number> }; prices: { plan: number; beat: number; seedanceSecond: number; wanSecond: number };
+  limits: { cuts: number; segments: number; refs: Record<Kind, number> }; prices: { plan: number; beat: number; ownSecond: number; seedanceSecond: number; wanSecond: number };
 };
 type MediaItem = { id: string; name: string; kind: Kind; url: string };
 type Character = { id: string; name: string; imageMediaId: string; imageUrl: string };
 
-const ENGINE_LABEL: Record<Engine, string> = { seedance: "Seedance 2.5 — full motion, references, native sound", wan: "Wan 2.2 — low-cost motion, chained clips", free: "Free — camera moves on your pictures" };
+const ENGINE_LABEL: Record<Engine, string> = { own: "Ghost Post engine — your own model on your GPU, no per-clip fees", seedance: "Seedance 2.5 — full motion, references, native sound", wan: "Wan 2.2 — low-cost motion, chained clips", free: "Free — camera moves on your pictures" };
 const ASPECTS = ["9:16", "16:9", "21:9", "1:1"];
 const busy = (s?: { status: Status }) => s?.status === "queued" || s?.status === "generating";
 const STATUS_TONE: Record<Status, "neutral" | "gold" | "mint" | "red"> = { draft: "neutral", queued: "gold", generating: "gold", done: "mint", failed: "red" };
@@ -136,11 +137,11 @@ export default function FilmEngine() {
         title="Film Engine"
         subtitle="Direct a film the way Seedance 2.5 works: beats of up to 30 seconds with timestamped shot lists, a reference library for your cast, places and voices, continuous extensions, moment-level fixes, and an edit room that cuts it together."
       />
-      {data && !data.engines.seedance && (
+      {data && !data.engines.own && !data.engines.seedance && (
         <div className="mb-5 rounded-xl bg-gold-400/[0.08] p-4 text-sm text-gold-300 ring-1 ring-gold-300/25">
           {admin
-            ? "Seedance 2.5 and Wan 2.2 run on Replicate. Add a Replicate API token in Admin → App settings → Integrations → Replicate to switch on full motion. Until then, films use the free engine: cinematic camera moves on your reference pictures."
-            : "Full-motion engines aren't switched on yet (the app's owner needs to connect Replicate). You can direct and film with the free engine now."}
+            ? "Full motion needs a video model on a GPU. Ghost Post has its own (Wan 2.2, open weights): start it on a rented GPU server with engine/README.md, then add its address and token in Admin → App settings → Integrations → Ghost Post Video Engine. Until then, films use the free engine: cinematic camera moves on your reference pictures."
+            : "Full-motion filming isn't switched on yet (the app's owner needs to start Ghost Post's video engine). You can direct and film with the free engine now."}
         </div>
       )}
       <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
@@ -193,7 +194,7 @@ export default function FilmEngine() {
                 <Field label="Look and tone (every beat)"><Input value={draft.style} onChange={(e) => edit({ style: e.target.value })} placeholder="Photorealistic, anamorphic, teal and amber, rain-soaked nights" /></Field>
                 <Field label="Engine" hint={!engineReady ? "Needs a Replicate token (see above)." : undefined}>
                   <Select value={draft.engine} onChange={(e) => edit({ engine: e.target.value as Engine })}>
-                    {(["seedance", "wan", "free"] as Engine[]).map((e) => <option key={e} value={e}>{ENGINE_LABEL[e]}{data.engines[e] ? "" : " (not connected)"}</option>)}
+                    {ENGINES.map((e) => <option key={e} value={e}>{ENGINE_LABEL[e]}{data.engines[e] ? "" : " (not connected)"}</option>)}
                   </Select>
                 </Field>
                 <Field label="Frame">
@@ -273,12 +274,12 @@ function NewFilm({ data, admin, onMade }: { data: Data | null; admin: boolean; o
   const [filmId, setFilmId] = useState("");
   const [style, setStyle] = useState("");
   const [aspect, setAspect] = useState("9:16");
-  const [engine, setEngine] = useState<Engine>("seedance");
+  const [engine, setEngine] = useState<Engine>("own");
   const [beats, setBeats] = useState(3);
   const [seconds, setSeconds] = useState(25);
   const [busyNow, setBusy] = useState(false);
   useEffect(() => {
-    if (data && !data.engines.seedance) setEngine("free");
+    if (data) setEngine(ENGINES.find((e) => data.engines[e]) ?? "free");
   }, [data]);
 
   async function make(plan: boolean) {
@@ -317,7 +318,7 @@ function NewFilm({ data, admin, onMade }: { data: Data | null; admin: boolean; o
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Frame"><Select value={aspect} onChange={(e) => setAspect(e.target.value)}>{ASPECTS.map((a) => <option key={a}>{a}</option>)}</Select></Field>
-          <Field label="Engine"><Select value={engine} onChange={(e) => setEngine(e.target.value as Engine)}>{(["seedance", "wan", "free"] as Engine[]).map((e) => <option key={e} value={e}>{e === "seedance" ? "Seedance 2.5" : e === "wan" ? "Wan 2.2" : "Free"}</option>)}</Select></Field>
+          <Field label="Engine"><Select value={engine} onChange={(e) => setEngine(e.target.value as Engine)}>{ENGINES.map((e) => <option key={e} value={e}>{e === "own" ? "Ghost Post engine" : e === "seedance" ? "Seedance 2.5" : e === "wan" ? "Wan 2.2" : "Free"}</option>)}</Select></Field>
         </div>
         <p className="text-xs text-white/45">About {beats * seconds} seconds of film. You can add your cast and references after planning; the shot lists cite them as @Name.</p>
         <Button variant="primary" loading={busyNow} disabled={!filmId && story.trim().length < 20} onClick={() => make(true)}>

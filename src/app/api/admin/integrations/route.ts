@@ -4,6 +4,7 @@ import { disconnectStripe, setupStripeBilling } from "@/lib/billing";
 import { appOrigin } from "@/lib/oauth";
 import { emailLayout, emailReady, sendEmail, validFrom } from "@/lib/email";
 import { testReplicate } from "@/lib/replicate-video";
+import { testOwnEngine } from "@/lib/own-video";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,8 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   elevenlabsKey: { re: /^[A-Za-z0-9_-]{20,}$/, msg: "That doesn't look like an ElevenLabs API key (elevenlabs.io → Developers → API keys)." },
   elevenlabsVoiceId: { re: /^[A-Za-z0-9]{10,40}$/, msg: "A voice ID is a short code of letters and numbers (ElevenLabs → Voices → ID)." },
   replicateKey: { re: /^r8_[A-Za-z0-9]{20,}$/, msg: "A Replicate API token starts with r8_ (replicate.com → Account → API tokens)." },
+  videoEngineUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the engine's web address, e.g. https://abc123-8000.proxy.runpod.net (from your GPU host)." },
+  videoEngineToken: { re: /^[A-Za-z0-9_.~-]{12,}$/, msg: "Paste the ENGINE_TOKEN you started the engine with (12+ letters, numbers, - or _)." },
   pixabayKey: { re: /^[A-Za-z0-9-]{20,}$/, msg: "That doesn't look like a Pixabay API key. Sign in at pixabay.com/api/docs and copy the value in the \"key\" row (numbers, a dash, then letters and numbers)." },
   pexelsKey: { re: /^[A-Za-z0-9]{20,}$/, msg: "That doesn't look like a Pexels API key (pexels.com/api)." },
   resendKey: { re: /^re_[A-Za-z0-9_]{10,}$/, msg: "A Resend API key starts with re_ (resend.com → API Keys)." },
@@ -67,6 +70,7 @@ export const POST = authed(async (req, user) => {
     }
   }
   if (b.action === "test" && b.which === "replicate") return ok(await testReplicate());
+  if (b.action === "test" && b.which === "videoEngine") return ok(await testOwnEngine());
   if (b.action === "test") {
     const which = b.which as "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe";
     if (!["anthropic", "gemini", "elevenlabs", "pixabay", "pexels", "stripe"].includes(which)) return fail("Unknown integration.");

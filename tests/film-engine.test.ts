@@ -75,6 +75,7 @@ describe("Film Engine shot lists and Seedance briefs", () => {
     expect(segmentCredits("seedance", 25)).toBe(25 * 16);
     expect(segmentCredits("wan", 12)).toBe(15 * 2); // three 5-second clips
     expect(segmentCredits("free", 30)).toBe(0);
+    expect(segmentCredits("own", 12)).toBe(15); // three 5-second clips at 1 credit a second
   });
 });
 
@@ -176,6 +177,49 @@ describe.skipIf(!hasFfmpeg)("Film Engine making footage", () => {
       await queueAssembly("usr_film", cut.id);
       expect((await getCut(cut.id))!.final?.status).toBe("done");
     });
+  }, 180_000);
+
+  it("films with Ghost Post's own engine: clips chained from each last frame, a cut to a shot's own picture", async () => {
+    process.env.VIDEO_ENGINE_URL = "https://gpu.example/";
+    process.env.VIDEO_ENGINE_TOKEN = "engine-token-123";
+    const posts: { body: Record<string, unknown>; auth: string }[] = [];
+    globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const auth = String((init?.headers as Record<string, string> | undefined)?.Authorization ?? "");
+      const json = (b: unknown) => new Response(JSON.stringify(b), { headers: { "content-type": "application/json" } });
+      if (url === "https://gpu.example/v1/videos" && init?.method === "POST") {
+        posts.push({ body: JSON.parse(String(init.body)), auth });
+        return json({ id: `j${posts.length}`, status: "queued" });
+      }
+      if (/^https:\/\/gpu\.example\/v1\/videos\/j\d+$/.test(url)) return json({ status: "succeeded", progress: 1 });
+      if (/\/v1\/videos\/j\d+\/file$/.test(url)) return new Response(new Uint8Array(clip));
+      return new Response("not mocked", { status: 500 });
+    }) as typeof fetch;
+    const cut = await setup("own");
+    const { asUser } = await import("@/lib/db");
+    const { getCut, queueSegment, saveCut } = await import("@/lib/film-engine");
+    await asUser("usr_film", async () => {
+      // Beat one: 0–2s Marcus, 2–4s cuts to Tasha; seven seconds so it takes two clips.
+      const c0 = (await getCut(cut.id))!;
+      c0.segments[0].seconds = 7;
+      c0.segments[0].shots = "0–5s: @Marcus holds out the keys.\n5–7s: @Tasha takes them.";
+      await saveCut(c0);
+      await queueSegment("usr_film", cut.id, cut.segments[0].id, 0);
+      await queueSegment("usr_film", cut.id, cut.segments[1].id, 0);
+      const done = (await getCut(cut.id))!;
+      expect(done.segments.map((s) => [s.status, s.message])).toEqual([["done", "Filmed with Ghost Post's video engine."], ["done", "Filmed with Ghost Post's video engine."]]);
+    });
+    expect(posts.every((p) => p.auth === "Bearer engine-token-123")).toBe(true);
+    expect(posts.map((p) => [p.body.aspect, p.body.seconds])).toEqual([["9:16", 5], ["9:16", 2], ["9:16", 3]]);
+    const frame = (i: number) => String(posts[i].body.image);
+    expect(frame(0)).toMatch(/^data:image\/png;base64,/); // Marcus's portrait
+    expect(frame(1)).toMatch(/^data:image\/png;base64,/); // the cut to Tasha's portrait…
+    expect(frame(1)).not.toBe(frame(0));
+    expect(String(posts[1].body.prompt)).toContain("(Tasha) takes them");
+    expect(frame(2)).toMatch(/^data:image\/png;base64,/); // beat two continues from beat one's last frame
+    expect(frame(2)).not.toBe(frame(1));
+    delete process.env.VIDEO_ENGINE_URL;
+    delete process.env.VIDEO_ENGINE_TOKEN;
   }, 180_000);
 
   it("gives the credits back when filming fails", async () => {

@@ -177,6 +177,8 @@ export const CREDIT_COST = {
   filmReview: 3,
   filmPromo: 2,
   /** Film Engine: plan a whole film as Seedance beats with timestamped shot lists, or write one more beat. */
+  /** Ghost Post Video Engine on the owner's GPU: a rented 48–80 GB GPU costs roughly $1–3 an hour and makes a 5-second clip in a few minutes, so 1 credit (2¢) a second covers it. */
+  ownSecond: 1,
   filmPlan: 4,
   filmBeat: 1,
 } as const;
@@ -210,6 +212,7 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   filmPage: "Writers' Room: screenplay pages, per scene",
   filmReview: "Writers' Room: awards-readiness review",
   filmPromo: "Writers' Room: promotion kit",
+  ownSecond: "Each second of footage from Ghost Post's own video engine",
   filmPlan: "Film Engine: plan a film as beats with timestamped shot lists",
   filmBeat: "Film Engine: write the next beat",
 };

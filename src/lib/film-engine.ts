@@ -9,6 +9,7 @@ import { kvGet, kvSet, log } from "./repo";
 import { refundCredits } from "./auth";
 import { MediaGenError } from "./gemini-media";
 import { seedanceFilm, wanClip, type RefFile } from "./replicate-video";
+import { ownClip } from "./own-video";
 import { mediaDuration, narrate, renderSegment, runCmd } from "./render";
 import { CREDIT_COST } from "./plans";
 import type { MediaItem } from "./types";
@@ -31,15 +32,16 @@ export const MAX_CUTS = 20;
 export const MAX_SEGMENTS = 40;
 export const MAX_SEGMENT_SECONDS = 30;
 export const REF_LIMITS = { image: 30, video: 10, audio: 10 } as const;
-export const FILM_ENGINES = ["seedance", "wan", "free"] as const;
+export const FILM_ENGINES = ["own", "seedance", "wan", "free"] as const;
 export type FilmEngineId = (typeof FILM_ENGINES)[number];
+export const ENGINE_NAME: Record<FilmEngineId, string> = { own: "Ghost Post's video engine", seedance: "Seedance 2.5", wan: "Wan 2.2", free: "the free engine" };
 export const FILM_ASPECTS = ["9:16", "16:9", "21:9", "1:1"] as const;
 export type FilmAspect = (typeof FILM_ASPECTS)[number];
 const SIZE: Record<FilmAspect, [number, number]> = { "9:16": [1080, 1920], "16:9": [1920, 1080], "21:9": [1920, 822], "1:1": [1080, 1080] };
 /** Seconds of the previous segment handed to Seedance to continue from. */
 const CONTINUE_TAIL = 5;
-/** Wan 2.2 makes about 5 seconds (81 frames at 16 fps) per clip. */
-const WAN_CLIP = 5;
+/** Wan 2.2 and Ghost Post's engine make about 5 seconds per clip. */
+const CHAIN_CLIP = 5;
 
 export type RefKind = "image" | "video" | "audio";
 export interface FilmRef {
@@ -228,7 +230,8 @@ export function seedanceBrief(cut: Pick<FilmCut, "refs" | "style" | "aspect" | "
 
 export function segmentCredits(engine: FilmEngineId, seconds: number) {
   if (engine === "seedance") return clampSeconds(seconds) * CREDIT_COST.seedanceSecond;
-  if (engine === "wan") return Math.ceil(clampSeconds(seconds) / WAN_CLIP) * WAN_CLIP * CREDIT_COST.wanSecond;
+  if (engine === "own") return Math.ceil(clampSeconds(seconds) / CHAIN_CLIP) * CHAIN_CLIP * CREDIT_COST.ownSecond;
+  if (engine === "wan") return Math.ceil(clampSeconds(seconds) / CHAIN_CLIP) * CHAIN_CLIP * CREDIT_COST.wanSecond;
   return 0;
 }
 
@@ -409,8 +412,8 @@ async function makeSegment(userId: string, cutId: string, segId: string, credits
       });
       out = path.join(dir, "seedance.mp4");
       await fs.writeFile(out, bytes);
-    } else if (cut.engine === "wan") {
-      out = await wanSegment(cut, seg, prevFile, dir, fix);
+    } else if (cut.engine === "wan" || cut.engine === "own") {
+      out = await chainSegment(cut.engine, cut, seg, prevFile, dir, fix);
     } else {
       out = await freeSegment(cut, seg, dir, W, H, index, fix);
     }
@@ -421,7 +424,7 @@ async function makeSegment(userId: string, cutId: string, segId: string, credits
       clipMediaId: item.id,
       history: [...(latest?.history ?? []), ...(latest?.clipMediaId ? [latest.clipMediaId] : [])].slice(-5),
       credits: 0,
-      message: fix ? "Fixed." : `Filmed with ${cut.engine === "seedance" ? "Seedance 2.5" : cut.engine === "wan" ? "Wan 2.2" : "the free engine"}.`,
+      message: fix ? "Fixed." : `Filmed with ${ENGINE_NAME[cut.engine]}.`,
     });
     await log("info", "generate", `Film Engine: “${cut.title}” beat ${index + 1} ${fix ? "fixed" : "filmed"}`);
   } catch (e) {
@@ -433,33 +436,71 @@ async function makeSegment(userId: string, cutId: string, segId: string, credits
   }
 }
 
-/** Wan 2.2 continues a beat in ~5-second clips, each starting from the last frame of the one before. */
-async function wanSegment(cut: FilmCut, seg: FilmSegment, prevFile: string | null, dir: string, fix?: string) {
+/**
+ * Wan 2.2 and Ghost Post's own engine make a beat as ~5-second clips. Each clip starts from the last frame of the one
+ * before (continuous motion); a shot that cites a picture of its own starts from that picture instead (a cut to a new
+ * place or person). Ghost Post's engine can also start from the prompt alone; Wan needs a picture.
+ */
+async function chainSegment(engine: "wan" | "own", cut: FilmCut, seg: FilmSegment, prevFile: string | null, dir: string, fix?: string) {
   const shots = parseShots(seg.shots, seg.seconds);
   const r = resolveRefs(cut.refs, seg.shots);
-  let start = prevFile ? await lastFrame(prevFile, dir) : null;
-  if (!start) {
-    const first = shotImage(cut, shots[0]?.text ?? "") ?? r.images[0];
-    const m = first && (await mediaFor([first.mediaId]))[0];
-    if (!m) throw new MediaGenError("Wan starts from a picture: add a reference picture (a cast portrait or location) or continue from the beat before.");
-    start = path.join(dir, `start.${m.storagePath.split(".").pop()}`);
-    await fs.writeFile(start, await readFile(m));
-  }
+  const picture = async (ref: FilmRef | undefined) => {
+    const m = ref && (await mediaFor([ref.mediaId]))[0];
+    if (!m) return null;
+    const f = path.join(dir, `start-${m.id}.${m.storagePath.split(".").pop()}`);
+    await fs.writeFile(f, await readFile(m));
+    return f;
+  };
+  let start = prevFile ? await lastFrame(prevFile, dir) : await picture(shotImage(cut, shots[0]?.text ?? "") ?? r.images[0]);
+  if (!start && engine === "wan") throw new MediaGenError("Wan starts from a picture: add a reference picture (a cast portrait or location) or continue from the beat before.");
   const clips: string[] = [];
-  for (let t = 0; t < seg.seconds; t += WAN_CLIP) {
-    const shot = shots.find((s) => t >= s.start && t < s.end) ?? shots[shots.length - 1];
+  let current: Shot | undefined;
+  for (let t = 0; t < seg.seconds; t += CHAIN_CLIP) {
+    const shot = shots.find((x) => t >= x.start && t < x.end) ?? shots[shots.length - 1];
+    if (current && shot !== current) start = (await picture(shotImage(cut, shot.text))) ?? start; // a cut
+    current = shot;
     const prompt = [cut.style, resolveRefs(cut.refs, shot.text).prompt.replace(/\[(Image|Video|Audio)\d+\] /g, ""), fix && `Change: ${fix}`, "Consistent characters, smooth natural motion, cinematic."].filter(Boolean).join(" ");
-    const mime = start.endsWith(".png") ? "image/png" : start.endsWith(".webp") ? "image/webp" : "image/jpeg";
-    const bytes = await wanClip({ prompt, start: { base64: (await fs.readFile(start)).toString("base64"), mimeType: mime }, aspect: cut.aspect === "9:16" ? "9:16" : "16:9", seconds: WAN_CLIP });
-    const clip = path.join(dir, `wan${clips.length}.mp4`);
+    const seconds = Math.min(CHAIN_CLIP, seg.seconds - t);
+    const first = start ? { bytes: await fs.readFile(start), mime: start.endsWith(".png") ? "image/png" : start.endsWith(".webp") ? "image/webp" : "image/jpeg" } : undefined;
+    const bytes =
+      engine === "own"
+        ? await ownClip({ prompt, start: first, aspect: cut.aspect, seconds })
+        : await wanClip({ prompt, start: { base64: first!.bytes.toString("base64"), mimeType: first!.mime }, aspect: cut.aspect === "9:16" ? "9:16" : "16:9", seconds: CHAIN_CLIP });
+    const clip = path.join(dir, `${engine}${clips.length}.mp4`);
     await fs.writeFile(clip, bytes);
     clips.push(clip);
     start = await lastFrame(clip, dir);
   }
   const [W, H] = SIZE[cut.aspect];
-  const joined = await joinClips(clips, W, H, dir, "wan");
-  const out = path.join(dir, "wan-cut.mp4");
+  const joined = await joinClips(clips, W, H, dir, engine);
+  const out = path.join(dir, `${engine}-cut.mp4`);
   await runCmd("ffmpeg", ["-hide_banner", "-y", "-i", joined, "-t", String(seg.seconds), "-c", "copy", out]);
+  return speakLines(out, shots, dir);
+}
+
+/**
+ * Engines without their own sound get the dialogue spoken by Ghost Post's voice (ElevenLabs, else the free voice),
+ * each line starting with its shot. Without a voice on this server the footage is returned as it is.
+ */
+async function speakLines(video: string, shots: Shot[], dir: string) {
+  const lines: { file: string; at: number }[] = [];
+  for (const [k, shot] of shots.entries()) {
+    const text = dialogueOf(shot.text).join(" ");
+    if (!text) continue;
+    try {
+      lines.push({ file: await narrate(text, path.join(dir, `say${k}`)), at: shot.start });
+    } catch {
+      return video;
+    }
+  }
+  if (!lines.length) return video;
+  const out = video.replace(/\.mp4$/, "-voiced.mp4");
+  const delayed = lines.map((l, i) => `[${i + 1}:a]aresample=48000,aformat=channel_layouts=stereo,adelay=${Math.round(l.at * 1000)}:all=1[l${i}]`);
+  await runCmd("ffmpeg", [
+    "-hide_banner", "-y", "-i", video, ...lines.flatMap((l) => ["-i", l.file]),
+    "-filter_complex", `${delayed.join(";")};[0:a]aresample=48000[base];[base]${lines.map((_, i) => `[l${i}]`).join("")}amix=inputs=${lines.length + 1}:normalize=0:duration=first[a]`,
+    "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", out,
+  ]);
   return out;
 }
 
