@@ -2,28 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  Activity,
-  BookOpenText,
-  CalendarDays,
-  Compass,
-  CreditCard,
-  Feather,
-  Film,
-  Flame,
-  Images,
-  LayoutDashboard,
-  Lightbulb,
-  LogOut,
-  Menu,
-  MessageSquare,
-  ScrollText,
-  Settings,
-  Share2,
-  ShieldCheck,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { Activity, BookOpenText, CalendarDays, Clapperboard, Compass, CreditCard, Feather, Film, Flame, Images, LayoutDashboard, Lightbulb, LogOut, Menu, MessageSquare, ScrollText, Settings, Share2, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +16,7 @@ const NAV: NavItem[] = [
   { href: "/studio", label: "Content Studio", short: "Create", icon: Sparkles },
   { href: "/writers", label: "Writers' Room", short: "Writers", icon: Feather },
   { href: "/movies", label: "Movie Studio", short: "Movies", icon: Film },
+  { href: "/film-engine", label: "Film Engine", short: "Film", icon: Clapperboard },
   { href: "/explain", label: "Explain", short: "Explain", icon: Lightbulb },
   { href: "/calendar", label: "Calendar", short: "Calendar", icon: CalendarDays },
   { href: "/media", label: "Media Library", short: "Media", icon: Images },

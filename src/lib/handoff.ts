@@ -53,7 +53,7 @@ export async function handoffMedia(userId: string, post: Post): Promise<HandoffM
   if (!item) return null;
   const url = sameOrigin(signedUrl(userId, item.id, 6 * 3600));
   const name = fileName(post, item);
-  return { kind: item.kind, url, downloadUrl: `${url}&dl=${encodeURIComponent(name)}`, name, type: item.type, size: item.size };
+  return { kind: item.kind === "video" ? "video" : "image", url, downloadUrl: `${url}&dl=${encodeURIComponent(name)}`, name, type: item.type, size: item.size };
 }
 
 /** The caption exactly as it would have been posted (hook/body, CTA, offer link + disclosure, hashtags). */

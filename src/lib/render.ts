@@ -81,7 +81,7 @@ export async function releaseOrphanedRender(userId: string, post: Post): Promise
   return true;
 }
 
-function run(cmd: string, args: string[], timeoutMs = 10 * 60_000): Promise<string> {
+export function runCmd(cmd: string, args: string[], timeoutMs = 10 * 60_000): Promise<string> {
   return new Promise((resolve, reject) => {
     const p = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
     let out = "";
@@ -108,15 +108,15 @@ function run(cmd: string, args: string[], timeoutMs = 10 * 60_000): Promise<stri
 
 export async function ffmpegAvailable() {
   try {
-    await run("ffmpeg", ["-hide_banner", "-version"], 15_000);
+    await runCmd("ffmpeg", ["-hide_banner", "-version"], 15_000);
     return true;
   } catch {
     return false;
   }
 }
 
-async function duration(file: string) {
-  const out = await run("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", file], 30_000);
+export async function mediaDuration(file: string) {
+  const out = await runCmd("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", file], 30_000);
   return Number(out.trim()) || 0;
 }
 
@@ -126,7 +126,7 @@ async function duration(file: string) {
  * Narration for one scene: ElevenLabs when its key is set, otherwise (or when ElevenLabs fails) the free Kokoro voice
  * that runs on this server. Returns the file written (the free voice writes WAV).
  */
-async function narrate(text: string, base: string, note?: string): Promise<string> {
+export async function narrate(text: string, base: string, note?: string): Promise<string> {
   if (await elevenlabsKey()) {
     try {
       await tts(text, `${base}.mp3`);
@@ -283,7 +283,7 @@ function captionGroups(text: string, dur: number) {
 
 /* ───────────── Scene segment ───────────── */
 
-interface SceneJob {
+export interface SceneJob {
   scene: VideoScene;
   dur: number;
   audio?: string;
@@ -295,7 +295,7 @@ interface SceneJob {
  * `film`: a fiction video's pictures and clips get a film finish: a different camera move per shot, grain, a vignette
  * and grade, movie-style subtitles low in the frame, and a dip through black between shots.
  */
-async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H: number, film = false): Promise<string> {
+export async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H: number, film = false): Promise<string> {
   const out = path.join(dir, `seg${String(i).padStart(3, "0")}.mp4`);
   const F = Math.max(1, Math.round(job.dur * FPS));
   const args: string[] = ["-hide_banner", "-y", "-filter_complex_threads", THREADS];
@@ -408,7 +408,7 @@ async function renderSegment(job: SceneJob, i: number, dir: string, W: number, H
     "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-ac", "2",
     out,
   );
-  await run("ffmpeg", args);
+  await runCmd("ffmpeg", args);
   return out;
 }
 
@@ -567,7 +567,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     for (const [k, m] of media.entries()) {
       const f = path.join(dir, `user${k}.${m.type.split("/")[1] === "quicktime" ? "mov" : m.type.split("/")[1]}`);
       await fs.writeFile(f, await readFile(m));
-      mediaFiles.push({ kind: m.kind, file: f });
+      mediaFiles.push({ kind: m.kind === "video" ? "video" : "image", file: f });
     }
 
     const voice = plan.voiceover !== false && (!!(await elevenlabsKey()) || freeVoiceEnabled());
@@ -582,7 +582,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       let dur = Math.max(1.8, scene.narration.split(/\s+/).filter(Boolean).length / 2.6);
       if (voice && scene.narration.trim()) {
         audio = await narrate(scene.narration, path.join(dir, `vo${i}`), plan.voice);
-        dur = (await duration(audio)) + 0.25;
+        dur = (await mediaDuration(audio)) + 0.25;
       }
       let visual: SceneJob["visual"];
       if (mediaFiles.length) visual = mediaFiles[i % mediaFiles.length];
@@ -640,12 +640,12 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     const list = path.join(dir, "list.txt");
     await fs.writeFile(list, segs.map((s) => `file '${s}'`).join("\n"));
     const out = path.join(dir, "final.mp4");
-    await run("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out]);
+    await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out]);
     const bytes = await fs.readFile(out);
     const slug = (post.hook || "video").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "video";
     const item = await storeFile(userId, { name: `${slug}.mp4`, type: "video/mp4", bytes }, { uncapped: true });
     item.rendered = true;
-    item.durationSec = Math.round(await duration(out));
+    item.durationSec = Math.round(await mediaDuration(out));
     await db().upsert("media", item);
 
     const fresh = (await db().get<Post>("posts", postId)) ?? post;

@@ -12,13 +12,19 @@ import { nowIso, uid } from "./utils";
  * Files live in Supabase Storage (bucket "media") when Supabase is configured, otherwise in ./.data/uploads.
  * Platforms like Instagram fetch images by URL, so each file can be served through a signed, expiring link.
  */
-export const ALLOWED_TYPES: Record<string, { ext: string; kind: "image" | "video" }> = {
+export const ALLOWED_TYPES: Record<string, { ext: string; kind: MediaItem["kind"] }> = {
   "image/jpeg": { ext: "jpg", kind: "image" },
   "image/png": { ext: "png", kind: "image" },
   "image/webp": { ext: "webp", kind: "image" },
   "image/gif": { ext: "gif", kind: "image" },
   "video/mp4": { ext: "mp4", kind: "video" },
   "video/quicktime": { ext: "mov", kind: "video" },
+  // Voice lines, music and sound for the Film Engine (Seedance lip-syncs to them).
+  "audio/mpeg": { ext: "mp3", kind: "audio" },
+  "audio/wav": { ext: "wav", kind: "audio" },
+  "audio/x-wav": { ext: "wav", kind: "audio" },
+  "audio/mp4": { ext: "m4a", kind: "audio" },
+  "audio/x-m4a": { ext: "m4a", kind: "audio" },
 };
 /** Largest file a person can upload or link (MAX_UPLOAD_MB, 2 GB by default). Videos Ghost Post makes itself have no cap. */
 export const MAX_FILE_BYTES = Math.max(1, Number(process.env.MAX_UPLOAD_MB) || 2048) * 1024 * 1024;
@@ -32,7 +38,7 @@ const localDir = (owner: string) => path.join(process.env.DATA_DIR || path.join(
 
 export async function storeFile(owner: string, file: { name: string; type: string; bytes: Buffer }, opts: { uncapped?: boolean } = {}): Promise<MediaItem> {
   const t = ALLOWED_TYPES[file.type];
-  if (!t) throw new Error("That file type isn't supported. Use JPG, PNG, WebP, GIF, MP4 or MOV.");
+  if (!t) throw new Error("That file type isn't supported. Use JPG, PNG, WebP, GIF, MP4, MOV, MP3, WAV or M4A.");
   if (!opts.uncapped && file.bytes.length > MAX_FILE_BYTES) throw new Error(`Files can be up to ${MAX_FILE_LABEL}.`);
   const id = uid("med");
   const storagePath = `${owner}/${id}.${t.ext}`;

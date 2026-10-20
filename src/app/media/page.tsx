@@ -70,8 +70,8 @@ export default function MediaPage() {
         >
           <Upload className="h-6 w-6 text-mint-300" />
           <span className="font-medium text-white">{busy ? "Uploading…" : "Drop files here or tap to upload"}</span>
-          <span className="text-xs text-white/45">JPG, PNG, WebP, GIF, MP4, MOV · up to 2 GB each · 20 at a time</span>
-          <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime" className="sr-only" disabled={busy} onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
+          <span className="text-xs text-white/45">JPG, PNG, WebP, GIF, MP4, MOV, MP3, WAV, M4A · up to 2 GB each · 20 at a time</span>
+          <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a" className="sr-only" disabled={busy} onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
         </label>
         <p className="mt-3 text-xs text-white/40">Only upload content you own or have rights to, and that follows each platform's rules. Explicit or nude media is never published automatically.</p>
       </Card>
@@ -84,6 +84,10 @@ export default function MediaPage() {
                 {m.kind === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={m.url} alt={m.name} className="h-full w-full object-cover" loading="lazy" />
+                ) : m.kind === "audio" ? (
+                  <div className="grid h-full w-full place-items-center bg-gradient-to-br from-violet-500/20 to-mint-400/10 p-3">
+                    <audio src={m.url} controls preload="none" className="w-full" />
+                  </div>
                 ) : (
                   <button className="focus-ring group relative block h-full w-full" onClick={() => setPlaying(m)} aria-label={`Play ${m.name}`}>
                     {/* #t=0.1 makes iPhones show the first frame as the thumbnail. */}
@@ -97,7 +101,7 @@ export default function MediaPage() {
               <div className="grid gap-2 p-3">
                 <p className="truncate text-sm text-white" title={m.name}>{m.name}</p>
                 <div className="flex items-center gap-2">
-                  <Badge tone={m.kind === "image" ? "violet" : "sky"}>{m.kind}</Badge>
+                  <Badge tone={m.kind === "image" ? "violet" : m.kind === "audio" ? "gold" : "sky"}>{m.kind}</Badge>
                   <span className="text-xs tabular-nums text-white/40">{mb(m.size)}</span>
                   <button className="ml-auto text-white/40 hover:text-white" title="Copy media ID" onClick={async () => toast((await copyToClipboard(m.id)) ? "Media ID copied" : "Copy blocked", "success")}>
                     <Copy className="h-3.5 w-3.5" />

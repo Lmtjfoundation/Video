@@ -176,6 +176,9 @@ export const CREDIT_COST = {
   filmPage: 2,
   filmReview: 3,
   filmPromo: 2,
+  /** Film Engine: plan a whole film as Seedance beats with timestamped shot lists, or write one more beat. */
+  filmPlan: 4,
+  filmBeat: 1,
 } as const;
 export type CreditAction = keyof typeof CREDIT_COST;
 
@@ -207,6 +210,8 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   filmPage: "Writers' Room: screenplay pages, per scene",
   filmReview: "Writers' Room: awards-readiness review",
   filmPromo: "Writers' Room: promotion kit",
+  filmPlan: "Film Engine: plan a film as beats with timestamped shot lists",
+  filmBeat: "Film Engine: write the next beat",
 };
 
 /** Hard safety ceiling even on Unlimited: beyond this, platforms treat accounts as spam. */

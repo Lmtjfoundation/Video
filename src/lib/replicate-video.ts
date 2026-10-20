@@ -33,16 +33,18 @@ async function call(path: string, key: string, init: RequestInit = {}) {
   return JSON.parse(text || "{}") as Record<string, unknown>;
 }
 
-/** Uploads the starting picture so the model can fetch it. */
-async function uploadStart(key: string, img: RefImage): Promise<string> {
-  const ext = img.mimeType.split("/")[1] || "png";
+/** Uploads a file (picture, clip or audio) to Replicate so the model can fetch it; returns its link. */
+export async function uploadToReplicate(key: string, bytes: Buffer, mime: string, name: string): Promise<string> {
   const form = new FormData();
-  form.append("content", new Blob([Buffer.from(img.base64, "base64")], { type: img.mimeType }), `start.${ext}`);
+  form.append("content", new Blob([new Uint8Array(bytes)], { type: mime }), name);
   const f = await call("/files", key, { method: "POST", body: form });
   const url = (f.urls as { get?: string } | undefined)?.get;
-  if (!url) throw new MediaGenError("Replicate didn't return a link for the uploaded picture.");
+  if (!url) throw new MediaGenError("Replicate didn't return a link for an uploaded file.");
   return url;
 }
+
+/** Uploads the starting picture so the model can fetch it. */
+const uploadStart = (key: string, img: RefImage) => uploadToReplicate(key, Buffer.from(img.base64, "base64"), img.mimeType, `start.${img.mimeType.split("/")[1] || "png"}`);
 
 type Prediction = { id?: string; status?: string; output?: unknown; error?: unknown; urls?: { get?: string } };
 
@@ -50,21 +52,67 @@ export type ClipRequest = { prompt: string; start: RefImage; aspect: "9:16" | "1
 
 /** One Seedance 2.5 scene, starting from the scene's picture, as long as the scene needs. Returns the MP4. */
 export const seedanceClip = (o: ClipRequest) =>
-  run("Seedance", MODEL, o, (image) => ({ prompt: o.prompt.slice(0, 4000), image, duration: Math.max(1, Math.min(30, Math.round(o.seconds))), resolution: "720p", aspect_ratio: o.aspect, generate_audio: false, watermark: false }));
+  run("Seedance", MODEL, o.timeoutMs, async (key) => ({ image: await uploadStart(key, o.start) }), (image) => ({ prompt: o.prompt.slice(0, 4000), image, duration: Math.max(1, Math.min(30, Math.round(o.seconds))), resolution: "720p", aspect_ratio: o.aspect, generate_audio: false, watermark: false }));
 
 /** One Wan 2.2 scene: about 5 seconds (81 frames at 16 fps), the shape Wan is trained for; the render holds the last frame if the voice runs longer. */
-export const wanClip = (o: ClipRequest) => run("Wan", WAN_MODEL, o, (image) => ({ prompt: o.prompt.slice(0, 2000), image, resolution: "720p", num_frames: 81, frames_per_second: 16, go_fast: true }));
+export const wanClip = (o: ClipRequest) => run("Wan", WAN_MODEL, o.timeoutMs, async (key) => ({ image: await uploadStart(key, o.start) }), (image) => ({ prompt: o.prompt.slice(0, 2000), image, resolution: "720p", num_frames: 81, frames_per_second: 16, go_fast: true }));
 
-async function run(name: string, model: string, o: ClipRequest, input: (image: string) => Record<string, unknown>): Promise<Buffer> {
+/** A file handed to Seedance as a reference. */
+export type RefFile = { bytes: Buffer; mime: string; name: string };
+
+export type SeedanceRequest = {
+  prompt: string;
+  /** Up to 30, cited in the prompt as [Image1]…; for identity, wardrobe, locations and style. */
+  images?: RefFile[];
+  /** Up to 10 (30 seconds in all), cited as [Video1]…; to continue, edit or copy motion. */
+  videos?: RefFile[];
+  /** Up to 10 (30 seconds in all), cited as [Audio1]…; voice lines to lip-sync, music to cut to. Needs a picture or clip too. */
+  audios?: RefFile[];
+  /** 1–30 seconds, or -1 to let the model choose (required when editing a clip). */
+  seconds: number;
+  /** 9:16, 16:9, 21:9, 1:1… or "adaptive" (required to extend or edit a clip). */
+  aspect: string;
+  /** Seedance's own sound: dialogue in double quotes, effects and music. */
+  audio: boolean;
+  timeoutMs?: number;
+};
+
+/**
+ * Seedance 2.5 with its full reference set, the way the film engine uses it: a multi-shot production brief, the cast
+ * and locations as reference pictures, the previous segment as a reference clip to continue from (or the clip to
+ * edit), and voice lines to lip-sync. Returns the MP4.
+ */
+export const seedanceFilm = (r: SeedanceRequest) =>
+  run("Seedance", MODEL, r.timeoutMs ?? 12 * 60_000, async (key) => {
+    const up = (list: RefFile[] | undefined, max: number) => Promise.all((list ?? []).slice(0, max).map((f) => uploadToReplicate(key, f.bytes, f.mime, f.name)));
+    const [reference_images, reference_videos, reference_audios] = await Promise.all([up(r.images, 30), up(r.videos, 10), up(r.audios, 10)]);
+    return { reference_images, reference_videos, reference_audios: reference_images.length || reference_videos.length ? reference_audios : [] };
+  }, (_, refs) => ({
+    prompt: r.prompt.slice(0, 4000),
+    ...refs,
+    duration: r.seconds === -1 ? -1 : Math.max(1, Math.min(30, Math.round(r.seconds))),
+    resolution: "720p",
+    aspect_ratio: r.aspect,
+    generate_audio: r.audio,
+    watermark: false,
+  }));
+
+async function run<R extends Record<string, unknown>>(
+  name: string,
+  model: string,
+  timeoutMs: number | undefined,
+  prepare: (key: string) => Promise<R>,
+  input: (image: string, refs: R) => Record<string, unknown>,
+): Promise<Buffer> {
   const key = await replicateKey();
   if (!key) throw new MediaGenError(`${name} clips need a Replicate API token. The admin adds it in Admin → App settings → Integrations → Replicate.`, "config");
-  const image = await uploadStart(key, o.start);
+  const refs = await prepare(key);
   let p = (await call(`/models/${model}/predictions`, key, {
     method: "POST",
     headers: { "Content-Type": "application/json", Prefer: "wait=60" },
-    body: JSON.stringify({ input: input(image) }),
+    body: JSON.stringify({ input: input(String(refs.image ?? ""), refs) }),
   })) as Prediction;
-  const deadline = Date.now() + (o.timeoutMs ?? 8 * 60_000);
+  const deadline = Date.now() + (timeoutMs ?? 8 * 60_000);
   while (p.status !== "succeeded") {
     if (p.status === "failed" || p.status === "canceled") {
       const why = String(p.error ?? "no reason given");

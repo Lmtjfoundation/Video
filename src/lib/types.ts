@@ -242,7 +242,7 @@ export interface MediaItem {
   name: string;
   type: string;
   size: number;
-  kind: "image" | "video";
+  kind: "image" | "video" | "audio";
   storagePath: string;
   createdAt: string;
   /** True for MP4s the app rendered from a video plan */
