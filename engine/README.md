@@ -25,6 +25,33 @@ both downloaded once). For `fast`: a 24–48 GB GPU and a 60 GB volume. Alibaba 
 few clips on your GPU to know your cost per second.
 Check your host's current hourly price; you only pay while the server is on.
 
+## Start it on Microsoft Azure (one command)
+
+Good for nonprofits: Microsoft's nonprofit grant gives $2,000 of Azure credit a year. The default VM,
+`Standard_NC24ads_A100_v4` (one A100 80 GB, 220 GB memory), runs the `best` setting and was $3.673 an hour in East US
+in October 2026 (about 540 hours on the grant). You pay only while it runs, plus a few dollars a month for its disk.
+
+1. **GPU quota first.** New and grant-funded subscriptions start with no GPU quota. In the Azure portal open
+   **Quotas → Compute**, search **Standard NCADS_A100_v4 Family vCPUs**, choose your region (East US), and request
+   **24**. Say it is for a nonprofit's AI video generation. Approval can take from minutes to a few days, and
+   Microsoft can decline it for credit-funded subscriptions; if so, ask Microsoft support, or try another region.
+2. Open **Cloud Shell** (the `>_` button at the top of portal.azure.com, choose Bash) and run:
+
+   ```bash
+   curl -sL https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-autopilot/engine/azure/deploy.sh | bash
+   ```
+
+   It checks your quota, creates the VM with Ubuntu 22.04, installs the NVIDIA driver, the engine and an HTTPS
+   certificate, sets a daily automatic stop (07:00 UTC) and prints the engine's **address and token**.
+3. The first start downloads the models (about 160 GB for `best`; allow 30–60 minutes). Then paste the address and
+   token into Ghost Post (step 6 below) and press **Save & test**.
+4. Stop the GPU when you aren't filming: `az vm deallocate -g ghost-post-engine -n ghost-post-engine`; start it with
+   `az vm start -g ghost-post-engine -n ghost-post-engine`. The models stay on the disk.
+
+Options go before `bash`, e.g. `| LOCATION=eastus2 bash` for another region, or `| QUALITY=fast bash` for the
+quicker TI2V-5B setting. Azure's A10 VMs (NVadsA10 v5) are not recommended: Microsoft's driver page lists a known CUDA
+problem with the GRID driver they install.
+
 ## Start it on RunPod (or any GPU host)
 
 1. Create a GPU pod from a **PyTorch** template (CUDA 12.8 or newer) on an **80 GB GPU (H100 or A100 80 GB)** with a

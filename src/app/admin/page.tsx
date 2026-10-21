@@ -655,7 +655,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Film className="h-4 w-4" />}
           title="Ghost Post Video Engine — your own video model"
-          desc="Ghost Post's own filmmaking model (Wan 2.2 I2V-A14B, the strongest open video model; or TI2V-5B for smaller GPUs) on a GPU server you rent. The Film Engine makes moving footage with it: no Seedance, no Replicate, no per-clip fee; you pay only for the GPU while it runs. Set it up from engine/README.md in the repo, then paste the server's address and its ENGINE_TOKEN here."
+          desc="Ghost Post's own filmmaking model (Wan 2.2 I2V-A14B, the strongest open video model; or TI2V-5B for smaller GPUs) on a GPU server you rent (Microsoft Azure in one command, using the nonprofit Azure credit, or RunPod). The Film Engine makes moving footage with it: no Seedance, no Replicate, no per-clip fee; you pay only for the GPU while it runs. Set it up from engine/README.md in the repo, then paste the server's address and its ENGINE_TOKEN here."
           link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/engine/README.md", label: "Setup guide" }}
           state={st.videoEngine}
           result={results.videoEngine}

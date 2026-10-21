@@ -1,0 +1,58 @@
+#cloud-config
+# Ghost Post Video Engine on an Azure GPU VM (Ubuntu 22.04). deploy.sh fills in the __PLACEHOLDERS__.
+# The NVIDIA driver comes from Azure's NvidiaGpuDriverLinux extension; the engine service keeps retrying until the GPU
+# is ready. Caddy serves it over HTTPS with a free Let's Encrypt certificate for the VM's Azure DNS name.
+package_update: true
+packages: [git, ffmpeg, debian-keyring, debian-archive-keyring, apt-transport-https, curl, gnupg]
+
+write_files:
+  - path: /etc/ghost-post-engine.env
+    permissions: "0600"
+    content: |
+      ENGINE_TOKEN=__TOKEN__
+      ENGINE_QUALITY=__QUALITY__
+      HF_HOME=/opt/ghost-post/hf
+      HF_HUB_ENABLE_HF_TRANSFER=1
+      PORT=8000
+  - path: /etc/systemd/system/ghost-post-engine.service
+    content: |
+      [Unit]
+      Description=Ghost Post Video Engine
+      After=network-online.target
+      Wants=network-online.target
+      [Service]
+      EnvironmentFile=/etc/ghost-post-engine.env
+      WorkingDirectory=/opt/ghost-post/repo/engine
+      # Wait for the NVIDIA driver (installed by the Azure extension, possibly after a restart).
+      ExecStartPre=/bin/sh -c 'until nvidia-smi >/dev/null 2>&1; do sleep 15; done'
+      ExecStartPre=/bin/sh -c 'git -C /opt/ghost-post/repo pull --ff-only || true'
+      ExecStartPre=/opt/ghost-post/venv/bin/pip install -q torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128
+      ExecStartPre=/opt/ghost-post/venv/bin/pip install -q -r /opt/ghost-post/repo/engine/requirements.txt
+      ExecStart=/opt/ghost-post/venv/bin/python server.py
+      Restart=always
+      RestartSec=20
+      TimeoutStartSec=infinity
+      [Install]
+      WantedBy=multi-user.target
+  - path: /etc/caddy/Caddyfile.ghost-post
+    content: |
+      __DOMAIN__ {
+        reverse_proxy 127.0.0.1:8000
+      }
+
+runcmd:
+  - mkdir -p /opt/ghost-post/hf
+  - git clone --depth 1 -b __BRANCH__ https://github.com/Lmtjfoundation/Video /opt/ghost-post/repo
+  # Ubuntu 22.04 ships Python 3.10; the engine's packages need 3.11+, so uv installs Python 3.12 for it.
+  - curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+  - env UV_PYTHON_INSTALL_DIR=/opt/ghost-post/python uv venv --seed --python 3.12 /opt/ghost-post/venv
+  - /opt/ghost-post/venv/bin/pip install -q --upgrade pip
+  - /opt/ghost-post/venv/bin/pip install -q torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128
+  - /opt/ghost-post/venv/bin/pip install -q -r /opt/ghost-post/repo/engine/requirements.txt
+  - curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  - curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt -o /etc/apt/sources.list.d/caddy-stable.list
+  - apt-get update -q && apt-get install -y -q caddy
+  - cp /etc/caddy/Caddyfile.ghost-post /etc/caddy/Caddyfile
+  - systemctl restart caddy
+  - systemctl daemon-reload
+  - systemctl enable --now ghost-post-engine
