@@ -23,7 +23,7 @@ type Data = {
 type MediaItem = { id: string; name: string; kind: Kind; url: string };
 type Character = { id: string; name: string; imageMediaId: string; imageUrl: string };
 
-const ENGINE_LABEL: Record<Engine, string> = { own: "Ghost Post engine — your own model on your GPU, no per-clip fees", gemini: "Google Veo 3.1 (Gemini) — full motion with its own sound, 8-second clips", seedance: "Seedance 2.5 — full motion, references, native sound", wan: "Wan 2.2 — low-cost motion, chained clips", free: "Free — camera moves on your pictures" };
+const ENGINE_LABEL: Record<Engine, string> = { own: "Ghost Post engine — your own model on your GPU, no per-clip fees", gemini: "Gemini Omni Flash — full motion with its own sound, on the app's Gemini key", seedance: "Seedance 2.5 — full motion, references, native sound", wan: "Wan 2.2 — low-cost motion, chained clips", free: "Free — camera moves on your pictures" };
 const ASPECTS = ["9:16", "16:9", "21:9", "1:1"];
 const busy = (s?: { status: Status }) => s?.status === "queued" || s?.status === "generating";
 const STATUS_TONE: Record<Status, "neutral" | "gold" | "mint" | "red"> = { draft: "neutral", queued: "gold", generating: "gold", done: "mint", failed: "red" };
@@ -318,7 +318,7 @@ function NewFilm({ data, admin, onMade }: { data: Data | null; admin: boolean; o
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Frame"><Select value={aspect} onChange={(e) => setAspect(e.target.value)}>{ASPECTS.map((a) => <option key={a}>{a}</option>)}</Select></Field>
-          <Field label="Engine"><Select value={engine} onChange={(e) => setEngine(e.target.value as Engine)}>{ENGINES.map((e) => <option key={e} value={e}>{e === "own" ? "Ghost Post engine" : e === "gemini" ? "Google Veo 3.1" : e === "seedance" ? "Seedance 2.5" : e === "wan" ? "Wan 2.2" : "Free"}</option>)}</Select></Field>
+          <Field label="Engine"><Select value={engine} onChange={(e) => setEngine(e.target.value as Engine)}>{ENGINES.map((e) => <option key={e} value={e}>{e === "own" ? "Ghost Post engine" : e === "gemini" ? "Gemini Omni Flash" : e === "seedance" ? "Seedance 2.5" : e === "wan" ? "Wan 2.2" : "Free"}</option>)}</Select></Field>
         </div>
         <p className="text-xs text-white/45">About {beats * seconds} seconds of film. You can add your cast and references after planning; the shot lists cite them as @Name.</p>
         <Button variant="primary" loading={busyNow} disabled={!filmId && story.trim().length < 20} onClick={() => make(true)}>

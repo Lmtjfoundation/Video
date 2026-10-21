@@ -26,7 +26,7 @@ export const POST = authed(async (req, user) => {
   await releaseOrphanedRender(user.id, post);
   if (post.render && (post.render.status === "queued" || post.render.status === "rendering")) return ok(post);
   if (!(await ffmpegAvailable())) return fail("Video rendering isn't switched on for this server yet (ffmpeg missing). Ask the admin to add it.", 503);
-  if (post.video.ai && post.video.visuals !== "motion" && !isGraphicsLook(post.video.ai.look) && !(await mediaKey())) return fail("This video's pictures and Veo clips need the app's Gemini key. Ask the admin to add it in Admin → App settings → Integrations.", 503);
+  if (post.video.ai && post.video.visuals !== "motion" && !isGraphicsLook(post.video.ai.look) && !(await mediaKey())) return fail("This video's pictures and video clips need the app's Gemini key. Ask the admin to add it in Admin → App settings → Integrations.", 503);
   const credits = renderCredits(post.video);
   await spendCredits(user.id, credits);
   post.render = { status: "queued", progress: 0, message: "Waiting to render…", credits, updatedAt: nowIso() };

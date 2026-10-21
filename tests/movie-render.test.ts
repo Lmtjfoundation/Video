@@ -28,7 +28,7 @@ process.env.FREE_VOICE = "off"; // the free voice downloads a 90 MB model; teste
 
 vi.mock("@/lib/utils", async (orig) => ({ ...(await orig<typeof import("@/lib/utils")>()), sleep: () => Promise.resolve() }));
 
-describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Veo clip", () => {
+describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Gemini clip", () => {
   const realFetch = globalThis.fetch;
   const requests: { url: string; body: Record<string, unknown> }[] = [];
   let png = "";
@@ -45,6 +45,8 @@ describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Veo clip",
       const url = String(input);
       requests.push({ url, body: init?.body ? JSON.parse(String(init.body)) : {} });
       const json = (b: unknown) => new Response(JSON.stringify(b), { headers: { "content-type": "application/json" } });
+      const asks = (requests.at(-1)!.body.response_format as { type?: string } | undefined)?.type;
+      if (url.endsWith("/interactions") && asks === "video") return json({ status: "completed", steps: [{ type: "model_output", content: [{ type: "video", mime_type: "video/mp4", data: mp4.toString("base64") }] }] });
       if (url.endsWith("/interactions")) return json({ output_image: { data: png, mime_type: "image/png" } });
       if (url.endsWith(":predictLongRunning")) return json({ name: "ops/1", done: true, response: { generateVideoResponse: { generatedSamples: [{ video: { uri: "https://files.example/v.mp4" } }] } } });
       if (url === "https://files.example/v.mp4") return new Response(new Uint8Array(mp4));
@@ -55,7 +57,7 @@ describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Veo clip",
     globalThis.fetch = realFetch;
   });
 
-  it("pictures every scene with the character, animates the Veo scene, and attaches the MP4", async () => {
+  it("pictures every scene with the character, animates the chosen scene with Gemini Omni Flash, and attaches the MP4", async () => {
     const { asUser, db } = await import("@/lib/db");
     const { createCharacter } = await import("@/lib/characters");
     const { renderVideoPost } = await import("@/lib/render");
@@ -84,13 +86,15 @@ describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Veo clip",
       expect(done?.mediaIds?.[0]).toBe(done?.render?.mediaId);
     });
 
-    const pictures = requests.filter((r) => r.url.endsWith("/interactions"));
+    const isVideo = (r: (typeof requests)[number]) => (r.body.response_format as { type?: string } | undefined)?.type === "video";
+    const pictures = requests.filter((r) => r.url.endsWith("/interactions") && !isVideo(r));
     expect(pictures).toHaveLength(3); // the character portrait + one picture per scene
     const withMaya = pictures[1].body.input as { type: string }[];
     expect(withMaya.filter((p) => p.type === "image")).toHaveLength(1); // Maya's portrait guides her scene
     expect((pictures[2].body.input as { type: string }[]).filter((p) => p.type === "image")).toHaveLength(0);
-    const veo = requests.find((r) => r.url.endsWith(":predictLongRunning"))!;
-    expect(veo.body).toMatchObject({ instances: [{ image: { inlineData: { mimeType: "image/png", data: png } } }], parameters: { durationSeconds: "4", aspectRatio: "9:16" } });
+    const omni = requests.find((r) => r.url.endsWith("/interactions") && isVideo(r))!;
+    expect(omni.body).toMatchObject({ model: "gemini-omni-1.1-flash", input: [{ type: "image", mime_type: "image/png", data: png }, { type: "text" }], response_format: { type: "video", aspect_ratio: "9:16", resolution: "720p" } });
+    expect(requests.some((r) => r.url.endsWith(":predictLongRunning"))).toBe(false); // Veo only when Omni isn't on the key
   }, 120_000);
 
   it("still finishes the movie when Google needs billing: backgrounds instead of AI pictures, credits back", async () => {

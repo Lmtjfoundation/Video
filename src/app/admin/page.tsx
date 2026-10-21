@@ -583,7 +583,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Sparkles className="h-4 w-4" />}
           title="Gemini — free trials & backup"
-          desc="Your own Google Gemini key. Free-trial accounts write with it, and it steps in automatically whenever Claude can't answer (no credits, overloaded), so subscribers never need an AI account of their own. It also powers Movie Studio: character portraits and scene pictures (Nano Banana) and animated scenes (Veo 3.1), billed by Google on this key's project. Optional."
+          desc="Your own Google Gemini key. Free-trial accounts write with it, and it steps in automatically whenever Claude can't answer (no credits, overloaded), so subscribers never need an AI account of their own. It also powers Movie Studio: character portraits and scene pictures (Nano Banana) and animated scenes (Gemini Omni Flash), billed by Google on this key's project. Optional."
           link={{ href: "https://aistudio.google.com/apikey", label: "Get a key" }}
           state={st.gemini}
           result={results.gemini}
@@ -635,7 +635,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Sparkles className="h-4 w-4" />}
           title="Replicate — Seedance 2.5 and Wan 2.2 video"
-          desc="Adds two engines for animating Movie Studio scenes, next to Veo: ByteDance's Seedance 2.5 ($0.2312 a second at 720p) and the open-weight Wan 2.2 (at most $0.145 a 5-second clip), prices as of Oct 2026. Replicate bills this token's account; subscribers pay in credits. Scene pictures still use the Gemini key. Optional."
+          desc="Adds two engines for animating Movie Studio scenes, next to Gemini Omni Flash: ByteDance's Seedance 2.5 ($0.2312 a second at 720p) and the open-weight Wan 2.2 (at most $0.145 a 5-second clip), prices as of Oct 2026. Replicate bills this token's account; subscribers pay in credits. Scene pictures still use the Gemini key. Optional."
           link={{ href: "https://replicate.com/account/api-tokens", label: "Get a token" }}
           state={st.replicate}
           result={results.replicate}

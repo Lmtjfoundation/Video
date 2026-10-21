@@ -5,7 +5,8 @@ import { sleep } from "./utils";
 /**
  * Pictures and video clips made on the app's own Gemini key (Admin → App settings → Integrations → Gemini):
  *  - Pictures: Nano Banana (Gemini image models). Up to 4 reference pictures keep a character looking the same.
- *  - Clips: Google Veo 3.1, image-to-video, so each clip starts from the scene's picture.
+ *  - Clips: Gemini Omni Flash (Veo 3.1 as the fallback while Google still serves it), image-to-video, so each clip
+ *    starts from the scene's picture.
  * Google bills these on the key's Cloud project; the app charges credits for them (see CREDIT_COST).
  */
 
@@ -15,6 +16,9 @@ const BASE = "https://generativelanguage.googleapis.com/v1beta";
 const IMAGE_MODELS = () => unique([process.env.GEMINI_IMAGE_MODEL, "gemini-nano-banana-2.1", "gemini-3.1-flash-image"]);
 /** Veo 3.1 Fast ($0.10/s at 720p) is the default; the full model costs 4× as much for a small quality gain. */
 const VEO_MODELS = () => unique([process.env.VEO_MODEL, "veo-3.1-fast-generate-preview", "veo-3.1-generate-preview"]);
+
+/** Gemini Omni Flash replaced the Veo 3.1 previews (shut down 2026-10-22); about $0.10 a second at 720p, paid tier only. */
+const OMNI_MODELS = () => unique([process.env.OMNI_MODEL, "gemini-omni-1.1-flash"]);
 
 const unique = (xs: (string | undefined)[]) => [...new Set(xs.map((x) => x?.trim()).filter((x): x is string => !!x))];
 
@@ -183,6 +187,81 @@ interface VeoOperation {
   done?: boolean;
   error?: { message?: string };
   response?: { generateVideoResponse?: { generatedSamples?: { video?: { uri?: string } }[]; raiMediaFilteredReasons?: string[] } };
+}
+
+/** Finds the generated video in an Interactions response (`steps[].content[]` with `type: "video"`). */
+export function findVideo(json: unknown): { data?: string; uri?: string } | null {
+  const seen = new Set<unknown>();
+  let found: { data?: string; uri?: string } | null = null;
+  const visit = (o: unknown) => {
+    if (found || !o || typeof o !== "object" || seen.has(o)) return;
+    seen.add(o);
+    const r = o as Record<string, unknown>;
+    if (r.type === "video" && (typeof r.data === "string" || typeof r.uri === "string")) {
+      found = { data: typeof r.data === "string" ? r.data : undefined, uri: typeof r.uri === "string" ? r.uri : undefined };
+      return;
+    }
+    for (const v of Object.values(r)) visit(v);
+  };
+  visit(json);
+  return found;
+}
+
+/**
+ * Animates a picture into a clip of about `seconds` (3–10) with Gemini Omni Flash at 720p; the model makes its own
+ * sound. One synchronous Interactions call; returns null when no Omni model is on this key (the caller falls back).
+ */
+async function omniClip(key: string, o: { prompt: string; start: RefImage; aspect: "9:16" | "16:9"; seconds: number; timeoutMs?: number }): Promise<Buffer | null> {
+  for (const model of OMNI_MODELS()) {
+    let res: Response;
+    try {
+      res = await fetch(`${BASE}/interactions`, {
+        method: "POST",
+        headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          input: [
+            { type: "image", mime_type: o.start.mimeType, data: o.start.base64 },
+            { type: "text", text: `One continuous shot of about ${o.seconds} seconds that starts exactly on this picture. ${o.prompt}` },
+          ],
+          response_format: { type: "video", aspect_ratio: o.aspect, resolution: "720p" },
+          generation_config: { video_config: { task: "image_to_video" } },
+          background: false,
+          store: false,
+          stream: false,
+        }),
+        signal: AbortSignal.timeout(o.timeoutMs ?? 10 * 60_000),
+      });
+    } catch (e) {
+      throw new MediaGenError(`Gemini Omni didn't answer (${(e as Error).message}).`);
+    }
+    const text = await res.text();
+    if (res.status === 404) continue;
+    if (!res.ok) {
+      const problem = googleProblem(res.status, text);
+      if (problem) throw new MediaGenError(problem, "config");
+      if (/safety|blocked|policy/i.test(text)) throw new MediaGenError("Google's safety filter declined this clip. Reword the shot.", "blocked");
+      throw new MediaGenError(`Gemini Omni couldn't make the clip (${res.status} ${text.replace(/\s+/g, " ").slice(0, 200)}).`);
+    }
+    const json = JSON.parse(text) as { status?: string; error?: { message?: string } };
+    if (json.error?.message) throw new MediaGenError(`Gemini Omni couldn't make the clip: ${json.error.message.slice(0, 200)}`);
+    const video = findVideo(json);
+    if (video?.data) return Buffer.from(video.data, "base64");
+    if (video?.uri) {
+      const id = video.uri.match(/files\/([^/?:]+)/)?.[1];
+      const dl = await fetch(id ? `${BASE}/files/${id}:download?alt=media` : video.uri, { headers: { "x-goog-api-key": key }, redirect: "follow" });
+      if (!dl.ok) throw new MediaGenError(`Downloading the Gemini Omni clip failed (${dl.status}).`);
+      return Buffer.from(await dl.arrayBuffer());
+    }
+    throw new MediaGenError(`Google's safety filter declined this clip${json.status && json.status !== "completed" ? ` (${json.status})` : ""}. Reword the shot.`, "blocked");
+  }
+  return null;
+}
+
+/** One clip: Gemini Omni Flash, or Veo 3.1 when Omni isn't on the key. */
+export async function geminiClip(o: { prompt: string; start: RefImage; aspect: "9:16" | "16:9"; seconds: 4 | 6 | 8; timeoutMs?: number }): Promise<Buffer> {
+  const key = await requireKey();
+  return (await omniClip(key, o)) ?? veoClip(o);
 }
 
 /**

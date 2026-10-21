@@ -60,13 +60,13 @@ export default function MovieStudio() {
     <div>
       <PageHeader
         title="Movie Studio"
-        subtitle="Turn photos into characters, then make short films and explainer videos with AI pictures, Veo-animated scenes, voiceover and captions."
+        subtitle="Turn photos into characters, then make short films and explainer videos with AI pictures, Gemini-animated scenes, voiceover and captions."
         actions={<Link href="/explain"><Button variant="secondary"><Lightbulb className="h-4 w-4" /> Explain a text</Button></Link>}
       />
       {lib && !lib.ready && (
         <div className="mb-5 rounded-xl bg-gold-400/[0.08] p-4 text-sm text-gold-300 ring-1 ring-gold-300/25">
           {admin
-            ? "Add a Gemini API key in Admin → App settings → Integrations to switch this on. Pictures and Veo clips are billed by Google on that key's project, so turn billing on there."
+            ? "Add a Gemini API key in Admin → App settings → Integrations to switch this on. Pictures and video clips are billed by Google on that key's project, so turn billing on there."
             : "Movie Studio isn't switched on yet. The app's owner needs to connect Google Gemini."}
         </div>
       )}
@@ -254,7 +254,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
   const [length, setLength] = useState<MovieLength>("s60");
   const [veo, setVeo] = useState(3);
   const [engine, setEngine] = useState<AnimationEngine>("veo");
-  const engineName = engine === "seedance" ? "Seedance 2.5" : engine === "wan" ? "Wan 2.2" : "Veo";
+  const engineName = engine === "seedance" ? "Seedance 2.5" : engine === "wan" ? "Wan 2.2" : "Gemini Omni Flash";
   const [renderNow, setRenderNow] = useState(true);
   const [voiceover, setVoiceover] = useState(true);
   const settings = useApp((s) => s.status?.settings);
@@ -401,7 +401,7 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
             </p>
           ) : (
           <>
-          <Field label="Animate with" hint={!lib?.replicate ? "Seedance 2.5 and Wan 2.2 switch on when the admin adds a Replicate token" : engine === "wan" ? "Open-weight model: the lowest cost, about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice Veo's price" : "Google's model: strong motion and lighting"}>
+          <Field label="Animate with" hint={!lib?.replicate ? "Seedance 2.5 and Wan 2.2 switch on when the admin adds a Replicate token" : engine === "wan" ? "Open-weight model: the lowest cost, about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice the Gemini price" : "Gemini Omni Flash, Google's video model: strong motion, lighting and sound"}>
             <Select value={engine} onChange={(e) => setEngine(e.target.value as AnimationEngine)}>
               <option value="veo">Google Veo 3.1 · {CREDIT_COST.veoSecond} credits a second</option>
               <option value="seedance" disabled={!lib?.replicate}>ByteDance Seedance 2.5 · {CREDIT_COST.seedanceSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>

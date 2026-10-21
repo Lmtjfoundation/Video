@@ -224,15 +224,22 @@ describe.skipIf(!hasFfmpeg)("Film Engine making footage", () => {
     delete process.env.VIDEO_ENGINE_TOKEN;
   }, 180_000);
 
-  it("films with Google Veo on the Gemini key: 8-second clips chained from each last frame, Veo's own sound kept", async () => {
+  it("films with Gemini Omni Flash on the Gemini key: clips chained from where the footage ends, its own sound kept, Veo as the fallback", async () => {
     process.env.GEMINI_API_KEY = "gem-test-key";
-    const starts: { url: string; body: { instances: { prompt: string; image: { inlineData: { data: string } } }[]; parameters: Record<string, unknown> } }[] = [];
+    let omniGone = false;
+    const omni: { model: string; input: { type: string; data?: string; text?: string }[]; response_format: Record<string, unknown> }[] = [];
+    const veo: { parameters: Record<string, unknown> }[] = [];
     globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input);
-      const json = (b: unknown) => new Response(JSON.stringify(b), { headers: { "content-type": "application/json" } });
+      const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { "content-type": "application/json" } });
+      if (url.endsWith("/v1beta/interactions")) {
+        if (omniGone) return json({ error: { code: 404, message: "model not found" } }, 404);
+        omni.push(JSON.parse(String(init?.body)));
+        return json({ status: "completed", steps: [{ type: "model_output", content: [{ type: "video", mime_type: "video/mp4", data: clip.toString("base64") }] }] });
+      }
       if (url.endsWith(":predictLongRunning")) {
-        starts.push({ url, body: JSON.parse(String(init?.body)) });
-        return json({ name: `models/veo/operations/o${starts.length}` });
+        veo.push(JSON.parse(String(init?.body)));
+        return json({ name: "models/veo/operations/o1" });
       }
       if (/operations\/o\d+$/.test(url)) return json({ done: true, response: { generateVideoResponse: { generatedSamples: [{ video: { uri: "https://files.example/veo.mp4" } }] } } });
       if (url === "https://files.example/veo.mp4") return new Response(new Uint8Array(clip));
@@ -240,21 +247,20 @@ describe.skipIf(!hasFfmpeg)("Film Engine making footage", () => {
     }) as typeof fetch;
     const cut = await setup("gemini");
     const { asUser } = await import("@/lib/db");
-    const { getCut, queueSegment, saveCut } = await import("@/lib/film-engine");
+    const { getCut, queueSegment } = await import("@/lib/film-engine");
     await asUser("usr_film", async () => {
-      const c0 = (await getCut(cut.id))!;
-      c0.segments[0].seconds = 10;
-      await saveCut(c0);
       await queueSegment("usr_film", cut.id, cut.segments[0].id, 0);
+      omniGone = true; // Omni not on the key: Veo makes beat two
       await queueSegment("usr_film", cut.id, cut.segments[1].id, 0);
       const done = (await getCut(cut.id))!;
-      expect(done.segments.map((s) => [s.status, s.message])).toEqual([["done", "Filmed with Google Veo 3.1."], ["done", "Filmed with Google Veo 3.1."]]);
+      expect(done.segments.map((s) => [s.status, s.message])).toEqual([["done", "Filmed with Gemini Omni Flash."], ["done", "Filmed with Gemini Omni Flash."]]);
     });
-    expect(starts.every((s) => s.url.includes("/models/veo-3.1-fast-generate-preview:"))).toBe(true);
-    expect(starts.map((s) => [s.body.parameters.aspectRatio, s.body.parameters.durationSeconds])).toEqual([["9:16", "8"], ["9:16", "4"], ["9:16", "4"]]);
-    const frames = starts.map((s) => s.body.instances[0].image.inlineData.data);
-    expect(new Set(frames).size).toBe(3); // Marcus's portrait, then each clip's last frame
-    expect(starts[1].body.instances[0].prompt).toContain('"Thank you."'); // native sound on: Veo speaks the line
+    // Beat one is 4 seconds; each mocked clip is 3 seconds, so a second clip picks up at 3s.
+    expect(omni.map((b) => [b.model, b.response_format.aspect_ratio, b.response_format.resolution])).toEqual([["gemini-omni-1.1-flash", "9:16", "720p"], ["gemini-omni-1.1-flash", "9:16", "720p"]]);
+    expect(omni[0].input[1].text).toMatch(/about 4 seconds/);
+    expect(omni[1].input[1].text).toContain('"Thank you."'); // native sound on: the model speaks the line
+    expect(omni[1].input[0].data).not.toBe(omni[0].input[0].data); // continues from the last frame
+    expect(veo.map((b) => b.parameters.durationSeconds)).toEqual(["4"]);
     delete process.env.GEMINI_API_KEY;
   }, 180_000);
 

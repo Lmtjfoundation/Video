@@ -7,7 +7,7 @@ import { claudeJson } from "./llm";
 import { readFile, storeFile } from "./media";
 import { kvGet, kvSet, log } from "./repo";
 import { refundCredits } from "./auth";
-import { geminiImage, MediaGenError, veoClip } from "./gemini-media";
+import { geminiClip, geminiImage, MediaGenError } from "./gemini-media";
 import { seedanceFilm, wanClip, type RefFile } from "./replicate-video";
 import { ownClip } from "./own-video";
 import { mediaDuration, narrate, renderSegment, runCmd } from "./render";
@@ -24,8 +24,8 @@ import { nowIso, uid } from "./utils";
  *  - Extend: a segment can continue from the last seconds of the one before it, so lighting, characters, camera
  *    language and sound carry across the cut. Fix: one segment's clip is edited by instruction, the rest untouched.
  *  - The edit room joins the segments, keeps the model's sound, adds an optional score and sets the loudness.
- * Engines: Seedance 2.5 (everything above), Google Veo 3.1 on the app's Gemini key (chains 4–8-second clips with their
- * own sound), Wan 2.2 (low cost: chains ~5-second clips from each last frame), and a
+ * Engines: Seedance 2.5 (everything above), Gemini Omni Flash on the app's Gemini key (chains ~8-second clips with
+ * their own sound), Wan 2.2 (low cost: chains ~5-second clips from each last frame), and a
  * free engine that films each shot from its reference picture with camera moves, the film finish and spoken lines.
  */
 const ROW = "filmcuts";
@@ -35,7 +35,7 @@ export const MAX_SEGMENT_SECONDS = 30;
 export const REF_LIMITS = { image: 30, video: 10, audio: 10 } as const;
 export const FILM_ENGINES = ["own", "gemini", "seedance", "wan", "free"] as const;
 export type FilmEngineId = (typeof FILM_ENGINES)[number];
-export const ENGINE_NAME: Record<FilmEngineId, string> = { own: "Ghost Post's video engine", gemini: "Google Veo 3.1", seedance: "Seedance 2.5", wan: "Wan 2.2", free: "the free engine" };
+export const ENGINE_NAME: Record<FilmEngineId, string> = { own: "Ghost Post's video engine", gemini: "Gemini Omni Flash", seedance: "Seedance 2.5", wan: "Wan 2.2", free: "the free engine" };
 export const FILM_ASPECTS = ["9:16", "16:9", "21:9", "1:1"] as const;
 export type FilmAspect = (typeof FILM_ASPECTS)[number];
 const SIZE: Record<FilmAspect, [number, number]> = { "9:16": [1080, 1920], "16:9": [1920, 1080], "21:9": [1920, 822], "1:1": [1080, 1080] };
@@ -43,7 +43,7 @@ const SIZE: Record<FilmAspect, [number, number]> = { "9:16": [1080, 1920], "16:9
 const CONTINUE_TAIL = 5;
 /** Wan 2.2 and Ghost Post's engine make about 5 seconds per clip. */
 const CHAIN_CLIP = 5;
-/** Veo makes 4, 6 or 8 seconds per clip: a beat is 8-second clips, the last one rounded up and trimmed. */
+/** Gemini clips are planned as 8 seconds (4 or 6 for the last; Veo only makes those lengths), then trimmed. */
 const VEO_CLIP = 8;
 export function veoLengths(seconds: number): (4 | 6 | 8)[] {
   const out: (4 | 6 | 8)[] = [];
@@ -448,7 +448,7 @@ async function makeSegment(userId: string, cutId: string, segId: string, credits
 /**
  * Wan 2.2 and Ghost Post's own engine make a beat as ~5-second clips. Each clip starts from the last frame of the one
  * before (continuous motion); a shot that cites a picture of its own starts from that picture instead (a cut to a new
- * place or person). Ghost Post's engine can also start from the prompt alone; Wan needs a picture. Veo makes 4–8-second
+ * place or person). Ghost Post's engine can also start from the prompt alone; Wan needs a picture. Gemini makes ~8-second
  * clips with their own sound (the dialogue too, when the film has native sound on); without a picture it starts from
  * one Gemini draws from the first shot and the cast portraits.
  */
@@ -468,8 +468,9 @@ async function chainSegment(engine: "wan" | "own" | "gemini", cut: FilmCut, seg:
   const clips: string[] = [];
   let current: Shot | undefined;
   const voiced = engine === "gemini" && cut.nativeAudio;
-  const lengths = engine === "gemini" ? veoLengths(seg.seconds) : Array.from({ length: Math.ceil(seg.seconds / CHAIN_CLIP) }, () => CHAIN_CLIP);
-  for (let k = 0, t = 0; k < lengths.length; t += lengths[k++]) {
+  // Gemini clips can come back a little shorter or longer than asked, so the next clip starts where the footage ends.
+  for (let t = 0; t < seg.seconds - 0.25 && clips.length < 12; ) {
+    const length = engine === "gemini" ? veoLengths(seg.seconds - t)[0] : CHAIN_CLIP;
     const shot = shots.find((x) => t >= x.start && t < x.end) ?? shots[shots.length - 1];
     if (current && shot !== current) start = (await picture(shotImage(cut, shot.text))) ?? start; // a cut
     current = shot;
@@ -480,17 +481,18 @@ async function chainSegment(engine: "wan" | "own" | "gemini", cut: FilmCut, seg:
       fix && `Change: ${fix}`,
       "Consistent characters, smooth natural motion, cinematic.",
     ].filter(Boolean).join(" ");
-    const seconds = Math.min(lengths[k], seg.seconds - t);
+    const seconds = Math.min(length, seg.seconds - t);
     const first = start ? { bytes: await fs.readFile(start), mime: start.endsWith(".png") ? "image/png" : start.endsWith(".webp") ? "image/webp" : "image/jpeg" } : undefined;
     const bytes =
       engine === "own"
         ? await ownClip({ prompt, start: first, aspect: cut.aspect, seconds })
         : engine === "gemini"
-          ? await veoClip({ prompt, start: { base64: first!.bytes.toString("base64"), mimeType: first!.mime }, aspect: cut.aspect === "9:16" ? "9:16" : "16:9", seconds: lengths[k] as 4 | 6 | 8 })
+          ? await geminiClip({ prompt, start: { base64: first!.bytes.toString("base64"), mimeType: first!.mime }, aspect: cut.aspect === "9:16" ? "9:16" : "16:9", seconds: length as 4 | 6 | 8 })
           : await wanClip({ prompt, start: { base64: first!.bytes.toString("base64"), mimeType: first!.mime }, aspect: cut.aspect === "9:16" ? "9:16" : "16:9", seconds: CHAIN_CLIP });
     const clip = path.join(dir, `${engine}${clips.length}.mp4`);
     await fs.writeFile(clip, bytes);
     clips.push(clip);
+    t += engine === "gemini" ? Math.max(1, await mediaDuration(clip)) : CHAIN_CLIP;
     start = await lastFrame(clip, dir);
   }
   const [W, H] = SIZE[cut.aspect];
@@ -500,7 +502,7 @@ async function chainSegment(engine: "wan" | "own" | "gemini", cut: FilmCut, seg:
   return voiced ? out : speakLines(out, shots, dir);
 }
 
-/** Veo starts from a picture: without one, Gemini draws the opening frame, keeping the cast's faces. */
+/** Gemini films start from a picture: without one, Gemini draws the opening frame, keeping the cast's faces. */
 async function drawStart(cut: FilmCut, cast: FilmRef[], shot: string, dir: string) {
   const refs = await Promise.all(
     (await mediaFor(cast.slice(0, 4).map((r) => r.mediaId))).map(async (m) => ({ mimeType: m.type, base64: (await readFile(m)).toString("base64") })),

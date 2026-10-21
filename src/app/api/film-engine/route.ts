@@ -200,7 +200,7 @@ export const POST = authed(async (req, user) => {
       if (cut.engine === "own" && !(await ownEngineReady()))
         return fail("Ghost Post's video engine isn't connected yet. The admin starts it on a GPU server (engine/README.md) and adds its address and token in Admin → App settings → Integrations → Ghost Post Video Engine. Until then, switch the engine to Free.", 503);
       if (cut.engine === "gemini" && !(await mediaKey()))
-        return fail("Google Veo runs on the app's Gemini key, and none is saved yet. The admin adds it in Admin → App settings → Integrations → Gemini (Veo needs billing turned on in Google AI Studio). Until then, switch the engine to Free.", 503);
+        return fail("Gemini Omni Flash runs on the app's Gemini key, and none is saved yet. The admin adds it in Admin → App settings → Integrations → Gemini (video needs billing turned on in Google AI Studio). Until then, switch the engine to Free.", 503);
       if ((cut.engine === "seedance" || cut.engine === "wan") && !(await replicateReady()))
         return fail(`${cut.engine === "seedance" ? "Seedance 2.5" : "Wan 2.2"} runs on Replicate, and this server has no Replicate token yet. The admin adds it in Admin → App settings → Integrations → Replicate. Until then, switch the engine to Free.`, 503);
       const fix = b.fix ? String(b.fix).trim().slice(0, 1000) : undefined;

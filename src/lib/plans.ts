@@ -202,7 +202,7 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   repurposePerPlatform: "Repurpose to one platform",
   liveCheck: "Live fact-check of a news piece (added to the post or video)",
   aiImage: "AI picture for one movie or explainer scene",
-  veoSecond: "Each second of a Veo-animated scene (4–8 seconds per scene)",
+  veoSecond: "Each second of a scene animated by Gemini Omni Flash (or Veo), 4–8 seconds per scene",
   seedanceSecond: "Each second of a Seedance 2.5-animated scene (4–8 seconds per scene)",
   wanSecond: "Each second of a Wan 2.2-animated scene (4–8 seconds per scene)",
   character: "Create a character from a photo or description",

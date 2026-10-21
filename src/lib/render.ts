@@ -14,7 +14,7 @@ import { drawShapes, isGraphicsLook, motionGraph, MOTION_PALETTES, roundPortrait
 import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types";
 import { nowIso } from "./utils";
 import { characterRef, getCharacters, isRealisticLook, REALISM_DIRECTION } from "./characters";
-import { geminiImage, MediaGenError, veoClip, type RefImage } from "./gemini-media";
+import { geminiClip, geminiImage, MediaGenError, type RefImage } from "./gemini-media";
 import { seedanceClip, wanClip } from "./replicate-video";
 import { CREDIT_COST } from "./plans";
 import { aiVisualCredits, animationSecondCredits, renderableScenes, veoSeconds } from "./video-spec";
@@ -505,7 +505,7 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
       await setRender(post, { message: `Animating scene ${i + 1} with ${engine} (about 1–3 minutes a clip)…` });
       const prompt = `${job.scene.motion || "Subtle, natural movement with a slow cinematic camera move."} ${job.scene.visual}`.slice(0, 1500) + ` Art style: ${ai.look}. Keep the characters exactly as they appear in the starting frame.${isRealisticLook(ai.look) ? " Real people moving naturally: realistic faces, blinking, breathing and natural body weight; no morphing." : ""} No text or captions.`;
       const clip = { prompt, start: still, aspect: portrait ? ("9:16" as const) : ("16:9" as const), seconds };
-      const bytes = engine === "Seedance" ? await seedanceClip(clip) : engine === "Wan" ? await wanClip(clip) : await veoClip(clip);
+      const bytes = engine === "Seedance" ? await seedanceClip(clip) : engine === "Wan" ? await wanClip(clip) : await geminiClip(clip);
       const file = path.join(dir, `veo${i}.mp4`);
       await fs.writeFile(file, bytes);
       job.visual = { kind: "video", file, hold: true };

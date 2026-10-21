@@ -30,12 +30,12 @@ export const POST = authed(async (req, user) => {
 
   const engine: AnimationEngine = ANIMATION_ENGINES.includes(b.engine as AnimationEngine) ? (b.engine as AnimationEngine) : "veo";
   if (engine !== "veo" && Number(b.veoScenes) > 0 && !(await replicateReady())) {
-    return fail(`${engine === "wan" ? "Wan 2.2" : "Seedance 2.5"} isn't connected yet. Ask the admin to add a Replicate API token in Admin → App settings → Integrations, or choose Veo.`, 503);
+    return fail(`${engine === "wan" ? "Wan 2.2" : "Seedance 2.5"} isn't connected yet. Ask the admin to add a Replicate API token in Admin → App settings → Integrations, or choose Gemini Omni Flash.`, 503);
   }
   const characters = await getCharacters(Array.isArray(b.characterIds) ? b.characterIds.slice(0, 6) : []);
   const look = String(b.look ?? "").trim().slice(0, 160) || characters[0]?.look || CHARACTER_LOOKS[0];
   // Graphics styles are drawn by the free motion-graphics engine; everything else needs Gemini for the pictures.
-  if (!isGraphicsLook(look) && !(await mediaKey())) return fail("AI movies need the app's Gemini key for pictures and Veo clips. Ask the admin to add it in Admin → App settings → Integrations, or pick a Graphics style (free).", 503);
+  if (!isGraphicsLook(look) && !(await mediaKey())) return fail("AI movies need the app's Gemini key for pictures and video clips. Ask the admin to add it in Admin → App settings → Integrations, or pick a Graphics style (free).", 503);
   const settings = await getSettings();
 
   const post = await withCredits(videoCredits(length, "plan"), () =>
