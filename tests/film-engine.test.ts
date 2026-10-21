@@ -76,6 +76,8 @@ describe("Film Engine shot lists and Seedance briefs", () => {
     expect(segmentCredits("wan", 12)).toBe(15 * 2); // three 5-second clips
     expect(segmentCredits("free", 30)).toBe(0);
     expect(segmentCredits("own", 12)).toBe(15); // three 5-second clips at 1 credit a second
+    expect(segmentCredits("gemini", 12)).toBe((8 + 4) * 7); // an 8-second Veo clip and a 4-second one
+    expect(segmentCredits("gemini", 30)).toBe(30 * 7); // 8 + 8 + 8 + 6
   });
 });
 
@@ -220,6 +222,40 @@ describe.skipIf(!hasFfmpeg)("Film Engine making footage", () => {
     expect(frame(2)).not.toBe(frame(1));
     delete process.env.VIDEO_ENGINE_URL;
     delete process.env.VIDEO_ENGINE_TOKEN;
+  }, 180_000);
+
+  it("films with Google Veo on the Gemini key: 8-second clips chained from each last frame, Veo's own sound kept", async () => {
+    process.env.GEMINI_API_KEY = "gem-test-key";
+    const starts: { url: string; body: { instances: { prompt: string; image: { inlineData: { data: string } } }[]; parameters: Record<string, unknown> } }[] = [];
+    globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const json = (b: unknown) => new Response(JSON.stringify(b), { headers: { "content-type": "application/json" } });
+      if (url.endsWith(":predictLongRunning")) {
+        starts.push({ url, body: JSON.parse(String(init?.body)) });
+        return json({ name: `models/veo/operations/o${starts.length}` });
+      }
+      if (/operations\/o\d+$/.test(url)) return json({ done: true, response: { generateVideoResponse: { generatedSamples: [{ video: { uri: "https://files.example/veo.mp4" } }] } } });
+      if (url === "https://files.example/veo.mp4") return new Response(new Uint8Array(clip));
+      return new Response("not mocked", { status: 500 });
+    }) as typeof fetch;
+    const cut = await setup("gemini");
+    const { asUser } = await import("@/lib/db");
+    const { getCut, queueSegment, saveCut } = await import("@/lib/film-engine");
+    await asUser("usr_film", async () => {
+      const c0 = (await getCut(cut.id))!;
+      c0.segments[0].seconds = 10;
+      await saveCut(c0);
+      await queueSegment("usr_film", cut.id, cut.segments[0].id, 0);
+      await queueSegment("usr_film", cut.id, cut.segments[1].id, 0);
+      const done = (await getCut(cut.id))!;
+      expect(done.segments.map((s) => [s.status, s.message])).toEqual([["done", "Filmed with Google Veo 3.1."], ["done", "Filmed with Google Veo 3.1."]]);
+    });
+    expect(starts.every((s) => s.url.includes("/models/veo-3.1-fast-generate-preview:"))).toBe(true);
+    expect(starts.map((s) => [s.body.parameters.aspectRatio, s.body.parameters.durationSeconds])).toEqual([["9:16", "8"], ["9:16", "4"], ["9:16", "4"]]);
+    const frames = starts.map((s) => s.body.instances[0].image.inlineData.data);
+    expect(new Set(frames).size).toBe(3); // Marcus's portrait, then each clip's last frame
+    expect(starts[1].body.instances[0].prompt).toContain('"Thank you."'); // native sound on: Veo speaks the line
+    delete process.env.GEMINI_API_KEY;
   }, 180_000);
 
   it("gives the credits back when filming fails", async () => {

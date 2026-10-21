@@ -8,6 +8,7 @@ import { log } from "@/lib/repo";
 import { ffmpegAvailable } from "@/lib/render";
 import { replicateReady } from "@/lib/replicate-video";
 import { ownEngineReady } from "@/lib/own-video";
+import { mediaKey } from "@/lib/gemini-media";
 import { elevenlabsKey } from "@/lib/integrations";
 import { freeVoiceEnabled } from "@/lib/free-voice";
 import { getFilm, listFilms, type FilmProject } from "@/lib/writers-room";
@@ -36,11 +37,11 @@ export const GET = authed(async (_req, user) => {
       finalUrl: c.final?.status === "done" ? link(c.final.mediaId) : null,
     })),
     films: (await listFilms()).map((f) => ({ id: f.id, title: f.title, logline: f.logline })),
-    engines: { own: await ownEngineReady(), seedance: await replicateReady(), wan: await replicateReady(), free: true },
+    engines: { own: await ownEngineReady(), gemini: !!(await mediaKey()), seedance: await replicateReady(), wan: await replicateReady(), free: true },
     voice: !!(await elevenlabsKey()) || freeVoiceEnabled(),
     ffmpeg: await ffmpegAvailable(),
     limits: { cuts: MAX_CUTS, segments: MAX_SEGMENTS, refs: REF_LIMITS },
-    prices: { plan: CREDIT_COST.filmPlan, beat: CREDIT_COST.filmBeat, ownSecond: CREDIT_COST.ownSecond, seedanceSecond: CREDIT_COST.seedanceSecond, wanSecond: CREDIT_COST.wanSecond },
+    prices: { plan: CREDIT_COST.filmPlan, beat: CREDIT_COST.filmBeat, ownSecond: CREDIT_COST.ownSecond, veoSecond: CREDIT_COST.veoSecond, seedanceSecond: CREDIT_COST.seedanceSecond, wanSecond: CREDIT_COST.wanSecond },
   });
 });
 
@@ -117,7 +118,7 @@ export const POST = authed(async (req, user) => {
     const film = b.filmId ? await getFilm(String(b.filmId)) : null;
     const story = film ? storyOf(film) : String(b.story ?? "").trim();
     const aspect = FILM_ASPECTS.includes(b.aspect as FilmAspect) ? (b.aspect as FilmAspect) : "9:16";
-    const engine = FILM_ENGINES.includes(b.engine as FilmEngineId) ? (b.engine as FilmEngineId) : (await ownEngineReady()) ? "own" : (await replicateReady()) ? "seedance" : "free";
+    const engine = FILM_ENGINES.includes(b.engine as FilmEngineId) ? (b.engine as FilmEngineId) : (await ownEngineReady()) ? "own" : (await replicateReady()) ? "seedance" : (await mediaKey()) ? "gemini" : "free";
     const refs = await cleanRefs(b.refs);
     if (typeof refs === "string") return fail(refs);
     const t = nowIso();
@@ -198,6 +199,8 @@ export const POST = authed(async (req, user) => {
       if (!(await ffmpegAvailable())) return fail("Video tools (ffmpeg) aren't installed on this server yet. Ask the admin to add them.", 503);
       if (cut.engine === "own" && !(await ownEngineReady()))
         return fail("Ghost Post's video engine isn't connected yet. The admin starts it on a GPU server (engine/README.md) and adds its address and token in Admin → App settings → Integrations → Ghost Post Video Engine. Until then, switch the engine to Free.", 503);
+      if (cut.engine === "gemini" && !(await mediaKey()))
+        return fail("Google Veo runs on the app's Gemini key, and none is saved yet. The admin adds it in Admin → App settings → Integrations → Gemini (Veo needs billing turned on in Google AI Studio). Until then, switch the engine to Free.", 503);
       if ((cut.engine === "seedance" || cut.engine === "wan") && !(await replicateReady()))
         return fail(`${cut.engine === "seedance" ? "Seedance 2.5" : "Wan 2.2"} runs on Replicate, and this server has no Replicate token yet. The admin adds it in Admin → App settings → Integrations → Replicate. Until then, switch the engine to Free.`, 503);
       const fix = b.fix ? String(b.fix).trim().slice(0, 1000) : undefined;

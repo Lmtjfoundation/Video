@@ -10,20 +10,20 @@ type Kind = "image" | "video" | "audio";
 type Ref = { id: string; kind: Kind; mediaId: string; label: string; url: string | null };
 type Status = "draft" | "queued" | "generating" | "done" | "failed";
 type Seg = { id: string; title: string; seconds: number; shots: string; continueFrom: boolean; status: Status; message?: string; clipMediaId?: string; clipUrl?: string | null; history?: string[]; cost?: number };
-type Engine = "own" | "seedance" | "wan" | "free";
-const ENGINES: Engine[] = ["own", "seedance", "wan", "free"];
+type Engine = "own" | "gemini" | "seedance" | "wan" | "free";
+const ENGINES: Engine[] = ["own", "gemini", "seedance", "wan", "free"];
 type Cut = {
   id: string; title: string; logline: string; style: string; aspect: string; engine: Engine; nativeAudio: boolean; score: boolean;
   refs: Ref[]; segments: Seg[]; final?: { status: Status; mediaId?: string; message?: string }; finalUrl?: string | null;
 };
 type Data = {
   cuts: Cut[]; films: { id: string; title: string; logline: string }[]; engines: Record<Engine, boolean>; voice: boolean; ffmpeg: boolean;
-  limits: { cuts: number; segments: number; refs: Record<Kind, number> }; prices: { plan: number; beat: number; ownSecond: number; seedanceSecond: number; wanSecond: number };
+  limits: { cuts: number; segments: number; refs: Record<Kind, number> }; prices: { plan: number; beat: number; ownSecond: number; veoSecond: number; seedanceSecond: number; wanSecond: number };
 };
 type MediaItem = { id: string; name: string; kind: Kind; url: string };
 type Character = { id: string; name: string; imageMediaId: string; imageUrl: string };
 
-const ENGINE_LABEL: Record<Engine, string> = { own: "Ghost Post engine — your own model on your GPU, no per-clip fees", seedance: "Seedance 2.5 — full motion, references, native sound", wan: "Wan 2.2 — low-cost motion, chained clips", free: "Free — camera moves on your pictures" };
+const ENGINE_LABEL: Record<Engine, string> = { own: "Ghost Post engine — your own model on your GPU, no per-clip fees", gemini: "Google Veo 3.1 (Gemini) — full motion with its own sound, 8-second clips", seedance: "Seedance 2.5 — full motion, references, native sound", wan: "Wan 2.2 — low-cost motion, chained clips", free: "Free — camera moves on your pictures" };
 const ASPECTS = ["9:16", "16:9", "21:9", "1:1"];
 const busy = (s?: { status: Status }) => s?.status === "queued" || s?.status === "generating";
 const STATUS_TONE: Record<Status, "neutral" | "gold" | "mint" | "red"> = { draft: "neutral", queued: "gold", generating: "gold", done: "mint", failed: "red" };
@@ -137,7 +137,7 @@ export default function FilmEngine() {
         title="Film Engine"
         subtitle="Direct a film the way Seedance 2.5 works: beats of up to 30 seconds with timestamped shot lists, a reference library for your cast, places and voices, continuous extensions, moment-level fixes, and an edit room that cuts it together."
       />
-      {data && !data.engines.own && !data.engines.seedance && (
+      {data && !data.engines.own && !data.engines.gemini && !data.engines.seedance && (
         <div className="mb-5 rounded-xl bg-gold-400/[0.08] p-4 text-sm text-gold-300 ring-1 ring-gold-300/25">
           {admin
             ? "Full motion needs a video model on a GPU. Ghost Post has its own (Wan 2.2, open weights): start it on a rented GPU server with engine/README.md, then add its address and token in Admin → App settings → Integrations → Ghost Post Video Engine. Until then, films use the free engine: cinematic camera moves on your reference pictures."
@@ -318,7 +318,7 @@ function NewFilm({ data, admin, onMade }: { data: Data | null; admin: boolean; o
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Frame"><Select value={aspect} onChange={(e) => setAspect(e.target.value)}>{ASPECTS.map((a) => <option key={a}>{a}</option>)}</Select></Field>
-          <Field label="Engine"><Select value={engine} onChange={(e) => setEngine(e.target.value as Engine)}>{ENGINES.map((e) => <option key={e} value={e}>{e === "own" ? "Ghost Post engine" : e === "seedance" ? "Seedance 2.5" : e === "wan" ? "Wan 2.2" : "Free"}</option>)}</Select></Field>
+          <Field label="Engine"><Select value={engine} onChange={(e) => setEngine(e.target.value as Engine)}>{ENGINES.map((e) => <option key={e} value={e}>{e === "own" ? "Ghost Post engine" : e === "gemini" ? "Google Veo 3.1" : e === "seedance" ? "Seedance 2.5" : e === "wan" ? "Wan 2.2" : "Free"}</option>)}</Select></Field>
         </div>
         <p className="text-xs text-white/45">About {beats * seconds} seconds of film. You can add your cast and references after planning; the shot lists cite them as @Name.</p>
         <Button variant="primary" loading={busyNow} disabled={!filmId && story.trim().length < 20} onClick={() => make(true)}>
