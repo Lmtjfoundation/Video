@@ -23,7 +23,7 @@ const dev = (summary2 = "Dre returns the ring.") => ({
 
 describe("Writers' Room", () => {
   it("develops, writes pages, reviews honestly, revises and builds the promotion kit", async () => {
-    process.env.DATA_DIR = (await import("node:fs")).mkdtempSync(`${(await import("node:os")).tmpdir()}/nexus-writers-`);
+    process.env.DATA_DIR = (await import("node:fs")).mkdtempSync(`${(await import("node:os")).tmpdir()}/ghost-post-writers-`);
     process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);
     const { asUser } = await import("@/lib/db");
     const w = await import("@/lib/writers-room");

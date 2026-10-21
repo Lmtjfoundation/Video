@@ -1,5 +1,5 @@
 {
-  "name": "nexus-pulse-mobile",
+  "name": "ghost-post-mobile",
   "private": true,
   "version": "1.0.0",
   "description": "iOS and Android app shell for Ghost Post (loads your hosted app).",

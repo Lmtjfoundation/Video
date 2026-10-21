@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 // Isolated file-backed database for this test.
-const dir = mkdtempSync(path.join(tmpdir(), "nexus-inbox-"));
+const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-inbox-"));
 process.env.DATA_DIR = dir;
 process.env.SETUP_CODE = "test-setup-code";
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);

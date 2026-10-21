@@ -54,9 +54,9 @@ export async function log(
   try {
     await db().upsert("logs", entry as unknown as LogEntry);
   } catch (e) {
-    console.error("[nexus] failed to write log", e);
+    console.error("[ghost-post] failed to write log", e);
   }
-  if (level === "error") console.error(`[nexus:${kind}] ${message}`, meta ?? "");
+  if (level === "error") console.error(`[ghost-post:${kind}] ${message}`, meta ?? "");
   return entry;
 }
 

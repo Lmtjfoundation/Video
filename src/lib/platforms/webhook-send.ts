@@ -15,8 +15,8 @@ export interface WebhookResult {
  * - The URL is validated, and every address the hostname resolves to is checked at connection time
  *   (so DNS tricks can't point it at an internal address).
  * - Redirects are never followed. 10 s timeout. Response body capped at 64 KB.
- * - With a signing secret, the request carries `X-Nexus-Signature: sha256=<hex HMAC of the body>`
- *   and `X-Nexus-Timestamp`, so the receiver can verify it came from this app.
+ * - With a signing secret, the request carries `X-GhostPost-Signature: sha256=<hex HMAC of the body>`
+ *   and `X-GhostPost-Timestamp`, so the receiver can verify it came from this app.
  */
 export function postWebhook(rawUrl: string, payload: unknown, secret?: string): Promise<WebhookResult> {
   const problem = webhookUrlProblem(rawUrl);
@@ -27,10 +27,10 @@ export function postWebhook(rawUrl: string, payload: unknown, secret?: string): 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "Content-Length": String(Buffer.byteLength(body)),
-    "User-Agent": "NexusPulse-Webhook/1.0",
-    "X-Nexus-Timestamp": timestamp,
+    "User-Agent": "GhostPost-Webhook/1.0",
+    "X-GhostPost-Timestamp": timestamp,
   };
-  if (secret) headers["X-Nexus-Signature"] = "sha256=" + createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");
+  if (secret) headers["X-GhostPost-Signature"] = "sha256=" + createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");
 
   return new Promise((resolve, reject) => {
     const req = httpsRequest(

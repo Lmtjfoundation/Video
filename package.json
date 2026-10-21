@@ -1,5 +1,5 @@
 {
-  "name": "nexus-pulse-autopilot",
+  "name": "ghost-post",
   "version": "1.0.0",
   "private": true,
   "description": "Autonomous, human-sounding social media agent: content engine, scheduler, auto-posting, comment engagement and monetization scoring.",

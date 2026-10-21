@@ -43,7 +43,7 @@ interface RawItem {
 
 const TTL_MS = 30 * 60_000;
 const MAX_AGE_MS = 72 * 3600_000;
-const UA = `Mozilla/5.0 (compatible; NexusPulse/1.0; +${process.env.APP_URL || "https://nexus-pulse.app"})`;
+const UA = `Mozilla/5.0 (compatible; GhostPost/1.0; +${process.env.APP_URL || "https://ghost-post-autopilot.up.railway.app"})`;
 
 /* ───────── parsing ───────── */
 

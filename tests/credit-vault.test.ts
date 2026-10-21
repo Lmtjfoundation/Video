@@ -110,7 +110,7 @@ describe("plans stay profitable", () => {
 
 /* ───────── with storage: grants, expiry, the pool ───────── */
 
-const dir = mkdtempSync(path.join(tmpdir(), "nexus-vault-"));
+const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-vault-"));
 process.env.DATA_DIR = dir;
 process.env.SETUP_CODE = "test-setup-code";
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);

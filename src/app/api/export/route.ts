@@ -24,7 +24,7 @@ export const GET = authed(async (req: Request) => {
   }
 
   const mime = format === "csv" ? "text/csv" : format === "md" ? "text/markdown" : "application/json";
-  const name = `nexus-${type}-${new Date().toISOString().slice(0, 10)}.${format}`;
+  const name = `ghost-post-${type}-${new Date().toISOString().slice(0, 10)}.${format}`;
   return new Response(content, {
     headers: { "Content-Type": `${mime}; charset=utf-8`, "Content-Disposition": `attachment; filename="${name}"` },
   });

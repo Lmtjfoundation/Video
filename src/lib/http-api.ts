@@ -11,7 +11,7 @@ function toResponse(e: unknown, user?: User | null) {
   const err = e as Error;
   if (err instanceof AuthError) return fail(err.message, err.status);
   if (err instanceof QuotaError) return fail(err.message, 402);
-  console.error("[nexus:api]", err instanceof LLMError && err.ownerMessage ? `${err.message} | ${err.ownerMessage}` : err);
+  console.error("[ghost-post:api]", err instanceof LLMError && err.ownerMessage ? `${err.message} | ${err.ownerMessage}` : err);
   // Subscribers get a plain message; the owner sees the real cause (credits, key, workspace…).
   if (err instanceof LLMError) return fail(user?.role === "admin" && err.ownerMessage ? err.ownerMessage : err.message, 502);
   return fail(err?.message || "Unexpected error", 500);

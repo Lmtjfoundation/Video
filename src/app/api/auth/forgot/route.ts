@@ -37,7 +37,7 @@ export const POST = handle(async (req: Request) => {
         }),
       });
     } catch (e) {
-      console.error("[nexus:email] password reset email failed:", (e as Error).message);
+      console.error("[ghost-post:email] password reset email failed:", (e as Error).message);
     }
   }
   return ok({ message: SENT });

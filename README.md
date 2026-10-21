@@ -43,7 +43,7 @@ Built with Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn-style compo
 | **Instagram** | ✅ Image posts | ✅ | Requires a Business or Creator account linked to the Graph API. Each post needs a **public https image URL**; text-only posts aren't possible on Instagram. |
 | **YouTube** | ❌ copy-ready scripts | ✅ | Video upload isn't automated in this version, and Community posts have no API. Comment replies use the Data API v3 (watch your daily quota). |
 | **TikTok** | ❌ copy-ready | ❌ | Direct posting needs an **audited** Content Posting API app; unaudited apps can only post privately. There is no general comment API. |
-| **Any app (webhook)** | ✅ JSON to your URL | ❌ | Paste a webhook URL from Zapier, Make, n8n, Slack, Discord or your own server (the Platforms tab). https only, internal addresses blocked, optional HMAC signature (`X-Nexus-Signature`, signed over `timestamp.body`). Text posts only. "Published" means the receiver accepted it. |
+| **Any app (webhook)** | ✅ JSON to your URL | ❌ | Paste a webhook URL from Zapier, Make, n8n, Slack, Discord or your own server (the Platforms tab). https only, internal addresses blocked, optional HMAC signature (`X-GhostPost-Signature`, signed over `timestamp.body`). Text posts only. "Published" means the receiver accepted it. |
 
 Platform terms and tiers change. Check each developer portal before relying on a feature.
 

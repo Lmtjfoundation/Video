@@ -5,7 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { detectNetworks, localDateTime, metricoolBody, parseMetricoolIds } from "@/lib/metricool";
 import type { Post } from "@/lib/types";
 
-const dir = mkdtempSync(path.join(tmpdir(), "nexus-metricool-"));
+const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-metricool-"));
 process.env.DATA_DIR = dir;
 process.env.SETUP_CODE = "test-setup-code";
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);

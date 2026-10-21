@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const result = await handleStripeEvent(JSON.parse(payload));
     return Response.json({ received: true, result });
   } catch (e) {
-    console.error("[nexus:stripe]", e);
+    console.error("[ghost-post:stripe]", e);
     return new Response("Handler error", { status: 500 }); // Stripe retries
   }
 }

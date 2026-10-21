@@ -16,7 +16,7 @@ export interface PlansPayload {
 /** Inside the iOS/Android app, purchases are hidden to follow app-store payment rules. */
 export const inNativeApp = () =>
   typeof window !== "undefined" &&
-  (!!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.() || /NexusPulseApp/.test(navigator.userAgent));
+  (!!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.() || /GhostPostApp/.test(navigator.userAgent));
 
 const COMPETITORS: [string, number][] = [
   ["OpusClip Starter", 15],
@@ -160,12 +160,12 @@ export function PricingTable({
               .sort((a, b) => a[1] - b[1])
               .map(([n, pr]) => (
                 <div key={n} className="grid grid-cols-[150px_1fr_44px] items-center gap-3 text-sm">
-                  <span className={n.startsWith("Nexus") ? "font-medium text-white" : "text-white/55"}>{n}</span>
-                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]"><div className={cn("h-full rounded-full", n.startsWith("Nexus") ? "bg-gradient-to-r from-mint-400 to-gold-400" : "bg-white/20")} style={{ width: `${(pr / 40) * 100}%` }} /></div>
+                  <span className={n.startsWith("Ghost Post") ? "font-medium text-white" : "text-white/55"}>{n}</span>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]"><div className={cn("h-full rounded-full", n.startsWith("Ghost Post") ? "bg-gradient-to-r from-mint-400 to-gold-400" : "bg-white/20")} style={{ width: `${(pr / 40) * 100}%` }} /></div>
                   <span className="text-right tabular-nums text-white/80">${pr}</span>
                 </div>
               ))}
-            <p className="mt-2 text-xs text-white/40">Ghost Post combines niche research, story scripts, scheduling for six platforms and reply automation in one plan. It doesn't render video yet.</p>
+            <p className="mt-2 text-xs text-white/40">Ghost Post combines niche research, story scripts, video and film making, scheduling for six platforms and reply automation in one plan.</p>
           </div>
         </Card>
       </div>

@@ -5,9 +5,9 @@
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs" || process.env.INTERNAL_SCHEDULER !== "1") return;
-  const g = globalThis as unknown as { __nexusScheduler?: boolean };
-  if (g.__nexusScheduler) return;
-  g.__nexusScheduler = true;
+  const g = globalThis as unknown as { __ghostPostScheduler?: boolean };
+  if (g.__ghostPostScheduler) return;
+  g.__ghostPostScheduler = true;
 
   const base = `http://127.0.0.1:${process.env.PORT || 3000}`;
   const headers = { Authorization: `Bearer ${process.env.CRON_SECRET ?? ""}` };

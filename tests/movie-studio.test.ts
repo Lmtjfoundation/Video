@@ -9,7 +9,7 @@ import { pickVeoScenes } from "@/lib/movie";
 import { cleanExplanation, explanationText } from "@/lib/explain";
 import type { VideoPlan, VideoScene } from "@/lib/types";
 
-const dir = mkdtempSync(path.join(tmpdir(), "nexus-movie-"));
+const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-movie-"));
 process.env.DATA_DIR = dir;
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);
 for (const k of ["SUPABASE_URL", "DATABASE_URL", "GEMINI_IMAGE_MODEL", "VEO_MODEL"]) delete process.env[k];

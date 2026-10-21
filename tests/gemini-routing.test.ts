@@ -6,7 +6,7 @@ import { CLAUDE_ATTEMPTS, CLAUDE_ATTEMPTS_WITH_BACKUP, engineOrder, geminiBlockR
 import { AI_PROVIDERS } from "@/lib/ai-providers";
 import { buildCall } from "@/lib/llm-providers";
 
-const dir = mkdtempSync(path.join(tmpdir(), "nexus-gemini-"));
+const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-gemini-"));
 process.env.DATA_DIR = dir;
 process.env.SETUP_CODE = "test-setup-code";
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);

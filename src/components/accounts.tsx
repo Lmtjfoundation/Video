@@ -147,7 +147,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
                   </div>
                   <div className="grid gap-1 text-[12px]">
                     <p className="text-white/60"><span className="text-white/85">Sends:</span> {spec.publish}</p>
-                    <p className="text-white/60"><span className="text-white/85">Security:</span> https addresses only. Internal addresses are blocked. With a signing secret, each request carries an HMAC signature (X-Nexus-Signature) over “timestamp.body”.</p>
+                    <p className="text-white/60"><span className="text-white/85">Security:</span> https addresses only. Internal addresses are blocked. With a signing secret, each request carries an HMAC signature (X-GhostPost-Signature) over “timestamp.body”.</p>
                   </div>
                   <p className="text-[11px] text-white/35">The switch above turns this connection on or off for posting. {saveHint}</p>
                 </div>

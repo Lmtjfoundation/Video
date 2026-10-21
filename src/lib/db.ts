@@ -83,11 +83,11 @@ class SupabaseBackend implements Backend {
 type Entry = { owner: string; row: Row; ts: number };
 type LocalData = Partial<Record<Table, Record<string, Entry>>>;
 const MAX_PER_OWNER: Partial<Record<Table, number>> = { logs: 3000, rate_events: 3000, comments: 3000 };
-const g = globalThis as unknown as { __nexusLocal2?: { data: LocalData | null; chain: Promise<void> } };
+const g = globalThis as unknown as { __ghostPostLocal2?: { data: LocalData | null; chain: Promise<void> } };
 
 class LocalBackend implements Backend {
   private file = path.join(process.env.DATA_DIR || path.join(process.cwd(), ".data"), "db.json");
-  private state = (g.__nexusLocal2 ??= { data: null, chain: Promise.resolve() });
+  private state = (g.__ghostPostLocal2 ??= { data: null, chain: Promise.resolve() });
 
   private async load(): Promise<LocalData> {
     if (this.state.data) return this.state.data;
@@ -107,7 +107,7 @@ class LocalBackend implements Backend {
         await fs.writeFile(tmp, JSON.stringify(this.state.data));
         await fs.rename(tmp, this.file);
       })
-      .catch((e) => console.error("[nexus] local store write failed", e));
+      .catch((e) => console.error("[ghost-post] local store write failed", e));
     return this.state.chain;
   }
 

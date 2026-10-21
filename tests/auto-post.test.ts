@@ -119,7 +119,7 @@ describe("posting automatically keeps the safety rules", () => {
   it("respects the kill switch, approval and mature posts, and posts copy-ready when nothing is connected", async () => {
     const { mkdtempSync } = await import("node:fs");
     const { tmpdir } = await import("node:os");
-    process.env.DATA_DIR = mkdtempSync(`${tmpdir()}/nexus-autopost-`);
+    process.env.DATA_DIR = mkdtempSync(`${tmpdir()}/ghost-post-autopost-`);
     process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);
     for (const k of ["SUPABASE_URL", "DATABASE_URL"]) delete process.env[k];
     process.env.SETUP_CODE = "test-setup-code";

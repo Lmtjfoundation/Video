@@ -15,7 +15,7 @@ describe("free voice (Kokoro)", () => {
   it.skipIf(!process.env.TEST_FREE_VOICE)("speaks a line into a WAV file (downloads the model; set TEST_FREE_VOICE=1)", async () => {
     const fs = await import("node:fs");
     const os = await import("node:os");
-    process.env.DATA_DIR = fs.mkdtempSync(`${os.tmpdir()}/nexus-voice-`);
+    process.env.DATA_DIR = fs.mkdtempSync(`${os.tmpdir()}/ghost-post-voice-`);
     const { freeVoice } = await import("@/lib/free-voice");
     const file = `${process.env.DATA_DIR}/line.wav`;
     await freeVoice("The porch light stays on.", file, "warm male narrator");

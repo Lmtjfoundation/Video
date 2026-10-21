@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { PLANS, introDiscount } from "@/lib/plans";
 
-const dir = mkdtempSync(path.join(tmpdir(), "nexus-stripe-"));
+const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-stripe-"));
 process.env.DATA_DIR = dir;
 process.env.SETUP_CODE = "test-setup-code";
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);
@@ -33,7 +33,7 @@ function fakeStripe() {
     if (p === "/products" && method === "GET") return respond({ data: [...products.values()] });
     if (p === "/products" && method === "POST") {
       const id = `prod_${++n}`;
-      const row = { id, metadata: { nexus_plan: body["metadata[nexus_plan]"] }, statement_descriptor: body.statement_descriptor };
+      const row = { id, metadata: { ghost_post_plan: body["metadata[ghost_post_plan]"] }, statement_descriptor: body.statement_descriptor };
       products.set(id, row);
       return respond(row);
     }

@@ -7,7 +7,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const APP_URL = process.env.APP_URL ?? "https://ghost-post-autopilot.up.railway.app";
 
 const config: CapacitorConfig = {
-  appId: "com.nexuspulse.app",
+  appId: "net.lmtj.ghostpost",
   appName: "Ghost Post",
   webDir: "www",
   server: {
@@ -17,7 +17,7 @@ const config: CapacitorConfig = {
     allowNavigation: [new URL(APP_URL).host],
   },
   // Lets the web app recognise the native app (it hides in-app purchase buttons to follow store rules).
-  appendUserAgent: "NexusPulseApp",
+  appendUserAgent: "GhostPostApp",
   ios: { contentInset: "always", backgroundColor: "#07080b" },
   android: { backgroundColor: "#07080b" },
   plugins: {

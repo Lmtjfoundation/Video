@@ -197,13 +197,14 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
   const stripeCoupons: Record<string, string> = {};
   const portalProducts: { product: string; prices: string[] }[] = [];
   for (const p of PLANS.filter((x) => x.monthly > 0)) {
-    let prod = products.data.find((x) => x.metadata?.nexus_plan === p.id);
+    // Products made before the rename carry their plan as nexus_plan; reuse them instead of making duplicates.
+    let prod = products.data.find((x) => (x.metadata?.ghost_post_plan ?? x.metadata?.nexus_plan) === p.id);
     if (!prod) {
       prod = await call<SProduct>("/products", {
         name: `Ghost Post ${p.name}`,
         description: p.blurb,
         statement_descriptor: STATEMENT_DESCRIPTOR,
-        metadata: { nexus_plan: p.id, app: "nexus-pulse" },
+        metadata: { ghost_post_plan: p.id, app: "ghost-post" },
       });
     } else if (prod.statement_descriptor !== STATEMENT_DESCRIPTOR) {
       prod = await call<SProduct>(`/products/${prod.id}`, { statement_descriptor: STATEMENT_DESCRIPTOR });
@@ -221,7 +222,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
           unit_amount: amount,
           recurring: { interval },
           nickname: `${p.name} ${interval === "month" ? "monthly" : "yearly"}`,
-          metadata: { nexus_plan: p.id, nexus_interval: interval },
+          metadata: { ghost_post_plan: p.id, ghost_post_interval: interval },
         });
       }
       stripePrices[`${p.id}_${interval}`] = price.id;
@@ -234,7 +235,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
     const off = introDiscount(p);
     if (p.trial && off > 0) {
       // The id carries the amount and product, so a price change or a recreated product gets a fresh coupon.
-      let couponId = `nexus_${p.id}_intro_${Math.round(off * 100)}_${prod.id.slice(-8)}`;
+      let couponId = `ghost_post_${p.id}_intro_${Math.round(off * 100)}_${prod.id.slice(-8)}`;
       const found = await call<{ id: string; valid?: boolean }>(`/coupons/${couponId}`, undefined, "GET").catch(() => null);
       if (!found?.id || found.valid === false) {
         if (found?.id) couponId = `${couponId}_${Date.now().toString(36)}`; // an expired/deleted coupon keeps its id
@@ -246,7 +247,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
           duration: "repeating",
           duration_in_months: 1,
           applies_to: { products: { 0: prod.id } },
-          metadata: { nexus_plan: p.id, app: "nexus-pulse" },
+          metadata: { ghost_post_plan: p.id, app: "ghost-post" },
         });
       }
       stripeCoupons[p.id] = couponId;
@@ -267,7 +268,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
       url,
       enabled_events: ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"],
       description: "Ghost Post subscriptions",
-      metadata: { app: "nexus-pulse" },
+      metadata: { app: "ghost-post" },
     });
     if (!hook.secret) throw new Error("Stripe didn't return the webhook signing secret. Try again.");
   }
@@ -287,10 +288,10 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
       subscription_cancel: { enabled: true, mode: "at_period_end" },
       subscription_update: { enabled: true, default_allowed_updates: ["price"], proration_behavior: "create_prorations", products: portalProducts },
     },
-    metadata: { app: "nexus-pulse" },
+    metadata: { app: "ghost-post" },
   };
   const portals = await call<StripeList<SPortal>>("/billing_portal/configurations?active=true&limit=100", undefined, "GET");
-  const mine = portals.data.find((x) => x.metadata?.app === "nexus-pulse");
+  const mine = portals.data.find((x) => x.metadata?.app === "ghost-post" || x.metadata?.app === "nexus-pulse");
   const portal = mine
     ? await call<SPortal>(`/billing_portal/configurations/${mine.id}`, portalParams)
     : await call<SPortal>("/billing_portal/configurations", portalParams);
@@ -371,7 +372,7 @@ export async function handleStripeEvent(evt: { id: string; type: string; data: {
       const item = sub.items?.data?.[0];
       let mapped = item?.price?.id ? await planForPrice(item.price.id) : null;
       // Fallback: prices created by "Connect Stripe" carry their plan in metadata (covers older/replaced prices).
-      const metaPlan = item?.price?.metadata?.nexus_plan;
+      const metaPlan = item?.price?.metadata?.ghost_post_plan ?? item?.price?.metadata?.nexus_plan;
       if (!mapped && metaPlan && PLANS.some((p) => p.id === metaPlan && p.monthly > 0)) {
         mapped = { plan: metaPlan as PlanId, interval: item?.price?.recurring?.interval === "year" ? "year" : "month" };
       }

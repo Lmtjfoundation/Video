@@ -550,7 +550,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
   const post = await db().get<Post>("posts", postId);
   if (!post?.video) return;
   const plan = post.video;
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "nexus-render-"));
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "ghost-post-render-"));
   try {
     if (!(await ffmpegAvailable())) throw new Error("Video rendering needs ffmpeg on the server. On Railway set RAILPACK_DEPLOY_APT_PACKAGES=ffmpeg and redeploy.");
     const long = plan.length === "long";

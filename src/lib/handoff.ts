@@ -30,7 +30,7 @@ const sameOrigin = (u: string) => u.replace(/^https?:\/\/[^/]+/i, "");
 function fileName(post: Post, item: MediaItem) {
   const ext = item.type === "video/quicktime" ? "mov" : item.kind === "video" ? "mp4" : (item.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
   const slug = post.hook.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "post";
-  return `nexus-pulse-${slug}.${ext}`;
+  return `ghost-post-${slug}.${ext}`;
 }
 
 /**

@@ -5,7 +5,7 @@ import path from "node:path";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { FilmCut, FilmRef } from "@/lib/film-engine";
 
-const dir = mkdtempSync(path.join(tmpdir(), "nexus-film-engine-"));
+const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-film-engine-"));
 process.env.DATA_DIR = dir;
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);
 for (const k of ["SUPABASE_URL", "DATABASE_URL", "ELEVENLABS_API_KEY"]) delete process.env[k];

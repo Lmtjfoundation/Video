@@ -18,7 +18,7 @@ const hasFfmpeg = (() => {
   }
 })();
 
-const dir = mkdtempSync(path.join(tmpdir(), "nexus-movie-render-"));
+const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-movie-render-"));
 process.env.DATA_DIR = dir;
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);
 for (const k of ["SUPABASE_URL", "DATABASE_URL", "ELEVENLABS_API_KEY", "PIXABAY_API_KEY", "PEXELS_API_KEY", "GEMINI_IMAGE_MODEL", "VEO_MODEL"]) delete process.env[k];

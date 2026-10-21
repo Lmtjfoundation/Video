@@ -24,7 +24,7 @@ export async function recordLlmHealth(ok: boolean, message?: string, covered = f
   try {
     await gdb().upsert("kv", { id: ROW, value: { ok, message, covered: covered || undefined, at: nowIso() } satisfies LlmHealth });
   } catch (e) {
-    console.error("[nexus:llm-health]", (e as Error).message);
+    console.error("[ghost-post:llm-health]", (e as Error).message);
   }
 }
 
