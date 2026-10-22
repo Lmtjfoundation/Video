@@ -2,6 +2,2038 @@
   "version": 1,
   "batches": [
     {
+      "id": "2026-10-22",
+      "createdAt": "2026-10-22T06:00:00-05:00",
+      "items": [
+        {
+          "id": "2026-10-22-01",
+          "type": "post",
+          "platform": "x",
+          "pillar": "wealth_systems",
+          "format": "short",
+          "topic": "Irving Fisher's 'permanently high plateau', nine days before Black Thursday (Oct 15, 1929)",
+          "hook": "Oct 15, 1929: economist Irving Fisher said stocks had hit \"a permanently high plateau.\"",
+          "body": "Nine days later: Black Thursday. By July 1932 the Dow was down 89%. Fisher lost his fortune.\n\nForecasts are free. Your allocation isn't.",
+          "parts": [],
+          "hashtags": [
+            "investing"
+          ],
+          "cta": "Write down your stock/bond split today.",
+          "moneyAngle": "Sharp, true market-history post that earns follows and replies from investing readers; feeds the newsletter funnel."
+        },
+        {
+          "id": "2026-10-22-02",
+          "type": "post",
+          "platform": "x",
+          "pillar": "ai_leverage",
+          "format": "thread",
+          "topic": "The Chicago Sun-Times' AI summer reading list: 10 of 15 books didn't exist (May 2025)",
+          "hook": "May 18, 2025. The Chicago Sun-Times printed a summer reading list of 15 books. 10 of them don't exist.",
+          "body": "How a fake Isabel Allende novel reached print, and the 5-minute check that would have stopped it.",
+          "parts": [
+            "May 18, 2025. The Chicago Sun-Times printed a summer reading list of 15 books.\n\n10 of them don't exist.\n\nHere's how a fake Isabel Allende novel made it into print:",
+            "The list credited Isabel Allende with \"Tidewater Dreams\" and Percival Everett with \"The Rainmakers.\"\n\nReal authors. Invented books. Only 5 of the 15 titles were real.",
+            "Nobody inside caught it. Readers did, posting it on social media on May 20.\n\nThe list came from a licensed insert syndicated by King Features, a Hearst unit. The same list ran in at least one edition of The Philadelphia Inquirer.",
+            "The writer, freelancer Marco Buscaglia, told NPR he used AI for part of the list and didn't check it.\n\nHe called it a serious mistake and said the Sun-Times wasn't at fault.",
+            "The paper's parent company said the content was licensed, not made by the newsroom, and that inaccurate content was \"unacceptable.\"\n\nSo the AI invented. The writer trusted. The paper printed. Three handoffs, zero checks.",
+            "AI making things up isn't news. It does that.\n\nThe failure was a workflow with no step where a human checks one fact. One search per title would have caught all 10.",
+            "Takeaway: before AI output leaves your hands, check every name, number and title it gives you. It takes 5 minutes.\n\nWhat's the last AI answer you shipped without checking?"
+          ],
+          "hashtags": [
+            "AI"
+          ],
+          "cta": "Repost this to the person on your team who pastes AI answers straight into documents.",
+          "moneyAngle": "A recent, verifiable AI-failure story that drives reposts and profile visits from people who use AI at work."
+        },
+        {
+          "id": "2026-10-22-03",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "high_agency",
+          "format": "short",
+          "topic": "Qwikster: Netflix's 'I messed up' email, a 22-day reversal and 800,000 lost subscribers (2011)",
+          "hook": "On September 18, 2011, Reed Hastings emailed Netflix customers: \"I messed up. I owe you an explanation.\"\n\nThen the same email made it worse.",
+          "body": "Two months earlier, Netflix had raised prices by as much as 60%. Its DVD-plus-streaming plan went from $9.99 to $15.98.\n\nThe apology announced Qwikster: DVDs would move to a separate website, with separate accounts.\n\nCustomers didn't want an explanation. They wanted the old thing back.\n\nOn October 10, 2011, 22 days later, Netflix killed Qwikster.\n\nThe damage was done. Netflix ended September with about 800,000 fewer US subscribers than in June. The stock, above $300 in July, closed at $77.23 on October 25.\n\nThe part worth copying: Netflix reversed in 22 days, not 22 months. And it kept the streaming bet that started the fight.\n\nTwo lessons for anyone who leads:\n1. An apology that ships a new problem isn't an apology.\n2. Separate the decision (go all-in on streaming) from the execution (a clumsy split). Kill bad execution fast. Keep the good decision.",
+          "parts": [],
+          "hashtags": [
+            "leadership",
+            "decisionmaking",
+            "strategy"
+          ],
+          "cta": "Which execution mistake are you protecting because you love the decision behind it?",
+          "moneyAngle": "Leadership story post that builds authority with managers and founders; strong comment driver on LinkedIn."
+        },
+        {
+          "id": "2026-10-22-04",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "ai_leverage",
+          "format": "carousel",
+          "topic": "CNET's AI-written money articles: 41 of 77 needed corrections (Jan 2023)",
+          "hook": "CNET let an AI write 77 money articles. 41 needed corrections.",
+          "body": "CNET let an AI write 77 money articles. 41 needed corrections.\n\nOne explained compound interest and got the answer wrong by $10,000.\n\nThe lesson isn't \"don't use AI.\" It's \"build the check before you hit publish.\" Swipe for what happened and the three checks I'd add to any AI writing workflow.\n\nWho checks the numbers in your team's AI-assisted work?",
+          "parts": [
+            "CNET let an AI write 77 money articles. 41 needed corrections.",
+            "From November 2022, CNET Money quietly published AI-written explainers under the byline \"CNET Money Staff.\"",
+            "January 2023: Futurism noticed and reported it.",
+            "\"What Is Compound Interest?\" said $10,000 at 3% would earn $10,300 in a year. The right answer: $300.",
+            "Some corrections also flagged phrases that were \"not entirely original.\"",
+            "CNET's own review: corrections on 41 of the 77 stories.",
+            "Editor-in-chief Connie Guglielmo paused the tool. The byline became \"CNET Money.\"",
+            "It was an internal AI engine, not ChatGPT. The brand of AI wasn't the problem. Publishing without an AI-specific check was.",
+            "Before AI writes for you: recalculate every number, run a plagiarism check, and label AI help clearly."
+          ],
+          "hashtags": [
+            "AI",
+            "contentstrategy",
+            "leadership"
+          ],
+          "cta": "Share this with whoever owns your team's AI writing workflow.",
+          "moneyAngle": "Credible AI-at-work carousel that earns saves and shares from managers; positions the account for AI workflow consulting.",
+          "slideDesign": {
+            "tag": "AI at work",
+            "accent": "#E8475A",
+            "glow": "rgba(232,71,90,.22)",
+            "slides": [
+              {
+                "big": true,
+                "size": 96,
+                "title": "CNET let an AI write 77 money articles. **41 needed corrections.**",
+                "tag": "Jan 2023"
+              },
+              {
+                "title": "From Nov 2022: AI explainers, **quietly.**",
+                "tag": "CNET Money",
+                "sub": "Byline: \"CNET Money Staff.\"",
+                "visual": {
+                  "type": "icons",
+                  "items": [
+                    [
+                      "🤖",
+                      "AI drafts"
+                    ],
+                    [
+                      "📰",
+                      "Publish"
+                    ],
+                    [
+                      "🤫",
+                      "No label"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "January 2023: **Futurism noticed.**",
+                "tag": "The exposé",
+                "visual": {
+                  "type": "stat",
+                  "value": "77",
+                  "label": "AI-written stories since November 2022"
+                }
+              },
+              {
+                "title": "\"What Is Compound Interest?\"",
+                "tag": "$10,000 at 3% for a year",
+                "visual": {
+                  "type": "split",
+                  "l": [
+                    "The AI said",
+                    "You'd earn $10,300"
+                  ],
+                  "r": [
+                    "The real answer",
+                    "You'd earn $300"
+                  ]
+                }
+              },
+              {
+                "title": "Some phrases were \"not entirely **original.**\"",
+                "tag": "Corrections",
+                "sub": "Several corrections flagged copied wording, which was replaced."
+              },
+              {
+                "title": "CNET's own review:",
+                "tag": "The count",
+                "visual": {
+                  "type": "stat",
+                  "value": "41 / 77",
+                  "label": "stories that needed corrections"
+                }
+              },
+              {
+                "big": true,
+                "size": 80,
+                "title": "Tool **paused.** Byline changed to \"CNET Money.\"",
+                "tag": "The response",
+                "sub": "Editor-in-chief Connie Guglielmo."
+              },
+              {
+                "title": "Not ChatGPT. An **internal** AI engine.",
+                "tag": "The real lesson",
+                "sub": "The brand of AI wasn't the problem. Publishing without an AI-specific check was."
+              },
+              {
+                "title": "Before AI **writes for you:**",
+                "tag": "Your checklist",
+                "visual": {
+                  "type": "checklist",
+                  "items": [
+                    "**Recalculate** every number",
+                    "Run a **plagiarism** check",
+                    "**Label** AI help clearly"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "2026-10-22-05",
+          "type": "post",
+          "platform": "facebook",
+          "pillar": "relationships",
+          "format": "short",
+          "topic": "Ruth Bader Ginsburg's wedding-day earplugs: 'it helps to be a little deaf' (1954)",
+          "hook": "On her wedding day in 1954, Ruth Bader Ginsburg's mother-in-law pulled her aside and handed her a pair of earplugs.",
+          "body": "Then came the advice: \"Dear, I want you to know the secret of a happy marriage: Every now and then, it helps to be a little deaf.\"\n\nGinsburg told that story for decades. She said it served her through 56 years of marriage to Marty, and with her colleagues on the Supreme Court too.\n\nIt isn't advice to ignore your partner. It's advice to stop putting every tired, snappy remark on trial.\n\nMost fights don't start with a betrayal. They start with a sharp line at the end of a long day, and an equally sharp reply. Somebody has to be the one who lets the small stuff go past.\n\nTry it this week: when your partner says something short with you after a rough day, don't answer the words. Answer the day. \"Long one?\" goes further than a rebuttal ever will.",
+          "parts": [],
+          "hashtags": [
+            "marriage",
+            "relationships"
+          ],
+          "cta": "What's one small thing you've learned to let go in your relationship?",
+          "moneyAngle": "Warm, shareable relationship story that drives comments and page reach on Facebook."
+        },
+        {
+          "id": "2026-10-22-06",
+          "type": "post",
+          "platform": "instagram",
+          "pillar": "wealth_systems",
+          "format": "carousel",
+          "topic": "Mark Twain lost about $300,000 on the Paige typesetter, went broke in 1894, then paid every creditor in full",
+          "hook": "Mark Twain was the most famous writer in America. In 1894 he was broke.",
+          "body": "Mark Twain was the most famous writer in America. In 1894 he was broke.\n\nHe put about $300,000 into one machine that never worked. Then his publishing house failed. Swipe for how he climbed out, and the rule he broke that you don't have to.\n\nSave this for the next time one \"sure thing\" asks for all your money.",
+          "parts": [
+            "Mark Twain was the most famous writer in America. In 1894 he was broke.",
+            "The bet: the Paige Compositor, a typesetting machine with about 18,000 parts.",
+            "Twain poured in about $300,000 through the 1880s. The machine kept needing an operator to step in.",
+            "Meanwhile, Ottmar Mergenthaler's Linotype machine took over the industry.",
+            "1894: his publishing firm, Charles L. Webster & Co., failed. He was over $100,000 in debt.",
+            "Creditors would have taken 50 cents on the dollar. Twain refused.",
+            "July 1895: at 59, he set off on a lecture tour around the world.",
+            "He paid every creditor in full. As he put it, \"honor is a harder master than the law.\"",
+            "The rule he broke: genius in one field isn't skill in another. Never let one bet hold your future."
+          ],
+          "hashtags": [
+            "moneylessons",
+            "investing",
+            "personalfinance",
+            "history"
+          ],
+          "cta": "Save this, and send it to the friend who's all-in on one idea.",
+          "moneyAngle": "Story carousel built for saves and shares on Instagram; grows the account in the money-lessons niche.",
+          "slideDesign": {
+            "tag": "Money",
+            "accent": "#E8B04B",
+            "glow": "rgba(232,176,75,.22)",
+            "slides": [
+              {
+                "big": true,
+                "size": 92,
+                "title": "Mark Twain was the most famous writer in America. In 1894 he was **broke.**",
+                "tag": "1894"
+              },
+              {
+                "title": "The bet: the **Paige Compositor.**",
+                "tag": "A typesetting machine",
+                "visual": {
+                  "type": "stat",
+                  "value": "18,000",
+                  "label": "parts, roughly"
+                }
+              },
+              {
+                "title": "Twain poured in about **$300,000.**",
+                "tag": "Through the 1880s",
+                "sub": "The machine kept needing an operator to step in."
+              },
+              {
+                "title": "Meanwhile, a rival **took the industry.**",
+                "tag": "Same era",
+                "visual": {
+                  "type": "split",
+                  "l": [
+                    "Twain's bet",
+                    "Paige Compositor: mimicked a human typesetter"
+                  ],
+                  "r": [
+                    "The winner",
+                    "Mergenthaler's Linotype: cast fresh type"
+                  ]
+                }
+              },
+              {
+                "title": "1894: his publishing firm **failed.**",
+                "tag": "Charles L. Webster & Co.",
+                "visual": {
+                  "type": "stat",
+                  "value": "$100K+",
+                  "label": "in debt (over $100,000)"
+                }
+              },
+              {
+                "big": true,
+                "size": 84,
+                "title": "Creditors offered to take **50 cents** on the dollar. He said no.",
+                "tag": "The choice"
+              },
+              {
+                "title": "So he went **on the road.**",
+                "tag": "The comeback",
+                "visual": {
+                  "type": "timeline",
+                  "items": [
+                    [
+                      "1880s",
+                      "Invests ~$300K",
+                      ""
+                    ],
+                    [
+                      "1894",
+                      "Firm fails",
+                      ""
+                    ],
+                    [
+                      "1895",
+                      "World tour",
+                      "on"
+                    ],
+                    [
+                      "Later",
+                      "Paid in full",
+                      "on"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "\"Honor is a harder master **than the law.**\"",
+                "tag": "Mark Twain",
+                "sub": "Every creditor was paid in full."
+              },
+              {
+                "title": "The rule **he broke:**",
+                "tag": "Your takeaway",
+                "visual": {
+                  "type": "checklist",
+                  "items": [
+                    "Genius in one field **isn't** skill in another",
+                    "Cap any single bet at a **set %**",
+                    "Never let **one** bet hold your future"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "2026-10-22-07",
+          "type": "video",
+          "platform": "tiktok",
+          "niche": "finance",
+          "style": "true",
+          "length": "s90",
+          "topic": "James Howells' 8,000 bitcoin in a Newport landfill: the 2025 court loss and the bid to buy the dump",
+          "titles": [
+            "8,000 Bitcoin Are Buried in a Welsh Dump",
+            "He Threw Away £597 Million by Accident",
+            "The Court Said No. So He Tried to Buy the Dump."
+          ],
+          "hook": "8,000 bitcoin are buried under a Welsh rubbish dump.",
+          "caption": "In 2013, IT engineer James Howells threw out a hard drive holding the key to 8,000 bitcoin. In January 2025 the High Court threw out his £495M claim against Newport council; the appeal failed in March. By August 2025 he said he'd given up. Two copies. Two places. Always.",
+          "hashtags": [
+            "bitcoin",
+            "crypto",
+            "moneytok",
+            "truestory"
+          ],
+          "cta": "Follow for one true money story a day.",
+          "thumbnail": {
+            "text": "£597M IN THE TRASH",
+            "prompt": "Stylized 3D crypto-noir scene: a glowing hard drive half-buried in a mountain of rubbish bags at night, mint light leaking from the drive, rain, near-black background, no real faces, no logos, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), steady true-crime pace about 150 wpm, slight pause before each court ruling. Story cast has no lines.",
+          "music": "Low pulsing synth bass with rain ambience; drops out for the judge's line; tense rise into the July 2025 offer; soft pad under the lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:03",
+              "narration": "8,000 bitcoin are buried under a Welsh rubbish dump.",
+              "onScreen": "8,000 BTC. In a dump.",
+              "visual": "Landfill at night rain, BG: glossy stylized 3D landfill at night with rain streaks and drifting mist; CHARACTER: none; ANIM: glowing hard drive pulses under the rubbish, BTC counter spins to 8,000",
+              "motion": "Slow push down through rain into the rubbish; word-pop captions",
+              "sfx": "Rain, deep bass hit"
+            },
+            {
+              "time": "0:03–0:08",
+              "narration": "In 2013, an IT engineer in Newport threw out the wrong hard drive.",
+              "onScreen": "Newport, 2013",
+              "visual": "Man carrying bin bag, BG: parallax Welsh terraced street at dusk with flickering streetlights; CHARACTER: the engineer, stylized 3D, dropping a bag in a bin; ANIM: two identical drives on a desk, one fades out",
+              "motion": "Whip pan from desk to bin; caption slides in",
+              "sfx": "Bin lid slam"
+            },
+            {
+              "time": "0:08–0:13",
+              "narration": "On it: the private key to coins he'd mined back in 2009.",
+              "onScreen": "Mined in 2009",
+              "visual": "Old laptop screen code, BG: dark bedroom with blue CRT glow and floating code; CHARACTER: the engineer at a 2009 laptop; ANIM: key icon locks into a vault graphic",
+              "motion": "Dolly in on the laptop; glitch transition",
+              "sfx": "Keyboard clicks"
+            },
+            {
+              "time": "0:13–0:17",
+              "narration": "By February 2025, they were valued around £597 million.",
+              "onScreen": "£597,000,000",
+              "visual": "Gold coins stacking, BG: mint light sweeps over a black glass vault; CHARACTER: none; ANIM: money counter spins up to £597M",
+              "motion": "Fast crane up the coin stack; counter hit",
+              "sfx": "Cash register ring"
+            },
+            {
+              "time": "0:17–0:21",
+              "narration": "So why can't he just go and dig it up?",
+              "onScreen": "Why not just dig?",
+              "visual": "Excavator in landfill, BG: parallax landfill with circling gulls and fog; CHARACTER: Nova, arms crossed, raising an eyebrow; ANIM: question mark stamps over the dump",
+              "motion": "Snap zoom to Nova; caption shakes",
+              "sfx": "Record scratch"
+            },
+            {
+              "time": "0:21–0:25",
+              "narration": "The council says it's under 110,000 to 200,000 tonnes of waste.",
+              "onScreen": "Up to 200,000 tonnes",
+              "visual": "Garbage mountain aerial, BG: animated cross-section of landfill layers; CHARACTER: none; ANIM: tonnage counter climbs; a tiny drive icon sinks deeper",
+              "motion": "Top-down zoom out revealing the scale",
+              "sfx": "Low rumble"
+            },
+            {
+              "time": "0:25–0:29",
+              "narration": "In 2021 he offered Newport 25 percent of the haul.",
+              "onScreen": "25% for the city",
+              "visual": "Town hall building, BG: parallax civic building in rain with warm windows; CHARACTER: the engineer handing over a glowing contract; ANIM: 25% slice cuts out of a coin pie chart",
+              "motion": "Push in on the contract; pie chart draws",
+              "sfx": "Paper slide"
+            },
+            {
+              "time": "0:29–0:34",
+              "narration": "His team pitched robot dogs, drones and AI to sort the rubbish.",
+              "onScreen": "Robot dogs. Drones. AI.",
+              "visual": "Drone flying over field, BG: neon blueprint grid with scanning lasers; CHARACTER: stylized robot dog and drones on a blueprint; ANIM: scan lines sweep the landfill model",
+              "motion": "Orbit around the blueprint; glitch cuts",
+              "sfx": "Servo whirr"
+            },
+            {
+              "time": "0:34–0:37",
+              "narration": "Refused. The council pointed to its environmental permit.",
+              "onScreen": "REFUSED",
+              "visual": "Rubber stamp on paper, BG: dark office with a single desk lamp; CHARACTER: none; ANIM: red REFUSED stamp slams onto the plan",
+              "motion": "Hard cut; stamp shake",
+              "sfx": "Stamp thud"
+            },
+            {
+              "time": "0:37–0:39",
+              "narration": "So he sued, for £495 million.",
+              "onScreen": "Claim: £495M",
+              "visual": "Courthouse exterior, BG: stylized 3D stone courthouse with light rays; CHARACTER: the engineer climbing courthouse steps; ANIM: claim figure types out on a glass card",
+              "motion": "Low-angle tilt up; typewriter caption",
+              "sfx": "Typewriter clack"
+            },
+            {
+              "time": "0:39–0:43",
+              "narration": "January 9, 2025: the High Court threw the case out.",
+              "onScreen": "Jan 9, 2025: dismissed",
+              "visual": "Judge gavel close up, BG: wood-panelled courtroom with dust in the light; CHARACTER: the judge, stylized 3D, faceless, lifting a gavel; ANIM: date card flips; DISMISSED glitches in",
+              "motion": "Slow push; freeze on the gavel",
+              "sfx": "Gavel strike"
+            },
+            {
+              "time": "0:43–0:47",
+              "narration": "The judge said the claim had no realistic prospect of succeeding.",
+              "onScreen": "No realistic prospect",
+              "visual": "Legal documents close up, BG: floating court papers drifting in a dark void; CHARACTER: none; ANIM: quote highlights word by word in mint",
+              "motion": "Kinetic text reveal; slow drift",
+              "sfx": "Paper flutter"
+            },
+            {
+              "time": "0:47–0:51",
+              "narration": "March 2025: the Court of Appeal refused him too.",
+              "onScreen": "Appeal: refused",
+              "visual": "Old court building, BG: parallax court corridor with closing doors; CHARACTER: the engineer watching a door shut; ANIM: second REFUSED stamp lands",
+              "motion": "Doors close to black; caption snaps",
+              "sfx": "Door thud"
+            },
+            {
+              "time": "0:51–0:55",
+              "narration": "Then it got worse. The council said the landfill would close.",
+              "onScreen": "The dump is closing",
+              "visual": "Closed gate with sign, BG: fog over a chained landfill gate, warning lights; CHARACTER: none; ANIM: countdown timer starts ticking on the gate",
+              "motion": "Rack focus to the chain; timer pulse",
+              "sfx": "Chain rattle, tick"
+            },
+            {
+              "time": "0:55–1:00",
+              "narration": "His last move? In July 2025 he offered £25 million for part of it.",
+              "onScreen": "£25M for the dump",
+              "visual": "Real estate contract signing, BG: glass UI panel over the landfill with a SOLD tag; CHARACTER: the engineer pointing at one section on a map; ANIM: offer card slides in, map section glows",
+              "motion": "Map zoom to the section; card slide",
+              "sfx": "Whoosh"
+            },
+            {
+              "time": "1:00–1:04",
+              "narration": "The council's answer: first pay £117,000 in legal costs.",
+              "onScreen": "Pay £117,000 first",
+              "visual": "Invoice on desk, BG: dark office, red light sweep; CHARACTER: none; ANIM: invoice unrolls with £117,000 total",
+              "motion": "Paper unroll; red flash",
+              "sfx": "Paper rip"
+            },
+            {
+              "time": "1:04–1:09",
+              "narration": "By August 2025 he told Forbes Australia he'd given up on the drive.",
+              "onScreen": "He gave up",
+              "visual": "Man walking away at sunset, BG: parallax hillside above the landfill at sunset; CHARACTER: the engineer walking away, hands in pockets; ANIM: drive icon dims and goes dark",
+              "motion": "Slow pull back; long dissolve",
+              "sfx": "Wind"
+            },
+            {
+              "time": "1:09–1:14",
+              "narration": "Twist: in 2022 he'd put recovery odds at 80 to 90 percent.",
+              "onScreen": "80–90% odds?",
+              "visual": "Hard drive platter spinning, BG: macro glass platter spinning in mint light; CHARACTER: none; ANIM: odds gauge swings to 80–90%",
+              "motion": "Macro push in on the platter; gauge spin",
+              "sfx": "Disk spin-up"
+            },
+            {
+              "time": "1:14–1:20",
+              "narration": "In 2026, your money is often just a key: a seed phrase, a password, a login.",
+              "onScreen": "Your money is a key",
+              "visual": "Phone login screen, BG: glossy 3D phone UI with floating keys and lock icons; CHARACTER: Nova holding up a glowing key; ANIM: lock icons click shut one by one",
+              "motion": "Orbit around Nova; word-pop captions",
+              "sfx": "Lock clicks"
+            },
+            {
+              "time": "1:20–1:24",
+              "narration": "Keep two copies of every key, in two different places.",
+              "onScreen": "Two copies. Two places.",
+              "visual": "Safe deposit box, BG: split screen of two glowing vaults; CHARACTER: Nova tapping her wrist display; ANIM: key duplicates and flies to both vaults",
+              "motion": "Split-screen wipe; caption slam",
+              "sfx": "Chime"
+            },
+            {
+              "time": "1:24–1:28",
+              "narration": "Or yours ends up like 8,000 bitcoin under a Welsh dump.",
+              "onScreen": "Don't be the dump",
+              "visual": "Landfill at night rain, BG: the same rainy landfill from the first frame; CHARACTER: none; ANIM: drive pulses again, loop to frame one",
+              "motion": "Push back down into the rubbish to match the opening",
+              "sfx": "Rain, bass hit"
+            }
+          ],
+          "loopLine": "Or yours ends up like 8,000 bitcoin under a Welsh dump.",
+          "factCheck": [
+            "James Howells, a computer engineer from Newport, Wales, accidentally threw out a hard drive in 2013 (between June and August).",
+            "The drive held the private key to 8,000 bitcoin he began mining in February 2009.",
+            "In February 2025 the bitcoin were valued at about £597 million (about US$751 million).",
+            "Newport council said the drive was likely under 110,000–200,000 tonnes of waste.",
+            "In January 2021 Howells offered the council 25% of the proceeds; the council refused, citing its environmental permit from Natural Resources Wales.",
+            "His search plan (2022) included AI, drones, a mechanical arm and Boston Dynamics robot dogs.",
+            "He sued Newport City Council for £495 million (December 2024).",
+            "On January 9, 2025, Judge Keyser KC dismissed the claim, saying it had 'no realistic prospect of succeeding'.",
+            "In March 2025 the Court of Appeal refused his appeal.",
+            "In February 2025 the council said the landfill would close.",
+            "In July 2025 he offered £25 million for part of the landfill; the council said he first had to pay £117,000 in legal costs.",
+            "In August 2025 he told Forbes Australia he had given up on the drive.",
+            "In 2022 he estimated an 80–90% chance of recovering the data if the platter was intact."
+          ],
+          "moneyAngle": "Over-60-second true money story eligible for TikTok creator payouts; drives follows for the daily series.",
+          "artStyle": "Glossy stylized 3D crypto-noir: rainy night landfill, near-black #07080B with mint #1CD28B glows and red alert accents; bold white word-pop captions with mint highlights.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The engineer",
+              "role": "the man who threw out the drive",
+              "look": "Original stylized 3D man in his 30s, dark hoodie, rain jacket, no real likeness",
+              "voice": "No lines"
+            },
+            {
+              "name": "The judge",
+              "role": "High Court judge",
+              "look": "Faceless stylized 3D figure in a dark robe, seen from behind or in silhouette",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, your money is often just a key: a seed phrase, a password, a login.",
+          "retention": {
+            "hookVisual": "A glowing hard drive pulsing under a rainy night landfill as a BTC counter spins to 8,000.",
+            "openLoop": {
+              "scene": 5,
+              "question": "If he knows where it is, why can't he just dig it up?"
+            },
+            "rehook": {
+              "scene": 14,
+              "line": "Then it got worse. The council said the landfill would close."
+            },
+            "payoff": {
+              "scene": 17,
+              "line": "By August 2025 he told Forbes Australia he'd given up on the drive."
+            }
+          }
+        },
+        {
+          "id": "2026-10-22-08",
+          "type": "video",
+          "platform": "instagram",
+          "niche": "lifestyle",
+          "style": "funny",
+          "length": "s60",
+          "topic": "Halfway, Oregon renamed itself Half.com for a year in exchange for about $100,000 and 20 school computers (2000)",
+          "titles": [
+            "The Town That Renamed Itself After a Website",
+            "A Startup Bought a Town's Name for $100K",
+            "Halfway, Oregon Became Half.com"
+          ],
+          "hook": "In January 2000, an Oregon town renamed itself after a website.",
+          "caption": "Halfway, Oregon (population 337 in the 2000 census) became 'Half.com, Oregon' for a year after the startup Half.com paid about $100,000 and donated 20 computers to the school. Months later eBay bought Half.com for roughly $350M. A weird true story beats a bigger ad budget.",
+          "hashtags": [
+            "marketing",
+            "startup",
+            "history",
+            "funnyhistory"
+          ],
+          "cta": "Send this to the friend who says marketing has to be expensive.",
+          "thumbnail": {
+            "text": "TOWN FOR SALE",
+            "prompt": "Retro-cartoon 1999 scene: a tiny Oregon mountain town with a giant web-address road sign being bolted on, chunky outlines, warm sunset, mint accents, no logos, no real faces, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), deadpan comic timing about 160 wpm, tiny pause before each punchline. Story cast has no lines.",
+          "music": "Bouncy late-90s lounge beat with a twangy guitar; record-stop on the question; brass sting on the eBay number.",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "In January 2000, an Oregon town renamed itself after a website.",
+              "onScreen": "Town renamed after a website",
+              "visual": "Small town welcome sign, BG: retro-cartoon mountain valley with drifting clouds; CHARACTER: a sign painter, chunky cartoon style, on a ladder; ANIM: old town name wipes off, a web address pops on",
+              "motion": "Snap zoom on the sign; bouncy caption pop",
+              "sfx": "Spray can hiss"
+            },
+            {
+              "time": "0:04–0:08",
+              "narration": "The town: Halfway, Oregon. Population at the 2000 census: 337.",
+              "onScreen": "Population: 337",
+              "visual": "Rural Oregon town main street, BG: parallax cartoon main street with tumbleweed rolling; CHARACTER: none; ANIM: population counter ticks up to 337",
+              "motion": "Side-scroll down main street",
+              "sfx": "Tumbleweed whoosh"
+            },
+            {
+              "time": "0:08–0:12",
+              "narration": "The buyer: Half.com, a startup selling used books and CDs.",
+              "onScreen": "Buyer: a startup",
+              "visual": "Stack of used books, BG: retro 1999 browser window floating over a desk; CHARACTER: the founder, cartoon 20-something in a fleece vest; ANIM: books and CDs fly into a shopping cart icon",
+              "motion": "Tilt down into the browser; pixel wipe",
+              "sfx": "Dial-up modem screech"
+            },
+            {
+              "time": "0:12–0:16",
+              "narration": "Why would a dot-com pay a farm town for its name?",
+              "onScreen": "Why buy a name?",
+              "visual": "Cow in a field, BG: pastoral cartoon field with a confused cow; CHARACTER: Nova leaning on a fence, squinting; ANIM: question marks bounce off the cow",
+              "motion": "Push in on Nova; record stop",
+              "sfx": "Record scratch, moo"
+            },
+            {
+              "time": "0:16–0:20",
+              "narration": "The price: about $100,000, plus 20 computers for the school.",
+              "onScreen": "$100K + 20 computers",
+              "visual": "Computers in a classroom, BG: cartoon schoolroom with chunky beige monitors; CHARACTER: kids cheering as boxes arrive; ANIM: price tag counter spins to $100,000; 20 computers stack",
+              "motion": "Crane down over the classroom; counter pop",
+              "sfx": "Cash register"
+            },
+            {
+              "time": "0:20–0:23",
+              "narration": "The deal: one year as Half.com, Oregon.",
+              "onScreen": "One year only",
+              "visual": "Calendar pages flipping, BG: spinning retro calendar on a starry background; CHARACTER: none; ANIM: calendar flips through 12 months",
+              "motion": "Spin transition; caption bounce",
+              "sfx": "Page flips"
+            },
+            {
+              "time": "0:23–0:26",
+              "narration": "The town put up signs: America's First Dot-com City.",
+              "onScreen": "First Dot-com City",
+              "visual": "Road sign highway, BG: cartoon highway at sunrise with lens flare; CHARACTER: two cartoon workers bolting up a sign; ANIM: sign drops in with a bounce",
+              "motion": "Dolly along the highway; sign slam",
+              "sfx": "Clang"
+            },
+            {
+              "time": "0:26–0:30",
+              "narration": "But the name never legally changed. It was just a proclamation.",
+              "onScreen": "Never legally changed",
+              "visual": "Official document with seal, BG: dusty cartoon courthouse office; CHARACTER: a clerk, cartoon style, shrugging at a scroll; ANIM: seal stamp misses the page",
+              "motion": "Snap zoom; wobble caption",
+              "sfx": "Boing"
+            },
+            {
+              "time": "0:30–0:33",
+              "narration": "It didn't matter. The stunt made national news.",
+              "onScreen": "National news",
+              "visual": "Vintage TV news broadcast, BG: stack of chunky CRT TVs all playing the same story; CHARACTER: none; ANIM: headlines multiply across screens",
+              "motion": "Whip pans across TVs",
+              "sfx": "TV static"
+            },
+            {
+              "time": "0:33–0:36",
+              "narration": "Months later, eBay bought Half.com for roughly $350 million.",
+              "onScreen": "eBay: ~$350 million",
+              "visual": "Money raining down, BG: cartoon city skyline with confetti; CHARACTER: the founder, cartoon, catching falling cash; ANIM: counter spins to $350M with a brass sting",
+              "motion": "Crane up through the confetti",
+              "sfx": "Brass sting"
+            },
+            {
+              "time": "0:36–0:41",
+              "narration": "The twist: in 2007, one town sign sold at auction for $1,000.",
+              "onScreen": "One sign: $1,000",
+              "visual": "Auction gavel, BG: spotlight stage with the old road sign; CHARACTER: a cartoon auctioneer pointing; ANIM: SOLD stamp lands on the sign",
+              "motion": "Spotlight snap; slow push",
+              "sfx": "Gavel bang"
+            },
+            {
+              "time": "0:41–0:44",
+              "narration": "The winning bidder? Half.com's own founder, Josh Kopelman.",
+              "onScreen": "Buyer: the founder",
+              "visual": "Man holding sign, BG: warm cartoon garage with the sign on the wall; CHARACTER: the founder, cartoon, hugging the sign; ANIM: heart pops above the sign",
+              "motion": "Push in; cheeky freeze frame",
+              "sfx": "Ding"
+            },
+            {
+              "time": "0:44–0:49",
+              "narration": "In 2026, attention still costs less when the story does the work.",
+              "onScreen": "Story beats budget",
+              "visual": "Phone feed scrolling, BG: glossy 3D phone feed with floating hearts; CHARACTER: Nova scrolling her wrist display; ANIM: story card outshines a giant ad billboard",
+              "motion": "Orbit around Nova; word-pop captions",
+              "sfx": "Swipe"
+            },
+            {
+              "time": "0:49–0:53",
+              "narration": "So find the weird, true angle before you buy more ads.",
+              "onScreen": "Find the weird angle",
+              "visual": "Brainstorm sticky notes, BG: corkboard with sticky notes flying in; CHARACTER: Nova pinning one note; ANIM: one note glows mint",
+              "motion": "Quick zoom to the glowing note",
+              "sfx": "Pop"
+            },
+            {
+              "time": "0:53–0:56",
+              "narration": "That's how a town of 337 became a website.",
+              "onScreen": "337 people. One website.",
+              "visual": "Small town welcome sign, BG: the same retro-cartoon valley from the first frame; CHARACTER: the sign painter finishing the sign; ANIM: web address pops on again, loop to frame one",
+              "motion": "Match cut back to the opening sign",
+              "sfx": "Spray can hiss"
+            }
+          ],
+          "loopLine": "That's how a town of 337 became a website.",
+          "factCheck": [
+            "Halfway, Oregon agreed in December 1999 to call itself 'Half.com, Oregon' for one year; news reports in January 2000 covered the new name.",
+            "Halfway's population in the 2000 census was 337.",
+            "Half.com, co-founded by Josh Kopelman, sold used books, CDs and other media; it launched in 1999.",
+            "Half.com paid the town about $100,000 (some sources say $110,000) plus 20 computers for the school.",
+            "The proclamation did not legally change the town's name.",
+            "The town put up signs reading 'America's First Dot-com City'.",
+            "eBay acquired Half.com in 2000 for roughly $350 million.",
+            "In September 2007 one of the signs was auctioned for $1,000; Josh Kopelman won it."
+          ],
+          "moneyAngle": "Funny, true marketing story that earns shares and saves on Reels; builds the account's business-stories audience.",
+          "artStyle": "Retro-cartoon 1999: chunky outlines, warm sunset oranges and teal skies with mint #8CF9CB accents, bouncy hand-lettered captions.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The founder",
+              "role": "the startup founder",
+              "look": "Original chunky cartoon 20-something in a fleece vest and khakis, no real likeness",
+              "voice": "No lines"
+            },
+            {
+              "name": "The sign painter",
+              "role": "townsperson",
+              "look": "Original cartoon townsperson in overalls and a cap",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, attention still costs less when the story does the work.",
+          "retention": {
+            "hookVisual": "A cartoon painter wipes an old town name off a sign and a web address pops on.",
+            "openLoop": {
+              "scene": 4,
+              "question": "Why would a dot-com pay a farm town for its name?"
+            },
+            "rehook": {
+              "scene": 8,
+              "line": "But the name never legally changed. It was just a proclamation."
+            },
+            "payoff": {
+              "scene": 10,
+              "line": "Months later, eBay bought Half.com for roughly $350 million."
+            }
+          }
+        },
+        {
+          "id": "2026-10-22-09",
+          "type": "video",
+          "platform": "youtube",
+          "niche": "tech",
+          "style": "explainer",
+          "length": "s60",
+          "topic": "The Netflix Prize: $1 million for a 10.06% better algorithm Netflix never shipped (2006–2009)",
+          "titles": [
+            "The $1M Algorithm Netflix Threw Away",
+            "They Won by 20 Minutes. Netflix Never Used It.",
+            "Netflix Paid $1 Million for Code It Never Used"
+          ],
+          "titleScores": {
+            "vidiq": [
+              {
+                "title": "The $1M Algorithm Netflix Threw Away",
+                "score": 92
+              },
+              {
+                "title": "They Won by 20 Minutes. Netflix Never Used It.",
+                "score": 89
+              },
+              {
+                "title": "Netflix Paid $1 Million for Code It Never Used",
+                "score": 82
+              }
+            ]
+          },
+          "hook": "Netflix paid $1 million for an algorithm. Then it never used it.",
+          "caption": "In 2006 Netflix offered $1M to anyone who could beat its recommendation system by 10%. BellKor's Pragmatic Chaos won on September 21, 2009 with 10.06%. Netflix later said the extra accuracy didn't justify the engineering effort. Best model isn't always the one worth shipping.",
+          "hashtags": [
+            "netflix",
+            "machinelearning",
+            "AI",
+            "shorts"
+          ],
+          "cta": "Subscribe for one wild tech story a day.",
+          "thumbnail": {
+            "text": "$1M. NEVER USED.",
+            "prompt": "Glitch-pop scene: a giant oversized $1,000,000 check glitching into code, red play-button shapes (generic, no logos) and mint data streams on near-black, no real faces, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), brisk explainer pace about 165 wpm; punch the numbers. Story cast has no lines.",
+          "music": "Glitchy electronic beat with stuttering hi-hats; drops to a heartbeat for the 20-minute finish; full return on the twist.",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "Netflix paid $1 million for an algorithm. Then never used it.",
+              "onScreen": "$1M. Never used.",
+              "visual": "Giant check close up, BG: glitch-pop near-black void with red and mint scanlines; CHARACTER: none; ANIM: oversized check glitches into code",
+              "motion": "Snap zoom; RGB-split caption",
+              "sfx": "Glitch hit"
+            },
+            {
+              "time": "0:04–0:08",
+              "narration": "October 2006: beat our recommendations by 10 percent, win $1 million.",
+              "onScreen": "Beat us by 10%",
+              "visual": "Movie posters wall, BG: wall of generic glowing movie tiles in parallax; CHARACTER: Nova pointing at a 10% badge; ANIM: 10% badge stamps on the wall",
+              "motion": "Dolly along the tile wall; caption pop",
+              "sfx": "Stamp"
+            },
+            {
+              "time": "0:08–0:10",
+              "narration": "Teams got 100 million movie ratings.",
+              "onScreen": "100 million ratings",
+              "visual": "Data center servers, BG: falling star-rating particles on near-black; CHARACTER: none; ANIM: rating counter spins to 100 million",
+              "motion": "Fall through the particle stream",
+              "sfx": "Data whoosh"
+            },
+            {
+              "time": "0:10–0:14",
+              "narration": "So why pay a fortune for code and then bin it?",
+              "onScreen": "Why bin it?",
+              "visual": "Person shrugging at laptop, BG: glitchy office with flickering monitors; CHARACTER: Nova shrugging; ANIM: trash can icon glitches on and off",
+              "motion": "Punch-in on Nova; stutter caption",
+              "sfx": "Record scratch"
+            },
+            {
+              "time": "0:14–0:16",
+              "narration": "It took nearly three years.",
+              "onScreen": "Nearly 3 years",
+              "visual": "Calendar time lapse, BG: progress bar crawling across a glitched grid; CHARACTER: a coder, stylized 3D, at a desk surrounded by mugs; ANIM: progress bar stalls at 9%",
+              "motion": "Time-lapse; progress bar strain",
+              "sfx": "Clock ticks"
+            },
+            {
+              "time": "0:16–0:19",
+              "narration": "Teams merged rivals' models into giant blends.",
+              "onScreen": "Models blended",
+              "visual": "Code on screen, BG: swirling neon model nodes merging; CHARACTER: three coder characters high-fiving; ANIM: nodes fuse into one big mesh",
+              "motion": "Orbit the merging mesh",
+              "sfx": "Synth swell"
+            },
+            {
+              "time": "0:19–0:23",
+              "narration": "September 21, 2009: BellKor's Pragmatic Chaos wins, 10.06 percent better.",
+              "onScreen": "10.06% — winner",
+              "visual": "Trophy on stage, BG: confetti over a glitch-pop stage; CHARACTER: the team, stylized 3D, raising a giant check; ANIM: 10.06% counter slams in",
+              "motion": "Crane up; confetti burst",
+              "sfx": "Crowd cheer"
+            },
+            {
+              "time": "0:23–0:28",
+              "narration": "But it almost wasn't them. A rival team posted the same score.",
+              "onScreen": "Same score. Two teams.",
+              "visual": "Two runners at finish line, BG: split-screen race track in neon; CHARACTER: two teams sprinting side by side; ANIM: two scoreboards show identical numbers",
+              "motion": "Split-screen wipe; caption shake",
+              "sfx": "Heartbeat"
+            },
+            {
+              "time": "0:28–0:32",
+              "narration": "BellKor submitted 20 minutes earlier. That was the tiebreaker.",
+              "onScreen": "Won by 20 minutes",
+              "visual": "Stopwatch close up, BG: giant glowing stopwatch on near-black; CHARACTER: none; ANIM: stopwatch freezes at 20:00",
+              "motion": "Macro push into the stopwatch",
+              "sfx": "Tick, then hit"
+            },
+            {
+              "time": "0:32–0:36",
+              "narration": "The twist: Netflix never put the winner into production.",
+              "onScreen": "Never shipped",
+              "visual": "Locked filing cabinet, BG: dim archive room with dust in the light; CHARACTER: none; ANIM: winning code folder slides into a drawer, lock clicks",
+              "motion": "Slow push; lock snap",
+              "sfx": "Lock click"
+            },
+            {
+              "time": "0:36–0:40",
+              "narration": "Its engineers wrote the gains didn't justify the engineering effort.",
+              "onScreen": "Not worth the effort",
+              "visual": "Engineers at whiteboard, BG: glass UI panel comparing cost vs gain bars; CHARACTER: Nova tapping the cost bar; ANIM: cost bar towers over the gain bar",
+              "motion": "Bar chart draws; quick zoom",
+              "sfx": "Blip"
+            },
+            {
+              "time": "0:40–0:42",
+              "narration": "And streaming changed the problem.",
+              "onScreen": "Streaming changed it",
+              "visual": "Person watching TV couch, BG: living room with a glowing TV and a DVD fading away; CHARACTER: a viewer on a couch with a remote; ANIM: DVD disc dissolves into a play button",
+              "motion": "Morph transition",
+              "sfx": "Whoosh"
+            },
+            {
+              "time": "0:42–0:48",
+              "narration": "In 2026, AI teams face the same trap: the best score isn't the best product.",
+              "onScreen": "Best score ≠ best product",
+              "visual": "Team meeting laptops, BG: glossy 3D office with floating AI dashboards; CHARACTER: Nova between two dashboards; ANIM: accuracy meter vs cost meter swing",
+              "motion": "Orbit around Nova; kinetic captions",
+              "sfx": "Swipe"
+            },
+            {
+              "time": "0:48–0:52",
+              "narration": "Before building, ask: is the gain worth running daily?",
+              "onScreen": "Worth running daily?",
+              "visual": "Checklist on clipboard, BG: mint checklist panel floating in dark space; CHARACTER: Nova ticking a box; ANIM: checkbox ticks with a mint flash",
+              "motion": "Push in on the checkbox",
+              "sfx": "Tick"
+            },
+            {
+              "time": "0:52–0:56",
+              "narration": "Or you might pay $1 million for code you never use.",
+              "onScreen": "$1M. Never used.",
+              "visual": "Giant check close up, BG: the same glitch-pop void from the first frame; CHARACTER: none; ANIM: check glitches again, loop to frame one",
+              "motion": "Match cut to the opening check",
+              "sfx": "Glitch hit"
+            }
+          ],
+          "loopLine": "Or you might pay $1 million for code you never use.",
+          "factCheck": [
+            "Netflix announced the Netflix Prize in October 2006, offering $1 million for a 10% improvement over its Cinematch recommendation system.",
+            "The contest dataset contained about 100 million movie ratings.",
+            "The grand prize was awarded about three years later.",
+            "Top teams combined (blended) many models, including by merging teams.",
+            "On September 21, 2009, BellKor's Pragmatic Chaos was named the winner with a 10.06% improvement.",
+            "A rival team, The Ensemble, matched the score; BellKor's Pragmatic Chaos had submitted 20 minutes earlier, which decided the tie.",
+            "Netflix never put the winning algorithm into production.",
+            "In a 2012 blog post, Netflix's Xavier Amatriain and Justin Basilico wrote the additional accuracy gains 'did not seem to justify the engineering effort' needed.",
+            "Netflix's shift to streaming changed how recommendations needed to work."
+          ],
+          "moneyAngle": "Evergreen tech-business Short that drives subscribers and long-tail search views on YouTube.",
+          "artStyle": "Glitch-pop: near-black #07080B with red and mint #1CD28B RGB-split accents, scanlines and data streams; stuttering monospace captions.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The coders",
+              "role": "contest teams",
+              "look": "Original stylized 3D programmers in hoodies and headphones, mixed ages, no real likeness",
+              "voice": "No lines"
+            },
+            {
+              "name": "The viewer",
+              "role": "streaming customer",
+              "look": "Original stylized 3D person on a couch in a cozy sweater",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, AI teams face the same trap: the best score isn't the best product.",
+          "retention": {
+            "hookVisual": "An oversized $1,000,000 check glitching apart into lines of code.",
+            "openLoop": {
+              "scene": 4,
+              "question": "Why pay a fortune for code and then throw it away?"
+            },
+            "rehook": {
+              "scene": 8,
+              "line": "But it almost wasn't them. A rival team posted the same score."
+            },
+            "payoff": {
+              "scene": 11,
+              "line": "Its engineers wrote the gains didn't justify the engineering effort."
+            }
+          }
+        },
+        {
+          "id": "2026-10-22-10",
+          "type": "video",
+          "platform": "facebook",
+          "niche": "finance",
+          "style": "countdown",
+          "length": "s60",
+          "topic": "3 famous deals turned down: Decca and the Beatles (1962), Excite and Google for $750,000 (1999), Yahoo and Microsoft's $44.6B (2008)",
+          "titles": [
+            "3 Deals That Were Turned Down (and What Followed)",
+            "Excite Could Have Bought Google for $750,000",
+            "Yahoo Said No to $44.6 Billion"
+          ],
+          "hook": "Excite could have bought Google for $750,000. It said no.",
+          "caption": "Three famous no's: Decca passed on the Beatles after a 15-song audition on January 1, 1962. Excite turned down Google at $750,000 in 1999. Yahoo rejected Microsoft's $44.6 billion offer in 2008, then sold its core business to Verizon for about $4.48 billion in 2017. Every no is a bet.",
+          "hashtags": [
+            "business",
+            "history",
+            "money",
+            "investing"
+          ],
+          "cta": "Comment the worst deal you ever turned down.",
+          "thumbnail": {
+            "text": "THEY SAID NO",
+            "prompt": "Newsreel 3D scene: three vintage desks in a row, each with a giant red NO stamp hovering over a contract, sepia film grain with mint accents, no logos, no real faces, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), countdown energy about 160 wpm, beat of silence before each number. Story cast has no lines.",
+          "music": "Old newsreel brass and snare remixed with a modern trap beat; drum fill before each countdown number; big hit on $44.6 billion.",
+          "scenes": [
+            {
+              "time": "0:00–0:03",
+              "narration": "Excite could have bought Google for $750,000. It said no.",
+              "onScreen": "$750,000. No.",
+              "visual": "Vintage office desk, BG: newsreel 3D sepia office with film grain and dust; CHARACTER: a 1999 executive, stylized 3D, pushing a contract away; ANIM: red NO stamp slams; $750K tag flutters",
+              "motion": "Snap zoom; film-burn transition",
+              "sfx": "Stamp hit"
+            },
+            {
+              "time": "0:03–0:07",
+              "narration": "That's number two. Three deals turned down. Which cost the most?",
+              "onScreen": "3 no's. Which cost most?",
+              "visual": "Countdown film leader, BG: flickering film countdown circle; CHARACTER: Nova holding up three fingers; ANIM: 3-2-1 film leader spins",
+              "motion": "Film leader spin; caption flicker",
+              "sfx": "Projector rattle"
+            },
+            {
+              "time": "0:07–0:10",
+              "narration": "Number three. January 1, 1962. London. Decca Records.",
+              "onScreen": "#3: Decca, 1962",
+              "visual": "Recording studio vintage, BG: newsreel 3D 1960s studio with tape reels turning; CHARACTER: four young musicians, stylized 3D, faceless, tuning up; ANIM: date card drops in with grain",
+              "motion": "Dolly into the studio",
+              "sfx": "Drum fill"
+            },
+            {
+              "time": "0:10–0:14",
+              "narration": "A young band from Liverpool recorded 15 songs for an audition.",
+              "onScreen": "15-song audition",
+              "visual": "Reel to reel tape, BG: spinning tape reels with sepia light leaks; CHARACTER: the band playing; ANIM: song counter ticks to 15",
+              "motion": "Tilt across the tape reels",
+              "sfx": "Tape whirr"
+            },
+            {
+              "time": "0:14–0:19",
+              "narration": "Decca signed Brian Poole and the Tremeloes instead. The band? The Beatles.",
+              "onScreen": "They passed on the Beatles",
+              "visual": "Vinyl record spinning, BG: turntable in a smoky newsreel room; CHARACTER: a faceless label executive shaking his head; ANIM: record label stamp reads NO",
+              "motion": "Push into the spinning record",
+              "sfx": "Needle scratch"
+            },
+            {
+              "time": "0:19–0:23",
+              "narration": "Number two. 1999. Google's founders wanted $1 million for the company.",
+              "onScreen": "#2: Google, 1999",
+              "visual": "Old desktop computer, BG: chunky 1999 beige computer glowing in the dark; CHARACTER: two young founders, stylized 3D, faceless, at a desk; ANIM: $1,000,000 price tag spins",
+              "motion": "Push in on the monitor; drum fill",
+              "sfx": "Dial-up tone"
+            },
+            {
+              "time": "0:23–0:26",
+              "narration": "Investor Vinod Khosla talked them down to $750,000.",
+              "onScreen": "Down to $750,000",
+              "visual": "Handshake close up, BG: glass deal card floating over a desk; CHARACTER: the investor, faceless, crossing out a number; ANIM: price drops from $1M to $750K",
+              "motion": "Counter roll-down; quick zoom",
+              "sfx": "Cash drawer"
+            },
+            {
+              "time": "0:26–0:29",
+              "narration": "Excite's CEO, George Bell, still said no.",
+              "onScreen": "Still no",
+              "visual": "Businessman in office, BG: late-90s corner office with venetian-blind shadows; CHARACTER: the executive, faceless, folding his arms; ANIM: NO stamp hits again",
+              "motion": "Hard cut; stamp shake",
+              "sfx": "Stamp hit"
+            },
+            {
+              "time": "0:29–0:32",
+              "narration": "But number one makes $750,000 look tiny.",
+              "onScreen": "Number one is bigger",
+              "visual": "Stock ticker board, BG: scrolling newsreel stock ticker; CHARACTER: Nova raising an eyebrow; ANIM: ticker freezes, red pulse",
+              "motion": "Snap zoom on Nova",
+              "sfx": "Bass drop"
+            },
+            {
+              "time": "0:32–0:36",
+              "narration": "February 2008. Microsoft offers $44.6 billion for Yahoo. $31 a share.",
+              "onScreen": "$44.6 billion",
+              "visual": "Skyscraper glass offices, BG: glossy newsreel 3D city at night with searchlights; CHARACTER: none; ANIM: money counter spins to $44.6B",
+              "motion": "Crane up the tower; counter slam",
+              "sfx": "Brass hit"
+            },
+            {
+              "time": "0:36–0:40",
+              "narration": "A 62 percent premium. Yahoo's board said it undervalued the company.",
+              "onScreen": "62% premium. Rejected.",
+              "visual": "Boardroom table, BG: dark boardroom with one spotlight; CHARACTER: faceless board members shaking heads; ANIM: 62% badge cracks",
+              "motion": "Slow push down the table",
+              "sfx": "Crack"
+            },
+            {
+              "time": "0:40–0:44",
+              "narration": "In 2017, Verizon bought Yahoo's core business for about $4.48 billion.",
+              "onScreen": "2017: ~$4.48B",
+              "visual": "Falling chart on screen, BG: red chart line falling across a glass panel; CHARACTER: none; ANIM: bar shrinks from $44.6B to $4.48B",
+              "motion": "Chart draw; zoom out",
+              "sfx": "Descending tone"
+            },
+            {
+              "time": "0:44–0:49",
+              "narration": "In 2026, every offer you turn down is a bet on yourself.",
+              "onScreen": "Every no is a bet",
+              "visual": "Person signing contract, BG: glossy 3D desk with a glowing contract; CHARACTER: Nova sliding a contract across a desk; ANIM: bet chips stack beside the contract",
+              "motion": "Orbit around Nova; word-pop captions",
+              "sfx": "Chip clink"
+            },
+            {
+              "time": "0:49–0:53",
+              "narration": "So price your no like an investment, not a feeling.",
+              "onScreen": "Price your no",
+              "visual": "Calculator on desk, BG: mint glass calculator UI floating; CHARACTER: Nova tapping numbers; ANIM: numbers roll on the calculator",
+              "motion": "Push in; caption pop",
+              "sfx": "Calculator beeps"
+            },
+            {
+              "time": "0:53–0:56",
+              "narration": "Because Excite could have had Google for $750,000.",
+              "onScreen": "$750,000. No.",
+              "visual": "Vintage office desk, BG: the same sepia newsreel office from the first frame; CHARACTER: the 1999 executive pushing the contract away; ANIM: NO stamp slams again, loop to frame one",
+              "motion": "Match cut to the opening shot",
+              "sfx": "Stamp hit"
+            }
+          ],
+          "loopLine": "Because Excite could have had Google for $750,000.",
+          "factCheck": [
+            "In 1999 Google's founders sought about $1 million to sell the company to Excite; Vinod Khosla (Kleiner Perkins) negotiated the price down to $750,000.",
+            "Excite CEO George Bell turned down the deal.",
+            "The Beatles auditioned for Decca Records on January 1, 1962, at Decca Studios in London, recording 15 songs.",
+            "Decca signed Brian Poole and the Tremeloes instead of the Beatles.",
+            "In February 2008 Microsoft offered about $44.6 billion ($31 a share) for Yahoo, a 62% premium.",
+            "Yahoo's board unanimously rejected the bid, saying it 'substantially undervalues' the company.",
+            "In 2017 Verizon completed its purchase of Yahoo's core internet business for about $4.48 billion."
+          ],
+          "moneyAngle": "Countdown-format Reel built for watch time and comments on Facebook; qualifies for in-stream monetisation reach.",
+          "artStyle": "Newsreel 3D: sepia film grain and flicker over glossy 3D sets, mint #1CD28B highlights, stamped typewriter captions.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The executives",
+              "role": "deal-makers who said no",
+              "look": "Original faceless stylized 3D executives in era suits (1962, 1999, 2008)",
+              "voice": "No lines"
+            },
+            {
+              "name": "The band",
+              "role": "young musicians at the audition",
+              "look": "Four original faceless stylized 3D musicians in early-60s suits",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, every offer you turn down is a bet on yourself.",
+          "retention": {
+            "hookVisual": "A 1999 executive pushes a contract away as a red NO stamp slams over a $750K tag.",
+            "openLoop": {
+              "scene": 2,
+              "question": "Of three famous deals turned down, which one cost the most?"
+            },
+            "rehook": {
+              "scene": 9,
+              "line": "But number one makes $750,000 look tiny."
+            },
+            "payoff": {
+              "scene": 12,
+              "line": "In 2017, Verizon bought Yahoo's core business for about $4.48 billion."
+            }
+          }
+        }
+      ],
+      "bank": [
+        {
+          "id": "2026-10-22-B01",
+          "type": "post",
+          "platform": "x",
+          "pillar": "wealth_systems",
+          "format": "short",
+          "topic": "Webvan: a $375M IPO, a $1 billion warehouse order and bankruptcy 20 months later (1999–2001)",
+          "hook": "Nov 1999: Webvan's IPO raised $375M and valued it at over $4.8B.",
+          "body": "It had ordered $1 billion of warehouses from Bechtel.\n\nJuly 2001: bankrupt. About 2,000 jobs gone.\n\nGrowth funded before demand is proven is just a bigger fall.",
+          "parts": [],
+          "hashtags": [
+            "business"
+          ],
+          "cta": "Test demand small before you scale.",
+          "moneyAngle": "Punchy dot-com history post that earns reposts from founders and investors."
+        },
+        {
+          "id": "2026-10-22-B02",
+          "type": "post",
+          "platform": "x",
+          "pillar": "ai_leverage",
+          "format": "thread",
+          "topic": "Sports Illustrated's AI-generated 'writers' Drew Ortiz and Sora Tanaka, and the CEO fired weeks later (Nov–Dec 2023)",
+          "hook": "In November 2023, Sports Illustrated was caught publishing product reviews by writers who didn't exist.",
+          "body": "Drew Ortiz and Sora Tanaka had bylines, bios and headshots. The headshots came from an AI-generated headshot site.",
+          "parts": [
+            "In November 2023, Sports Illustrated was caught publishing product reviews by writers who didn't exist.\n\nTwo of their names: Drew Ortiz and Sora Tanaka.\n\nWhat happened next cost a CEO his job:",
+            "Futurism looked for Ortiz and Tanaka anywhere outside Sports Illustrated.\n\nNothing. No trace.\n\nTheir headshots came from a website that sells AI-generated headshots.",
+            "The publisher, The Arena Group, said the articles came from a third-party ad company, AdVon Commerce, which assured it they were written and edited by humans.",
+            "It also said AdVon admitted some writers used pen names.\n\nArena cut ties with AdVon and pulled the content while it investigated.",
+            "December 11, 2023: Arena Group's board fired CEO Ross Levinsohn.\n\nThe week before, it had also fired its COO, its media president and its corporate counsel, citing efficiency, not AI.",
+            "The lesson isn't \"AI bad.\" It's that a fake face on a byline turns a content shortcut into a trust problem, and trust is the asset a publisher sells.",
+            "If AI helps make your content: say so, keep a real person accountable for every piece, and never invent a human.\n\nWould you still trust a brand that did this?"
+          ],
+          "hashtags": [
+            "AI"
+          ],
+          "cta": "Repost this to whoever runs content at your company.",
+          "moneyAngle": "AI-ethics story thread that drives reposts and follows from marketers and media people."
+        },
+        {
+          "id": "2026-10-22-B03",
+          "type": "post",
+          "platform": "linkedin",
+          "pillar": "high_agency",
+          "format": "short",
+          "topic": "Apollo 13's CO2 fix: Ed Smylie's team built a square-to-round adapter from bags, tape and a manual cover (April 1970)",
+          "hook": "April 1970, about 200,000 miles from Earth. Three astronauts are slowly being poisoned by their own breath.\n\nThe fix came from a plastic bag, duct tape and the cover of a flight manual.",
+          "body": "An oxygen tank on Apollo 13 had exploded on April 13. The crew moved into the lunar module, a craft designed to keep two men alive for about two days. Now it had to keep three alive for four.\n\nThe lunar module's carbon dioxide filters were running out. The command module had spares. But they were square, and the lunar module's holes were round.\n\nIn Houston, engineer Ed Smylie and his team worked for two days straight with one rule: use only what is on the spacecraft. They built an adapter from plastic bags, a flight-manual cover, a sock and lots of duct tape, then talked the crew through building it.\n\nCO2 levels began falling. The crew came home.\n\nSmylie died in 2025, aged 95. His team's method is the lesson:\n1. Inventory what you actually have before you ask for what you don't.\n2. Define the constraint precisely (square into round).\n3. Write instructions so clear someone can follow them under stress.",
+          "parts": [],
+          "hashtags": [
+            "leadership",
+            "problemsolving",
+            "engineering"
+          ],
+          "cta": "What's a problem you could solve this week with only what's already on your desk?",
+          "moneyAngle": "Evergreen problem-solving story that performs with managers and engineers on LinkedIn."
+        },
+        {
+          "id": "2026-10-22-B04",
+          "type": "post",
+          "platform": "facebook",
+          "pillar": "relationships",
+          "format": "short",
+          "topic": "Gottman's 5-to-1 ratio: stable couples vs 0.8-to-1 in couples headed for divorce",
+          "hook": "In John Gottman's lab, couples were filmed while they argued. The ones who stayed together weren't the ones who fought less.",
+          "body": "They were the ones who stayed kind in the middle of the fight.\n\nGottman and his colleagues counted positive and negative moments during conflict. Stable couples averaged about five positive moments for every negative one. A joke. A touch. \"Okay, I see your point.\" A softened tone.\n\nCouples headed for divorce averaged about 0.8 positives for every negative. More heat than warmth, minute after minute.\n\nThat changes what \"working on your relationship\" means. You don't have to stop disagreeing. You have to keep the ratio.\n\nOne harsh line can be outweighed, but it takes several small repairs to do it.\n\nTry this tonight: the next time a conversation turns tense, add one deliberate positive before you make your next point. A thank-you, a laugh, a hand on the arm.",
+          "parts": [],
+          "hashtags": [
+            "relationships",
+            "marriage"
+          ],
+          "cta": "What's your go-to way to cool things down mid-argument?",
+          "moneyAngle": "Research-backed relationship post built for shares and comments on Facebook."
+        },
+        {
+          "id": "2026-10-22-B05",
+          "type": "post",
+          "platform": "instagram",
+          "pillar": "wealth_systems",
+          "format": "carousel",
+          "topic": "Jerry and Marge Selbee beat the Michigan and Massachusetts WinFall roll-downs legally: about $27M in tickets, just under $8M profit",
+          "hook": "A retired couple from small-town Michigan beat the lottery. Legally. For years.",
+          "body": "A retired couple from small-town Michigan beat the lottery. Legally. For years.\n\nJerry Selbee did the math on one game and found a week where a $1 ticket was worth more than $1. Swipe for how it worked, and why your lottery ticket almost never is.\n\nSave this before you buy your next ticket.",
+          "parts": [
+            "A retired couple from small-town Michigan beat the lottery. Legally. For years.",
+            "The game: Michigan's WinFall. If nobody hit the jackpot, the money \"rolled down\" to smaller prizes.",
+            "On a roll-down, matching 3 numbers paid $50 instead of $5. Matching 4 paid $1,000 instead of $100.",
+            "Jerry Selbee's math: in those weeks, a $1 ticket was worth more than $1.",
+            "First try: 2,200 tickets. He lost a little. He kept the math, not the feeling.",
+            "He formed a company with friends and family and played every roll-down, then moved to Massachusetts' Cash WinFall.",
+            "Total: about $27 million in tickets bought, net profit just under $8 million. Biggest single loss: $360,000.",
+            "MIT students found the same loophole. After the Boston Globe reported it, the games were shut down. No one was charged.",
+            "Your takeaway: before any bet or investment, ask what $1 is worth on average. Normal lottery draws: less than $1."
+          ],
+          "hashtags": [
+            "moneylessons",
+            "math",
+            "personalfinance",
+            "truestory"
+          ],
+          "cta": "Save this, and send it to the friend who buys tickets every week.",
+          "moneyAngle": "Story carousel that earns saves and shares in the money-lessons niche on Instagram.",
+          "slideDesign": {
+            "tag": "Money",
+            "accent": "#1CD28B",
+            "accent2": "#8CF9CB",
+            "glow": "rgba(28,210,139,.20)",
+            "slides": [
+              {
+                "big": true,
+                "size": 96,
+                "title": "A retired couple **beat the lottery.** Legally.",
+                "tag": "Michigan"
+              },
+              {
+                "title": "The game: Michigan's **WinFall.**",
+                "tag": "The loophole",
+                "sub": "No jackpot winner? The money \"rolled down\" to smaller prizes."
+              },
+              {
+                "title": "On a **roll-down** week:",
+                "tag": "Prize per match",
+                "visual": {
+                  "type": "split",
+                  "l": [
+                    "Match 3",
+                    "$5 → $50"
+                  ],
+                  "r": [
+                    "Match 4",
+                    "$100 → $1,000"
+                  ]
+                }
+              },
+              {
+                "title": "A $1 ticket was worth **more than $1.**",
+                "tag": "Jerry Selbee's math",
+                "visual": {
+                  "type": "icons",
+                  "items": [
+                    [
+                      "🎟️",
+                      "Buy $1"
+                    ],
+                    [
+                      "📈",
+                      "Worth more"
+                    ],
+                    [
+                      "🔁",
+                      "Repeat"
+                    ]
+                  ]
+                }
+              },
+              {
+                "title": "First try: **2,200 tickets.** He lost a little.",
+                "tag": "Stay with the math",
+                "sub": "He trusted the average, not one result."
+              },
+              {
+                "title": "Then he **scaled it.**",
+                "tag": "A company of friends and family",
+                "sub": "Michigan's WinFall, then Massachusetts' Cash WinFall."
+              },
+              {
+                "title": "The **totals:**",
+                "tag": "Over several years",
+                "visual": {
+                  "type": "stat",
+                  "value": "~$8M",
+                  "label": "net profit on about $27M of tickets"
+                }
+              },
+              {
+                "title": "MIT students found it too. Then the games **shut down.**",
+                "tag": "The end",
+                "sub": "After the Boston Globe reported it. No one was charged."
+              },
+              {
+                "title": "Before any bet, ask **what $1 is worth.**",
+                "tag": "Your takeaway",
+                "visual": {
+                  "type": "checklist",
+                  "items": [
+                    "Find the **average** payout per $1",
+                    "Normal lottery draws: **less than $1**",
+                    "Only scale what the **math** backs"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "2026-10-22-B06",
+          "type": "video",
+          "platform": "tiktok",
+          "niche": "tech",
+          "style": "true",
+          "length": "s90",
+          "topic": "Nate's 'AI' shopping app: $40M+ raised, near-zero automation and a Philippines call center, founder charged (April 2025)",
+          "titles": [
+            "The 'AI' App That Was Secretly Humans",
+            "He Raised $40M. The AI Was People.",
+            "The One-Tap App Run by a Call Center"
+          ],
+          "hook": "An app raised over $40 million for its AI. Prosecutors say it was humans.",
+          "caption": "In April 2025, US prosecutors charged Albert Saniger, founder of the shopping app Nate, with securities and wire fraud. They allege he raised more than $40M by claiming AI completed purchases, while hundreds of contractors in the Philippines did the work. These are allegations; he's presumed innocent.",
+          "hashtags": [
+            "AI",
+            "startup",
+            "techtok",
+            "truestory"
+          ],
+          "cta": "Follow for one true tech story a day.",
+          "thumbnail": {
+            "text": "THE AI WAS PEOPLE",
+            "prompt": "Stylized 3D scene: a sleek phone with a one-tap buy button, its back panel opened to reveal a tiny glowing office of people at desks, mint and near-black palette, no logos, no real faces, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), investigative pace about 150 wpm; neutral on the allegations. Story cast has no lines.",
+          "music": "Minimal tech-house pulse; a curtain-pull riser on the reveal; quiet piano under the lesson.",
+          "scenes": [
+            {
+              "time": "0:00–0:07",
+              "narration": "An app raised over $40 million for its AI. Prosecutors say it was humans.",
+              "onScreen": "$40M for 'AI'",
+              "visual": "Smartphone shopping app, BG: glossy 3D glass phone floating in a dark studio; CHARACTER: none; ANIM: one-tap BUY button pulses; $40M counter spins",
+              "motion": "Snap push into the phone; word-pop captions",
+              "sfx": "UI tap, bass hit"
+            },
+            {
+              "time": "0:07–0:12",
+              "narration": "The app: Nate. The promise: buy anything online with one tap.",
+              "onScreen": "One tap. Anything.",
+              "visual": "Online checkout screen, BG: parallax web of floating store checkout pages; CHARACTER: a shopper, stylized 3D, tapping a phone; ANIM: checkout pages auto-fill and fly away",
+              "motion": "Whip pan across pages",
+              "sfx": "Swipe"
+            },
+            {
+              "time": "0:12–0:18",
+              "narration": "Founder Albert Saniger told investors AI completed the purchases, no humans needed.",
+              "onScreen": "'No human intervention'",
+              "visual": "Startup pitch meeting, BG: glass pitch room with a glowing slide deck; CHARACTER: the founder, stylized 3D, faceless, presenting; ANIM: slide reads AI, sparkles appear",
+              "motion": "Slow orbit around the pitch",
+              "sfx": "Applause"
+            },
+            {
+              "time": "0:18–0:21",
+              "narration": "Investors put in more than $40 million.",
+              "onScreen": "$40,000,000+",
+              "visual": "Money transfer screen, BG: mint money streams flowing into a vault; CHARACTER: none; ANIM: investment counter climbs past $40M",
+              "motion": "Crane up the money stream",
+              "sfx": "Cash register"
+            },
+            {
+              "time": "0:21–0:24",
+              "narration": "So who was really clicking buy?",
+              "onScreen": "Who clicked buy?",
+              "visual": "Dark office monitors, BG: dim office with flickering monitors; CHARACTER: Nova peering at the phone; ANIM: phone back panel starts to unscrew",
+              "motion": "Push in on Nova; tense hold",
+              "sfx": "Screw squeak"
+            },
+            {
+              "time": "0:24–0:29",
+              "narration": "Prosecutors say the app's real automation rate was effectively zero.",
+              "onScreen": "Automation: ~0%",
+              "visual": "Dashboard graph on screen, BG: red glass dashboard with a flatlined chart; CHARACTER: none; ANIM: automation gauge drops to zero",
+              "motion": "Gauge swing; red flash",
+              "sfx": "Descending tone"
+            },
+            {
+              "time": "0:29–0:34",
+              "narration": "And the dashboard showing that number? Access was restricted, they allege.",
+              "onScreen": "Dashboard: locked",
+              "visual": "Locked computer screen, BG: dark server room with a padlocked panel; CHARACTER: none; ANIM: padlock snaps onto the dashboard",
+              "motion": "Rack focus to the padlock",
+              "sfx": "Lock click"
+            },
+            {
+              "time": "0:34–0:40",
+              "narration": "Purchases were mostly done by hundreds of contractors in a Philippines call center.",
+              "onScreen": "A call center",
+              "visual": "Call center workers at desks, BG: parallax call-center floor with rows of glowing screens; CHARACTER: contract workers, stylized 3D, faceless, typing; ANIM: phone back opens to reveal the office inside",
+              "motion": "Pull back from phone to reveal the floor",
+              "sfx": "Office murmur"
+            },
+            {
+              "time": "0:40–0:42",
+              "narration": "They were called purchasing assistants.",
+              "onScreen": "'Purchasing assistants'",
+              "visual": "Headset on desk, BG: close-up of a desk with a headset and a glowing order queue; CHARACTER: none; ANIM: order queue scrolls endlessly",
+              "motion": "Macro slide along the desk",
+              "sfx": "Keyboard clicks"
+            },
+            {
+              "time": "0:42–0:49",
+              "narration": "Then it got worse: in fall 2021 it began using bots for some orders, they allege.",
+              "onScreen": "Then: bots",
+              "visual": "Robot hand on keyboard, BG: glitchy bot code flooding the screens; CHARACTER: none; ANIM: bot icons multiply across the order queue",
+              "motion": "Glitch transition; stutter caption",
+              "sfx": "Glitch"
+            },
+            {
+              "time": "0:49–0:54",
+              "narration": "Despite earlier statements, prosecutors say, that the company didn't use bots.",
+              "onScreen": "'We don't use bots'",
+              "visual": "Contract papers on desk, BG: split screen: pitch slide vs bot code; CHARACTER: none; ANIM: quote card cracks down the middle",
+              "motion": "Split-screen wipe",
+              "sfx": "Crack"
+            },
+            {
+              "time": "0:54–1:00",
+              "narration": "April 9, 2025: Saniger was charged with securities fraud and wire fraud.",
+              "onScreen": "Apr 9, 2025: charged",
+              "visual": "Courthouse exterior, BG: stylized 3D federal courthouse at dusk; CHARACTER: none; ANIM: charge cards stack: securities fraud, wire fraud",
+              "motion": "Low-angle tilt up; card stack",
+              "sfx": "Gavel"
+            },
+            {
+              "time": "1:00–1:04",
+              "narration": "Each charge carries up to 20 years in prison.",
+              "onScreen": "Up to 20 years each",
+              "visual": "Prison bars shadow, BG: barred light shadows sweep a dark wall; CHARACTER: none; ANIM: 20-year counter ticks on each card",
+              "motion": "Slow push; shadow sweep",
+              "sfx": "Low boom"
+            },
+            {
+              "time": "1:04–1:07",
+              "narration": "The SEC filed a parallel civil case.",
+              "onScreen": "SEC: civil case",
+              "visual": "Legal documents stack, BG: floating legal files in a dark void; CHARACTER: none; ANIM: second file lands beside the first",
+              "motion": "Drop-in transition",
+              "sfx": "Paper thud"
+            },
+            {
+              "time": "1:07–1:12",
+              "narration": "Remember: these are allegations. He's presumed innocent unless proven guilty.",
+              "onScreen": "Presumed innocent",
+              "visual": "Scales of justice, BG: soft-lit glossy scales balancing; CHARACTER: none; ANIM: scales settle level",
+              "motion": "Gentle push; slow fade",
+              "sfx": "Soft chime"
+            },
+            {
+              "time": "1:12–1:18",
+              "narration": "In 2026, 'AI-powered' is on every pitch deck. Ask what share is actually automated.",
+              "onScreen": "Ask: how automated?",
+              "visual": "Pitch deck on laptop, BG: glossy 3D office with AI badges floating everywhere; CHARACTER: Nova pointing at an AI badge; ANIM: badge flips to a percentage meter",
+              "motion": "Orbit around Nova; word-pop captions",
+              "sfx": "Swipe"
+            },
+            {
+              "time": "1:18–1:23",
+              "narration": "Investing, buying or hiring? Ask to see the work happen, live.",
+              "onScreen": "See it work live",
+              "visual": "Live demo on screen, BG: glass demo screen with a live cursor; CHARACTER: Nova watching a live demo; ANIM: LIVE tag blinks in mint",
+              "motion": "Push into the demo screen",
+              "sfx": "Blip"
+            },
+            {
+              "time": "1:23–1:28",
+              "narration": "Because a one-tap AI might be a room full of people.",
+              "onScreen": "AI or people?",
+              "visual": "Smartphone shopping app, BG: the same glossy phone from the first frame; CHARACTER: none; ANIM: BUY button pulses again, loop to frame one",
+              "motion": "Match cut to the opening phone",
+              "sfx": "UI tap, bass hit"
+            }
+          ],
+          "loopLine": "Because a one-tap AI might be a room full of people.",
+          "factCheck": [
+            "Albert Saniger, 35, of Barcelona, former CEO of Nate, Inc., was charged on April 9, 2025 (announced by the US Attorney's Office for the Southern District of New York).",
+            "Nate, founded around 2018, marketed an app to complete online checkout across retail sites with one tap, using AI.",
+            "Investors were told the app could transact online 'without human intervention'.",
+            "Nate raised more than $40 million from investors.",
+            "Prosecutors allege the app's actual automation rate was effectively zero.",
+            "Prosecutors allege Saniger restricted access to an internal dashboard showing the automation rate.",
+            "Prosecutors allege purchases were mostly completed by hundreds of contractors ('purchasing assistants') in a call center in the Philippines.",
+            "Prosecutors allege that in fall 2021 the company began using bots for some transactions despite earlier statements that it did not.",
+            "He was charged with one count of securities fraud and one count of wire fraud, each with a maximum of 20 years in prison.",
+            "The SEC filed a parallel civil action.",
+            "The charges are allegations; the defendant is presumed innocent unless proven guilty."
+          ],
+          "moneyAngle": "Over-60-second 2025 tech story eligible for TikTok creator payouts; strong share potential with founders and investors.",
+          "artStyle": "Stylized 3D 'glass tech' look: glossy phones and dashboards on near-black #07080B with mint #1CD28B light and red alert accents; clean sans captions popping word by word.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The founder",
+              "role": "startup CEO (unnamed character)",
+              "look": "Original faceless stylized 3D figure in a dark blazer, shown only in silhouette",
+              "voice": "No lines"
+            },
+            {
+              "name": "The contractors",
+              "role": "purchasing assistants",
+              "look": "Original faceless stylized 3D office workers with headsets",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, 'AI-powered' is on every pitch deck. Ask what share is actually automated.",
+          "retention": {
+            "hookVisual": "A glossy phone's one-tap BUY button pulsing as a $40M counter spins up.",
+            "openLoop": {
+              "scene": 5,
+              "question": "If the AI wasn't buying, who was really clicking buy?"
+            },
+            "rehook": {
+              "scene": 10,
+              "line": "Then it got worse: in fall 2021 it began using bots for some orders, they allege."
+            },
+            "payoff": {
+              "scene": 12,
+              "line": "April 9, 2025: Saniger was charged with securities fraud and wire fraud."
+            }
+          }
+        },
+        {
+          "id": "2026-10-22-B07",
+          "type": "video",
+          "platform": "youtube",
+          "niche": "lifestyle",
+          "style": "funny",
+          "length": "s60",
+          "topic": "Fyre Festival: luxury promised, cheese sandwiches served, and a six-year sentence for Billy McFarland (2017–2018)",
+          "titles": [
+            "The Luxury Festival That Served Cheese Sandwiches",
+            "Fyre Festival: Supermodels Promised, Tents Delivered",
+            "He Sold a Fantasy Island. Got 6 Years."
+          ],
+          "hook": "2017, the Bahamas. A luxury festival served guests a cheese sandwich.",
+          "caption": "Fyre Festival promised luxury in the Exumas in April 2017. Guests got stranded and served cheese sandwiches; headliners pulled out. Founder Billy McFarland was sentenced to six years in October 2018 for defrauding investors of about $26M. Hype is not a product.",
+          "hashtags": [
+            "fyrefestival",
+            "scam",
+            "truestory",
+            "shorts"
+          ],
+          "cta": "Subscribe for one wild true money story a day.",
+          "thumbnail": {
+            "text": "THE $26M SANDWICH",
+            "prompt": "Retro-cartoon-meets-3D scene: a sad cheese sandwich in a foam takeaway box on a tropical beach, with a glossy luxury yacht fading out behind it, mint and near-black palette, no logos, no real faces, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), dry comic timing about 160 wpm; let the sandwich line breathe. Story cast has no lines.",
+          "music": "Sunny tropical house that slowly detunes as things go wrong; record stop on the sandwich; dramatic sting on the sentence.",
+          "scenes": [
+            {
+              "time": "0:00–0:05",
+              "narration": "2017, the Bahamas. A luxury festival served guests a cheese sandwich.",
+              "onScreen": "Luxury. One sandwich.",
+              "visual": "Cheese sandwich in box, BG: 2.5D tropical beach parallax with palm shadows; CHARACTER: none; ANIM: foam box opens, sad sandwich revealed, sparkles fizzle",
+              "motion": "Snap zoom into the box; bouncy caption",
+              "sfx": "Record scratch"
+            },
+            {
+              "time": "0:05–0:09",
+              "narration": "Fyre Festival was sold as a private-island party in the Exumas.",
+              "onScreen": "Private-island party",
+              "visual": "Tropical island aerial, BG: glossy 2.5D turquoise sea with drifting yachts; CHARACTER: none; ANIM: luxury icons orbit the island",
+              "motion": "Drone-style glide over the island",
+              "sfx": "Waves"
+            },
+            {
+              "time": "0:09–0:12",
+              "narration": "Supermodels promoted it online. The hype was enormous.",
+              "onScreen": "Supermodel hype",
+              "visual": "Models on beach, BG: neon social feed panels floating over the sea; CHARACTER: faceless stylized models posing; ANIM: like counters explode",
+              "motion": "Whip pans between feed panels",
+              "sfx": "Notification pings"
+            },
+            {
+              "time": "0:12–0:16",
+              "narration": "So how does a dream festival end with one sandwich?",
+              "onScreen": "How did it end here?",
+              "visual": "Confused tourist, BG: beach at dusk, clouds rolling in; CHARACTER: Nova holding the sandwich, unimpressed; ANIM: question mark drawn in sand",
+              "motion": "Push in on Nova; record stop",
+              "sfx": "Record scratch"
+            },
+            {
+              "time": "0:16–0:19",
+              "narration": "April 2017. Guests arrived. Many got stranded at airports.",
+              "onScreen": "Stranded",
+              "visual": "Crowded airport terminal, BG: 2.5D airport gate with flickering departure boards; CHARACTER: faceless guests with designer luggage; ANIM: board flips to DELAYED again and again",
+              "motion": "Side-scroll down the gate",
+              "sfx": "Airport chime"
+            },
+            {
+              "time": "0:19–0:23",
+              "narration": "Promised gourmet meals? They got cheese sandwiches in foam boxes.",
+              "onScreen": "Gourmet? No.",
+              "visual": "Sandwich on paper plate, BG: spotlight on the foam box on a stage; CHARACTER: none; ANIM: five-star rating crumbles to one",
+              "motion": "Slow push; spotlight snap",
+              "sfx": "Sad trombone"
+            },
+            {
+              "time": "0:23–0:25",
+              "narration": "Headliners, including blink-182, pulled out.",
+              "onScreen": "Headliners: gone",
+              "visual": "Empty concert stage, BG: empty stage with wind blowing flyers; CHARACTER: none; ANIM: band names peel off a poster",
+              "motion": "Dolly across the empty stage",
+              "sfx": "Wind"
+            },
+            {
+              "time": "0:25–0:29",
+              "narration": "Then it got worse. Federal prosecutors looked at the money.",
+              "onScreen": "Then: prosecutors",
+              "visual": "FBI documents desk, BG: dark federal office with a desk lamp; CHARACTER: none; ANIM: case file slams open",
+              "motion": "Hard cut; file slam",
+              "sfx": "Low boom"
+            },
+            {
+              "time": "0:29–0:33",
+              "narration": "Founder Billy McFarland had defrauded investors of about $26 million.",
+              "onScreen": "$26 million",
+              "visual": "Money counting machine, BG: mint money streams draining from a vault; CHARACTER: the founder, faceless silhouette, in a suit; ANIM: fraud counter spins to $26M",
+              "motion": "Counter climb; quick zoom",
+              "sfx": "Cash register"
+            },
+            {
+              "time": "0:33–0:37",
+              "narration": "October 2018: six years in federal prison. Judge: a serial fraudster.",
+              "onScreen": "6 years",
+              "visual": "Courtroom gavel, BG: wood-panelled courtroom with dust in light; CHARACTER: faceless judge raising a gavel; ANIM: 6 YEARS stamps down",
+              "motion": "Slow push; freeze on gavel",
+              "sfx": "Gavel strike"
+            },
+            {
+              "time": "0:37–0:42",
+              "narration": "The twist: one celebrity promoter was reportedly paid $250,000 for one post.",
+              "onScreen": "$250K. One post.",
+              "visual": "Phone with social post, BG: glossy 3D phone floating over the beach; CHARACTER: none; ANIM: post card spins, price tag swings",
+              "motion": "Orbit the phone; tag swing",
+              "sfx": "Ding"
+            },
+            {
+              "time": "0:42–0:45",
+              "narration": "In 2020 she agreed to pay $90,000 to settle.",
+              "onScreen": "Settled: $90,000",
+              "visual": "Legal settlement papers, BG: floating legal papers in a soft void; CHARACTER: none; ANIM: $90,000 counter ticks in",
+              "motion": "Paper drop; caption pop",
+              "sfx": "Paper thud"
+            },
+            {
+              "time": "0:45–0:50",
+              "narration": "In 2026, AI can make any event look perfect online. Check what's real.",
+              "onScreen": "Pretty isn't proof",
+              "visual": "Laptop showing resort ad, BG: glossy 3D feed of flawless resort images glitching; CHARACTER: Nova pointing at a glitching photo; ANIM: fake image peels to show a blank tent",
+              "motion": "Glitch peel transition",
+              "sfx": "Glitch"
+            },
+            {
+              "time": "0:50–0:54",
+              "narration": "Before you pay, find proof it exists: reviews, venue, refund terms.",
+              "onScreen": "Proof before payment",
+              "visual": "Checklist on phone, BG: mint checklist panel over the beach; CHARACTER: Nova ticking boxes; ANIM: three boxes tick in mint",
+              "motion": "Push into the checklist",
+              "sfx": "Tick, tick, tick"
+            },
+            {
+              "time": "0:54–0:56",
+              "narration": "Or you'll get the cheese sandwich.",
+              "onScreen": "Or: the sandwich",
+              "visual": "Cheese sandwich in box, BG: the same tropical beach from the first frame; CHARACTER: none; ANIM: foam box opens again, loop to frame one",
+              "motion": "Match cut to the opening box",
+              "sfx": "Record scratch"
+            }
+          ],
+          "loopLine": "Or you'll get the cheese sandwich.",
+          "factCheck": [
+            "Fyre Festival was scheduled in the Exumas, Bahamas, in late April 2017 and promoted as a luxury event.",
+            "It was promoted on social media by supermodels and influencers.",
+            "Many attendees were stranded at airports.",
+            "Attendees were served cheese sandwiches instead of promised gourmet meals.",
+            "Headliners including blink-182 pulled out.",
+            "Billy McFarland defrauded investors and lenders of about $26 million.",
+            "On October 11, 2018, McFarland was sentenced to six years in federal prison; Judge Naomi Reice Buchwald called him 'a serial fraudster'.",
+            "Kendall Jenner was reportedly paid $250,000 for one Instagram post (court documents cited by later reports put her gross at $275,000; reports differ).",
+            "In May 2020 Jenner agreed to pay $90,000 to settle a claim from the bankruptcy trustee."
+          ],
+          "moneyAngle": "Funny true-scam Short that drives subscribers and long-tail search views on YouTube.",
+          "artStyle": "2.5D tropical parallax: turquoise sea and palm layers that slowly desaturate, near-black #07080B night scenes with mint #8CF9CB accents, bouncy rounded captions.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The guests",
+              "role": "festival attendees",
+              "look": "Original faceless stylized 2.5D travellers with designer luggage",
+              "voice": "No lines"
+            },
+            {
+              "name": "The founder",
+              "role": "festival founder (shown only in silhouette)",
+              "look": "Original faceless silhouette in a slim suit",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, AI can make any event look perfect online. Check what's real.",
+          "retention": {
+            "hookVisual": "A foam takeaway box opens on a sunny beach to reveal one sad cheese sandwich.",
+            "openLoop": {
+              "scene": 4,
+              "question": "How does a dream festival end with one sandwich?"
+            },
+            "rehook": {
+              "scene": 8,
+              "line": "Then it got worse. Federal prosecutors looked at the money."
+            },
+            "payoff": {
+              "scene": 10,
+              "line": "October 2018: six years in federal prison. Judge: a serial fraudster."
+            }
+          }
+        },
+        {
+          "id": "2026-10-22-B08",
+          "type": "video",
+          "platform": "instagram",
+          "niche": "health",
+          "style": "explainer",
+          "length": "s60",
+          "topic": "James Lind's 1747 scurvy trial on HMS Salisbury: 12 sailors, 6 treatments, and a 48-year wait for the Navy",
+          "titles": [
+            "The First Clinical Trial Had 12 Sailors",
+            "Two Oranges Beat Five Other Cures (1747)",
+            "Why the Navy Waited 48 Years for Lemons"
+          ],
+          "hook": "1747. Twelve sick sailors. Six cures. Only one worked.",
+          "caption": "On HMS Salisbury in 1747, naval surgeon James Lind split 12 sailors with scurvy into six pairs and gave each pair a different treatment. The pair on oranges and lemons recovered fastest. The Royal Navy issued lemon juice fleet-wide in 1795. Test it before you trust it.",
+          "hashtags": [
+            "history",
+            "science",
+            "nutrition",
+            "health"
+          ],
+          "cta": "Send this to the friend who loves a good experiment.",
+          "thumbnail": {
+            "text": "2 ORANGES WON",
+            "prompt": "Newsreel-meets-oil-painting 3D scene: a wooden 18th-century ship deck at dawn with six pairs of bowls, one glowing with oranges and a lemon, mint highlights, no real faces, vertical 9:16, space at top for text"
+          },
+          "voice": "Narrator: Nova (warm, crisp, confident, a hint of a smile), curious explainer pace about 160 wpm. Story cast has no lines.",
+          "music": "Sea-shanty rhythm on low strings with a modern pulse; stops for the result; warm swell on the twist.",
+          "scenes": [
+            {
+              "time": "0:00–0:04",
+              "narration": "1747. Twelve sick sailors. Six cures. Only one worked.",
+              "onScreen": "6 cures. 1 worked.",
+              "visual": "Old sailing ship at sea, BG: painterly 3D ocean with rolling fog and creaking ship; CHARACTER: none; ANIM: six glowing bowls appear on deck, five fade",
+              "motion": "Push across the deck; serif caption pop",
+              "sfx": "Creaking wood, bell"
+            },
+            {
+              "time": "0:04–0:08",
+              "narration": "The ship: HMS Salisbury. The surgeon: James Lind.",
+              "onScreen": "HMS Salisbury",
+              "visual": "Wooden ship deck, BG: lantern-lit lower deck swaying; CHARACTER: the surgeon, stylized 3D, faceless, in an 18th-century coat; ANIM: name plate engraves itself",
+              "motion": "Dolly down the ladder",
+              "sfx": "Lantern creak"
+            },
+            {
+              "time": "0:08–0:12",
+              "narration": "The disease: scurvy. It was killing sailors on long voyages.",
+              "onScreen": "Scurvy",
+              "visual": "Old ship sails storm, BG: stormy painterly sea with lightning; CHARACTER: faceless sailors resting in hammocks; ANIM: voyage map line stretches out",
+              "motion": "Slow parallax across hammocks",
+              "sfx": "Thunder"
+            },
+            {
+              "time": "0:12–0:17",
+              "narration": "So how do you find a cure when everyone has a theory?",
+              "onScreen": "Everyone had a theory",
+              "visual": "Old medicine bottles, BG: apothecary shelf with drifting dust; CHARACTER: Nova holding up a bottle, skeptical; ANIM: theory labels flutter around her",
+              "motion": "Push in on Nova",
+              "sfx": "Glass clink"
+            },
+            {
+              "time": "0:17–0:20",
+              "narration": "Lind split 12 sailors with scurvy into six pairs.",
+              "onScreen": "12 sailors, 6 pairs",
+              "visual": "Sailors sitting together, BG: clean diagram grid over the deck; CHARACTER: twelve faceless sailors sorting into pairs; ANIM: pairs snap into six boxes",
+              "motion": "Top-down shot; grid snaps",
+              "sfx": "Snap"
+            },
+            {
+              "time": "0:20–0:23",
+              "narration": "Same diet. Extras: cider, vinegar, seawater, an acid elixir.",
+              "onScreen": "Same diet. 6 extras.",
+              "visual": "Vinegar bottle close up, BG: six labeled bowls on a wooden table; CHARACTER: none; ANIM: labels flip on each bowl",
+              "motion": "Track along the bowls",
+              "sfx": "Pour"
+            },
+            {
+              "time": "0:23–0:27",
+              "narration": "A spicy paste. Or two oranges and a lemon daily.",
+              "onScreen": "2 oranges + 1 lemon",
+              "visual": "Oranges and lemons on table, BG: warm candlelight on a wooden table; CHARACTER: none; ANIM: citrus glows mint, others dim",
+              "motion": "Macro push on the citrus",
+              "sfx": "Peel squish"
+            },
+            {
+              "time": "0:27–0:30",
+              "narration": "Then the fruit ran out after six days.",
+              "onScreen": "Fruit gone: day 6",
+              "visual": "Empty fruit crate, BG: empty crate with a single seed rolling; CHARACTER: none; ANIM: day counter stops at 6",
+              "motion": "Hard cut; counter freeze",
+              "sfx": "Thud"
+            },
+            {
+              "time": "0:30–0:34",
+              "narration": "One citrus sailor was fit for duty. The other nearly recovered.",
+              "onScreen": "Citrus pair recovered",
+              "visual": "Sailor standing on deck, BG: sunrise breaking over the deck; CHARACTER: a faceless sailor standing tall; ANIM: recovery bar fills for the citrus pair only",
+              "motion": "Crane up into the sunrise",
+              "sfx": "Rising strings"
+            },
+            {
+              "time": "0:34–0:38",
+              "narration": "The cider pair improved a little. The rest, barely at all.",
+              "onScreen": "Cider: a little",
+              "visual": "Cider barrel, BG: chart drawing over the deck planks; CHARACTER: none; ANIM: bar chart: citrus tall, cider short, others flat",
+              "motion": "Chart draw; quick zoom",
+              "sfx": "Blip"
+            },
+            {
+              "time": "0:38–0:42",
+              "narration": "Twist: the Royal Navy didn't issue lemon juice fleet-wide until 1795.",
+              "onScreen": "Navy waited: 1795",
+              "visual": "Old navy fleet ships, BG: painterly fleet at anchor in fog; CHARACTER: none; ANIM: calendar flips from 1747 to 1795",
+              "motion": "Slow pull back over the fleet",
+              "sfx": "Clock ticks"
+            },
+            {
+              "time": "0:42–0:45",
+              "narration": "Forty-eight years later. His treatise came out in 1753.",
+              "onScreen": "48 years later",
+              "visual": "Antique book pages, BG: candlelit study with an open treatise; CHARACTER: none; ANIM: 48-year counter spins",
+              "motion": "Push into the book",
+              "sfx": "Page turn"
+            },
+            {
+              "time": "0:45–0:50",
+              "narration": "In 2026, every feed sells a cure. Lind's method still works: compare fairly.",
+              "onScreen": "Compare fairly.",
+              "visual": "Phone health feed scrolling, BG: glossy 3D phone feed with flashing supplement ads; CHARACTER: Nova swiping past ads; ANIM: ads stack, one test card glows",
+              "motion": "Orbit around Nova; word-pop captions",
+              "sfx": "Swipe"
+            },
+            {
+              "time": "0:50–0:53",
+              "narration": "For anything personal, ask a professional, not a feed.",
+              "onScreen": "Ask a professional",
+              "visual": "Doctor consultation, BG: warm clinic room with soft light; CHARACTER: Nova nodding; ANIM: chat bubble turns into a calendar",
+              "motion": "Gentle push",
+              "sfx": "Soft chime"
+            },
+            {
+              "time": "0:53–0:56",
+              "narration": "Because in 1747, only one of six cures worked.",
+              "onScreen": "Only one worked",
+              "visual": "Old sailing ship at sea, BG: the same foggy ocean from the first frame; CHARACTER: none; ANIM: six bowls appear again, loop to frame one",
+              "motion": "Match cut to the opening deck",
+              "sfx": "Bell"
+            }
+          ],
+          "loopLine": "Because in 1747, only one of six cures worked.",
+          "factCheck": [
+            "In 1747, naval surgeon James Lind ran a controlled trial on scurvy aboard HMS Salisbury.",
+            "He took 12 sailors with scurvy and divided them into six pairs on the same base diet.",
+            "The treatments were cider, elixir of vitriol (dilute sulfuric acid), vinegar, seawater, two oranges and a lemon daily, and a spicy paste with barley water.",
+            "The citrus treatment stopped after six days when the fruit ran out.",
+            "One sailor on citrus was fit for duty and the other had nearly recovered.",
+            "The cider group showed some improvement; the others showed little.",
+            "Lind published A Treatise of the Scurvy in 1753.",
+            "The Royal Navy issued lemon juice to the whole fleet in 1795, 48 years after the trial."
+          ],
+          "moneyAngle": "Science-history Reel built for shares and saves; grows the health-curious audience without medical claims.",
+          "artStyle": "Painterly 3D: oil-painting textures on 3D ship sets, candle and fog lighting, mint #1CD28B highlights on near-black, elegant serif captions.",
+          "cast": [
+            {
+              "name": "Nova",
+              "role": "host",
+              "look": "Original stylized 3D-animated host, late 20s, warm brown skin, short curly hair with mint-green tips, oversized olive bomber jacket over a black tee, small glowing mint wrist display",
+              "voice": "Warm, crisp, confident, a hint of a smile"
+            },
+            {
+              "name": "The surgeon",
+              "role": "naval surgeon",
+              "look": "Original faceless stylized 3D figure in an 18th-century naval coat",
+              "voice": "No lines"
+            },
+            {
+              "name": "The sailors",
+              "role": "sailors with scurvy",
+              "look": "Original faceless stylized 3D 18th-century sailors in linen shirts",
+              "voice": "No lines"
+            }
+          ],
+          "angle2026": "In 2026, every feed sells a cure. Lind's method still works: compare fairly.",
+          "retention": {
+            "hookVisual": "Six glowing bowls appear on a foggy 18th-century deck and five fade away.",
+            "openLoop": {
+              "scene": 4,
+              "question": "How do you find a cure when everyone has a theory?"
+            },
+            "rehook": {
+              "scene": 8,
+              "line": "Then the fruit ran out after six days."
+            },
+            "payoff": {
+              "scene": 9,
+              "line": "One citrus sailor was fit for duty. The other nearly recovered."
+            }
+          }
+        }
+      ]
+    },
+    {
       "id": "2026-10-21",
       "createdAt": "2026-10-21T12:00:00-05:00",
       "items": [
