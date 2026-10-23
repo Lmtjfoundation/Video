@@ -13,10 +13,12 @@ const DAY = 86_400_000;
 export const POOL_PER_USER_DAILY = 8;
 /** Credits taken from the pool stay in the vault this long; whatever isn't used goes back to the pool. */
 export const POOL_LOT_DAYS = 2;
+/** Credits from a purchased pack stay this long (they were bought, so they outlast the 30-day plan credits). */
+export const PACK_DAYS = 365;
 /** Credits restored after a failed AI action when the original lot is gone. */
 export const REFUND_LOT_DAYS = 7;
 
-export type LotSource = "plan" | "migration" | "pool" | "refund" | "bonus";
+export type LotSource = "plan" | "migration" | "pool" | "refund" | "bonus" | "pack";
 
 export interface CreditLot {
   id: string;

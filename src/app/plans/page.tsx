@@ -5,7 +5,8 @@ import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { Badge, Button, Card, PageHeader } from "@/components/ui";
 import type { Me } from "@/lib/store";
-import { POOL_PER_USER_DAILY } from "@/lib/vault-core";
+import { PACK_DAYS, POOL_PER_USER_DAILY } from "@/lib/vault-core";
+import { CREDIT_PACKS } from "@/lib/plans";
 import { PricingTable, inNativeApp } from "@/components/pricing";
 
 export default function PlansPage() {
@@ -15,6 +16,7 @@ export default function PlansPage() {
     const q = new URLSearchParams(window.location.search).get("checkout");
     const trial = new URLSearchParams(window.location.search).get("trial") === "1";
     if (q === "success") toast(trial ? "Your free trial has started. Generate as much as you like today!" : "Thanks! Your plan updates as soon as Stripe confirms the payment.", "success");
+    if (q === "credits") toast("Thanks! Your credits are added to your vault as soon as Stripe confirms the payment.", "success");
     if (q === "cancelled") toast("Checkout cancelled. Nothing was charged.", "info");
     if (q) {
       window.history.replaceState(null, "", "/plans");
@@ -92,8 +94,9 @@ export default function PlansPage() {
         </Card>
       )}
       {me && <VaultCard me={me} />}
+      {me && !inNativeApp() && <PacksCard />}
       <PricingTable currentPlan={me?.plan.id} signedIn hasSubscription={!!sub?.subscriptionId && sub?.status !== "canceled"} trialEligible={me?.trial.eligible ?? false} />
-      <p className="mt-6 text-xs text-white/40">Post counts reset on the 1st of each month. AI credits stay in your vault for 30 days; credits that expire unused go to the community pool. Prices in USD; taxes may apply at checkout.</p>
+      <p className="mt-6 text-xs text-white/40">Post counts reset on the 1st of each month. Plan credits stay in your vault for 30 days and credit packs for a year; credits that expire unused go to the community pool. Prices in USD; taxes may apply at checkout.</p>
     </>
   );
 }
@@ -113,7 +116,42 @@ function Usage({ label, used, total }: { label: string; used: number; total: num
   );
 }
 
-const SOURCE_LABEL: Record<string, string> = { plan: "Plan credits", migration: "Carried over", pool: "Community pool", refund: "Returned", bonus: "Bonus" };
+const SOURCE_LABEL: Record<string, string> = { plan: "Plan credits", migration: "Carried over", pool: "Community pool", refund: "Returned", bonus: "Bonus", pack: "Credit pack" };
+
+/** One-time credit packs for when a plan's monthly credits run out. */
+function PacksCard() {
+  const { toast } = useApp();
+  const [busy, setBusy] = useState("");
+  const buy = async (pack: string) => {
+    setBusy(pack);
+    try {
+      const { url } = await api<{ url: string }>("/api/billing/credits", { body: { pack } });
+      window.location.href = url;
+    } catch (e) {
+      toast((e as Error).message, "error");
+      setBusy("");
+    }
+  };
+  return (
+    <Card className="mb-6 p-5">
+      <p className="label">Need more credits?</p>
+      <p className="mt-1 text-[13px] text-white/60">One-time packs, no subscription change. Pack credits last {PACK_DAYS} days and are used after your plan credits.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {CREDIT_PACKS.map((p) => (
+          <div key={p.id} className="flex flex-col gap-2 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.06]">
+            <p className="text-lg font-semibold text-white">
+              {p.credits.toLocaleString()} <span className="text-sm font-normal text-white/50">credits</span>
+            </p>
+            <p className="text-[12px] leading-snug text-white/55">{p.label}</p>
+            <Button className="mt-auto" disabled={!!busy} onClick={() => buy(p.id)}>
+              {busy === p.id ? "Opening…" : `Buy for $${p.price}`}
+            </Button>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
 
 /** The credit vault: every batch of credits with the day it expires, plus the shared community pool. */
 function VaultCard({ me }: { me: Me }) {

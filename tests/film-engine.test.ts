@@ -75,7 +75,7 @@ describe("Film Engine shot lists and Seedance briefs", () => {
     expect(segmentCredits("seedance", 25)).toBe(25 * 16);
     expect(segmentCredits("wan", 12)).toBe(15 * 2); // three 5-second clips
     expect(segmentCredits("free", 30)).toBe(0);
-    expect(segmentCredits("own", 12)).toBe(15); // three 5-second clips at 1 credit a second
+    expect(segmentCredits("own", 12)).toBe(15 * 16); // three 5-second clips at 16 credits a second
     expect(segmentCredits("gemini", 12)).toBe((8 + 4) * 7); // an 8-second Veo clip and a 4-second one
     expect(segmentCredits("gemini", 30)).toBe(30 * 7); // 8 + 8 + 8 + 6
   });

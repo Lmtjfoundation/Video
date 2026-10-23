@@ -8,7 +8,8 @@
  *   Creator   $15 / 400 credits   42% monthly · 35% yearly
  *   Pro       $39 / 1,000 credits 45% monthly · 36% yearly
  *   Unlimited $99 / 3,000 credits 36% monthly · 26% yearly
- * At half the credits used (typical) every plan is above 60%.
+ * At half the credits used (typical) every plan is above 60%. Anyone who needs more buys a credit pack (CREDIT_PACKS),
+ * so the heaviest users pay for their own usage instead of eating into the plan's margin.
  *
  * Competitor reference (list prices, costbench.com, Oct 2026): SocialBee $29/$49/$99, Later $25/$50/$110,
  * Metricool $25/$67, ContentStudio $19/$49/$99, SocialPilot $20/$40/$100, Hootsuite $99+.
@@ -176,9 +177,14 @@ export const CREDIT_COST = {
   filmPage: 2,
   filmReview: 3,
   filmPromo: 2,
+  /**
+   * Ghost Post Video Engine on the owner's GPU. Wan 2.2 A14B takes about 1,056 s for a 5-second 720p clip on one
+   * H100 (Novita AI's figure; an A100 is slower), and Azure's A100 VM is $3.673 an hour in East US (Oct 2026), so a
+   * second of footage costs roughly 20–35¢. 16 credits (32¢ at the cost basis, 53–62¢ charged) keeps it profitable;
+   * lower it once your own timings show a faster GPU.
+   */
+  ownSecond: 16,
   /** Film Engine: plan a whole film as Seedance beats with timestamped shot lists, or write one more beat. */
-  /** Ghost Post Video Engine on the owner's GPU: a rented 48–80 GB GPU costs roughly $1–3 an hour and makes a 5-second clip in a few minutes, so 1 credit (2¢) a second covers it. */
-  ownSecond: 1,
   filmPlan: 4,
   filmBeat: 1,
 } as const;
@@ -216,6 +222,27 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   filmPlan: "Film Engine: plan a film as beats with timestamped shot lists",
   filmBeat: "Film Engine: write the next beat",
 };
+
+/**
+ * Credit packs: one-time purchases for people who use more than their plan includes, so heavy use is paid by the
+ * person using it. Each pack costs more per credit than Unlimited, the best-value plan (so subscribing stays the better
+ * deal), and keeps at least 20% margin after Stripe's fee even if every credit goes to the most expensive writing; video credits cost
+ * less than that (Gemini 1.43¢, Seedance 1.45¢ a credit), so packs used for video earn more. Pack credits last
+ * PACK_DAYS, not 30 days, because they were bought outright.
+ */
+export interface CreditPack {
+  id: "small" | "medium" | "large";
+  credits: number;
+  /** Price in dollars. */
+  price: number;
+  label: string;
+}
+export const CREDIT_PACKS: CreditPack[] = [
+  { id: "small", credits: 300, price: 12, label: "About 40 seconds of Gemini video, or 300 posts" },
+  { id: "medium", credits: 1_000, price: 35, label: "About 2 minutes of Gemini video" },
+  { id: "large", credits: 3_000, price: 90, label: "About 7 minutes of Gemini video" },
+];
+export const packById = (id: string | undefined) => CREDIT_PACKS.find((p) => p.id === id);
 
 /** Hard safety ceiling even on Unlimited: beyond this, platforms treat accounts as spam. */
 export const ABSOLUTE_MAX_POSTS_PER_DAY = 50;

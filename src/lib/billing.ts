@@ -1,8 +1,8 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "crypto";
 import { gdb } from "./db";
-import { getUser, listUsers, saveUser, trialEligible, type User } from "./auth";
-import { PLANS, introDiscount, planById, type PlanId } from "./plans";
+import { addPackCredits, getUser, listUsers, saveUser, trialEligible, type User } from "./auth";
+import { PLANS, introDiscount, packById, planById, type PlanId } from "./plans";
 import { nowIso } from "./utils";
 import { getIntegrations, saveIntegrations, stripeIntroCoupon, stripePortalConfig, stripePriceId, stripeSecretKey } from "./integrations";
 
@@ -82,6 +82,44 @@ export async function createCheckout(user: User, plan: PlanId, interval: Interva
     return (await stripe<{ url: string }>("/checkout/sessions", params(true))).url;
   } catch (e) {
     // A customer saved in test mode doesn't exist in live mode (or was deleted in Stripe): start fresh.
+    if (user.billing?.customerId && /No such customer/i.test((e as Error).message)) {
+      return (await stripe<{ url: string }>("/checkout/sessions", params(false))).url;
+    }
+    throw e;
+  }
+}
+
+/**
+ * One-time checkout for a credit pack. The price is sent with the checkout (no Stripe product to set up first), and
+ * card is the only method so the payment is settled when the webhook arrives. Works on any plan, including Free.
+ */
+export async function createPackCheckout(user: User, packId: string, origin: string) {
+  if (!(await stripeReady())) throw new Error("Payments aren't set up yet. Ask the admin to connect Stripe.");
+  const pack = packById(packId);
+  if (!pack) throw new Error("Choose a credit pack.");
+  const params = (withCustomer: boolean) => ({
+    mode: "payment",
+    payment_method_types: { 0: "card" },
+    line_items: {
+      0: {
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: pack.price * 100,
+          product_data: { name: `Ghost Post ${pack.credits.toLocaleString("en-US")} AI credits` },
+        },
+      },
+    },
+    success_url: `${origin}/plans?checkout=credits`,
+    cancel_url: `${origin}/plans?checkout=cancelled`,
+    client_reference_id: user.id,
+    ...(withCustomer && user.billing?.customerId ? { customer: user.billing.customerId } : { customer_email: user.email }),
+    payment_intent_data: { statement_descriptor_suffix: "CREDITS" },
+    metadata: { userId: user.id, pack: pack.id, credits: String(pack.credits) },
+  });
+  try {
+    return (await stripe<{ url: string }>("/checkout/sessions", params(true))).url;
+  } catch (e) {
     if (user.billing?.customerId && /No such customer/i.test((e as Error).message)) {
       return (await stripe<{ url: string }>("/checkout/sessions", params(false))).url;
     }
@@ -357,7 +395,13 @@ export async function handleStripeEvent(evt: { id: string; type: string; data: {
   if (await gdb().get("billing_events", evt.id)) return "duplicate";
   const o = evt.data.object;
 
-  if (evt.type === "checkout.session.completed") {
+  if (evt.type === "checkout.session.completed" && o.mode === "payment") {
+    // A credit pack. The pack id from metadata decides the credits (not the amount field), and only a paid session counts.
+    const meta = (o.metadata ?? {}) as { userId?: string; pack?: string };
+    const pack = packById(meta.pack);
+    const userId = String(o.client_reference_id ?? meta.userId ?? "");
+    if (pack && o.payment_status === "paid" && o.amount_subtotal === pack.price * 100) await addPackCredits(userId, pack.credits);
+  } else if (evt.type === "checkout.session.completed") {
     const u = await getUser(String(o.client_reference_id ?? (o.metadata as { userId?: string })?.userId ?? ""));
     if (u) {
       u.billing = { ...(u.billing ?? {}), customerId: String(o.customer ?? ""), subscriptionId: String(o.subscription ?? "") };

@@ -6,6 +6,7 @@ import { TRIAL_DAILY_FREE_CREDITS, planById, type PlanId } from "./plans";
 import { nowIso, uid } from "./utils";
 import { addToPool, takeFromPool } from "./credit-pool";
 import {
+  PACK_DAYS,
   POOL_LOT_DAYS,
   VAULT_DAYS,
   balance,
@@ -439,6 +440,17 @@ export async function refundCredits(userId: string, n: number) {
   u.vault.lots = restore(u.vault.lots, n, Date.now(), uid("lot"));
   u.usage.credits = Math.max(0, u.usage.credits - n);
   await saveUser(u);
+}
+
+/** Adds a purchased credit pack to the person's vault as one lot that lasts PACK_DAYS. */
+export async function addPackCredits(userId: string, credits: number) {
+  const u = await getUser(userId);
+  if (!u || credits <= 0) return null;
+  const now = Date.now();
+  await rollVault(u, now);
+  u.vault!.lots.push(newLot(uid("lot"), credits, "pack", now, now + PACK_DAYS * 86_400_000));
+  await saveUser(u);
+  return balance(u.vault!.lots, now);
 }
 
 /** Checks the monthly post allowance; records one post when `commit` is true. */
