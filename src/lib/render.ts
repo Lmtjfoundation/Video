@@ -570,7 +570,15 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       mediaFiles.push({ kind: m.kind === "video" ? "video" : "image", file: f });
     }
 
-    const voice = plan.voiceover !== false && (!!(await elevenlabsKey()) || freeVoiceEnabled());
+    // Audio to video: the uploaded recording is the soundtrack and sets each scene's length; nobody narrates.
+    let recording: string | undefined;
+    if (plan.audio) {
+      const m = await db().get<MediaItem>("media", plan.audio.mediaId);
+      if (!m) throw new Error("The recording this video is made from was deleted from the Media Library. Upload it again and make a new video.");
+      recording = path.join(dir, `recording.${m.name.split(".").pop() || "audio"}`);
+      await fs.writeFile(recording, await readFile(m));
+    }
+    const voice = !recording && plan.voiceover !== false && (!!(await elevenlabsKey()) || freeVoiceEnabled());
     const motionOnly = plan.visuals === "motion";
     const jobs: SceneJob[] = [];
     const planned = renderableScenes(plan);
@@ -580,7 +588,9 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     for (const [i, scene] of scenes.entries()) {
       let audio: string | undefined;
       let dur = Math.max(1.8, scene.narration.split(/\s+/).filter(Boolean).length / 2.6);
-      if (voice && scene.narration.trim()) {
+      const cut = recording ? plan.audio!.cuts[planned[i].index] : undefined;
+      if (cut) dur = Math.max(0.1, cut.end - cut.start);
+      else if (voice && scene.narration.trim()) {
         audio = await narrate(scene.narration, path.join(dir, `vo${i}`), plan.voice);
         dur = (await mediaDuration(audio)) + 0.25;
       }
@@ -640,7 +650,13 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     const list = path.join(dir, "list.txt");
     await fs.writeFile(list, segs.map((s) => `file '${s}'`).join("\n"));
     const out = path.join(dir, "final.mp4");
-    await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out]);
+    if (recording) {
+      // The scenes were cut silent to the recording's timing; lay the whole recording back over them in one piece,
+      // so the sound has no seams between scenes.
+      const pictures = path.join(dir, "pictures.mp4");
+      await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", pictures]);
+      await runCmd("ffmpeg", ["-hide_banner", "-y", "-i", pictures, "-i", recording, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", "-shortest", "-movflags", "+faststart", out]);
+    } else await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out]);
     const bytes = await fs.readFile(out);
     const slug = (post.hook || "video").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "video";
     const item = await storeFile(userId, { name: `${slug}.mp4`, type: "video/mp4", bytes }, { uncapped: true });
@@ -652,7 +668,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     fresh.mediaIds = [item.id, ...(fresh.mediaIds ?? []).filter((id) => id !== fresh.render?.mediaId)];
     const refunded = unused && credits ? ` · ${unused} credits refunded for ${ai ? "scenes Google couldn't make" : "AI scenes replaced by your media"}` : "";
     const note = aiBlocked ? ` · AI visuals were unavailable (${aiBlocked}), so scenes use stock footage or backgrounds` : "";
-    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${voice ? "voiceover" : "captions only"}${motionOnly || (ai && isGraphicsLook(ai.look)) ? " · motion graphics" : ai && !aiBlocked ? " · AI visuals" : ""} · ${(bytes.length / 1048576).toFixed(1)} MB${refunded}${note}`.slice(0, 600), mediaId: item.id, updatedAt: nowIso() };
+    fresh.render = { status: "done", progress: 100, message: `${item.durationSec}s · ${recording ? "your recording" : voice ? "voiceover" : "captions only"}${motionOnly || (ai && isGraphicsLook(ai.look)) ? " · motion graphics" : ai && !aiBlocked ? " · AI visuals" : ""} · ${(bytes.length / 1048576).toFixed(1)} MB${refunded}${note}`.slice(0, 600), mediaId: item.id, updatedAt: nowIso() };
     if (fresh.status === "copy_ready") { fresh.status = "draft"; fresh.error = undefined; }
     await savePost(fresh);
     if (unused && credits) await refundCredits(userId, Math.min(unused, credits));

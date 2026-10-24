@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Clapperboard, Download, FileText, FileUp, PenLine, Send, Sparkles, WandSparkles } from "lucide-react";
+import { AudioLines, Clapperboard, Download, FileText, FileUp, PenLine, Send, Sparkles, Upload, WandSparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/store";
@@ -50,6 +50,12 @@ export default function Studio() {
   const [importOpen, setImportOpen] = useState(false);
   const [genre, setGenre] = useState("");
   const [fromText, setFromText] = useState(false);
+  // Audio to video: an uploaded recording becomes the soundtrack and the pictures follow it.
+  const [fromAudio, setFromAudio] = useState(false);
+  const [audioId, setAudioId] = useState("");
+  const [about, setAbout] = useState("");
+  const [landscape, setLandscape] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [sourceText, setSourceText] = useState("");
   const [faceless, setFaceless] = useState(true);
   const [renderNow, setRenderNow] = useState(false);
@@ -105,7 +111,46 @@ export default function Studio() {
     return [...list].sort((a, b) => (sort === "money" ? b.moneyScore - a.moneyScore : b.createdAt.localeCompare(a.createdAt)));
   }, [posts, filter, sort]);
 
+  async function uploadAudio(file: File) {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("files", file);
+      const res = await fetch("/api/media", { method: "POST", body: fd });
+      const r = (await res.json()) as { saved?: (MediaItem & { url: string })[]; errors?: string[]; error?: string };
+      if (!res.ok) throw new Error(r.error ?? `Upload failed (${res.status})`);
+      if (r.errors?.length) toast(r.errors[0], "error");
+      const item = r.saved?.[0];
+      if (item) {
+        setMedia((m) => [item, ...m]);
+        setAudioId(item.id);
+      }
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function audioToVideo() {
+    setBusy(true);
+    try {
+      const created = await api<Post>("/api/audio-video", {
+        body: { mediaId: audioId, platform, landscape: landscape && (platform === "youtube" || platform === "facebook"), visuals: motion ? "motion" : "auto", about: about || undefined, renderNow, autoPost, placement: hasPlacement ? placement : undefined, account: account || undefined },
+      });
+      setPosts((p) => [created, ...p]);
+      setFilter("all");
+      toast(created.render?.status === "queued" ? (autoPost ? "Video rendering — it posts itself when ready" : "Video rendering — it appears below when ready") : "Video plan ready — press Render video on it", "success");
+      refresh();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function generate() {
+    if (fromAudio) return audioToVideo();
     const posting = autoPost && !(kind === "text" && platform === "x" && mature);
     setBusy(true);
     setPostingNow(posting);
@@ -179,15 +224,16 @@ export default function Studio() {
         <Card className="h-fit xl:sticky xl:top-10">
           <CardHeader
             title="Generate"
-            subtitle={!kind ? "First, what are you making?" : kind === "video" ? (fromText ? "Text to video — a faceless video built from your text." : "Video post — a complete, production-ready video plan.") : "Text post — on-voice posts with their money potential."}
+            subtitle={!kind ? "First, what are you making?" : kind === "video" ? (fromAudio ? "Audio to video — your recording, with pictures that follow what's said." : fromText ? "Text to video — a faceless video built from your text." : "Video post — a complete, production-ready video plan.") : "Text post — on-voice posts with their money potential."}
             icon={<WandSparkles className="h-4 w-4" />}
             action={kind ? <Button size="sm" variant="ghost" onClick={() => setKind(null)}>Change</Button> : undefined}
           />
           {!kind ? (
             <div className="grid gap-3 p-5">
-              <KindButton icon={<PenLine className="h-5 w-5" />} title="Text post" text="Posts, threads, carousels and captions, ready to publish." onClick={() => { setKind("text"); setFromText(false); if (count > 5) setCount(1); }} />
-              <KindButton icon={<Clapperboard className="h-5 w-5" />} title="Video post" text="Full script, scene-by-scene visuals, on-screen text, voice and music direction, titles, thumbnail and caption. Up to 10 minutes." onClick={() => { setKind("video"); setFromText(false); if (count > 3) setCount(1); }} />
-              <KindButton icon={<FileText className="h-5 w-5" />} title="Text to video" text="Paste an article, notes or a script. Get a faceless video built only from it, and render it to MP4 in one go." onClick={() => { setKind("video"); setFromText(true); setRenderNow(true); setCount(1); }} />
+              <KindButton icon={<PenLine className="h-5 w-5" />} title="Text post" text="Posts, threads, carousels and captions, ready to publish." onClick={() => { setKind("text"); setFromText(false); setFromAudio(false); if (count > 5) setCount(1); }} />
+              <KindButton icon={<Clapperboard className="h-5 w-5" />} title="Video post" text="Full script, scene-by-scene visuals, on-screen text, voice and music direction, titles, thumbnail and caption. Up to 10 minutes." onClick={() => { setKind("video"); setFromText(false); setFromAudio(false); if (count > 3) setCount(1); }} />
+              <KindButton icon={<FileText className="h-5 w-5" />} title="Text to video" text="Paste an article, notes or a script. Get a faceless video built only from it, and render it to MP4 in one go." onClick={() => { setKind("video"); setFromText(true); setFromAudio(false); setRenderNow(true); setCount(1); }} />
+              <KindButton icon={<AudioLines className="h-5 w-5" />} title="Audio to video" text="Upload a podcast, voice note, sermon or song. Get a video whose pictures and captions follow what's said, with your recording as the sound. Up to 10 minutes." onClick={() => { setKind("video"); setFromAudio(true); setFromText(false); setRenderNow(true); setCount(1); }} />
             </div>
           ) : (
           <div className="grid gap-4 p-5">
@@ -210,6 +256,25 @@ export default function Studio() {
               </div>
               <p className="mt-1.5 text-[11px] text-white/40">{kind === "video" ? VIDEO_TARGET[platform] : PLATFORM_SPECS[platform].publish}</p>
             </div>
+            {fromAudio ? (
+              <AudioPanel
+                media={media}
+                audioId={audioId}
+                setAudioId={setAudioId}
+                uploading={uploading}
+                onUpload={uploadAudio}
+                about={about}
+                setAbout={setAbout}
+                platform={platform}
+                landscape={landscape}
+                setLandscape={setLandscape}
+                motion={motion}
+                setMotion={setMotion}
+                renderNow={renderNow}
+                setRenderNow={setRenderNow}
+              />
+            ) : (
+            <>
             <Field label="Genre" hint={<Link href="/trends" className="text-mint-300 hover:underline">Live stories →</Link>}>
               <Select value={genre} onChange={(e) => setGenre(e.target.value)}>
                 <option value="">{kind === "video" ? "Pick by niche (below)" : "My usual voice and pillars"}</option>
@@ -338,6 +403,8 @@ export default function Studio() {
                 </div>
               </div>
             )}
+            </>
+            )}
             {kind === "text" && platform === "instagram" && !attach.length && (
               <Field label="Or an image URL" hint="Instagram needs an image">
                 <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…/image.jpg" />
@@ -357,7 +424,9 @@ export default function Studio() {
                 <div>
                   <p className="text-[13px] font-medium text-white">Post automatically</p>
                   <p className="text-xs text-white/50">
-                    {kind === "video"
+                    {fromAudio
+                      ? "Renders the video (render credits by length), then posts it to your connected account."
+                      : kind === "video"
                       ? `Renders each video (${videoCredits(vLen, "render")} more credits), then posts it to your connected account.`
                       : platform === "x" && mature
                         ? "Mature posts are always reviewed and posted by hand."
@@ -386,9 +455,11 @@ export default function Studio() {
                 </Field>
               )}
             </div>
-            <Button variant={autoPost ? "gold" : "primary"} size="lg" loading={busy} onClick={generate} disabled={busy || !settings || (fromText && sourceText.trim().length < 40)}>
+            <Button variant={autoPost ? "gold" : "primary"} size="lg" loading={busy} onClick={generate} disabled={busy || !settings || (fromText && sourceText.trim().length < 40) || (fromAudio && !audioId)}>
               {autoPost ? <Send className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}{" "}
-              {kind === "video"
+              {fromAudio
+                ? busy ? "Listening and planning…" : autoPost ? "Make the video & post" : renderNow ? "Make the video" : "Plan the video"
+                : kind === "video"
                 ? busy ? "Producing…" : `${autoPost ? "Generate, render & post" : "Generate video plan"} · ${videoCost + (autoPost ? count * videoCredits(vLen, "render") : 0)} credits`
                 : busy ? (postingNow ? "Writing and posting…" : "Writing…") : `${autoPost && !(platform === "x" && mature) ? "Generate & post" : "Generate"} · ${count * CREDIT_COST.post} credit${count > 1 ? "s" : ""}`}
             </Button>
@@ -496,6 +567,92 @@ function ImportDialog({ onClose, onDone }: { onClose: () => void; onDone: () => 
         </div>
       </div>
     </div>
+  );
+}
+
+/** Audio to video: pick or upload the recording, then the few choices that matter for it. */
+function AudioPanel(p: {
+  media: (MediaItem & { url: string })[];
+  audioId: string;
+  setAudioId: (id: string) => void;
+  uploading: boolean;
+  onUpload: (f: File) => void;
+  about: string;
+  setAbout: (v: string) => void;
+  platform: Platform;
+  landscape: boolean;
+  setLandscape: (v: boolean) => void;
+  motion: boolean;
+  setMotion: (v: boolean) => void;
+  renderNow: boolean;
+  setRenderNow: (v: boolean) => void;
+}) {
+  const recordings = p.media.filter((m) => m.kind === "audio");
+  const wide = p.platform === "youtube" || p.platform === "facebook";
+  return (
+    <>
+      <div>
+        <span className="mb-1.5 block text-[13px] font-medium text-white/80">Your recording <span className="font-normal text-white/40">· MP3, WAV or M4A, up to 10 minutes</span></span>
+        <label className={cn("focus-ring flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3 py-3 text-sm text-white/70 hover:text-white", p.uploading && "pointer-events-none opacity-60")}>
+          <Upload className="h-4 w-4" /> {p.uploading ? "Uploading…" : "Upload a recording"}
+          <input
+            type="file"
+            accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,.mp3,.wav,.m4a"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) p.onUpload(f);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        {recordings.length > 0 && (
+          <div className="mt-2 grid max-h-44 gap-1.5 overflow-y-auto">
+            {recordings.slice(0, 20).map((m) => (
+              <button
+                key={m.id}
+                onClick={() => p.setAudioId(m.id)}
+                className={cn("focus-ring flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs ring-1", p.audioId === m.id ? "bg-mint-400/10 text-mint-100 ring-mint-400/40" : "bg-white/[0.03] text-white/60 ring-white/[0.07] hover:text-white")}
+              >
+                <AudioLines className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{m.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <Field label="What is it?" hint="optional — helps pick the pictures">
+        <Input value={p.about} onChange={(e) => p.setAbout(e.target.value.slice(0, 500))} placeholder="e.g. Sunday sermon on forgiveness · a love song · my podcast about credit" />
+      </Field>
+      <div className="grid gap-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+        {wide && (
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[13px] font-medium text-white">16:9 landscape</p>
+              <p className="text-xs text-white/50">Widescreen for {PLATFORM_SPECS[p.platform].name}. Off: vertical 9:16.</p>
+            </div>
+            <Switch checked={p.landscape} onChange={p.setLandscape} label="16:9 landscape" />
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[13px] font-medium text-white">Motion graphics</p>
+            <p className="text-xs text-white/50">Animated shapes and kinetic words instead of stock footage. Free.</p>
+          </div>
+          <Switch checked={p.motion} onChange={p.setMotion} label="Motion graphics" />
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[13px] font-medium text-white">Render the video right away</p>
+            <p className="text-xs text-white/50">Pictures, captions and your recording into an MP4.</p>
+          </div>
+          <Switch checked={p.renderNow} onChange={p.setRenderNow} label="Render now" />
+        </div>
+      </div>
+      <p className="-mt-1 text-[11px] leading-snug text-white/40">
+        Transcribing is free. Planning the pictures costs the same as a video plan of that length ({CREDIT_COST.videoShort}–{CREDIT_COST.videoLong} credits), and rendering {CREDIT_COST.renderShort}–{CREDIT_COST.renderLong} more.
+      </p>
+    </>
   );
 }
 

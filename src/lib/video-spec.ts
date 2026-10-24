@@ -32,9 +32,13 @@ export function videoCredits(length: VideoPlan["length"] | undefined, action: "p
   return tier === "long" ? CREDIT_COST.renderLong : tier === "mid" ? CREDIT_COST.renderMid : CREDIT_COST.renderShort;
 }
 
-/** Scenes the renderer turns into video (blank scenes are skipped), with their index in `plan.scenes`. */
-export function renderableScenes(plan: Pick<VideoPlan, "scenes">) {
-  return plan.scenes.map((scene, index) => ({ scene, index })).filter(({ scene }) => scene.narration.trim() || scene.onScreen.trim());
+/**
+ * Scenes the renderer turns into video (blank scenes are skipped), with their index in `plan.scenes`. A video made
+ * from a recording keeps every scene: a scene without words is the music between them.
+ */
+export function renderableScenes(plan: Pick<VideoPlan, "scenes" | "audio">) {
+  const all = plan.scenes.map((scene, index) => ({ scene, index }));
+  return plan.audio ? all : all.filter(({ scene }) => scene.narration.trim() || scene.onScreen.trim());
 }
 
 /** Planned length of a scene: narration read at a natural pace (about 2.6 words a second), never under 1.8 s. */

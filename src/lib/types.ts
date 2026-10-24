@@ -418,6 +418,11 @@ export interface VideoPlan {
   voiceover?: boolean;
   /** "motion" = Ghost Post's motion graphics for every scene; "auto" (or missing) = stock footage or AI pictures. */
   visuals?: VideoVisuals;
+  /**
+   * Audio to video: an uploaded recording (Media Library id) is the soundtrack, played as it is. Scene i is shown
+   * from cuts[i].start to cuts[i].end (seconds), so the pictures follow what is heard. No narrator is added.
+   */
+  audio?: { mediaId: string; cuts: { start: number; end: number }[] };
 }
 export const VIDEO_VISUALS = ["auto", "motion"] as const;
 export type VideoVisuals = (typeof VIDEO_VISUALS)[number];
