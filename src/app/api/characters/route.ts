@@ -1,11 +1,13 @@
 import { authed, body, fail, ok } from "@/lib/http-api";
 import { refundCredits, spendCredits } from "@/lib/auth";
 import { CHARACTER_LOOK_GROUPS, CHARACTER_LOOKS, createCharacter, deleteCharacter, listCharacters } from "@/lib/characters";
-import { mediaKey, MediaGenError } from "@/lib/gemini-media";
+import { MediaGenError } from "@/lib/gemini-media";
 import { signedUrl } from "@/lib/media";
 import { CREDIT_COST } from "@/lib/plans";
 import { log } from "@/lib/repo";
 import { replicateReady } from "@/lib/replicate-video";
+
+import { picturesReady } from "@/lib/pictures";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
@@ -17,7 +19,7 @@ export const GET = authed(async (_req, user) => {
     characters: list.map((c) => ({ ...c, imageUrl: signedUrl(user.id, c.imageMediaId, 6 * 3600) })),
     looks: CHARACTER_LOOKS,
     lookGroups: CHARACTER_LOOK_GROUPS,
-    ready: !!(await mediaKey()),
+    ready: !!(await picturesReady()),
     replicate: await replicateReady(),
   });
 });
@@ -26,7 +28,7 @@ export const GET = authed(async (_req, user) => {
 export const POST = authed(async (req, user) => {
   const b = await body<{ name?: string; description?: string; look?: string; photoId?: string; consent?: boolean }>(req);
   if (b.photoId && !b.consent) return fail("Confirm the photo is of you, or that you have permission from the person in it.");
-  if (!(await mediaKey())) return fail("Making characters needs the app's Gemini key. Ask the admin to add it in Admin → App settings → Integrations.", 503);
+  if (!(await picturesReady())) return fail("Making characters needs Ghost Post's engine (or the app's Gemini key). Ask the admin to connect one in Admin → App settings → Integrations.", 503);
   const credits = CREDIT_COST.character;
   await spendCredits(user.id, credits);
   try {

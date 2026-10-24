@@ -1,4 +1,5 @@
 import "server-only";
+import { makeImage } from "./pictures";
 import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
@@ -7,7 +8,7 @@ import { claudeJson } from "./llm";
 import { readFile, storeFile } from "./media";
 import { kvGet, kvSet, log } from "./repo";
 import { refundCredits } from "./auth";
-import { geminiClip, geminiImage, MediaGenError } from "./gemini-media";
+import { geminiClip, MediaGenError } from "./gemini-media";
 import { seedanceFilm, wanClip, type RefFile } from "./replicate-video";
 import { ownClip } from "./own-video";
 import { mediaDuration, narrate, renderSegment, runCmd } from "./render";
@@ -508,7 +509,7 @@ async function drawStart(cut: FilmCut, cast: FilmRef[], shot: string, dir: strin
     (await mediaFor(cast.slice(0, 4).map((r) => r.mediaId))).map(async (m) => ({ mimeType: m.type, base64: (await readFile(m)).toString("base64") })),
   );
   const prompt = [cut.style, "Opening frame of a film shot, photorealistic, cinematic lighting.", resolveRefs(cut.refs, shot).prompt.replace(/\[(Image|Video|Audio)\d+\] /g, "").replace(/"[^"]*"/g, "")].filter(Boolean).join(" ");
-  const img = await geminiImage({ prompt, refs, aspect: cut.aspect === "9:16" ? "9:16" : cut.aspect === "1:1" ? "1:1" : "16:9" });
+  const img = await makeImage({ prompt, refs, aspect: cut.aspect === "9:16" ? "9:16" : cut.aspect === "1:1" ? "1:1" : "16:9" });
   const f = path.join(dir, `start-drawn.${img.mimeType === "image/png" ? "png" : img.mimeType === "image/webp" ? "webp" : "jpg"}`);
   await fs.writeFile(f, img.bytes);
   return f;

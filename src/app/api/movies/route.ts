@@ -2,7 +2,6 @@ import { authed, body, fail, ok } from "@/lib/http-api";
 import { spendCredits } from "@/lib/auth";
 import { CHARACTER_LOOKS, getCharacters } from "@/lib/characters";
 import { withCredits } from "@/lib/credits";
-import { mediaKey } from "@/lib/gemini-media";
 import { isGraphicsLook } from "@/lib/looks";
 import { writeMovie } from "@/lib/movie";
 import { enqueueRender, ffmpegAvailable } from "@/lib/render";
@@ -11,6 +10,8 @@ import { ANIMATION_ENGINES, PLACEMENTS, PLATFORMS, type AnimationEngine, type Pl
 import { replicateReady } from "@/lib/replicate-video";
 import { clamp, nowIso } from "@/lib/utils";
 import { lengthAllowed, MAX_VEO_SCENES, MOVIE_LENGTHS, renderCredits, videoCredits, type MovieLength } from "@/lib/video-spec";
+
+import { picturesReady } from "@/lib/pictures";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
@@ -35,7 +36,7 @@ export const POST = authed(async (req, user) => {
   const characters = await getCharacters(Array.isArray(b.characterIds) ? b.characterIds.slice(0, 6) : []);
   const look = String(b.look ?? "").trim().slice(0, 160) || characters[0]?.look || CHARACTER_LOOKS[0];
   // Graphics styles are drawn by the free motion-graphics engine; everything else needs Gemini for the pictures.
-  if (!isGraphicsLook(look) && !(await mediaKey())) return fail("AI movies need the app's Gemini key for pictures and video clips. Ask the admin to add it in Admin → App settings → Integrations, or pick a Graphics style (free).", 503);
+  if (!isGraphicsLook(look) && !(await picturesReady())) return fail("AI movies need Ghost Post's engine (or the app's Gemini key) for pictures. Ask the admin to connect one in Admin → App settings → Integrations, or pick a Graphics style (free).", 503);
   const settings = await getSettings();
 
   const post = await withCredits(videoCredits(length, "plan"), () =>

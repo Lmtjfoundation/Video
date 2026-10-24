@@ -1,4 +1,5 @@
 import "server-only";
+import { makeImage } from "./pictures";
 import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import os from "os";
@@ -14,7 +15,7 @@ import { drawShapes, isGraphicsLook, motionGraph, MOTION_PALETTES, roundPortrait
 import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types";
 import { nowIso } from "./utils";
 import { characterRef, getCharacters, isRealisticLook, REALISM_DIRECTION } from "./characters";
-import { geminiClip, geminiImage, MediaGenError, type RefImage } from "./gemini-media";
+import { geminiClip, MediaGenError, type RefImage } from "./gemini-media";
 import { seedanceClip, wanClip } from "./replicate-video";
 import { CREDIT_COST } from "./plans";
 import { aiVisualCredits, animationSecondCredits, renderableScenes, veoSeconds } from "./video-spec";
@@ -473,7 +474,7 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
     const sceneRefs = inScene.map((c) => refs.get(c.name.toLowerCase())).filter((r): r is RefImage => !!r);
     try {
       if (blocked) throw new MediaGenError(blocked, "config");
-      const img = await geminiImage({ prompt: scenePrompt(job.scene, ai, inScene, portrait), refs: sceneRefs, aspect: portrait ? "9:16" : "16:9", size: "2K" });
+      const img = await makeImage({ prompt: scenePrompt(job.scene, ai, inScene, portrait), refs: sceneRefs, aspect: portrait ? "9:16" : "16:9", size: "2K" });
       const file = path.join(dir, `ai${i}.${extFor(img.mimeType)}`);
       await fs.writeFile(file, img.bytes);
       job.visual = { kind: "image", file };

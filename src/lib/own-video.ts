@@ -70,6 +70,30 @@ export async function ownClip(o: OwnClipRequest): Promise<Buffer> {
   }
 }
 
+/**
+ * Makes one picture on the engine (Qwen-Image), or, with reference pictures, an edit that keeps their people and
+ * places (Qwen-Image-Edit): up to three cast portraits or photos. Returns the PNG.
+ */
+export async function ownImage(o: { prompt: string; refs?: { bytes: Buffer; mime: string }[]; aspect: string; timeoutMs?: number }): Promise<Buffer> {
+  const job = await call<{ id: string }>("/v1/images", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt: o.prompt.slice(0, 4000),
+      images: (o.refs ?? []).slice(0, 3).map((r) => `data:${r.mime};base64,${r.bytes.toString("base64")}`),
+      aspect: o.aspect,
+    }),
+  });
+  const deadline = Date.now() + (o.timeoutMs ?? 10 * 60_000);
+  for (;;) {
+    const s = await call<{ status: string; error?: string | null }>(`/v1/images/${job.id}`);
+    if (s.status === "succeeded") return call<Buffer>(`/v1/images/${job.id}/file`, {}, true);
+    if (s.status === "failed") throw new MediaGenError(`The engine couldn't make this picture: ${(s.error ?? "no reason given").slice(0, 300)}`);
+    if (Date.now() > deadline) throw new MediaGenError("The engine took too long on this picture. The first picture after a restart also loads the picture model (a few minutes).");
+    await sleep(3000);
+  }
+}
+
 /** Admin → Integrations → Test. */
 export async function testOwnEngine(): Promise<{ ok: boolean; message: string }> {
   try {

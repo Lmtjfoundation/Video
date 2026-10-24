@@ -9,12 +9,20 @@ without Seedance, Replicate or any per-clip fee. Two quality profiles (ENGINE_QU
   fast            Wan 2.2 TI2V-5B: 720p, 121 frames at 24 fps (5 seconds), from text or a first frame. 24 GB and up.
 The Film Engine chains clips from each last frame into beats of up to 30 seconds and adds voices and score itself.
 
+Pictures, so the app needs no paid picture service either (both Apache 2.0, loaded the first time they're asked for):
+  Qwen-Image             text to picture.
+  Qwen-Image-Edit-2511   picture editing, and putting up to three reference pictures (cast portraits, a location)
+                         into a new scene with their faces kept.
+
 API (every call except /health needs `Authorization: Bearer <ENGINE_TOKEN>`):
   GET  /health                 -> {"ok": true}                      (for the host's health check)
   GET  /v1/info                -> profile, models, GPU, whether loaded, queue length
   POST /v1/videos              -> {"id": ...}                       start a clip
   GET  /v1/videos/{id}         -> {"status": queued|running|succeeded|failed, "progress": 0..1, "error"?}
   GET  /v1/videos/{id}/file    -> the MP4
+  POST /v1/images              -> {"id": ...}                       start a picture (with "images": an edit)
+  GET  /v1/images/{id}         -> same status shape as videos
+  GET  /v1/images/{id}/file    -> the PNG
 
 Settings (environment): ENGINE_TOKEN (required in production), ENGINE_QUALITY (best|fast), ENGINE_OFFLOAD
 (auto|on|off: keep idle model parts in CPU memory), ENGINE_STEPS (default 40), HF_HOME (model cache).
@@ -55,6 +63,10 @@ if not TOKEN:
 OUT_DIR = os.environ.get("ENGINE_OUT") or os.path.join(tempfile.gettempdir(), "ghost-post-engine")
 KEEP_SECONDS = 3 * 3600
 FIVE_B = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
+T2I = os.environ.get("ENGINE_IMAGE_MODEL", "Qwen/Qwen-Image")
+EDIT = os.environ.get("ENGINE_EDIT_MODEL", "Qwen/Qwen-Image-Edit-2511")
+# Qwen-Image's native sizes per frame shape (from its model card).
+IMAGE_SIZES = {"1:1": (1328, 1328), "16:9": (1664, 928), "9:16": (928, 1664), "4:3": (1472, 1104), "3:4": (1104, 1472), "21:9": (1792, 768)}
 A14B = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 # Wan's own default negative prompt (it was trained with it): garish colours, overexposure, static frames, blur,
 # subtitles, low quality, JPEG artefacts, ugly or deformed faces and hands, extra fingers, fused fingers, still
@@ -117,10 +129,22 @@ class VideoRequest(BaseModel):
     seed: int | None = None
 
 
+class ImageRequest(BaseModel):
+    prompt: str = Field(min_length=1, max_length=4000)
+    negative_prompt: str | None = Field(default=None, max_length=2000)
+    # Up to three pictures, base64. With them the request is an edit: change the first picture, or put the people
+    # and places from all of them into a new scene ("the woman in picture 1 at the table in picture 2").
+    images: list[str] = Field(default_factory=list, max_length=3)
+    aspect: str = "9:16"
+    steps: int | None = Field(default=None, ge=2, le=80)
+    guidance: float | None = Field(default=None, ge=1, le=12)
+    seed: int | None = None
+
+
 @dataclass
 class Job:
     id: str
-    req: VideoRequest
+    req: VideoRequest | ImageRequest
     status: str = "queued"
     progress: float = 0.0
     error: str | None = None
@@ -132,6 +156,8 @@ class Engine:
     def __init__(self) -> None:
         self.i2v = None  # first frame -> video (best: A14B; fast: TI2V-5B)
         self.t2v = None  # text -> video (TI2V-5B; in "best" loaded when first needed)
+        self.t2i = None  # text -> picture (Qwen-Image), loaded when first asked for
+        self.edit = None  # picture editing (Qwen-Image-Edit), loaded when first asked for
         self.ready = False
         self.load_error: str | None = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -181,7 +207,7 @@ class Engine:
             pipe.to(self.device)
 
     # ── Jobs ─────────────────────────────────────────────────────────────────
-    def submit(self, req: VideoRequest) -> Job:
+    def submit(self, req: VideoRequest | ImageRequest) -> Job:
         job = Job(id=uuid.uuid4().hex, req=req)
         with self.lock:
             self.jobs[job.id] = job
@@ -200,7 +226,7 @@ class Engine:
                 continue
             job.status = "running"
             try:
-                job.file = self.render(job)
+                job.file = self.picture(job) if isinstance(job.req, ImageRequest) else self.render(job)
                 job.status, job.progress = "succeeded", 1.0
             except Exception as e:  # noqa: BLE001
                 log.exception("Job %s failed", job.id)
@@ -253,6 +279,59 @@ class Engine:
         export_to_video(video, path, fps=p.fps)
         return path
 
+    def picture(self, job: Job) -> str:
+        """One picture: from the prompt alone (Qwen-Image) or an edit of up to three pictures (Qwen-Image-Edit)."""
+        r = job.req
+        width, height = (64, 64) if TINY else IMAGE_SIZES[r.aspect]
+        os.makedirs(OUT_DIR, exist_ok=True)
+        path = os.path.join(OUT_DIR, f"{job.id}.png")
+        refs = [read_picture(b) for b in r.images]
+        if TINY:
+            # No real weights in tests: a picture that depends on the request, so the API can be checked end to end.
+            seed = sum(map(ord, r.prompt)) + len(refs)
+            img = Image.new("RGB", (width, height), (seed % 256, (seed * 7) % 256, (seed * 13) % 256))
+            if refs:
+                img.paste(ImageOps.fit(refs[0], (width // 2, height // 2)), (0, 0))
+            img.save(path)
+            job.progress = 1.0
+            return path
+        if refs:
+            if self.edit is None:
+                from diffusers import QwenImageEditPlusPipeline
+
+                log.info("First picture edit: loading %s", EDIT)
+                self.edit = QwenImageEditPlusPipeline.from_pretrained(EDIT, torch_dtype=self.dtype)
+                self.edit.enable_model_cpu_offload()  # shares the GPU with the video model
+            pipe, steps = self.edit, r.steps or 40
+        else:
+            if self.t2i is None:
+                from diffusers import QwenImagePipeline
+
+                log.info("First picture: loading %s", T2I)
+                self.t2i = QwenImagePipeline.from_pretrained(T2I, torch_dtype=self.dtype)
+                self.t2i.enable_model_cpu_offload()
+            pipe, steps = self.t2i, r.steps or 50
+
+        def on_step(_pipe, i, _t, kwargs):
+            job.progress = min(0.99, (i + 1) / steps)
+            return kwargs
+
+        args = dict(
+            prompt=r.prompt,
+            negative_prompt=r.negative_prompt or " ",
+            width=width,
+            height=height,
+            num_inference_steps=steps,
+            true_cfg_scale=r.guidance or 4.0,
+            generator=torch.Generator(device="cpu").manual_seed(r.seed if r.seed is not None else secrets.randbelow(2**31)),
+            callback_on_step_end=on_step,
+        )
+        if refs:
+            args["image"] = refs
+        with torch.inference_mode():
+            pipe(**args).images[0].save(path)
+        return path
+
     def cleanup(self) -> None:
         cutoff = time.time() - KEEP_SECONDS
         with self.lock:
@@ -271,6 +350,14 @@ def first_frame(b64: str, width: int, height: int) -> Image.Image:
     except Exception as e:  # noqa: BLE001
         raise HTTPException(400, f"The starting picture couldn't be read: {e}") from e
     return ImageOps.fit(img, (width, height), Image.Resampling.LANCZOS)
+
+
+def read_picture(b64: str) -> Image.Image:
+    try:
+        raw = base64.b64decode(b64.split(",", 1)[-1], validate=False)
+        return ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert("RGB")
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(400, f"A picture couldn't be read: {e}") from e
 
 
 def gpu_memory_gb() -> float:
@@ -365,6 +452,9 @@ def info() -> dict:
         "max_seconds": round(MAIN.max_frames / MAIN.fps, 2),
         "fps": MAIN.fps,
         "aspects": list(ASPECTS),
+        "image_model": T2I,
+        "edit_model": EDIT,
+        "image_aspects": list(IMAGE_SIZES),
     }
 
 
@@ -394,6 +484,29 @@ def file(job_id: str) -> FileResponse:
     if not job or job.status != "succeeded" or not job.file:
         raise HTTPException(404, "The clip isn't ready.")
     return FileResponse(job.file, media_type="video/mp4", filename=f"{job_id}.mp4")
+
+
+@app.post("/v1/images", dependencies=[Depends(authorised)])
+def create_image(req: ImageRequest) -> dict:
+    if req.aspect not in IMAGE_SIZES:
+        raise HTTPException(400, f"aspect must be one of {', '.join(IMAGE_SIZES)}")
+    for b in req.images:
+        read_picture(b)  # reject an unreadable picture now, not minutes later
+    job = engine.submit(req)
+    return {"id": job.id, "status": job.status}
+
+
+@app.get("/v1/images/{job_id}", dependencies=[Depends(authorised)])
+def image_status(job_id: str) -> dict:
+    return status(job_id)
+
+
+@app.get("/v1/images/{job_id}/file", dependencies=[Depends(authorised)])
+def image_file(job_id: str) -> FileResponse:
+    job = engine.jobs.get(job_id)
+    if not job or job.status != "succeeded" or not job.file or not isinstance(job.req, ImageRequest):
+        raise HTTPException(404, "The picture isn't ready.")
+    return FileResponse(job.file, media_type="image/png", filename=f"{job_id}.png")
 
 
 if __name__ == "__main__":

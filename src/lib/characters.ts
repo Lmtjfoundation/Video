@@ -1,9 +1,10 @@
 import "server-only";
+import { makeImage } from "./pictures";
 import { db } from "./db";
 import { claude } from "./llm";
 import { readFile, storeFile } from "./media";
 import { kvGet, kvSet } from "./repo";
-import { geminiImage, type RefImage } from "./gemini-media";
+import { type RefImage } from "./gemini-media";
 import type { Character, MediaItem } from "./types";
 import { nowIso, uid } from "./utils";
 
@@ -136,7 +137,7 @@ export async function createCharacter(userId: string, input: NewCharacter): Prom
   ]
     .filter(Boolean)
     .join("\n");
-  const img = await geminiImage({ prompt, refs: photo ? [photo] : [], aspect: "9:16", size: "2K" });
+  const img = await makeImage({ prompt, refs: photo ? [photo] : [], aspect: "9:16", size: "2K" });
   const type = img.mimeType === "image/jpeg" ? "image/jpeg" : img.mimeType === "image/webp" ? "image/webp" : "image/png";
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "character";
   const item = await storeFile(userId, { name: `character-${slug}.${type.split("/")[1]}`, type, bytes: img.bytes });

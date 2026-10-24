@@ -73,3 +73,34 @@ def test_clip_lengths_and_sizes():
         # The models' native 720p sizes.
         assert server.size_for("9:16", best) == (720, 1280) and server.size_for("16:9", best) == (1280, 720)
         assert server.size_for("9:16", fast) == (704, 1280) and server.size_for("16:9", fast) == (1280, 704)
+
+
+def test_pictures(tmp_path):
+    with TestClient(server.app) as client:
+        for _ in range(600):
+            if client.get("/v1/info", headers=AUTH).json()["ready"]:
+                break
+            time.sleep(0.2)
+        assert client.post("/v1/images", headers=AUTH, json={"prompt": "x", "aspect": "5:2"}).status_code == 400
+        assert client.post("/v1/images", headers=AUTH, json={"prompt": "x", "images": ["bm90IGFuIGltYWdl"]}).status_code == 400
+        assert client.post("/v1/images", headers=AUTH, json={"prompt": "x", "images": [picture()] * 4}).status_code == 422
+        # From the prompt alone, and an edit that puts a reference picture into a new scene.
+        for body in ({"prompt": "a kitchen at night", "aspect": "9:16"}, {"prompt": "the woman in picture 1 at a desk", "images": [picture()], "aspect": "1:1"}):
+            job = client.post("/v1/images", headers=AUTH, json=body).json()
+            for _ in range(600):
+                s = client.get(f"/v1/images/{job['id']}", headers=AUTH).json()
+                if s["status"] in ("succeeded", "failed"):
+                    break
+                time.sleep(0.1)
+            assert s["status"] == "succeeded", s
+            png = client.get(f"/v1/images/{job['id']}/file", headers=AUTH)
+            assert png.status_code == 200 and png.headers["content-type"] == "image/png"
+            assert Image.open(io.BytesIO(png.content)).size == (64, 64)
+        # A video job's id doesn't serve a picture.
+        assert client.get(f"/v1/images/{'0' * 32}/file", headers=AUTH).status_code == 404
+
+
+def test_picture_sizes():
+    # Qwen-Image's native sizes; every side is a multiple of 16.
+    assert server.IMAGE_SIZES["9:16"] == (928, 1664) and server.IMAGE_SIZES["16:9"] == (1664, 928)
+    assert all(w % 16 == 0 and h % 16 == 0 for w, h in server.IMAGE_SIZES.values())
