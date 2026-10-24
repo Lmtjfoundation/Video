@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BookOpen, Clapperboard, ListVideo, Save, Trash2 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
+import { jobStarted } from "@/lib/jobs-client";
 import { Badge, Button, Card, CardHeader, Empty, Field, Input, PageHeader, Select, Switch, Textarea } from "@/components/ui";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import { PLATFORMS, type Platform } from "@/lib/types";
@@ -43,6 +44,9 @@ export default function SeriesStudio() {
   }, [toast]);
   useEffect(() => {
     load();
+    const reload = () => load();
+    window.addEventListener("ghostpost:job-done", reload);
+    return () => window.removeEventListener("ghostpost:job-done", reload);
   }, [load]);
   // Refresh while an episode is rendering.
   useEffect(() => {
@@ -167,9 +171,9 @@ function SeriesView({ s, onChange }: { s: Series; onChange: () => void }) {
   async function make(n: number) {
     setMaking(n);
     try {
-      const r = await api<{ note: string }>("/api/series/episode", { body: { id: s.id, n, renderNow } });
-      toast(r.note || (renderNow ? `Episode ${n} written — rendering now` : `Episode ${n} written`), r.note ? "info" : "success");
-      onChange();
+      await api("/api/series/episode", { body: { id: s.id, n, renderNow, background: true } });
+      jobStarted();
+      toast(`Episode ${n} is being made in the background. Keep working, or leave the page: we'll tell you when it's ready.`, "success");
       refresh();
     } catch (e) {
       toast((e as Error).message, "error");

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
+import { jobStarted } from "@/lib/jobs-client";
 import type { Format, MediaItem, Pillar, Placement, Platform, Post, PostStatus } from "@/lib/types";
 import { CREDIT_COST } from "@/lib/plans";
 import { PILLARS, PLATFORMS } from "@/lib/types";
@@ -99,6 +100,8 @@ export default function Studio() {
   }, [toast]);
   useEffect(() => {
     load();
+    window.addEventListener("ghostpost:job-done", load);
+    return () => window.removeEventListener("ghostpost:job-done", load);
   }, [load]);
 
   const formats = PLATFORM_SPECS[platform].formats;
@@ -135,13 +138,11 @@ export default function Studio() {
   async function audioToVideo() {
     setBusy(true);
     try {
-      const created = await api<Post>("/api/audio-video", {
-        body: { mediaId: audioId, platform, landscape: landscape && (platform === "youtube" || platform === "facebook"), visuals: motion ? "motion" : "auto", about: about || undefined, renderNow, autoPost, placement: hasPlacement ? placement : undefined, account: account || undefined },
+      await api("/api/audio-video", {
+        body: { mediaId: audioId, platform, landscape: landscape && (platform === "youtube" || platform === "facebook"), visuals: motion ? "motion" : "auto", about: about || undefined, renderNow, autoPost, placement: hasPlacement ? placement : undefined, account: account || undefined, background: true },
       });
-      setPosts((p) => [created, ...p]);
-      setFilter("all");
-      toast(created.render?.status === "queued" ? (autoPost ? "Video rendering — it posts itself when ready" : "Video rendering — it appears below when ready") : "Video plan ready — press Render video on it", "success");
-      refresh();
+      jobStarted();
+      toast("Started in the background. Keep working, or leave the page: we'll tell you when it's ready.", "success");
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
@@ -156,26 +157,24 @@ export default function Studio() {
     setPostingNow(posting);
     try {
       const shared = { autoPost: posting, placement: hasPlacement ? placement : undefined, account: account || undefined };
+      if (kind === "video") {
+        // Video plans (and their renders) are made in the background; the jobs tray follows them.
+        await api("/api/generate", { body: { kind, platform, count, topic, niche: genre ? "auto" : vNiche, style: vStyle, length: vLen, mediaIds: attach.length ? attach : undefined, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, faceless, renderNow: fromText && renderNow, voiceover, visuals: motion ? "motion" : "auto", ...shared, background: true } });
+        jobStarted();
+        toast("Started in the background. Keep working, or leave the page: we'll tell you when it's ready.", "success");
+        return;
+      }
       const created = await api<Post[]>("/api/generate", {
-        body: kind === "video"
-          ? { kind, platform, count, topic, niche: genre ? "auto" : vNiche, style: vStyle, length: vLen, mediaIds: attach.length ? attach : undefined, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, faceless, renderNow: fromText && renderNow, voiceover, visuals: motion ? "motion" : "auto", ...shared }
-          : { kind, platform, pillar, format, count, topic, imageUrl: imageUrl || undefined, mediaIds: attach.length ? attach : undefined, mature: platform === "x" && mature, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, ...shared },
+        body: { kind, platform, pillar, format, count, topic, imageUrl: imageUrl || undefined, mediaIds: attach.length ? attach : undefined, mature: platform === "x" && mature, genre: genre || undefined, sourceText: fromText ? sourceText : undefined, ...shared },
       });
       setPosts((p) => [...created, ...p]);
       setFilter("all");
-      if (posting && kind !== "video") {
+      if (posting) {
         reportPosting(created);
         refresh();
         return;
       }
-      toast(
-        kind === "video"
-          ? posting
-            ? `${created.length} video${created.length > 1 ? "s" : ""} rendering — ${created.length > 1 ? "each posts itself" : "it posts itself"} when ready`
-            : `${created.length} video plan${created.length > 1 ? "s" : ""} ready`
-          : `${created.length} draft${created.length > 1 ? "s" : ""} ready`,
-        "success",
-      );
+      toast(`${created.length} draft${created.length > 1 ? "s" : ""} ready`, "success");
       refresh();
     } catch (e) {
       toast((e as Error).message, "error");

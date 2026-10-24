@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Clapperboard, Film, ImagePlus, Lightbulb, Sparkles, Trash2, UserRound, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api, EXPLAIN_HANDOFF, FILM_HANDOFF } from "@/lib/client";
+import { jobStarted } from "@/lib/jobs-client";
 import { briefFor } from "@/lib/film-brief";
 import { isGraphicsLook } from "@/lib/looks";
 import type { FilmProject } from "@/lib/writers-room";
@@ -54,6 +55,8 @@ export default function MovieStudio() {
 
   useEffect(() => {
     load();
+    window.addEventListener("ghostpost:job-done", load);
+    return () => window.removeEventListener("ghostpost:job-done", load);
   }, [load]);
 
   return (
@@ -72,7 +75,7 @@ export default function MovieStudio() {
       )}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         <CharactersCard lib={lib} admin={admin} creditsLeft={status?.me.creditsLeft} onChange={() => { load(); refresh(); }} />
-        <MovieCard lib={lib} admin={admin} creditsLeft={status?.me.creditsLeft} onMade={(p) => { setVideos((v) => [p, ...v]); refresh(); }} />
+        <MovieCard lib={lib} admin={admin} creditsLeft={status?.me.creditsLeft} />
       </div>
       <Card className="mt-5">
         <CardHeader title="Your AI videos" subtitle="Open one to watch the render, edit the caption, schedule it or post it." icon={<Film className="h-4 w-4" />} />
@@ -244,7 +247,7 @@ function CharactersCard({ lib, admin, creditsLeft, onChange }: { lib: Library | 
   );
 }
 
-function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; admin: boolean; creditsLeft?: number; onMade: (p: Post) => void }) {
+function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: boolean; creditsLeft?: number }) {
   const toast = useApp((s) => s.toast);
   const [kind, setKind] = useState<"movie" | "explainer">("movie");
   const [brief, setBrief] = useState("");
@@ -261,7 +264,6 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
   const [autoPost, setAutoPost] = useState(false);
   const [placement, setPlacement] = useState<Placement>("auto");
   const [busy, setBusy] = useState(false);
-  const [made, setMade] = useState<{ post: Post; note: string } | null>(null);
   const hasPlacement = platform === "instagram" || platform === "facebook";
   useEffect(() => {
     if (settings) setAutoPost(settings.autoPost?.enabled ?? false);
@@ -325,12 +327,10 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
 
   async function make() {
     setBusy(true);
-    setMade(null);
     try {
-      const r = await api<{ post: Post; note: string }>("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: graphics ? 0 : veo, engine, voiceover, renderNow: renderNow || autoPost, autoPost, placement: hasPlacement ? placement : undefined } });
-      setMade(r);
-      onMade(r.post);
-      toast(r.post.render?.status === "queued" ? (r.post.autoPost ? "Script written. Rendering — it posts itself when ready." : "Script written. Rendering has started.") : "Script written and saved as a draft.", "success");
+      await api("/api/movies", { body: { kind, brief, characterIds: cast, look: look || firstLook, platform, length, veoScenes: graphics ? 0 : veo, engine, voiceover, renderNow: renderNow || autoPost, autoPost, placement: hasPlacement ? placement : undefined, background: true } });
+      jobStarted();
+      toast("Started in the background. Keep working, or leave the page: we'll tell you when it's ready.", "success");
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
@@ -445,16 +445,6 @@ function MovieCard({ lib, admin, creditsLeft, onMade }: { lib: Library | null; a
             <Film className="h-4 w-4" /> {kind === "movie" ? "Write the movie" : "Write the explainer"}
           </Button>
         </div>
-        {made && (
-          <div className="rounded-xl bg-mint-400/[0.06] p-4 text-sm ring-1 ring-mint-300/20">
-            <p className="font-medium text-white">{made.post.hook}</p>
-            <p className="mt-1 text-xs text-white/55">
-              {made.post.video?.scenes.length} scenes · {made.post.video?.ai?.veoScenes.length ?? 0} animated · render {renderCredits(made.post.video)} credits
-              {made.note ? ` · ${made.note}` : ""}
-            </p>
-            <Link href={`/post/${made.post.id}`} className="mt-2 inline-block text-xs text-sky-300 hover:underline">Open it to watch the render, edit and schedule →</Link>
-          </div>
-        )}
       </div>
     </Card>
   );

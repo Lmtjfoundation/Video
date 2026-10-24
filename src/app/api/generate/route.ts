@@ -16,6 +16,7 @@ import { genreById } from "@/lib/genres";
 import { spendCredits } from "@/lib/auth";
 import { enqueueRender, ffmpegAvailable } from "@/lib/render";
 import { nowIso } from "@/lib/utils";
+import { startJob } from "@/lib/jobs";
 
 /**
  * When Claude's API can't write (no credits, key problem), hand out finished pieces Claude already wrote
@@ -39,7 +40,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export const POST = authed(async (req: Request, user) => {
-  const b = await body<{ kind?: "text" | "video"; platform: Platform; pillar?: Pillar | "auto"; format?: Format | "auto"; topic?: string; count?: number; imageUrl?: string; mediaIds?: string[]; mature?: boolean; niche?: string; style?: VideoPlan["style"]; length?: VideoPlan["length"]; genre?: string; sourceText?: string; faceless?: boolean; renderNow?: boolean; autoPost?: boolean; placement?: Placement; account?: string; voiceover?: boolean; visuals?: VideoVisuals }>(req);
+  const b = await body<{ kind?: "text" | "video"; platform: Platform; pillar?: Pillar | "auto"; format?: Format | "auto"; topic?: string; count?: number; imageUrl?: string; mediaIds?: string[]; mature?: boolean; niche?: string; style?: VideoPlan["style"]; length?: VideoPlan["length"]; genre?: string; sourceText?: string; faceless?: boolean; renderNow?: boolean; autoPost?: boolean; placement?: Placement; account?: string; voiceover?: boolean; visuals?: VideoVisuals; background?: boolean }>(req);
   const genre = genreById(b.genre) ? b.genre : undefined;
   // Text to video / text to post: build only from pasted material.
   const sourceText = typeof b.sourceText === "string" && b.sourceText.trim().length >= 40 ? b.sourceText.trim().slice(0, 15000) : undefined;
@@ -60,35 +61,47 @@ export const POST = authed(async (req: Request, user) => {
     const style = b.style && b.style in VIDEO_STYLES ? b.style : "true";
     const n = clamp(Number(b.count) || 1, 1, 3);
     const mediaIds = Array.isArray(b.mediaIds) ? b.mediaIds.slice(0, 10) : undefined;
-    const { posts: videos, fromBank } = await withBankFallback(b.platform, "video", n, s, () =>
-      withCredits(n * videoCredits(length, "plan"), () =>
-        generateVideoPosts({ platform: b.platform, count: n, niche: String(b.niche ?? (genre ? "auto" : "edu")), style, length, topic: b.topic?.slice(0, 500), mediaIds, genre, sourceText, faceless: typeof b.faceless === "boolean" ? b.faceless : undefined }, s),
-      ),
-    );
-    if (fromBank && mediaIds?.length) videos.forEach((p) => (p.mediaIds = mediaIds));
-    for (const v of videos) {
-      if (v.video && b.voiceover === false) v.video.voiceover = false;
-      if (v.video && VIDEO_VISUALS.includes(b.visuals as VideoVisuals)) v.video.visuals = b.visuals;
-      if (placement) v.placement = placement;
-      if (account) v.account = account;
-      if (autoPost) v.autoPost = true;
+    // In the background the person can leave the page; the jobs tray says when the videos are ready.
+    if (b.background) {
+      const job = await startJob(user.id, { kind: "video", title: b.topic?.trim().slice(0, 80) || "Video post" }, async () => {
+        const videos = await make();
+        return { post: videos[0], href: "/studio", message: videos.length > 1 ? `${videos.length} videos ready` : undefined };
+      });
+      return ok({ job });
     }
-    // "Render it now": turn the plan straight into an MP4 (render credits as usual). Auto-posted videos always render.
-    if ((b.renderNow || autoPost) && (await ffmpegAvailable())) {
+    return ok(await make());
+
+    async function make() {
+      const { posts: videos, fromBank } = await withBankFallback(b.platform, "video", n, s, () =>
+        withCredits(n * videoCredits(length, "plan"), () =>
+          generateVideoPosts({ platform: b.platform, count: n, niche: String(b.niche ?? (genre ? "auto" : "edu")), style, length, topic: b.topic?.slice(0, 500), mediaIds, genre, sourceText, faceless: typeof b.faceless === "boolean" ? b.faceless : undefined }, s),
+        ),
+      );
+      if (fromBank && mediaIds?.length) videos.forEach((p) => (p.mediaIds = mediaIds));
       for (const v of videos) {
-        const credits = renderCredits(v.video);
-        try {
-          await spendCredits(user.id, credits);
-        } catch {
-          break; // not enough credits to render: the plan is still saved and can be rendered later
-        }
-        v.render = { status: "queued", progress: 0, message: "Waiting to render…", credits, updatedAt: nowIso() };
+        if (v.video && b.voiceover === false) v.video.voiceover = false;
+        if (v.video && VIDEO_VISUALS.includes(b.visuals as VideoVisuals)) v.video.visuals = b.visuals;
+        if (placement) v.placement = placement;
+        if (account) v.account = account;
+        if (autoPost) v.autoPost = true;
       }
+      // "Render it now": turn the plan straight into an MP4 (render credits as usual). Auto-posted videos always render.
+      if ((b.renderNow || autoPost) && (await ffmpegAvailable())) {
+        for (const v of videos) {
+          const credits = renderCredits(v.video);
+          try {
+            await spendCredits(user.id, credits);
+          } catch {
+            break; // not enough credits to render: the plan is still saved and can be rendered later
+          }
+          v.render = { status: "queued", progress: 0, message: "Waiting to render…", credits, updatedAt: nowIso() };
+        }
+      }
+      await savePosts(videos);
+      for (const v of videos) if (v.render?.status === "queued") enqueueRender(user.id, v.id, v.render.credits ?? 0);
+      await log("info", "generate", `${fromBank ? "From Claude's daily batch (API out of credits): " : ""}Video plan${videos.length > 1 ? "s" : ""}: ${videos.map((p) => `“${p.hook}”`).join(", ")}`, { platform: b.platform });
+      return videos;
     }
-    await savePosts(videos);
-    for (const v of videos) if (v.render?.status === "queued") enqueueRender(user.id, v.id, v.render.credits ?? 0);
-    await log("info", "generate", `${fromBank ? "From Claude's daily batch (API out of credits): " : ""}Video plan${videos.length > 1 ? "s" : ""}: ${videos.map((p) => `“${p.hook}”`).join(", ")}`, { platform: b.platform });
-    return ok(videos);
   }
   const count = clamp(Number(b.count) || 1, 1, 5);
   const pillars = b.pillar && b.pillar !== "auto" && PILLARS.includes(b.pillar) ? Array(count).fill(b.pillar) : undefined;

@@ -7,6 +7,7 @@ import { listMedia, signedUrl } from "@/lib/media";
 import { picturesReady } from "@/lib/pictures";
 import { CREDIT_COST } from "@/lib/plans";
 import { getPost, getSettings, log } from "@/lib/repo";
+import { startJob } from "@/lib/jobs";
 import { deleteSession, getSession, listSessions, revise, setScenes, startSession } from "@/lib/director";
 import { PLATFORMS, type MediaItem, type Platform, type VideoScene } from "@/lib/types";
 import { lengthAllowed, MOVIE_LENGTHS, MOVIE_SHAPE, renderCredits, videoCredits, type MovieLength } from "@/lib/video-spec";
@@ -47,8 +48,8 @@ export const GET = authed(async (req, user) => {
 });
 
 /** A chat message: the first one starts a video, the rest change it. */
-export const POST = authed(async (req) => {
-  const b = await body<{ id?: string; message?: string; characterIds?: string[]; look?: string; platform?: Platform; length?: MovieLength }>(req);
+export const POST = authed(async (req, user) => {
+  const b = await body<{ id?: string; message?: string; characterIds?: string[]; look?: string; platform?: Platform; length?: MovieLength; background?: boolean }>(req);
   const message = String(b.message ?? "").trim().slice(0, 4000);
   if (message.length < 3) return fail("Tell the Director what you want.");
   if (b.id) {
@@ -63,9 +64,20 @@ export const POST = authed(async (req) => {
   const cast = await getCharacters(Array.isArray(b.characterIds) ? b.characterIds.slice(0, 6) : []);
   const look = String(b.look ?? "").trim().slice(0, 160) || cast[0]?.look || CHARACTER_LOOKS[0];
   if (!isGraphicsLook(look) && !(await picturesReady())) return fail("The Director needs Ghost Post's engine for pictures. The admin connects it in Admin → App settings → Integrations.", 503);
-  const r = await withCredits(videoCredits(length, "plan"), async () => startSession({ message, characterIds: cast.map((c) => c.id), look, platform, length }, await getSettings()));
-  await log("info", "generate", `Director: “${r.post.hook}”`, { postId: r.post.id });
-  return ok({ id: r.session.id });
+  const start = async () => {
+    const r = await withCredits(videoCredits(length, "plan"), async () => startSession({ message, characterIds: cast.map((c) => c.id), look, platform, length }, await getSettings()));
+    await log("info", "generate", `Director: “${r.post.hook}”`, { postId: r.post.id });
+    return r;
+  };
+  // In the background the person can leave the page; the jobs tray opens the storyboard when it's ready.
+  if (b.background) {
+    const job = await startJob(user.id, { kind: "director", title: message.slice(0, 80) }, async () => {
+      const r = await start();
+      return { post: r.post, href: `/director?id=${r.session.id}`, message: "Storyboard ready" };
+    });
+    return ok({ job });
+  }
+  return ok({ id: (await start()).session.id });
 });
 
 /** Timeline edits by hand: the whole scene list, in its new order. */

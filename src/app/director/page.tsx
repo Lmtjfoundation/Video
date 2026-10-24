@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Clapperboard, Copy, ImageIcon, MessageSquarePlus, Play, Save, Send, Trash2, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
+import { jobStarted } from "@/lib/jobs-client";
 import { Button, Card, Empty, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import { PLATFORMS, type Platform, type VideoScene } from "@/lib/types";
@@ -39,6 +40,8 @@ export default function Director() {
   const [platform, setPlatform] = useState<Platform>("tiktok");
   const [length, setLength] = useState("s60");
   const chatEnd = useRef<HTMLDivElement>(null);
+  /** The first message of a storyboard being written in the background. */
+  const [writing, setWriting] = useState("");
 
   const load = useCallback(
     async (id?: string | null) => {
@@ -53,7 +56,16 @@ export default function Director() {
     [toast],
   );
   useEffect(() => {
-    load();
+    // Opened from the jobs tray (/director?id=…) or the menu.
+    const id = new URLSearchParams(window.location.search).get("id");
+    load(id);
+    const done = () => {
+      setWriting("");
+      setFresh(false);
+      load(new URLSearchParams(window.location.search).get("id"));
+    };
+    window.addEventListener("ghostpost:job-done", done);
+    return () => window.removeEventListener("ghostpost:job-done", done);
   }, [load]);
   useEffect(() => chatEnd.current?.scrollIntoView({ behavior: "smooth" }), [data?.open?.messages.length]);
   // Follow a render in progress.
@@ -71,9 +83,17 @@ export default function Director() {
     if (!text) return;
     setBusy(true);
     try {
-      const r = await api<{ id: string }>("/api/director", { body: open ? { id: open.id, message: text } : { message: text, characterIds: cast, look: look || undefined, platform, length } });
+      if (!open) {
+        // A new storyboard is written in the background; the jobs tray opens it when it's ready.
+        await api("/api/director", { body: { message: text, characterIds: cast, look: look || undefined, platform, length, background: true } });
+        setMessage("");
+        setWriting(text);
+        jobStarted();
+        refresh();
+        return;
+      }
+      const r = await api<{ id: string }>("/api/director", { body: { id: open.id, message: text } });
       setMessage("");
-      setFresh(false);
       await load(r.id);
       refresh();
     } catch (e) {
@@ -120,7 +140,14 @@ export default function Director() {
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
           <Card className="flex min-h-[420px] flex-col">
             <div className="flex-1 space-y-3 overflow-y-auto p-5" style={{ maxHeight: 460 }}>
-              {open ? (
+              {writing && !open ? (
+                <>
+                  <div className="ml-auto max-w-[85%] whitespace-pre-line rounded-2xl bg-mint-400/15 px-4 py-2.5 text-sm text-mint-50">{writing}</div>
+                  <div className="max-w-[85%] rounded-2xl bg-white/[0.05] px-4 py-2.5 text-sm text-white/85">
+                    I&apos;m writing the storyboard in the background. You can keep working or leave this page; it opens here when it&apos;s ready.
+                  </div>
+                </>
+              ) : open ? (
                 open.messages.map((m, i) => (
                   <div key={i} className={cn("max-w-[85%] whitespace-pre-line rounded-2xl px-4 py-2.5 text-sm", m.role === "you" ? "ml-auto bg-mint-400/15 text-mint-50" : "bg-white/[0.05] text-white/85")}>
                     {m.text}

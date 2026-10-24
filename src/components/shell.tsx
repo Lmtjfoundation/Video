@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Activity, BookOpenText, CalendarDays, Clapperboard, Compass, CreditCard, Feather, Film, Flame, Images, LayoutDashboard, Lightbulb, ListVideo, LogOut, Menu, MessageSquare, MessagesSquare, Palette, ScrollText, Settings, Share2, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useApp } from "@/lib/store";
+import { JobsTray } from "./jobs-tray";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; short: string; icon: typeof Activity; badge?: "pending" | "review"; admin?: boolean };
@@ -192,6 +193,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
+      <JobsTray />
       <main className="min-w-0 flex-1 px-4 pb-28 pt-[calc(env(safe-area-inset-top)+84px)] sm:px-6 lg:px-10 lg:pb-16 lg:pt-10">
         <div className="mx-auto max-w-[1280px]">{children}</div>
       </main>
