@@ -369,6 +369,13 @@ export interface VideoScene {
   sfx: string;
   /** Names of library characters who appear in this scene (AI-pictured videos only). */
   cast?: string[];
+  /** A picture or clip from the Media Library chosen for this scene (timeline "swap picture"): used instead of an AI picture or stock footage. */
+  mediaId?: string;
+  /**
+   * The AI picture last painted for this scene and what it was painted from. A re-render reuses it while the scene's
+   * shot, cast and style are unchanged, so editing one scene repaints only that scene.
+   */
+  painted?: { mediaId: string; key: string };
 }
 
 /** AI-made visuals for a video: every scene is pictured with Gemini, and chosen scenes are animated with Google Veo. */

@@ -1,10 +1,11 @@
 import "server-only";
 import { makeImage } from "./pictures";
 import { spawn } from "child_process";
+import { createHash } from "crypto";
 import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
-import { asUser, db } from "./db";
+import { asUser, currentUserId, db } from "./db";
 import { readFile, storeFile } from "./media";
 import { log, savePost } from "./repo";
 import { getUser, refundCredits } from "./auth";
@@ -472,12 +473,28 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
   const stills: (RefImage | null)[] = await mapLimit(jobs, 3, async (job, i) => {
     const inScene = cast.filter((c) => (job.scene.cast ?? []).some((n) => n.toLowerCase() === c.name.toLowerCase()));
     const sceneRefs = inScene.map((c) => refs.get(c.name.toLowerCase())).filter((r): r is RefImage => !!r);
+    const prompt = scenePrompt(job.scene, ai, inScene, portrait);
+    const key = createHash("sha256").update(`${prompt}|${inScene.map((c) => `${c.id}:${c.imageMediaId}`).join(",")}|${portrait}`).digest("hex").slice(0, 32);
     try {
+      // A picture chosen for this scene, or the one painted last time from the same shot: no new picture to pay for.
+      const kept = (await sceneMedia(job.scene.mediaId)) ?? (job.scene.painted?.key === key ? await sceneMedia(job.scene.painted.mediaId, "image") : null);
+      if (kept) {
+        unused += CREDIT_COST.aiImage;
+        const file = path.join(dir, `kept${i}.${kept.type.split("/")[1] === "quicktime" ? "mov" : kept.type.split("/")[1]}`);
+        const bytes = await readFile(kept);
+        await fs.writeFile(file, bytes);
+        job.visual = { kind: kept.kind === "video" ? "video" : "image", file };
+        return kept.kind === "image" ? { mimeType: kept.type, base64: bytes.toString("base64") } : null;
+      }
       if (blocked) throw new MediaGenError(blocked, "config");
-      const img = await makeImage({ prompt: scenePrompt(job.scene, ai, inScene, portrait), refs: sceneRefs, aspect: portrait ? "9:16" : "16:9", size: "2K" });
+      const img = await makeImage({ prompt, refs: sceneRefs, aspect: portrait ? "9:16" : "16:9", size: "2K" });
       const file = path.join(dir, `ai${i}.${extFor(img.mimeType)}`);
       await fs.writeFile(file, img.bytes);
       job.visual = { kind: "image", file };
+      // Keep it so the next render of this video reuses it while the scene is unchanged.
+      const owner = currentUserId();
+      const saved = owner ? await storeFile(owner, { name: `scene-${post.id}-${i + 1}.${extFor(img.mimeType)}`, type: extFor(img.mimeType) === "jpg" ? "image/jpeg" : `image/${extFor(img.mimeType)}`, bytes: img.bytes }, { uncapped: true }).catch(() => null) : null;
+      if (saved) job.scene.painted = { mediaId: saved.id, key };
       return { mimeType: img.mimeType, base64: img.bytes.toString("base64") };
     } catch (e) {
       if (e instanceof MediaGenError && e.kind === "config") blocked ??= e.message;
@@ -522,6 +539,14 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
   if (blocked) console.warn(`[render] AI pictures unavailable, used stock footage or backgrounds: ${blocked}`);
   if (animBlocked) console.warn(`[render] ${engine} unavailable, kept the pictures: ${animBlocked}`);
   return { unused, blocked: blocked ?? (animBlocked ? `${engine}: ${animBlocked}` : undefined) };
+}
+
+/** A Media Library item a scene uses, if it still exists (and is of the wanted kind). */
+async function sceneMedia(id: string | undefined, only?: "image") {
+  if (!id) return null;
+  const m = await db().get<MediaItem>("media", id);
+  if (!m || (m.kind !== "image" && m.kind !== "video") || (only && m.kind !== only)) return null;
+  return m;
 }
 
 /* ───────────── Main ───────────── */
@@ -596,7 +621,12 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
         dur = (await mediaDuration(audio)) + 0.25;
       }
       let visual: SceneJob["visual"];
-      if (mediaFiles.length) visual = mediaFiles[i % mediaFiles.length];
+      const chosen = ai ? null : await sceneMedia(scene.mediaId); // AI videos handle chosen pictures while painting
+      if (chosen) {
+        const file = path.join(dir, `chosen${i}.${chosen.type.split("/")[1] === "quicktime" ? "mov" : chosen.type.split("/")[1]}`);
+        await fs.writeFile(file, await readFile(chosen));
+        visual = { kind: chosen.kind === "video" ? "video" : "image", file };
+      } else if (mediaFiles.length) visual = mediaFiles[i % mediaFiles.length];
       else if (motionOnly) visual = { kind: "motion" };
       else if (ai) visual = { kind: "motion" }; // pictured below (graphics styles keep the motion graphics)
       else {
@@ -666,6 +696,11 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     await db().upsert("media", item);
 
     const fresh = (await db().get<Post>("posts", postId)) ?? post;
+    // Remember each scene's painted picture on the saved plan, so the next render repaints only scenes that changed.
+    for (const sc of plan.scenes) {
+      const same = sc.painted && fresh.video?.scenes.find((x) => x.visual === sc.visual && x.narration === sc.narration);
+      if (same) same.painted = sc.painted;
+    }
     fresh.mediaIds = [item.id, ...(fresh.mediaIds ?? []).filter((id) => id !== fresh.render?.mediaId)];
     const refunded = unused && credits ? ` · ${unused} credits refunded for ${ai ? "scenes Google couldn't make" : "AI scenes replaced by your media"}` : "";
     const note = aiBlocked ? ` · AI visuals were unavailable (${aiBlocked}), so scenes use stock footage or backgrounds` : "";
