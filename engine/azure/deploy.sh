@@ -53,7 +53,7 @@ az vm create \
   --resource-group "$GROUP" --name "$VM" --location "$LOCATION" --size "$SIZE" \
   --image Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:latest \
   --security-type Standard \
-  --os-disk-size-gb 256 --storage-sku Premium_LRS \
+  --os-disk-size-gb 512 --storage-sku Premium_LRS \
   --public-ip-sku Standard --public-ip-address-dns-name "$label" \
   --admin-username ghostpost --generate-ssh-keys \
   --custom-data "$init" -o none
@@ -71,7 +71,7 @@ if [ "$SHUTDOWN" != "off" ]; then
   az vm auto-shutdown --resource-group "$GROUP" --name "$VM" --time "$SHUTDOWN" -o none
 fi
 
-say "Done. The engine is installing and downloading the model now (about 160 GB for best; allow 30–60 minutes)."
+say "Done. The engine is installing and downloading the model now (about 160 GB for best; allow 30–60 minutes). The picture and writing models (about 130 GB more) download the first time they are used."
 cat <<EOF
 
   Address:  https://${domain}

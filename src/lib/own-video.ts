@@ -94,6 +94,31 @@ export async function ownImage(o: { prompt: string; refs?: { bytes: Buffer; mime
   }
 }
 
+/** Until when the engine's writing is skipped after it said writing is off or failed to load (0 = try it). */
+let writingOffUntil = 0;
+export const engineWritingSkipped = () => Date.now() < writingOffUntil;
+/** Tests only. */
+export function resetEngineWriting() {
+  writingOffUntil = 0;
+}
+
+/** Writes with the engine's own text model (Qwen3-8B). Throws MediaGenError when the engine can't write right now. */
+export async function ownWrite(o: { system: string; user: string; maxTokens: number; temperature: number }): Promise<string> {
+  try {
+    const r = await call<{ text: string }>("/v1/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system: o.system.slice(0, 20_000), user: o.user.slice(0, 60_000), max_tokens: Math.min(16_000, o.maxTokens), temperature: o.temperature }),
+    });
+    if (!r.text?.trim()) throw new MediaGenError("The engine's writing model returned nothing.");
+    return r.text;
+  } catch (e) {
+    // Writing switched off, or the model can't load: stop asking for a while so every request isn't slowed down.
+    if (e instanceof MediaGenError && /switched off|couldn't load|OutOfMemory|CUDA/i.test(e.message)) writingOffUntil = Date.now() + 10 * 60_000;
+    throw e;
+  }
+}
+
 /** Admin → Integrations → Test. */
 export async function testOwnEngine(): Promise<{ ok: boolean; message: string }> {
   try {

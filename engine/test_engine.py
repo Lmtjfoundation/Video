@@ -104,3 +104,12 @@ def test_picture_sizes():
     # Qwen-Image's native sizes; every side is a multiple of 16.
     assert server.IMAGE_SIZES["9:16"] == (928, 1664) and server.IMAGE_SIZES["16:9"] == (1664, 928)
     assert all(w % 16 == 0 and h % 16 == 0 for w, h in server.IMAGE_SIZES.values())
+
+
+def test_writing():
+    with TestClient(server.app) as client:
+        assert client.post("/v1/chat", json={"user": "hi"}).status_code == 401
+        assert client.post("/v1/chat", headers=AUTH, json={"user": ""}).status_code == 422
+        r = client.post("/v1/chat", headers=AUTH, json={"system": "You write.", "user": "Plan a series.", "max_tokens": 50})
+        assert r.status_code == 200 and r.json()["text"] == '{"echo": 14, "system": 10}'
+        assert client.get("/v1/info", headers=AUTH).json()["text_model_writer"] == server.WRITER

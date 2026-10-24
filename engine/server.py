@@ -9,6 +9,9 @@ without Seedance, Replicate or any per-clip fee. Two quality profiles (ENGINE_QU
   fast            Wan 2.2 TI2V-5B: 720p, 121 frames at 24 fps (5 seconds), from text or a first frame. 24 GB and up.
 The Film Engine chains clips from each last frame into beats of up to 30 seconds and adds voices and score itself.
 
+Writing, so the app needs no paid AI service for scripts, series plans or the Director chat:
+  Qwen3-8B (Apache 2.0), loaded the first time it's asked to write (ENGINE_TEXT_MODEL; ENGINE_TEXT=off turns it off).
+
 Pictures, so the app needs no paid picture service either (both Apache 2.0, loaded the first time they're asked for):
   Qwen-Image             text to picture.
   Qwen-Image-Edit-2511   picture editing, and putting up to three reference pictures (cast portraits, a location)
@@ -23,6 +26,7 @@ API (every call except /health needs `Authorization: Bearer <ENGINE_TOKEN>`):
   POST /v1/images              -> {"id": ...}                       start a picture (with "images": an edit)
   GET  /v1/images/{id}         -> same status shape as videos
   GET  /v1/images/{id}/file    -> the PNG
+  POST /v1/chat                -> {"text": ...}                     write: {"system", "user", "max_tokens", "temperature"}
 
 Settings (environment): ENGINE_TOKEN (required in production), ENGINE_QUALITY (best|fast), ENGINE_OFFLOAD
 (auto|on|off: keep idle model parts in CPU memory), ENGINE_STEPS (default 40), HF_HOME (model cache).
@@ -64,6 +68,8 @@ OUT_DIR = os.environ.get("ENGINE_OUT") or os.path.join(tempfile.gettempdir(), "g
 KEEP_SECONDS = 3 * 3600
 FIVE_B = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 T2I = os.environ.get("ENGINE_IMAGE_MODEL", "Qwen/Qwen-Image")
+WRITER = os.environ.get("ENGINE_TEXT_MODEL", "Qwen/Qwen3-8B")
+WRITING = os.environ.get("ENGINE_TEXT", "on") != "off"
 EDIT = os.environ.get("ENGINE_EDIT_MODEL", "Qwen/Qwen-Image-Edit-2511")
 # Qwen-Image's native sizes per frame shape (from its model card).
 IMAGE_SIZES = {"1:1": (1328, 1328), "16:9": (1664, 928), "9:16": (928, 1664), "4:3": (1472, 1104), "3:4": (1104, 1472), "21:9": (1792, 768)}
@@ -127,6 +133,48 @@ class VideoRequest(BaseModel):
     steps: int | None = Field(default=None, ge=2, le=80)
     guidance: float | None = Field(default=None, ge=1, le=12)
     seed: int | None = None
+
+
+class ChatRequest(BaseModel):
+    system: str = Field(default="", max_length=20_000)
+    user: str = Field(min_length=1, max_length=60_000)
+    max_tokens: int = Field(default=2500, ge=1, le=16_000)
+    temperature: float = Field(default=0.7, ge=0, le=2)
+
+
+class Writer:
+    """The writing model, loaded on first use and shared by all requests (one at a time)."""
+
+    def __init__(self) -> None:
+        self.model = None
+        self.tokenizer = None
+        self.lock = threading.Lock()
+
+    def write(self, r: ChatRequest) -> str:
+        if TINY:
+            # No real weights in tests: a reply that depends on the request.
+            return f'{{"echo": {len(r.user)}, "system": {len(r.system)}}}'
+        with self.lock:
+            if self.model is None:
+                from transformers import AutoModelForCausalLM, AutoTokenizer
+
+                log.info("First writing request: loading %s", WRITER)
+                self.tokenizer = AutoTokenizer.from_pretrained(WRITER)
+                self.model = AutoModelForCausalLM.from_pretrained(WRITER, torch_dtype="auto", device_map="auto").eval()
+            messages = ([{"role": "system", "content": r.system}] if r.system else []) + [{"role": "user", "content": r.user}]
+            # Qwen3 answers directly (no hidden reasoning) so the whole budget goes to the answer.
+            prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, enable_thinking=False)
+            inputs = self.tokenizer([prompt], return_tensors="pt").to(self.model.device)
+            sample = r.temperature > 0
+            with torch.inference_mode():
+                out = self.model.generate(
+                    **inputs, max_new_tokens=r.max_tokens, do_sample=sample, temperature=r.temperature if sample else None,
+                    top_p=0.8 if sample else None, top_k=20 if sample else None,
+                )
+            return self.tokenizer.decode(out[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True).strip()
+
+
+writer = Writer()
 
 
 class ImageRequest(BaseModel):
@@ -452,6 +500,7 @@ def info() -> dict:
         "max_seconds": round(MAIN.max_frames / MAIN.fps, 2),
         "fps": MAIN.fps,
         "aspects": list(ASPECTS),
+        "text_model_writer": WRITER if WRITING else None,
         "image_model": T2I,
         "edit_model": EDIT,
         "image_aspects": list(IMAGE_SIZES),
@@ -507,6 +556,19 @@ def image_file(job_id: str) -> FileResponse:
     if not job or job.status != "succeeded" or not job.file or not isinstance(job.req, ImageRequest):
         raise HTTPException(404, "The picture isn't ready.")
     return FileResponse(job.file, media_type="image/png", filename=f"{job_id}.png")
+
+
+@app.post("/v1/chat", dependencies=[Depends(authorised)])
+def chat(req: ChatRequest) -> dict:
+    if not WRITING:
+        raise HTTPException(503, "Writing is switched off on this engine (ENGINE_TEXT=off).")
+    try:
+        return {"text": writer.write(req), "model": WRITER}
+    except Exception as e:  # noqa: BLE001
+        log.exception("Writing failed")
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        raise HTTPException(500, f"{type(e).__name__}: {e}"[:500]) from e
 
 
 if __name__ == "__main__":

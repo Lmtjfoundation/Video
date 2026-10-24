@@ -1,4 +1,5 @@
 import "server-only";
+import { engineWritingSkipped, ownWrite, videoEngine } from "./own-video";
 import { sleep } from "./utils";
 import { anthropicHeaders, anthropicKey, anthropicWorkspaceHint, ownerGemini, type OwnerGemini } from "./integrations";
 import { recordLlmHealth } from "./llm-health";
@@ -270,6 +271,17 @@ export function resetClaudeDown() {
 export async function claude(opts: CallOpts): Promise<string> {
   const own = await getOwnAi();
   if (own) return callOwnAi(own, opts);
+
+  // Ghost Post's own engine writes first, so no other company's AI credits are used. Its model reads text only, so
+  // requests with pictures (and ones that need live web search) go to Claude or Gemini; if the engine can't answer,
+  // the usual order below takes over.
+  if (!opts.images?.length && !opts.webSearch?.domains.length && !engineWritingSkipped() && (await videoEngine())) {
+    try {
+      return await ownWrite({ system: opts.system, user: opts.user, maxTokens: opts.maxTokens ?? 2500, temperature: opts.temperature ?? 0.85 });
+    } catch (e) {
+      console.warn(`[llm] Ghost Post's engine couldn't write (${(e as Error).message.slice(0, 200)}); using the next AI.`);
+    }
+  }
 
   const gemini = await ownerGemini();
   const claudeConfigured = !!(await anthropicKey());

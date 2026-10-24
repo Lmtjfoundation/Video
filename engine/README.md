@@ -9,6 +9,19 @@ API. Two quality settings (`ENGINE_QUALITY`):
 | **`best`** (default) | Wan 2.2 **I2V-A14B**: the strongest open model, two 14B experts (one lays out the motion, one adds the detail) | 720p, about 5 s per clip at 16 fps, from a first frame | **80 GB** (H100, A100 80 GB) |
 | `fast` | Wan 2.2 **TI2V-5B** | 720p, 5 s per clip at 24 fps, from text or a first frame | 24 GB and up (48 GB+ is quicker) |
 
+The same engine also makes **pictures** and does the **writing**, so Ghost Post needs no other company's AI credits:
+
+| Job | Model | License | Download |
+|---|---|---|---|
+| Pictures from a description | Qwen-Image | Apache 2.0 | 58 GB |
+| Picture edits, and characters placed into scenes (up to 3 reference pictures) | Qwen-Image-Edit-2511 | Apache 2.0 | 58 GB |
+| Writing (scripts, series plans, the Director chat) | Qwen3-8B | Apache 2.0 | 16 GB |
+
+Each loads the first time it's used. With everything in use the disk needs about **300 GB**, so the Azure script makes a
+512 GB disk. The app sends writing that needs to look at a picture, or to search the web, to Claude or Gemini instead
+(Qwen3-8B reads text only); if the engine can't answer, the app falls back to them too. `ENGINE_TEXT=off` turns
+writing off on the engine.
+
 In `best`, a clip that has no starting picture (rare in the Film Engine, which starts from your cast portraits and
 from each clip's last frame) is made with TI2V-5B, loaded the first time it is needed.
 
