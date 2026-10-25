@@ -62,24 +62,46 @@ export async function ownEngineReady(cap: EngineCapability = "pictures"): Promis
   return caps === null || caps.includes(cap);
 }
 
+/** When the engine last answered (so a busy run of calls doesn't check its health every time). */
+let lastAnswered = 0;
+
+/** A gateway's "can't reach it" answer (a proxy or load balancer in front of a switched-off machine), not the engine's own. */
+const unreachable = async (res: Response) => {
+  if (res.status === 502 || res.status === 504) return true;
+  if (res.status !== 503) return false;
+  return !(res.headers.get("content-type") ?? "").includes("json"); // the engine's own 503s are JSON
+};
+
 async function call<T>(path: string, init: RequestInit = {}, raw = false): Promise<T> {
   const e = await videoEngine();
   if (!e) throw new MediaGenError("Ghost Post's video engine isn't connected. The admin adds its address and token in Admin → App settings → Integrations → Ghost Post Video Engine.", "config");
-  let res: Response;
-  const send = () => fetch(`${e.url}${path}`, { ...init, headers: { Authorization: `Bearer ${e.token}`, ...(init.headers ?? {}) }, signal: AbortSignal.timeout(120_000) });
-  try {
-    res = await send();
-  } catch (err) {
-    // The machine may be switched off for the night: start it (when wake on use is set up) and try once more.
-    const { wakeConfigured, wakeEngine } = await import("./vm-wake");
-    if (!(await wakeConfigured())) throw new MediaGenError(`Ghost Post's video engine didn't answer at ${e.url} (${(err as Error).message}). Check the GPU server is running.`);
+  const { wakeConfigured, wakeEngine, engineHealthy } = await import("./vm-wake");
+  const wake = async () => {
     try {
       await wakeEngine(e.url);
-      res = await send();
-    } catch (again) {
-      throw new MediaGenError(`Ghost Post's engine couldn't be woken: ${(again as Error).message}`);
+    } catch (err) {
+      throw new MediaGenError(`Ghost Post's engine couldn't be woken: ${(err as Error).message}`);
     }
+  };
+  // The machine may be switched off for the night: with wake on use set up, a quick check first (a switched-off
+  // machine would otherwise keep a request hanging for minutes), then start it and wait.
+  const canWake = await wakeConfigured();
+  if (canWake && Date.now() - lastAnswered > 60_000 && !(await engineHealthy(e.url))) await wake();
+  const send = () => fetch(`${e.url}${path}`, { ...init, headers: { Authorization: `Bearer ${e.token}`, ...(init.headers ?? {}) }, signal: AbortSignal.timeout(120_000) });
+  let res: Response;
+  try {
+    res = await send();
+    if (canWake && (await unreachable(res))) {
+      await wake();
+      res = await send();
+    }
+  } catch (err) {
+    if (err instanceof MediaGenError) throw err;
+    if (!canWake) throw new MediaGenError(`Ghost Post's video engine didn't answer at ${e.url} (${(err as Error).message}). Check the GPU server is running.`);
+    await wake();
+    res = await send();
   }
+  if (res.ok || res.status < 500) lastAnswered = Date.now();
   if (res.status === 401) throw new MediaGenError("The video engine rejected the token. Paste the ENGINE_TOKEN the engine was started with.", "config");
   if (!res.ok) {
     const text = await res.text();

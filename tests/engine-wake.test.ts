@@ -86,6 +86,42 @@ describe("engine capabilities and wake on use", () => {
     expect(calls.indexOf("GET https://ghost.example/health")).toBeGreaterThan(calls.findIndex((c) => c.includes("management.azure.com")));
   });
 
+  it("also wakes the VM when a proxy in front of it answers for the switched-off machine", async () => {
+    process.env.VM_WAKE = LINE;
+    let up = false;
+    let starts = 0;
+    vi.stubGlobal("fetch", vi.fn(async (u: string, init?: RequestInit) => {
+      const url = String(u);
+      if (url.startsWith("https://login.microsoftonline.com/")) return Response.json({ access_token: "t" });
+      if (url.startsWith("https://management.azure.com/")) {
+        starts++;
+        up = true;
+        return new Response(null, { status: 202 });
+      }
+      if (!up) return new Response("upstream connect error or disconnect/reset before headers", { status: 503, headers: { "content-type": "text/plain" } });
+      if (url.endsWith("/health")) return Response.json({ ok: true });
+      if (url.endsWith("/v1/info")) return Response.json({ profile: "tools", capabilities: ["upscale"], ready: true, device: "cpu", vram_gb: 0, queue: 0, model: "-" });
+      return new Response("{}", { status: 404, headers: { "content-type": "application/json" } });
+    }));
+    const { testOwnEngine } = await import("@/lib/own-video");
+    expect((await testOwnEngine()).ok).toBe(true);
+    expect(starts).toBe(1);
+  });
+
+  it("keeps the engine's own 503 as its answer (no wake)", async () => {
+    process.env.VM_WAKE = LINE;
+    let starts = 0;
+    vi.stubGlobal("fetch", vi.fn(async (u: string) => {
+      const url = String(u);
+      if (url.startsWith("https://management.azure.com/")) starts++;
+      if (url.endsWith("/health")) return Response.json({ ok: true });
+      return Response.json({ detail: "This engine runs without a GPU" }, { status: 503 });
+    }));
+    const { ownImage } = await import("@/lib/own-video");
+    await expect(ownImage({ prompt: "a cat", aspect: "1:1" })).rejects.toThrow(/without a GPU/);
+    expect(starts).toBe(0);
+  });
+
   it("says plainly when the machine is off and wake isn't set up", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => {
       throw new TypeError("fetch failed");
