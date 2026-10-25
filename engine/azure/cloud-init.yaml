@@ -46,7 +46,8 @@ write_files:
       ExecStartPre=/bin/sh -c '[ -d vendor/MOSS-TTS ] || { git clone -q https://github.com/OpenMOSS/MOSS-TTS vendor/MOSS-TTS && git -C vendor/MOSS-TTS checkout -q 934d6826b084c46a0d033402174d5f8ac4ed2519; }'
       ExecStartPre=/opt/ghost-post/audio-venv/bin/pip install -q -r /opt/ghost-post/repo/engine/requirements-audio.txt
       ExecStartPre=/opt/ghost-post/audio-venv/bin/pip install -q --no-deps -r /opt/ghost-post/repo/engine/requirements-audio-nodeps.txt
-      ExecStart=/opt/ghost-post/audio-venv/bin/python audio_server.py
+      # Fast downloads (hf_transfer) are installed only in the video engine's environment.
+      ExecStart=/usr/bin/env HF_HUB_ENABLE_HF_TRANSFER=0 /opt/ghost-post/audio-venv/bin/python audio_server.py
       Restart=always
       RestartSec=20
       TimeoutStartSec=infinity
@@ -62,7 +63,8 @@ write_files:
       WorkingDirectory=/opt/ghost-post/repo/engine
       ExecStartPre=/bin/sh -c 'until nvidia-smi >/dev/null 2>&1; do sleep 15; done'
       ExecStartPre=/bin/sh -c 'PATH=/usr/local/bin:$PATH ./setup-sidecars.sh'
-      ExecStart=/opt/ghost-post/repo/engine/.speech-venv/bin/python speech_server.py
+      # Fast downloads (hf_transfer) are installed only in the video engine's environment.
+      ExecStart=/usr/bin/env HF_HUB_ENABLE_HF_TRANSFER=0 /opt/ghost-post/repo/engine/.speech-venv/bin/python speech_server.py
       Restart=always
       RestartSec=20
       TimeoutStartSec=infinity
@@ -78,7 +80,8 @@ write_files:
       WorkingDirectory=/opt/ghost-post/repo/engine
       ExecStartPre=/bin/sh -c 'until nvidia-smi >/dev/null 2>&1; do sleep 15; done'
       ExecStartPre=/bin/sh -c 'PATH=/usr/local/bin:$PATH ./setup-sidecars.sh'
-      ExecStart=/opt/ghost-post/repo/engine/.lipsync-venv/bin/python lipsync_server.py
+      # Fast downloads (hf_transfer) are installed only in the video engine's environment.
+      ExecStart=/usr/bin/env HF_HUB_ENABLE_HF_TRANSFER=0 /opt/ghost-post/repo/engine/.lipsync-venv/bin/python lipsync_server.py
       Restart=always
       RestartSec=20
       TimeoutStartSec=infinity
@@ -94,7 +97,8 @@ write_files:
       WorkingDirectory=/opt/ghost-post/repo/engine
       ExecStartPre=/bin/sh -c 'until nvidia-smi >/dev/null 2>&1; do sleep 15; done'
       ExecStartPre=/bin/sh -c 'PATH=/usr/local/bin:$PATH ./setup-sidecars.sh'
-      ExecStart=/opt/ghost-post/repo/engine/.design-venv/bin/python voicedesign_server.py
+      # Fast downloads (hf_transfer) are installed only in the video engine's environment.
+      ExecStart=/usr/bin/env HF_HUB_ENABLE_HF_TRANSFER=0 /opt/ghost-post/repo/engine/.design-venv/bin/python voicedesign_server.py
       Restart=always
       RestartSec=20
       TimeoutStartSec=infinity
@@ -120,7 +124,7 @@ runcmd:
   - /opt/ghost-post/audio-venv/bin/pip install -q torch==2.9.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu128
   - /opt/ghost-post/audio-venv/bin/pip install -q -r /opt/ghost-post/repo/engine/requirements-audio.txt
   - /opt/ghost-post/audio-venv/bin/pip install -q --no-deps -r /opt/ghost-post/repo/engine/requirements-audio-nodeps.txt
-  - curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  - curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
   - curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt -o /etc/apt/sources.list.d/caddy-stable.list
   - apt-get update -q && apt-get install -y -q caddy
   - cp /etc/caddy/Caddyfile.ghost-post /etc/caddy/Caddyfile

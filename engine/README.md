@@ -76,6 +76,24 @@ Options go before `bash`, e.g. `| LOCATION=eastus2 bash` for another region, or 
 quicker TI2V-5B setting. Azure's A10 VMs (NVadsA10 v5) are not recommended: Microsoft's driver page lists a known CUDA
 problem with the GRID driver they install.
 
+## On a GPU VM you already have (one command)
+
+On any Ubuntu 22.04/24.04 VM with an NVIDIA GPU (Azure NC A100/H100 or NV A10 sizes), SSH in and run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-autopilot/engine/azure/install.sh | sudo bash
+```
+
+It installs the NVIDIA driver if needed (then asks for one restart: `sudo reboot`, SSH in again, run the same line),
+the engine and its side services as systemd services, and Caddy with a free HTTPS certificate for
+`<your-ip>.sslip.io` (or pass your own DNS name: `... | sudo bash -s -- engine.example.com`). At the end it prints the
+**Engine URL** and **token** to paste into Ghost Post (Admin → App settings → Integrations → Ghost Post Video Engine).
+
+- Open inbound TCP **80 and 443** to the VM (Azure: VM → Networking); Caddy needs both for the certificate.
+- The models need about **250 GB** of disk: resize the OS disk or mount a data disk at `/opt/ghost-post` first.
+- `... | sudo bash -s -- --check` only reports what's ready. Running it again updates to the latest code and keeps
+  the token. Logs: `sudo journalctl -fu ghost-post-engine` (and `-audio`, `-speech`, `-lipsync`, `-voicedesign`).
+
 ## Start it on RunPod (or any GPU host)
 
 1. Create a GPU pod from a **PyTorch** template (CUDA 12.8 or newer) on an **80 GB GPU (H100 or A100 80 GB)** with a
