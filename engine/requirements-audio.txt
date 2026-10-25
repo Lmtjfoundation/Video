@@ -1,0 +1,20 @@
+# Ghost Post Audio Engine (audio_server.py), in its own environment: the audio models need transformers < 4.58.
+# torch/torchaudio come from the host (CUDA build). ACE-Step itself is installed with --no-deps (its package pins a
+# CUDA-specific torch build): requirements-audio-nodeps.txt. The MOSS-SoundEffect code is cloned into vendor/MOSS-TTS.
+transformers==4.57.1
+diffusers==0.37.1
+accelerate==1.13.0
+descript-audiotools==0.7.2
+einops==0.8.2
+safetensors==0.7.0
+soundfile==0.13.1
+scipy==1.16.2
+loguru==0.7.3
+diskcache==5.6.3
+numba==0.63.1
+vector-quantize-pytorch==1.27.15
+toml==0.10.2
+ftfy==6.3.1
+fastapi==0.142.2
+uvicorn==0.54.0
+numpy<2

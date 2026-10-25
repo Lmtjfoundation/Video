@@ -27,9 +27,11 @@ API (every call except /health needs `Authorization: Bearer <ENGINE_TOKEN>`):
   GET  /v1/images/{id}         -> same status shape as videos
   GET  /v1/images/{id}/file    -> the PNG
   POST /v1/chat                -> {"text": ...}                     write: {"system", "user", "max_tokens", "temperature"}
+  /v1/audio...                 music and sound effects: forwarded to the audio engine (audio_server.py, AUDIO_URL)
 
 Settings (environment): ENGINE_TOKEN (required in production), ENGINE_QUALITY (best|fast), ENGINE_OFFLOAD
 (auto|on|off: keep idle model parts in CPU memory), ENGINE_STEPS (default 40), HF_HOME (model cache).
+AUDIO_URL (default http://127.0.0.1:8001): where audio_server.py listens (its own Python environment; start.sh runs it).
 ENGINE_MODEL=tiny / tiny-best build tiny random models of each profile for tests.
 """
 
@@ -50,8 +52,8 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 
 import torch
-from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.responses import FileResponse, Response
 from PIL import Image, ImageOps
 from pydantic import BaseModel, Field
 
@@ -71,6 +73,7 @@ T2I = os.environ.get("ENGINE_IMAGE_MODEL", "Qwen/Qwen-Image")
 WRITER = os.environ.get("ENGINE_TEXT_MODEL", "Qwen/Qwen3-8B")
 WRITING = os.environ.get("ENGINE_TEXT", "on") != "off"
 EDIT = os.environ.get("ENGINE_EDIT_MODEL", "Qwen/Qwen-Image-Edit-2511")
+AUDIO_URL = os.environ.get("AUDIO_URL", "http://127.0.0.1:8001").rstrip("/")
 # Qwen-Image's native sizes per frame shape (from its model card).
 IMAGE_SIZES = {"1:1": (1328, 1328), "16:9": (1664, 928), "9:16": (928, 1664), "4:3": (1472, 1104), "3:4": (1104, 1472), "21:9": (1792, 768)}
 A14B = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
@@ -569,6 +572,26 @@ def chat(req: ChatRequest) -> dict:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         raise HTTPException(500, f"{type(e).__name__}: {e}"[:500]) from e
+
+
+@app.api_route("/v1/audio", methods=["POST"], dependencies=[Depends(authorised)])
+@app.api_route("/v1/audio/{rest:path}", methods=["GET"], dependencies=[Depends(authorised)])
+async def audio(request: Request, rest: str = "") -> Response:
+    """Music and sound effects are made by audio_server.py (its own Python environment): pass the call through."""
+    import urllib.error
+    import urllib.request
+
+    url = f"{AUDIO_URL}/v1/audio" + (f"/{rest}" if rest else "")
+    data = await request.body() if request.method == "POST" else None
+    req = urllib.request.Request(url, data=data, method=request.method,
+                                 headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:  # noqa: S310 - our own sidecar
+            return Response(r.read(), status_code=r.status, media_type=r.headers.get("Content-Type"))
+    except urllib.error.HTTPError as e:
+        return Response(e.read(), status_code=e.code, media_type=e.headers.get("Content-Type"))
+    except OSError as e:
+        raise HTTPException(503, f"The audio engine isn't running on this server ({e}). start.sh starts it beside the video engine.") from e
 
 
 if __name__ == "__main__":

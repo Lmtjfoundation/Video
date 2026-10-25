@@ -77,7 +77,7 @@ export function JobsTray() {
   }
 
   return (
-    <div className="fixed right-4 top-[calc(env(safe-area-inset-top)+64px)] z-50 w-[calc(100%-2rem)] max-w-xs lg:bottom-4 lg:left-[17rem] lg:right-auto lg:top-auto">
+    <div className="fixed right-4 top-[calc(env(safe-area-inset-top)+64px)] z-50 w-[calc(100%-2rem)] max-w-xs lg:bottom-4 lg:left-[17rem] lg:right-auto lg:top-auto lg:[body.has-player_&]:bottom-24">
       {open ? (
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-ink-900/95 shadow-2xl backdrop-blur-xl">
           <div className="flex items-center justify-between px-4 py-2.5">

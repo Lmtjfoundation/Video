@@ -94,6 +94,49 @@ export async function ownImage(o: { prompt: string; refs?: { bytes: Buffer; mime
   }
 }
 
+export type OwnAudioRequest = {
+  kind: "music" | "sfx";
+  prompt: string;
+  /** Music only: sung lyrics (with instrumental false). */
+  lyrics?: string;
+  instrumental?: boolean;
+  seconds: number;
+  bpm?: number;
+  key?: string;
+  timeoutMs?: number;
+};
+
+/**
+ * Makes music (ACE-Step 1.5) or a sound effect (MOSS-SoundEffect v2) on the engine's audio side. Returns the 48 kHz WAV
+ * and, for music, the tempo and key it was made in.
+ */
+export async function ownAudio(o: OwnAudioRequest): Promise<{ wav: Buffer; bpm?: number; key?: string }> {
+  const job = await call<{ id: string }>("/v1/audio", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      kind: o.kind,
+      prompt: o.prompt.slice(0, 500),
+      lyrics: (o.lyrics ?? "").slice(0, 4000),
+      instrumental: o.instrumental ?? true,
+      seconds: o.seconds,
+      bpm: o.bpm || undefined,
+      key: o.key || undefined,
+    }),
+  });
+  const deadline = Date.now() + (o.timeoutMs ?? 15 * 60_000);
+  for (;;) {
+    const s = await call<{ status: string; error?: string | null; bpm?: number | null; key?: string | null }>(`/v1/audio/${job.id}`);
+    if (s.status === "succeeded") {
+      const wav = await call<Buffer>(`/v1/audio/${job.id}/file`, {}, true);
+      return { wav, bpm: s.bpm ?? undefined, key: s.key ?? undefined };
+    }
+    if (s.status === "failed") throw new MediaGenError(`The engine couldn't make this ${o.kind === "music" ? "track" : "sound"}: ${(s.error ?? "no reason given").slice(0, 300)}`);
+    if (Date.now() > deadline) throw new MediaGenError("The engine took too long. The first track after a restart also loads the music model (a few minutes).");
+    await sleep(3000);
+  }
+}
+
 /** Until when the engine's writing is skipped after it said writing is off or failed to load (0 = try it). */
 let writingOffUntil = 0;
 export const engineWritingSkipped = () => Date.now() < writingOffUntil;

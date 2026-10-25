@@ -29,13 +29,30 @@ export function kokoroVoice(note = "") {
   return /deep|gravel|low|older|grand/.test(n) ? "am_onyx" : "am_michael";
 }
 
-/** Writes the narration as a WAV file. */
-export async function freeVoice(text: string, file: string, note?: string) {
+/** The Kokoro voices people can pick in AI Studio → Voiceover (American and British English). */
+export const KOKORO_VOICES = [
+  { id: "af_heart", label: "Heart — warm woman (US)" },
+  { id: "af_bella", label: "Bella — bright young woman (US)" },
+  { id: "af_nicole", label: "Nicole — soft, close woman (US)" },
+  { id: "af_sarah", label: "Sarah — clear woman (US)" },
+  { id: "am_michael", label: "Michael — friendly man (US)" },
+  { id: "am_onyx", label: "Onyx — deep man (US)" },
+  { id: "am_fenrir", label: "Fenrir — strong man (US)" },
+  { id: "am_puck", label: "Puck — lively man (US)" },
+  { id: "bf_emma", label: "Emma — woman (British)" },
+  { id: "bf_isabella", label: "Isabella — woman (British)" },
+  { id: "bm_george", label: "George — man (British)" },
+  { id: "bm_fable", label: "Fable — storyteller man (British)" },
+] as const;
+
+/** Writes the narration as a WAV file, with the voice picked from a note or named exactly (a KOKORO_VOICES id). */
+export async function freeVoice(text: string, file: string, note?: string, o: { voice?: string; speed?: number } = {}) {
   model ??= load().catch((e) => {
     model = null; // try again next time (e.g. the download was interrupted)
     throw e;
   });
   const tts = await model;
-  const audio = await tts.generate(text.slice(0, 2000), { voice: kokoroVoice(note) });
+  const voice = KOKORO_VOICES.some((v) => v.id === o.voice) ? o.voice! : kokoroVoice(note);
+  const audio = await tts.generate(text.slice(0, 2000), { voice, speed: o.speed });
   await audio.save(file);
 }

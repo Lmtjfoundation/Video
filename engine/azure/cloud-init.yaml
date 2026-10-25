@@ -34,6 +34,24 @@ write_files:
       TimeoutStartSec=infinity
       [Install]
       WantedBy=multi-user.target
+  - path: /etc/systemd/system/ghost-post-audio.service
+    content: |
+      [Unit]
+      Description=Ghost Post Audio Engine (music and sound effects; the video engine forwards /v1/audio here)
+      After=ghost-post-engine.service
+      [Service]
+      EnvironmentFile=/etc/ghost-post-engine.env
+      WorkingDirectory=/opt/ghost-post/repo/engine
+      ExecStartPre=/bin/sh -c 'until nvidia-smi >/dev/null 2>&1; do sleep 15; done'
+      ExecStartPre=/bin/sh -c '[ -d vendor/MOSS-TTS ] || { git clone -q https://github.com/OpenMOSS/MOSS-TTS vendor/MOSS-TTS && git -C vendor/MOSS-TTS checkout -q 934d6826b084c46a0d033402174d5f8ac4ed2519; }'
+      ExecStartPre=/opt/ghost-post/audio-venv/bin/pip install -q -r /opt/ghost-post/repo/engine/requirements-audio.txt
+      ExecStartPre=/opt/ghost-post/audio-venv/bin/pip install -q --no-deps -r /opt/ghost-post/repo/engine/requirements-audio-nodeps.txt
+      ExecStart=/opt/ghost-post/audio-venv/bin/python audio_server.py
+      Restart=always
+      RestartSec=20
+      TimeoutStartSec=infinity
+      [Install]
+      WantedBy=multi-user.target
   - path: /etc/caddy/Caddyfile.ghost-post
     content: |
       __DOMAIN__ {
@@ -49,6 +67,11 @@ runcmd:
   - /opt/ghost-post/venv/bin/pip install -q --upgrade pip
   - /opt/ghost-post/venv/bin/pip install -q torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128
   - /opt/ghost-post/venv/bin/pip install -q -r /opt/ghost-post/repo/engine/requirements.txt
+  # Music and sound effects run in their own environment (they need older transformers than the video models).
+  - env UV_PYTHON_INSTALL_DIR=/opt/ghost-post/python uv venv --seed --python 3.12 /opt/ghost-post/audio-venv
+  - /opt/ghost-post/audio-venv/bin/pip install -q torch==2.9.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu128
+  - /opt/ghost-post/audio-venv/bin/pip install -q -r /opt/ghost-post/repo/engine/requirements-audio.txt
+  - /opt/ghost-post/audio-venv/bin/pip install -q --no-deps -r /opt/ghost-post/repo/engine/requirements-audio-nodeps.txt
   - curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
   - curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt -o /etc/apt/sources.list.d/caddy-stable.list
   - apt-get update -q && apt-get install -y -q caddy
@@ -56,3 +79,4 @@ runcmd:
   - systemctl restart caddy
   - systemctl daemon-reload
   - systemctl enable --now ghost-post-engine
+  - systemctl enable --now ghost-post-audio

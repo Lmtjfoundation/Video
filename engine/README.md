@@ -17,6 +17,17 @@ The same engine also makes **pictures** and does the **writing**, so Ghost Post 
 | Picture edits, and characters placed into scenes (up to 3 reference pictures) | Qwen-Image-Edit-2511 | Apache 2.0 | 58 GB |
 | Writing (scripts, series plans, the Director chat) | Qwen3-8B | Apache 2.0 | 16 GB |
 
+And the **sound** for the Library and AI Studio (music, sound effects), in a second process with its own Python
+environment (`audio_server.py`, `requirements-audio.txt`; the video engine forwards `/v1/audio` to it, so the app still
+uses one address and one token):
+
+| Job | Model | License | Download |
+|---|---|---|---|
+| Music: songs and instrumentals, 10 s to 4 min, from a description and optional lyrics | ACE-Step 1.5 turbo | MIT (the model card allows commercial use of the music) | about 10 GB |
+| Sound effects, up to 30 s, from a description | MOSS-SoundEffect v2 | Apache 2.0 | about 11 GB |
+
+`start.sh`, the Dockerfile and the Azure script set both processes up; the audio side needs no settings of its own.
+
 Each loads the first time it's used. With everything in use the disk needs about **300 GB**, so the Azure script makes a
 512 GB disk. The app sends writing that needs to look at a picture, or to search the web, to Claude or Gemini instead
 (Qwen3-8B reads text only); if the engine can't answer, the app falls back to them too. `ENGINE_TEXT=off` turns

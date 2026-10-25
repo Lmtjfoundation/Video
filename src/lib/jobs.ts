@@ -9,7 +9,7 @@ import { nowIso, uid } from "./utils";
  * storyboard) runs on the server while the person keeps using the app, or leaves it. The jobs tray shows progress
  * and says when each one is ready; a video that renders afterwards is followed through its render too.
  */
-export type JobKind = "video" | "audio" | "movie" | "episode" | "director";
+export type JobKind = "video" | "audio" | "movie" | "episode" | "director" | "music" | "sfx" | "footage";
 export type JobStatus = "queued" | "running" | "done" | "failed";
 
 export interface Job {
@@ -27,6 +27,12 @@ export interface Job {
 }
 
 const ROW = "jobs";
+const STARTING: Partial<Record<JobKind, string>> = {
+  audio: "Listening to the recording…",
+  music: "Composing the track…",
+  sfx: "Making the sound…",
+  footage: "Filming the clip…",
+};
 const KEEP = 30;
 /** At most this many jobs write at once on this server (each mostly waits on an AI service). */
 const PARALLEL = 3;
@@ -79,7 +85,7 @@ export async function startJob(userId: string, o: { kind: JobKind; title: string
     try {
       await asUser(userId, async () => {
         job.status = "running";
-        job.message = o.kind === "audio" ? "Listening to the recording…" : "Writing…";
+        job.message = STARTING[o.kind] ?? "Writing…";
         await put(job);
         try {
           const r = await fn();

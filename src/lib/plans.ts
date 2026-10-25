@@ -184,6 +184,17 @@ export const CREDIT_COST = {
    * lower it once your own timings show a faster GPU.
    */
   ownSecond: 16,
+  /**
+   * Music and sound effects on the same GPU (Library generators). ACE-Step 1.5 turbo makes a full song in well under a
+   * minute even on a 24 GB card and MOSS-SoundEffect v2 a 30-second sound in about a minute, a few cents of GPU time
+   * each at the A100 price above; the prices keep the same margin as footage.
+   */
+  aiMusic: 6,
+  aiSfx: 3,
+  /** AI Voiceover on the app's own server (Kokoro): per started 1,000 characters. */
+  voiceover: 1,
+  /** Turn a short idea into a full generator prompt. */
+  autoPrompt: 1,
   /** Film Engine: plan a whole film as Seedance beats with timestamped shot lists, or write one more beat. */
   filmPlan: 4,
   filmBeat: 1,
@@ -213,6 +224,10 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   wanSecond: "Each second of a Wan 2.2-animated scene (4–8 seconds per scene)",
   character: "Create a character from a photo or description",
   explain: "Explain a text in plain language (2 credits over 8,000 characters)",
+  aiMusic: "AI Music: one track up to 4 minutes, with the license",
+  aiSfx: "AI Sound Effects: one sound up to 30 seconds, with the license",
+  autoPrompt: "Auto-prompt: turn a short idea into a full prompt",
+  voiceover: "AI Voiceover: each started 1,000 characters",
   filmDevelop: "Writers' Room: develop or revise a short film (titles, characters, world, structure, scene outline)",
   filmDevelopLong: "Writers' Room: develop or revise a feature film or series pilot",
   filmPage: "Writers' Room: screenplay pages, per scene",
