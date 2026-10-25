@@ -26,6 +26,7 @@ interface AdminUser {
   counts: { total: number; scheduled: number; review: number };
   isOwner?: boolean;
   isCoOwner?: boolean;
+  staff?: boolean;
 }
 interface ContentRow {
   owner: string;
@@ -303,7 +304,7 @@ function UsersTab({ onChange }: { onChange: () => void }) {
               return (
                 <tr key={u.id} className="align-top">
                   <td className="px-5 py-3">
-                    <p className="font-medium text-white">{u.name} {u.isOwner ? <Badge tone="gold">owner</Badge> : u.isCoOwner ? <Badge tone="gold">co-owner</Badge> : u.role === "admin" && <Badge tone="gold">admin</Badge>}</p>
+                    <p className="font-medium text-white">{u.name} {u.isOwner ? <Badge tone="gold">owner</Badge> : u.isCoOwner ? <Badge tone="gold">co-owner</Badge> : u.role === "admin" && <Badge tone="gold">admin</Badge>} {u.staff && u.role !== "admin" && <Badge tone="mint">employee · unlimited</Badge>}</p>
                     <p className="text-xs text-white/45">{u.email}</p>
                     <p className="text-xs text-white/35">Joined {new Date(u.createdAt).toLocaleDateString()}{u.lastLoginAt ? ` · last seen ${new Date(u.lastLoginAt).toLocaleDateString()}` : ""}</p>
                   </td>
@@ -327,6 +328,9 @@ function UsersTab({ onChange }: { onChange: () => void }) {
                       <Button size="sm" variant="ghost" onClick={() => { setResetFor(u.id); setPw(""); }} title="Set a new password"><KeyRound className="h-3.5 w-3.5" /></Button>
                       {u.id !== me && !u.isOwner && (
                         <>
+                          {u.role !== "admin" && (u.staff
+                            ? <Button size="sm" onClick={() => patch(u.id, { staff: false }, "Employee access removed")}>Remove employee</Button>
+                            : <Button size="sm" onClick={() => { if (confirm(`Make ${u.email} an employee? They get unlimited use, without admin access.`)) void patch(u.id, { staff: true }, "Employee: unlimited use"); }} title="Unlimited use, no admin access">Make employee</Button>)}
                           {!u.isCoOwner && <Button size="sm" variant="primary" onClick={() => { if (confirm(`Make ${u.email} a co-owner? They get full admin access and unlimited use.`)) void patch(u.id, { makeCoOwner: true }, "Co-owner: admin access and unlimited use"); }} title="Admin access and the Unlimited plan">Make co-owner</Button>}
                           <Button size="sm" onClick={() => patch(u.id, { role: u.role === "admin" ? "user" : "admin" }, u.role === "admin" ? "Admin removed" : "Made admin")}>{u.role === "admin" ? "Remove admin" : "Make admin"}</Button>
                           <Button size="sm" variant={u.status === "active" ? "danger" : "primary"} onClick={() => patch(u.id, { status: u.status === "active" ? "suspended" : "active" }, u.status === "active" ? "Suspended" : "Reactivated")}>{u.status === "active" ? "Suspend" : "Reactivate"}</Button>

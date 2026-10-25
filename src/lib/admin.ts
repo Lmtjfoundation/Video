@@ -46,6 +46,8 @@ export interface UserPatch {
   resetUsage?: boolean;
   /** Co-owner: admin access and the Unlimited plan in one step (admins never spend credits). */
   makeCoOwner?: boolean;
+  /** Employee: unlimited use (no credits spent, Unlimited plan) without admin access; false takes it away. */
+  staff?: boolean;
 }
 
 export async function adminUpdateUser(actor: User, p: UserPatch) {
@@ -71,6 +73,14 @@ export async function adminUpdateUser(actor: User, p: UserPatch) {
   if (p.role && p.role !== u.role) {
     changes.push(`role → ${p.role}`);
     u.role = p.role;
+  }
+  if (typeof p.staff === "boolean" && p.staff !== !!u.staff) {
+    changes.push(p.staff ? "made an employee (unlimited use)" : "employee access removed");
+    u.staff = p.staff;
+    if (p.staff) {
+      if (u.plan !== "unlimited") changes.push(`plan ${u.plan} → unlimited`);
+      u.plan = "unlimited";
+    }
   }
   if (typeof p.requireApproval === "boolean" && p.requireApproval !== u.requireApproval) {
     changes.push(p.requireApproval ? "approval required" : "approval not required");

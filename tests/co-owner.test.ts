@@ -38,6 +38,25 @@ describe("co-owner access", () => {
     expect((await getUser(friend.id))!.role).toBe("user");
   });
 
+  it("gives employees unlimited use without admin access", async () => {
+    const { createUser, getUser, spendCredits, rollVault } = await import("@/lib/auth");
+    const { adminUpdateUser, adminUsers } = await import("@/lib/admin");
+    const owner = (await adminUsers()).find((u) => u.isOwner)!;
+    const actor = (await getUser(owner.id))!;
+    const emp = await createUser({ email: "staff@example.com", password: "Correct-horse-battery-9" });
+    const balance = async () => ((await rollVault((await getUser(emp.id))!)).vault?.lots ?? []).reduce((n, l) => n + l.credits, 0);
+    await adminUpdateUser(actor, { id: emp.id, staff: true });
+    const e = (await getUser(emp.id))!;
+    expect(e).toMatchObject({ staff: true, plan: "unlimited", role: "user" });
+    const before = await balance();
+    await spendCredits(emp.id, 50_000); // far more than any plan holds
+    expect(await balance()).toBe(before);
+    expect((await adminUsers()).find((u) => u.id === emp.id)).toMatchObject({ staff: true, isCoOwner: false });
+    // Employees can't change other accounts: the admin routes check the role, which stays "user".
+    await adminUpdateUser(actor, { id: emp.id, staff: false });
+    await expect(spendCredits(emp.id, 50_000)).rejects.toThrow(/credit/);
+  });
+
   it("answers 503 with Retry-After (not 502) when an AI service is down", async () => {
     const { handle } = await import("@/lib/http-api");
     const { LLMError } = await import("@/lib/llm");
