@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Activity, BookOpenText, CalendarDays, Clapperboard, Compass, CreditCard, Feather, Film, Flame, Images, LayoutDashboard, Library, Wand2, Workflow, Lightbulb, ListVideo, LogOut, Menu, MessageSquare, MessagesSquare, Palette, ScrollText, Settings, Share2, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Activity, BookOpenText, CalendarDays, Clapperboard, Compass, CreditCard, Feather, Film, Flame, Images, LayoutDashboard, Library, Wand2, Workflow, Code2, Lightbulb, ListVideo, LogOut, Menu, MessageSquare, MessagesSquare, Palette, ScrollText, Settings, Share2, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { JobsTray } from "./jobs-tray";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ const NAV: NavItem[] = [
   { href: "/logs", label: "Activity Log", short: "Log", icon: ScrollText },
   { href: "/plans", label: "Plans & Billing", short: "Plans", icon: CreditCard },
   { href: "/settings", label: "Settings", short: "Settings", icon: Settings },
+  { href: "/developers", label: "Developers", short: "API", icon: Code2 },
   { href: "/admin", label: "Admin", short: "Admin", icon: ShieldCheck, badge: "review", admin: true },
 ];
 /** Bottom bar on phones: the five things people do most. */

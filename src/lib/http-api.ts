@@ -7,8 +7,16 @@ import { AuthError, QuotaError, userFromRequest, type User } from "./auth";
 export const ok = <T>(data: T, init?: number) => NextResponse.json(data, { status: init ?? 200 });
 export const fail = (message: string, status = 400) => NextResponse.json({ error: message }, { status });
 
+/** A request that can't be done as asked: its message goes to the caller with this status. */
+export class RequestError extends Error {
+  constructor(message: string, public status = 400) {
+    super(message);
+  }
+}
+
 function toResponse(e: unknown, user?: User | null) {
   const err = e as Error;
+  if (err instanceof RequestError) return fail(err.message, err.status);
   if (err instanceof AuthError) return fail(err.message, err.status);
   if (err instanceof QuotaError) return fail(err.message, 402);
   console.error("[ghost-post:api]", err instanceof LLMError && err.ownerMessage ? `${err.message} | ${err.ownerMessage}` : err);
@@ -43,6 +51,31 @@ export function authed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Respo
       if (opts.admin && user.role !== "admin") return fail("Admins only.", 403);
       const u = user;
       return await asUser(u.id, () => fn(req, u, ctx));
+    } catch (e) {
+      return toResponse(e, user);
+    }
+  };
+}
+
+/**
+ * Developer API route: authenticated by a personal API key (Authorization: Bearer gp_live_…) instead of a session,
+ * limited to 60 requests a minute per key, with everything scoped to the key's owner.
+ */
+export function apiKeyed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Response>) {
+  return async (req: Request, ctx: Ctx) => {
+    let user: User | null = null;
+    try {
+      const { overLimit, touchKey, userForKey } = await import("./api-keys");
+      const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+      const found = token ? await userForKey(token) : null;
+      if (!found) return fail("Send a valid API key: Authorization: Bearer gp_live_… (make one in Ghost Post → Developers).", 401);
+      if (overLimit(found.keyId)) return fail("Too many requests: the limit is 60 a minute per key.", 429);
+      user = found.user;
+      const u = found.user;
+      return await asUser(u.id, async () => {
+        void touchKey(found.keyId).catch(() => {});
+        return fn(req, u, ctx);
+      });
     } catch (e) {
       return toResponse(e, user);
     }
