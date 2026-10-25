@@ -1,2 +1,5 @@
 Poppins (Bold) by Indian Type Foundry — licensed under the SIL Open Font License, Version 1.1.
 https://openfontlicense.org — used to burn captions into rendered videos.
+
+Bebas Neue by Dharma Type and Cinzel by Natanael Gama (The Cinzel Project Authors) — SIL Open Font License, Version 1.1
+(full texts in OFL-BebasNeue.txt and OFL-Cinzel.txt) — used in the video templates.

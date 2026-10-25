@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { AudioLines, Clapperboard, Languages, Library, Mic, Music, Palette, Sparkles, UserRound, Wand2 } from "lucide-react";
 import { AvatarPanel, DubPanel, useRunTool, useVoiceInfo, useVoices, VoicesPanel } from "@/components/voice-tools";
 import { SPEECH_LANGUAGES } from "@/lib/languages";
+import { TemplatePanel } from "@/components/template-panel";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { jobStarted } from "@/lib/jobs-client";
@@ -13,8 +14,8 @@ import { cn } from "@/lib/utils";
 import { FOOTAGE_CATEGORIES, GENRES, MOODS, SFX_CATEGORIES } from "@/lib/library-tags";
 import { fillSubject, presetsFor, type Preset } from "@/lib/presets";
 
-type Tab = "music" | "sfx" | "footage" | "voice" | "voices" | "dub" | "avatar";
-const ALL_TABS: Tab[] = ["music", "sfx", "footage", "voice", "voices", "dub", "avatar"];
+type Tab = "music" | "sfx" | "footage" | "voice" | "voices" | "dub" | "avatar" | "templates";
+const ALL_TABS: Tab[] = ["music", "sfx", "footage", "voice", "voices", "dub", "avatar", "templates"];
 type Info = { engine: boolean; credits: { music: number; sfx: number; footageSecond: number; autoPrompt: number } };
 type Voices = { voices: { id: string; label: string }[]; maxChars: number; creditsPer1000: number; enabled: boolean };
 
@@ -26,6 +27,7 @@ const TABS: { id: Tab; label: string; icon: typeof Music; text: string }[] = [
   { id: "voices", label: "My Voices", icon: UserRound, text: "Voice cloning with consent, and the voice changer." },
   { id: "dub", label: "Dubbing", icon: Languages, text: "Your video in 23 languages." },
   { id: "avatar", label: "Avatars & lip sync", icon: UserRound, text: "Pictures that speak; new words on any face." },
+  { id: "templates", label: "Templates", icon: Clapperboard, text: "Titles, lower thirds, end screens and more." },
 ];
 
 export default function CreatePage() {
@@ -60,14 +62,14 @@ function AiStudio() {
         ))}
         <Link href="/images" className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10"><Palette className="h-4 w-4" /> Pictures</Link>
       </div>
-      {info && !info.engine && (
+      {info && !info.engine && tab !== "templates" && (
         <Card className="mb-5 p-4 text-sm text-white/70">
           {tab === "voice"
             ? "English voiceovers work now. Other languages and My Voices need Ghost Post's engine, which the admin connects in Admin → App settings → Integrations."
             : "These tools run on Ghost Post's own engine. The admin connects it in Admin → App settings → Integrations → Ghost Post Video Engine."}
         </Card>
       )}
-      {tab === "voice" ? <VoiceForm /> : tab === "voices" ? <VoicesPanel /> : tab === "dub" ? <DubPanel /> : tab === "avatar" ? <AvatarPanel /> : <GenForm key={tab} kind={tab} info={info} />}
+      {tab === "voice" ? <VoiceForm /> : tab === "voices" ? <VoicesPanel /> : tab === "dub" ? <DubPanel /> : tab === "avatar" ? <AvatarPanel /> : tab === "templates" ? <TemplatePanel /> : <GenForm key={tab} kind={tab} info={info} />}
     </>
   );
 }
