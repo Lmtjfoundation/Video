@@ -44,9 +44,11 @@ async function wakeLine() {
 }
 export const wakeConfigured = async () => !!(await wakeLine());
 
-const healthy = async (url: string) => {
+/** Whether the engine at `url` answers its health check within 8 seconds. */
+export const engineHealthy = async (url: string) => {
   try {
-    return (await fetch(`${url}/health`, { signal: AbortSignal.timeout(8_000), cache: "no-store" })).ok;
+    const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(8_000), cache: "no-store" });
+    return res.ok && ((await res.json().catch(() => null)) as { ok?: boolean } | null)?.ok === true;
   } catch {
     return false;
   }
@@ -78,7 +80,7 @@ export function wakeEngine(url: string, o: { waitMs?: number; pollMs?: number } 
       console.info(`[vm-wake] starting ${w.vm}`);
       const deadline = Date.now() + (o.waitMs ?? 5 * 60_000);
       while (Date.now() < deadline) {
-        if (await healthy(url)) return;
+        if (await engineHealthy(url)) return;
         await new Promise((r) => setTimeout(r, o.pollMs ?? 5_000));
       }
       throw new Error(`The VM “${w.vm}” was started but the engine didn't answer within ${Math.round((o.waitMs ?? 300_000) / 60_000)} minutes. Try again in a minute.`);
