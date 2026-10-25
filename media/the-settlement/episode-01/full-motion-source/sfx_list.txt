@@ -1,0 +1,24 @@
+rain|10|Heavy rain falling on a city street at night, steady downpour, water running in gutters
+sirens|10|Police sirens wailing in the distance, slowly approaching through city streets
+cruiser|6|Police car speeding past close, siren blaring, doppler effect, tires hissing on wet road
+whoop|2|Police siren short whoop chirp, close
+cuffs|3|Metal handcuffs ratcheting closed, close-mic, sharp metallic clicks
+cardoor|2|Car door slamming shut, solid heavy thud
+engine|6|Car engine starting and pulling away on wet pavement
+footsteps|6|Slow footsteps on wet pavement at night
+keys|3|Bunch of keys jingling and hung on a metal hook
+envelope|3|Paper envelope torn open, close-mic
+paper|3|Paper letter unfolded and rustled, close-mic
+pen|3|Ballpoint pen scratching a signature on paper, close-mic
+fridge|10|Quiet kitchen at night, refrigerator hum and a wall clock ticking
+ac|10|Rooftop air conditioning compressor rumbling, fan whirring
+wrench|3|Metal wrench clanking against an air conditioner housing
+cicadas|10|Cicadas buzzing loudly on a hot summer afternoon
+candle|2|Candle blown out, soft breath and faint fizzle
+phonebuzz|6|Cell phone vibrating inside a cardboard box, muffled buzzing
+creak|4|Closet door slowly creaking open
+heartbeat|8|Deep slow heartbeat, low thumping
+thunder|8|Distant thunder rolling, deep rumble
+monitor|8|Baby monitor static crackle and soft electronic hiss
+impact|5|Deep cinematic boom impact with a long reverb tail
+riser|6|Tense cinematic riser, rising whoosh building up to a hit
