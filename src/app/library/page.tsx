@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Download, FileText, FolderPlus, Heart, Library as LibraryIcon, ListFilter, Pause, Play, Search, Sparkles, Trash2, Upload, Wand2, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
+import { jobStarted } from "@/lib/jobs-client";
 import { Badge, Button, Card, Empty, Input, PageHeader, Select, Spinner } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
@@ -212,6 +213,7 @@ function Library() {
         </Button>
       </div>
 
+      {data?.isAdmin && shelf === "catalog" && kind !== "footage" && <FillCatalog kind={kind} engine={data.engine} />}
       {similar && (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-mint-400/30 bg-mint-400/10 px-4 py-2 text-sm">
           <Sparkles className="h-4 w-4 text-mint-300" /> More like <b>{similar.title}</b>
@@ -347,6 +349,44 @@ function Library() {
       {boardFor && data && <BoardPicker item={boardFor} boards={data.boards} onClose={() => setBoardFor(null)} onAct={act} reload={load} />}
       {playing && <div className="h-36 lg:h-20" />}
     </>
+  );
+}
+
+/** Admins: have the engine fill the shared catalog from Ghost Post's recipe list. */
+function FillCatalog({ kind, engine }: { kind: "music" | "sfx"; engine: boolean }) {
+  const { toast } = useApp();
+  const [status, setStatus] = useState<{ music: { left: number; inCatalog: number }; sfx: { left: number; inCatalog: number } } | null>(null);
+  const [count, setCount] = useState("25");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    api<NonNullable<typeof status>>("/api/library", { body: { action: "fill-status" } }).then(setStatus).catch(() => {});
+  }, [kind]);
+  const s = status?.[kind];
+  return (
+    <Card className="mb-4 flex flex-wrap items-center gap-3 p-4 text-sm">
+      <Sparkles className="h-4 w-4 text-mint-300" />
+      <div className="min-w-0 flex-1">
+        <div className="font-medium">Fill the catalog</div>
+        <div className="text-xs text-white/50">
+          {s ? `${s.inCatalog} in the catalog now; ${s.left} more ${kind === "music" ? "genre and mood recipes" : "sound recipes"} ready to make.` : "…"} Made on your engine in the background, free for admins.
+        </div>
+      </div>
+      <Select className="w-auto" value={count} onChange={(e) => setCount(e.target.value)}>
+        {["10", "25", "50", "100"].map((n) => <option key={n} value={n}>{n}</option>)}
+      </Select>
+      <Button variant="primary" loading={busy} disabled={!engine || s?.left === 0} onClick={async () => {
+        setBusy(true);
+        try {
+          await api("/api/library", { body: { action: "fill-catalog", kind, count: Number(count) } });
+          jobStarted();
+          toast("Started. New items appear in the catalog as the job finishes.", "success");
+        } catch (e) {
+          toast((e as Error).message, "error");
+        } finally {
+          setBusy(false);
+        }
+      }}>Make {count} {kind === "music" ? "tracks" : "sounds"}</Button>
+    </Card>
   );
 }
 

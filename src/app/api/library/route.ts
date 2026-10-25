@@ -3,6 +3,8 @@ import { GLOBAL } from "@/lib/db";
 import { assetUrls, boards, canDownload, createBoard, deleteAsset, favorites, publishToCatalog, searchLibrary, toggleFavorite, updateBoard, type LibraryAsset, type LibraryQuery } from "@/lib/library";
 import { ASSET_KINDS, type AssetKind, type SortId } from "@/lib/library-tags";
 import { ownEngineReady } from "@/lib/own-video";
+import { fillCatalog, fillStatus } from "@/lib/catalog-fill";
+import { startJob } from "@/lib/jobs";
 import { CREDIT_COST } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +51,7 @@ function view(a: LibraryAsset, favs: string[]) {
 
 /** Favorites, boards, and (admins) publishing to the catalog. */
 export const POST = authed(async (req, user) => {
-  const b = await body<{ action?: string; id?: string; boardId?: string; name?: string }>(req);
+  const b = await body<{ action?: string; id?: string; boardId?: string; name?: string; kind?: string; count?: number }>(req);
   const id = String(b.id ?? "");
   switch (b.action) {
     case "favorite":
@@ -71,6 +73,20 @@ export const POST = authed(async (req, user) => {
     case "publish":
       if (user.role !== "admin") return fail("Only the app's admins can add to the catalog.", 403);
       return ok({ item: (await publishToCatalog(id)).id });
+    case "fill-status":
+      if (user.role !== "admin") return fail("Only the app's admins manage the catalog.", 403);
+      return ok(await fillStatus());
+    case "fill-catalog": {
+      if (user.role !== "admin") return fail("Only the app's admins manage the catalog.", 403);
+      if (!(await ownEngineReady())) return fail("Filling the catalog needs Ghost Post's engine connected.", 503);
+      const kind = b.kind === "sfx" ? "sfx" : "music";
+      const count = Math.max(1, Math.min(200, Math.round(Number(b.count) || 10)));
+      const job = await startJob(user.id, { kind: "catalog", title: `Catalog: ${count} ${kind === "sfx" ? "sound effects" : "tracks"}` }, async () => {
+        const r = await fillCatalog(kind, count);
+        return { href: `/library?kind=${kind}&shelf=catalog`, message: `${r.made} added to the catalog${r.failed.length ? ` (${r.failed.length} couldn't be made)` : ""}` };
+      });
+      return ok({ job });
+    }
     case "delete":
       await deleteAsset(id, user.role === "admin");
       return ok({ ok: true });

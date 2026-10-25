@@ -159,6 +159,29 @@ describe("Library and AI Studio", () => {
     });
   });
 
+  it("fills the shared catalog from the recipe list without repeating recipes", async () => {
+    const engine = fakeEngine();
+    vi.stubGlobal("fetch", engine.fetchFn);
+    process.env.VIDEO_ENGINE_URL = "https://gpu.example";
+    process.env.VIDEO_ENGINE_TOKEN = "engine-token";
+    const { GLOBAL } = await import("@/lib/db");
+    const { fillCatalog, fillStatus, musicRecipes, sfxRecipes } = await import("@/lib/catalog-fill");
+    const { catalog } = await import("@/lib/library");
+    expect(new Set(musicRecipes().map((r) => r.id)).size).toBe(musicRecipes().length);
+    expect(new Set(sfxRecipes().map((r) => r.id)).size).toBe(sfxRecipes().length);
+    expect(musicRecipes().some((r) => r.genres[0] === "Children" && r.moods[0] === "Dark")).toBe(false);
+    const before = await fillStatus();
+    const progress: number[] = [];
+    expect(await fillCatalog("sfx", 2, (made) => progress.push(made), false)).toEqual({ made: 2, failed: [] });
+    expect(progress).toEqual([1, 2]);
+    await fillCatalog("sfx", 1, undefined, false);
+    const items = (await catalog()).filter((a) => a.kind === "sfx");
+    expect(items).toHaveLength(3);
+    expect(items.every((a) => a.owner === GLOBAL)).toBe(true);
+    expect(new Set(engine.requests.map((r) => r.prompt)).size).toBe(3); // no recipe made twice
+    expect((await fillStatus()).sfx).toEqual({ left: before.sfx.left - 3, inCatalog: 3 });
+  });
+
   it("checks tags against the Library's lists", async () => {
     const { pickTags, tagsInText, GENRES, fmtDuration } = await import("@/lib/library-tags");
     expect(pickTags(GENRES, ["hip HOP", "Polka", "Trap", "Trap"])).toEqual(["Hip hop", "Trap"]);
