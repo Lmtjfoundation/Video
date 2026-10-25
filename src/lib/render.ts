@@ -128,6 +128,16 @@ export async function mediaDuration(file: string) {
  * Narration for one scene: ElevenLabs when its key is set, otherwise (or when ElevenLabs fails) the free Kokoro voice
  * that runs on this server. Returns the file written (the free voice writes WAV).
  */
+/** Narration in a chosen voice (Story to Video): the engine in any of its 23 languages, or a named free voice. WAV. */
+export async function narrateAs(v: NonNullable<VideoPlan["narrator"]>, text: string, base: string): Promise<string> {
+  const file = `${base}.wav`;
+  if (v.kind === "engine") {
+    const { speak } = await import("./voice-studio");
+    await fs.writeFile(file, await speak(text, v.language, v.voiceId));
+  } else await freeVoice(text, file, undefined, { voice: v.id, speed: v.speed });
+  return file;
+}
+
 export async function narrate(text: string, base: string, note?: string): Promise<string> {
   if (await elevenlabsKey()) {
     try {
@@ -604,7 +614,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       recording = path.join(dir, `recording.${m.name.split(".").pop() || "audio"}`);
       await fs.writeFile(recording, await readFile(m));
     }
-    const voice = !recording && plan.voiceover !== false && (!!(await elevenlabsKey()) || freeVoiceEnabled());
+    const voice = !recording && plan.voiceover !== false && (plan.narrator?.kind === "engine" || !!(await elevenlabsKey()) || freeVoiceEnabled());
     const motionOnly = plan.visuals === "motion";
     const jobs: SceneJob[] = [];
     const planned = renderableScenes(plan);
@@ -617,7 +627,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       const cut = recording ? plan.audio!.cuts[planned[i].index] : undefined;
       if (cut) dur = Math.max(0.1, cut.end - cut.start);
       else if (voice && scene.narration.trim()) {
-        audio = await narrate(scene.narration, path.join(dir, `vo${i}`), plan.voice);
+        audio = plan.narrator ? await narrateAs(plan.narrator, scene.narration, path.join(dir, `vo${i}`)) : await narrate(scene.narration, path.join(dir, `vo${i}`), plan.voice);
         dur = (await mediaDuration(audio)) + 0.25;
       }
       let visual: SceneJob["visual"];

@@ -66,8 +66,15 @@ export function aiVisualCredits(plan: Pick<VideoPlan, "scenes" | "ai" | "visuals
 }
 
 /** Everything a render costs: voice, assembly and captions by length, plus any AI pictures and Veo clips. */
-export const renderCredits = (plan: Pick<VideoPlan, "length" | "scenes" | "ai" | "visuals"> | undefined) =>
-  videoCredits(plan?.length, "render") + (plan ? aiVisualCredits(plan) : 0);
+export const renderCredits = (plan: (Pick<VideoPlan, "length" | "scenes" | "ai" | "visuals"> & Partial<Pick<VideoPlan, "narrator" | "voiceover">>) | undefined) =>
+  videoCredits(plan?.length, "render") + (plan ? aiVisualCredits(plan) + narratorCredits(plan) : 0);
+
+/** A narrator on the engine (another language or one of My Voices) is speech on the GPU: the speech rate per 1,000 characters. */
+export function narratorCredits(plan: Pick<VideoPlan, "scenes"> & Partial<Pick<VideoPlan, "narrator" | "voiceover">>) {
+  if (plan.narrator?.kind !== "engine" || plan.voiceover === false) return 0;
+  const chars = plan.scenes.reduce((n, s) => n + s.narration.length, 0);
+  return chars ? CREDIT_COST.speech * Math.ceil(chars / 1000) : 0;
+}
 
 /* Movies and explainers with AI visuals (Movie Studio). */
 export const MOVIE_LENGTHS = ["s30", "s60", "s90", "m3"] as const;

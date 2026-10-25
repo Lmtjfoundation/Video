@@ -162,7 +162,8 @@ function BoxPicker({ url, box, onBox }: { url: string; box: number[] | null; onB
   };
   return (
     <div ref={area} className="relative mx-auto w-fit touch-none select-none overflow-hidden rounded-lg" onPointerDown={(e) => { (e.target as HTMLElement).setPointerCapture(e.pointerId); start.current = at(e); onBox([...start.current, 0, 0]); }} onPointerMove={move} onPointerUp={() => (start.current = null)}>
-      <video src={url} muted playsInline preload="metadata" className="block max-h-80 w-auto" />
+      {/* "#t=0.1" makes browsers paint the first frame without playing. */}
+      <video src={`${url}#t=0.1`} muted playsInline preload="auto" className="block max-h-80 max-w-full" />
       {box && <div className="pointer-events-none absolute border-2 border-mint-300 bg-mint-300/20" style={{ left: `${box[0] * 100}%`, top: `${box[1] * 100}%`, width: `${box[2] * 100}%`, height: `${box[3] * 100}%` }} />}
     </div>
   );
