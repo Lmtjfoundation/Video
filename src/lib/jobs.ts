@@ -83,7 +83,7 @@ function release() {
  * made (and where to open it); if it throws, the job fails with the error's message (credits are put back by
  * `withCredits` inside it, as usual).
  */
-export async function startJob(userId: string, o: { kind: JobKind; title: string }, fn: () => Promise<{ post?: Post; href?: string; message?: string }>): Promise<Job> {
+export async function startJob(userId: string, o: { kind: JobKind; title: string }, fn: (say: (message: string) => void) => Promise<{ post?: Post; href?: string; message?: string }>): Promise<Job> {
   const t = nowIso();
   const job: Job = { id: uid("job"), kind: o.kind, title: o.title.slice(0, 120), status: "queued", message: "Waiting to start…", createdAt: t, updatedAt: t };
   await put(job);
@@ -92,17 +92,26 @@ export async function startJob(userId: string, o: { kind: JobKind; title: string
     await slot();
     try {
       await asUser(userId, async () => {
+        let saving: Promise<unknown> = Promise.resolve();
         job.status = "running";
         job.message = STARTING[o.kind] ?? "Writing…";
         await put(job);
         try {
-          const r = await fn();
+          // Long jobs say which step they're on ("Shot 2 of 5…"); the tray shows the latest. Saves run one after
+          // another, and all finish before the final save, so a late one can never overwrite "done".
+          const r = await fn((message) => {
+            job.message = message.slice(0, 200);
+            const snapshot = { ...job, updatedAt: nowIso() };
+            saving = saving.then(() => put(snapshot)).catch(() => {});
+          });
+          await saving;
           job.status = "done";
           job.postId = r.post?.id;
           job.href = r.href ?? (r.post ? `/post/${r.post.id}` : undefined);
           job.title = (r.post?.hook || job.title).slice(0, 120);
           job.message = r.message ?? "Ready";
         } catch (e) {
+          await saving;
           job.status = "failed";
           job.message = (e as Error).message.slice(0, 300) || "Something went wrong. Please try again.";
         }

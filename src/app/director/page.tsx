@@ -5,6 +5,7 @@ import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { jobStarted } from "@/lib/jobs-client";
 import { Button, Card, Empty, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
+import { DIRECTOR_TEMPLATES } from "@/lib/director-templates";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import { PLATFORMS, type Platform, type VideoScene } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -156,6 +157,13 @@ export default function Director() {
               ) : (
                 <div className="grid gap-4">
                   <p className="text-sm text-white/60">Describe the video: the story, who&apos;s in it, the mood. You can change everything afterwards just by saying so.</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DIRECTOR_TEMPLATES.map((t) => (
+                      <button key={t.id} onClick={() => { setMessage(t.brief); setLength(t.length); setPlatform(t.platform); }} className="focus-ring rounded-full bg-white/[0.05] px-3 py-1.5 text-xs text-white/75 ring-1 ring-white/10 hover:bg-white/10">
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
                   {!!data?.characters.length && (
                     <div className="flex flex-wrap gap-2">
                       {data.characters.map((c) => (

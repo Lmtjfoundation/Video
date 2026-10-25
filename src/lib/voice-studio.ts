@@ -139,7 +139,7 @@ export async function changeVoice(userId: string, o: { mediaId: string; voiceId:
   const voice = await voiceSample(o.voiceId);
   return tmp(async (dir) => {
     const src = await toFile(m, dir, "src");
-    const wav = path.join(dir, "src.wav");
+    const wav = path.join(dir, "pcm.wav");
     await ff(["-i", src, "-vn", "-ac", "1", "-ar", "24000", wav]);
     const conv = path.join(dir, "conv.wav");
     await fs.writeFile(conv, await ownVoiceConvert({ source: await fs.readFile(wav), voice }));

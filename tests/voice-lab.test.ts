@@ -118,6 +118,11 @@ describe("Voice Lab", () => {
       expect(iso.name).toBe("voice-only-clip-mp4.mp4");
       expect(probe(fileOf(user, iso), "stream=codec_type").split("\n")).toEqual(["video", "audio"]);
       expect(e.calls.at(-1)!.body).toMatchObject({ mode: "isolate", stem: "vocals" });
+      // A WAV upload too (its working copy mustn't share the converted file's name).
+      const wavRec = await storeFile(user, { name: "take.wav", type: "audio/wav", bytes: tone(2) });
+      expect((await isolateVoice(user, { mediaId: wavRec.id, stem: "background" })).name).toBe("no-voice-take-wav.mp3");
+      const { changeVoice } = await import("@/lib/voice-studio");
+      expect((await changeVoice(user, { mediaId: wavRec.id, voiceId: v.id })).name).toBe("voice-changed-take-wav.mp3");
       expect(await db().get("media", iso.id)).toBeTruthy();
     });
   });

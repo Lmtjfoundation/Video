@@ -166,7 +166,7 @@ export async function isolateVoice(userId: string, o: { mediaId: string; stem: "
   const m = await media(o.mediaId, ["audio", "video"], "a recording or video");
   return tmp(async (dir) => {
     const src = await toFile(m, dir, "src");
-    const wav = path.join(dir, "src.wav");
+    const wav = path.join(dir, "pcm.wav");
     await ff(["-i", src, "-vn", "-ac", "2", "-ar", "44100", wav]);
     const out = path.join(dir, "iso.wav");
     await fs.writeFile(out, await ownIsolate({ source: await fs.readFile(wav), stem: o.stem }));
