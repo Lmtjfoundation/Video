@@ -20,8 +20,13 @@ function toResponse(e: unknown, user?: User | null) {
   if (err instanceof AuthError) return fail(err.message, err.status);
   if (err instanceof QuotaError) return fail(err.message, 402);
   console.error("[ghost-post:api]", err instanceof LLMError && err.ownerMessage ? `${err.message} | ${err.ownerMessage}` : err);
-  // Subscribers get a plain message; the owner sees the real cause (credits, key, workspace…).
-  if (err instanceof LLMError) return fail(user?.role === "admin" && err.ownerMessage ? err.ownerMessage : err.message, 502);
+  // Subscribers get a plain message; the owner sees the real cause (credits, key, workspace…). 503 (not 502): the app
+  // is fine, an AI service it depends on isn't answering, and "Retry-After" tells clients when to try again.
+  if (err instanceof LLMError) {
+    const res = fail(user?.role === "admin" && err.ownerMessage ? `${err.ownerMessage} (Admin → Integrations)` : err.message, 503);
+    res.headers.set("Retry-After", err.kind === "config" ? "600" : "30");
+    return res;
+  }
   return fail(err?.message || "Unexpected error", 500);
 }
 

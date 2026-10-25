@@ -13,7 +13,7 @@ export const GET = authed(async (req) => {
   if (!url) return fail("That video link isn't allowed.", 400);
   const range = req.headers.get("range");
   const res = await fetch(url, { headers: range ? { range } : {}, cache: "no-store" });
-  if (!res.ok && res.status !== 206) return fail(`The video couldn't be loaded (HTTP ${res.status}).`, 502);
+  if (!res.ok && res.status !== 206) return fail(res.status === 404 ? "That video is no longer available." : `The video couldn't be loaded right now (HTTP ${res.status}). Try again in a minute.`, res.status === 404 ? 404 : 503);
   const headers = new Headers({ "Content-Type": "video/mp4", "Cache-Control": "private, max-age=3600", "Accept-Ranges": "bytes" });
   for (const k of ["content-length", "content-range", "etag", "last-modified"]) {
     const v = res.headers.get(k);

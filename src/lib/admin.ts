@@ -19,9 +19,21 @@ export async function adminUsers() {
     if (row.status === "pending_review") c.review++;
     counts.set(owner, c);
   }
+  const owner = originalOwner(users);
   return users
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map((u) => ({ ...publicUser(u), counts: counts.get(u.id) ?? { total: 0, scheduled: 0, review: 0 }, planInfo: planById(u.plan) }));
+    .map((u) => ({
+      ...publicUser(u),
+      counts: counts.get(u.id) ?? { total: 0, scheduled: 0, review: 0 },
+      planInfo: planById(u.plan),
+      isOwner: u.id === owner?.id,
+      isCoOwner: u.role === "admin" && u.plan === "unlimited" && u.id !== owner?.id,
+    }));
+}
+
+/** The account that set the app up: the first admin to sign up. Nobody can take its access away. */
+export function originalOwner<T extends Pick<User, "id" | "role" | "createdAt">>(users: T[]): T | undefined {
+  return users.filter((u) => u.role === "admin").sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
 }
 
 export interface UserPatch {
@@ -32,12 +44,20 @@ export interface UserPatch {
   requireApproval?: boolean;
   newPassword?: string;
   resetUsage?: boolean;
+  /** Co-owner: admin access and the Unlimited plan in one step (admins never spend credits). */
+  makeCoOwner?: boolean;
 }
 
 export async function adminUpdateUser(actor: User, p: UserPatch) {
   const u = await getUser(p.id);
   if (!u) throw new Error("User not found.");
   if (u.id === actor.id && (p.role === "user" || p.status === "suspended")) throw new Error("You can't remove your own admin access or suspend yourself.");
+  if ((p.role === "user" || p.status === "suspended") && originalOwner(await listUsers())?.id === u.id) throw new Error("The owner's access can't be removed.");
+  if (p.makeCoOwner) {
+    p.role = "admin";
+    p.plan = "unlimited";
+    p.status = "active";
+  }
   const changes: string[] = [];
   if (p.plan && PLANS.some((x) => x.id === p.plan) && p.plan !== u.plan) {
     changes.push(`plan ${u.plan} → ${p.plan}`);
@@ -70,6 +90,7 @@ export async function adminUpdateUser(actor: User, p: UserPatch) {
     changes.push("usage reset");
   }
   await saveUser(u);
+  if (p.makeCoOwner) changes.push("made co-owner");
   if (changes.length) {
     await asUser(actor.id, () => log("info", "system", `Admin updated ${u.email}: ${changes.join(", ")}`));
     await asUser(u.id, () => log("info", "system", `An admin updated your account: ${changes.join(", ")}`));

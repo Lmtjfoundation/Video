@@ -47,7 +47,7 @@ export const POST = authed(async (req, user) => {
     return ok({ id: item.id, name: item.name, url: signedUrl(user.id, item.id, 6 * 3600) });
   } catch (e) {
     await refundCredits(user.id, credits);
-    if (e instanceof MediaGenError) return fail(e.message, e.kind === "config" ? 503 : 502);
+    if (e instanceof MediaGenError) return fail(e.message, 503);
     return fail((e as Error).message);
   }
 });

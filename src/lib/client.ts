@@ -1,12 +1,23 @@
 "use client";
 
+/** The hosting proxy answers 502/504 (with a web page, not JSON) while the server restarts or a request runs too long. */
+const GATEWAY = new Set([502, 504]);
+
 export async function api<T>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
-  const res = await fetch(path, {
-    method: opts.method ?? (opts.body ? "POST" : "GET"),
-    headers: opts.body ? { "Content-Type": "application/json" } : undefined,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-    cache: "no-store",
-  });
+  const method = opts.method ?? (opts.body ? "POST" : "GET");
+  const send = () =>
+    fetch(path, {
+      method,
+      headers: opts.body ? { "Content-Type": "application/json" } : undefined,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      cache: "no-store",
+    });
+  let res = await send();
+  // Reads are safe to repeat: wait out a restart (up to about 10 s) before showing an error.
+  for (let i = 0; method === "GET" && GATEWAY.has(res.status) && i < 3; i++) {
+    await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+    res = await send();
+  }
   const text = await res.text();
   let data: unknown = null;
   try {
@@ -19,7 +30,11 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
     throw new Error("Please sign in.");
   }
   if (!res.ok) {
-    const msg = (data && typeof data === "object" && "error" in data ? (data as { error: string }).error : null) ?? `Request failed (${res.status})`;
+    const msg =
+      (data && typeof data === "object" && "error" in data ? (data as { error: string }).error : null) ??
+      (GATEWAY.has(res.status) || res.status === 503
+        ? "Ghost Post is restarting or busy for a moment. Please try again in a minute; anything already started keeps running."
+        : `Request failed (${res.status})`);
     throw new Error(msg);
   }
   return data as T;
