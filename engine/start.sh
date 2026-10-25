@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Starts the Ghost Post engine on a GPU host (see README.md): the audio engine (music and sound effects, its own
-# environment in .audio-venv, on 127.0.0.1:8001) and the video engine on $PORT (8000), which also answers /v1/audio.
+# Starts the Ghost Post engine on a GPU host (see README.md): the side services (music and sound effects on 8001,
+# speech on 8002, lip sync on 8003, each in its own environment) and the video engine on $PORT (8000), which answers
+# for all of them.
 set -euo pipefail
 cd "$(dirname "$0")"
 export HF_HOME="${HF_HOME:-/workspace/hf}" HF_HUB_ENABLE_HF_TRANSFER=1
@@ -12,4 +13,9 @@ fi
 .audio-venv/bin/pip install --no-cache-dir -q -r requirements-audio.txt
 .audio-venv/bin/pip install --no-cache-dir -q --no-deps -r requirements-audio-nodeps.txt
 .audio-venv/bin/python audio_server.py &
+# Speech (voices, cloning, dubbing) and lip sync, each in its own environment (set up once by setup-sidecars.sh).
+command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
+PATH="$HOME/.local/bin:$PATH" ./setup-sidecars.sh
+.speech-venv/bin/python speech_server.py &
+.lipsync-venv/bin/python lipsync_server.py &
 exec python server.py

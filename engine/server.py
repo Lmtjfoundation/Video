@@ -28,10 +28,13 @@ API (every call except /health needs `Authorization: Bearer <ENGINE_TOKEN>`):
   GET  /v1/images/{id}/file    -> the PNG
   POST /v1/chat                -> {"text": ...}                     write: {"system", "user", "max_tokens", "temperature"}
   /v1/audio...                 music and sound effects: forwarded to the audio engine (audio_server.py, AUDIO_URL)
+  /v1/speech...                voices, voice cloning, voice-to-voice: forwarded to speech_server.py (SPEECH_URL)
+  /v1/lipsync...               lip sync and talking avatars: forwarded to lipsync_server.py (LIPSYNC_URL)
 
 Settings (environment): ENGINE_TOKEN (required in production), ENGINE_QUALITY (best|fast), ENGINE_OFFLOAD
 (auto|on|off: keep idle model parts in CPU memory), ENGINE_STEPS (default 40), HF_HOME (model cache).
-AUDIO_URL (default http://127.0.0.1:8001): where audio_server.py listens (its own Python environment; start.sh runs it).
+AUDIO_URL / SPEECH_URL / LIPSYNC_URL (defaults 127.0.0.1:8001 / 8002 / 8003): where the side services listen, each in
+its own Python environment (start.sh runs them).
 ENGINE_MODEL=tiny / tiny-best build tiny random models of each profile for tests.
 """
 
@@ -74,6 +77,8 @@ WRITER = os.environ.get("ENGINE_TEXT_MODEL", "Qwen/Qwen3-8B")
 WRITING = os.environ.get("ENGINE_TEXT", "on") != "off"
 EDIT = os.environ.get("ENGINE_EDIT_MODEL", "Qwen/Qwen-Image-Edit-2511")
 AUDIO_URL = os.environ.get("AUDIO_URL", "http://127.0.0.1:8001").rstrip("/")
+SPEECH_URL = os.environ.get("SPEECH_URL", "http://127.0.0.1:8002").rstrip("/")
+LIPSYNC_URL = os.environ.get("LIPSYNC_URL", "http://127.0.0.1:8003").rstrip("/")
 # Qwen-Image's native sizes per frame shape (from its model card).
 IMAGE_SIZES = {"1:1": (1328, 1328), "16:9": (1664, 928), "9:16": (928, 1664), "4:3": (1472, 1104), "3:4": (1104, 1472), "21:9": (1792, 768)}
 A14B = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
@@ -574,24 +579,42 @@ def chat(req: ChatRequest) -> dict:
         raise HTTPException(500, f"{type(e).__name__}: {e}"[:500]) from e
 
 
-@app.api_route("/v1/audio", methods=["POST"], dependencies=[Depends(authorised)])
-@app.api_route("/v1/audio/{rest:path}", methods=["GET"], dependencies=[Depends(authorised)])
-async def audio(request: Request, rest: str = "") -> Response:
-    """Music and sound effects are made by audio_server.py (its own Python environment): pass the call through."""
+async def forward(request: Request, url: str, what: str) -> Response:
+    """Passes a call through to a side service on this server (its own Python environment), with the same token."""
     import urllib.error
     import urllib.request
 
-    url = f"{AUDIO_URL}/v1/audio" + (f"/{rest}" if rest else "")
     data = await request.body() if request.method == "POST" else None
     req = urllib.request.Request(url, data=data, method=request.method,
                                  headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=60) as r:  # noqa: S310 - our own sidecar
+        with urllib.request.urlopen(req, timeout=300) as r:  # noqa: S310 - our own side service
             return Response(r.read(), status_code=r.status, media_type=r.headers.get("Content-Type"))
     except urllib.error.HTTPError as e:
         return Response(e.read(), status_code=e.code, media_type=e.headers.get("Content-Type"))
     except OSError as e:
-        raise HTTPException(503, f"The audio engine isn't running on this server ({e}). start.sh starts it beside the video engine.") from e
+        raise HTTPException(503, f"The {what} isn't running on this server ({e}). start.sh starts it beside the video engine.") from e
+
+
+@app.api_route("/v1/audio", methods=["POST"], dependencies=[Depends(authorised)])
+@app.api_route("/v1/audio/{rest:path}", methods=["GET"], dependencies=[Depends(authorised)])
+async def audio(request: Request, rest: str = "") -> Response:
+    """Music and sound effects: audio_server.py."""
+    return await forward(request, f"{AUDIO_URL}/v1/audio" + (f"/{rest}" if rest else ""), "audio engine")
+
+
+@app.api_route("/v1/speech", methods=["POST"], dependencies=[Depends(authorised)])
+@app.api_route("/v1/speech/{rest:path}", methods=["GET"], dependencies=[Depends(authorised)])
+async def speech(request: Request, rest: str = "") -> Response:
+    """Voices in 23 languages, voice cloning, voice-to-voice: speech_server.py."""
+    return await forward(request, f"{SPEECH_URL}/v1/speech" + (f"/{rest}" if rest else ""), "speech engine")
+
+
+@app.api_route("/v1/lipsync", methods=["POST"], dependencies=[Depends(authorised)])
+@app.api_route("/v1/lipsync/{rest:path}", methods=["GET"], dependencies=[Depends(authorised)])
+async def lipsync(request: Request, rest: str = "") -> Response:
+    """Lip sync and talking avatars: lipsync_server.py."""
+    return await forward(request, f"{LIPSYNC_URL}/v1/lipsync" + (f"/{rest}" if rest else ""), "lip-sync engine")
 
 
 if __name__ == "__main__":

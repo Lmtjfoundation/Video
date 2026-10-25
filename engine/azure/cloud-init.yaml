@@ -52,6 +52,38 @@ write_files:
       TimeoutStartSec=infinity
       [Install]
       WantedBy=multi-user.target
+  - path: /etc/systemd/system/ghost-post-speech.service
+    content: |
+      [Unit]
+      Description=Ghost Post Speech Engine (voices, cloning, dubbing) (the video engine forwards /v1/speech here)
+      After=ghost-post-engine.service
+      [Service]
+      EnvironmentFile=/etc/ghost-post-engine.env
+      WorkingDirectory=/opt/ghost-post/repo/engine
+      ExecStartPre=/bin/sh -c 'until nvidia-smi >/dev/null 2>&1; do sleep 15; done'
+      ExecStartPre=/bin/sh -c 'PATH=/usr/local/bin:$PATH ./setup-sidecars.sh'
+      ExecStart=/opt/ghost-post/repo/engine/.speech-venv/bin/python speech_server.py
+      Restart=always
+      RestartSec=20
+      TimeoutStartSec=infinity
+      [Install]
+      WantedBy=multi-user.target
+  - path: /etc/systemd/system/ghost-post-lipsync.service
+    content: |
+      [Unit]
+      Description=Ghost Post Lip Sync Engine (lip sync, avatars) (the video engine forwards /v1/lipsync here)
+      After=ghost-post-engine.service
+      [Service]
+      EnvironmentFile=/etc/ghost-post-engine.env
+      WorkingDirectory=/opt/ghost-post/repo/engine
+      ExecStartPre=/bin/sh -c 'until nvidia-smi >/dev/null 2>&1; do sleep 15; done'
+      ExecStartPre=/bin/sh -c 'PATH=/usr/local/bin:$PATH ./setup-sidecars.sh'
+      ExecStart=/opt/ghost-post/repo/engine/.lipsync-venv/bin/python lipsync_server.py
+      Restart=always
+      RestartSec=20
+      TimeoutStartSec=infinity
+      [Install]
+      WantedBy=multi-user.target
   - path: /etc/caddy/Caddyfile.ghost-post
     content: |
       __DOMAIN__ {
@@ -80,3 +112,4 @@ runcmd:
   - systemctl daemon-reload
   - systemctl enable --now ghost-post-engine
   - systemctl enable --now ghost-post-audio
+  - systemctl enable --now ghost-post-speech ghost-post-lipsync
