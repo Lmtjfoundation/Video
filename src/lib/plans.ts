@@ -201,6 +201,11 @@ export const CREDIT_COST = {
   dubMinute: 12,
   /** Lip sync (MuseTalk), per started second of speech. */
   lipsyncSecond: 2,
+  /** Picture tools on the GPU: Real-ESRGAN upscale (to 4K) and BiRefNet background removal. */
+  upscale: 2,
+  removeBg: 1,
+  /** Video edits (Wan 2.1 VACE: restyle, relight, motion control, new background, inpaint), per started second. */
+  editSecond: 16,
   /** Voice design (Parler-TTS on the GPU): one sample in a new voice described in words. */
   voiceDesign: 2,
   /** Voice isolator (Demucs on the GPU), per started minute. */
@@ -244,6 +249,9 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   voiceChangeMinute: "Voice changer: each started minute",
   dubMinute: "Dubbing into another language: each started minute",
   lipsyncSecond: "Lip sync and avatars: each started second of speech",
+  upscale: "Upscale a picture (2× or 4×, up to 4K)",
+  removeBg: "Remove a picture's background (transparent PNG)",
+  editSecond: "Video edits (restyle, relight, motion control, new background, inpaint): each started second",
   voiceDesign: "Voice design: a new voice from a description",
   isolateMinute: "Voice isolator: each started minute",
   filmDevelop: "Writers' Room: develop or revise a short film (titles, characters, world, structure, scene outline)",

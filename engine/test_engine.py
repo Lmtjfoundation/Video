@@ -113,3 +113,46 @@ def test_writing():
         r = client.post("/v1/chat", headers=AUTH, json={"system": "You write.", "user": "Plan a series.", "max_tokens": 50})
         assert r.status_code == 200 and r.json()["text"] == '{"echo": 14, "system": 10}'
         assert client.get("/v1/info", headers=AUTH).json()["text_model_writer"] == server.WRITER
+
+
+def test_picture_tools():
+    with TestClient(server.app) as client:
+        assert client.post("/v1/images", headers=AUTH, json={"op": "upscale"}).status_code == 400
+        assert client.post("/v1/images", headers=AUTH, json={"op": "blur", "images": [picture()]}).status_code == 422
+        assert client.post("/v1/images", headers=AUTH, json={"prompt": " "}).status_code == 400
+        job = client.post("/v1/images", headers=AUTH, json={"op": "upscale", "images": [picture()]}).json()
+        assert wait(client, job["id"])["status"] == "succeeded"
+        up = Image.open(io.BytesIO(client.get(f"/v1/images/{job['id']}/file", headers=AUTH).content))
+        assert up.size == (1200, 2000)  # 300 x 500, four times
+        job = client.post("/v1/images", headers=AUTH, json={"op": "upscale", "scale": 2, "images": [picture()]}).json()
+        assert wait(client, job["id"])["status"] == "succeeded"
+        assert Image.open(io.BytesIO(client.get(f"/v1/images/{job['id']}/file", headers=AUTH).content)).size == (600, 1000)
+        job = client.post("/v1/images", headers=AUTH, json={"op": "remove-bg", "images": [picture()]}).json()
+        assert wait(client, job["id"])["status"] == "succeeded"
+        cut = Image.open(io.BytesIO(client.get(f"/v1/images/{job['id']}/file", headers=AUTH).content))
+        assert cut.mode == "RGBA" and cut.getpixel((10, 10))[3] == 255 and cut.getpixel((290, 10))[3] == 0
+
+
+def clip(path) -> str:
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc=s=320x180:r=24:d=1", "-pix_fmt", "yuv420p", str(path)], check=True)
+    return base64.b64encode(path.read_bytes()).decode()
+
+
+def test_video_edits(tmp_path):
+    video = clip(tmp_path / "in.mp4")
+    with TestClient(server.app) as client:
+        assert client.post("/v1/video-edits", headers=AUTH, json={"task": "motion", "video": video, "prompt": "dance"}).status_code == 400
+        assert client.post("/v1/video-edits", headers=AUTH, json={"task": "explode", "video": video, "prompt": "x"}).status_code == 422
+        for task, extra in [("restyle", {}), ("motion", {"image": picture()}), ("background", {}), ("inpaint", {"box": [0.1, 0.1, 0.3, 0.3]})]:
+            job = client.post("/v1/video-edits", headers=AUTH, json={"task": task, "video": video, "prompt": "A watercolor painting", **extra}).json()
+            s = None
+            for _ in range(300):
+                s = client.get(f"/v1/video-edits/{job['id']}", headers=AUTH).json()
+                if s["status"] in ("succeeded", "failed"):
+                    break
+                time.sleep(0.1)
+            assert s["status"] == "succeeded", (task, s)
+            out = tmp_path / f"{task}.mp4"
+            out.write_bytes(client.get(f"/v1/video-edits/{job['id']}/file", headers=AUTH).content)
+            frames = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0", "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", str(out)], capture_output=True, text=True).stdout.strip()
+            assert frames == "9", (task, frames)

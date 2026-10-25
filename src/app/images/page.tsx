@@ -1,27 +1,30 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Download, ImagePlus, Palette, UsersRound, Wand2 } from "lucide-react";
+import { Download, ImagePlus, Palette, SlidersHorizontal, UsersRound, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { Badge, Button, Card, CardHeader, Empty, Field, PageHeader, Select, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { IMAGE_TOOLS, type ImageToolId } from "@/lib/image-tools";
 
 type Pic = { id: string; name: string; url: string };
 type Data = {
   engine: "own" | "gemini" | null;
   lookGroups: { label: string; looks: string[] }[];
   credits: number;
+  toolCredits: { image: number; upscale: number; removeBg: number };
   made: Pic[];
   pictures: Pic[];
   characters: { id: string; name: string; imageUrl: string }[];
 };
-type Mode = "create" | "edit" | "scene";
+type Mode = "create" | "edit" | "scene" | "tools";
 
 const MODES: { id: Mode; title: string; text: string; icon: typeof Palette; placeholder: string }[] = [
   { id: "create", title: "Create", text: "A new picture from a description.", icon: Palette, placeholder: "e.g. A Houston street corner at night in the rain, red and blue lights far away" },
   { id: "edit", title: "Edit a picture", text: "Change one of your pictures by describing the change.", icon: Wand2, placeholder: "e.g. Make it night time and add rain on the window" },
   { id: "scene", title: "Characters in a scene", text: "Put up to three of your characters into a new scene, faces kept.", icon: UsersRound, placeholder: "e.g. Marcus and Tasha arguing at the kitchen table, bills spread out between them" },
+  { id: "tools", title: "Tools", text: "Erase, expand, new background, cut-out, restyle, relight, camera angle, restore, retouch, headshots, character swap and 4K upscale.", icon: SlidersHorizontal, placeholder: "" },
 ];
 
 export default function ImageStudio() {
@@ -35,6 +38,10 @@ export default function ImageStudio() {
   const [cast, setCast] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [latest, setLatest] = useState<Pic | null>(null);
+  const [tool, setTool] = useState<ImageToolId>("erase");
+  const [swapWith, setSwapWith] = useState("");
+  const [angle, setAngle] = useState<{ rotate: number; tilt: number; lens: "wide" | "normal" | "close" }>({ rotate: 30, tilt: 0, lens: "normal" });
+  const [scale, setScale] = useState<2 | 4>(4);
 
   const load = useCallback(async () => {
     try {
@@ -48,12 +55,18 @@ export default function ImageStudio() {
   }, [load]);
 
   const m = MODES.find((x) => x.id === mode)!;
-  const ready = mode === "edit" ? !!mediaId : mode === "scene" ? cast.length > 0 : true;
+  const t = IMAGE_TOOLS.find((x) => x.id === tool)!;
+  const ready = mode === "edit" ? !!mediaId : mode === "scene" ? cast.length > 0 : mode === "tools" ? !!mediaId && (!t.ask?.required || !!prompt.trim()) && (tool !== "swap" || !!swapWith) : true;
+  const cost = mode !== "tools" ? data?.credits ?? 4 : data ? data.toolCredits[t.cost] : 0;
 
   async function make() {
     setBusy(true);
     try {
-      const pic = await api<Pic>("/api/images", { body: { mode, prompt, look: look || undefined, aspect, mediaId: mediaId || undefined, characterIds: mode === "scene" ? cast : undefined } });
+      const pic = await api<Pic>("/api/images", {
+        body: mode === "tools"
+          ? { tool, mediaId, prompt, aspect, characterId: swapWith || undefined, angle, scale }
+          : { mode, prompt, look: look || undefined, aspect, mediaId: mediaId || undefined, characterIds: mode === "scene" ? cast : undefined },
+      });
       setLatest(pic);
       setData((d) => (d ? { ...d, made: [pic, ...d.made], pictures: [pic, ...d.pictures] } : d));
       toast("Picture saved to your Media Library", "success");
@@ -77,7 +90,7 @@ export default function ImageStudio() {
         <Card className="h-fit xl:sticky xl:top-10">
           <CardHeader title="Make a picture" subtitle={m.text} icon={<ImagePlus className="h-4 w-4" />} action={data?.engine === "own" ? <Badge tone="mint">Ghost Post engine</Badge> : undefined} />
           <div className="grid gap-4 p-5">
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               {MODES.map((x) => (
                 <button
                   key={x.id}
@@ -118,10 +131,21 @@ export default function ImageStudio() {
               </div>
             )}
 
+            {mode === "tools" && (
+              <div className="grid grid-cols-3 gap-1.5">
+                {IMAGE_TOOLS.map((x) => (
+                  <button key={x.id} onClick={() => { setTool(x.id); setPrompt(""); }} title={x.text} className={cn("focus-ring rounded-lg px-2 py-2 text-[11px] font-semibold ring-1", tool === x.id ? "bg-mint-400/15 text-mint-200 ring-mint-400/40" : "bg-white/[0.03] text-white/60 ring-white/10 hover:text-white")}>
+                    {x.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            {mode === "tools" && <p className="-mt-2 text-xs text-white/55">{t.text}</p>}
+
             {mode !== "create" && (
               <div>
                 <span className="mb-1.5 block text-[13px] font-medium text-white/80">
-                  {mode === "edit" ? "Picture to change" : "Setting"} <span className="font-normal text-white/40">{mode === "scene" ? "· optional, a place from your pictures" : ""}</span>
+                  {mode === "edit" || mode === "tools" ? "Picture to change" : "Setting"} <span className="font-normal text-white/40">{mode === "scene" ? "· optional, a place from your pictures" : ""}</span>
                 </span>
                 {data?.pictures.length ? (
                   <div className="grid max-h-48 grid-cols-6 gap-1.5 overflow-y-auto">
@@ -138,6 +162,52 @@ export default function ImageStudio() {
               </div>
             )}
 
+            {mode === "tools" ? (
+              <>
+                {t.presets && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {t.presets.map((p) => <button key={p} onClick={() => setPrompt(p)} className={cn("rounded-lg px-2.5 py-1 text-[11px]", prompt === p ? "bg-mint-400/20 text-mint-100" : "bg-white/5 text-white/65 hover:bg-white/10")}>{p.split(":")[0]}</button>)}
+                  </div>
+                )}
+                {t.ask && (
+                  <Field label={t.ask.label}>
+                    <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value.slice(0, 600))} placeholder={t.ask.placeholder} className="min-h-[80px]" />
+                  </Field>
+                )}
+                {tool === "expand" && (
+                  <Field label="New shape">
+                    <Select value={aspect} onChange={(e) => setAspect(e.target.value as typeof aspect)}>
+                      <option value="16:9">16:9 (wide)</option>
+                      <option value="9:16">9:16 (tall)</option>
+                      <option value="1:1">1:1 (square)</option>
+                    </Select>
+                  </Field>
+                )}
+                {tool === "angle" && (
+                  <div className="grid gap-3 rounded-xl bg-white/[0.03] p-3 text-xs text-white/70">
+                    <label className="grid gap-1">Orbit left / right: {angle.rotate}°<input type="range" min={-90} max={90} step={5} value={angle.rotate} onChange={(e) => setAngle({ ...angle, rotate: Number(e.target.value) })} className="accent-mint-400" /></label>
+                    <label className="grid gap-1">Look up / down: {angle.tilt}°<input type="range" min={-60} max={60} step={5} value={angle.tilt} onChange={(e) => setAngle({ ...angle, tilt: Number(e.target.value) })} className="accent-mint-400" /></label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(["wide", "normal", "close"] as const).map((l) => <button key={l} onClick={() => setAngle({ ...angle, lens: l })} className={cn("rounded-lg py-1.5", angle.lens === l ? "bg-mint-400/20 text-mint-100" : "bg-white/5")}>{l === "wide" ? "Wider" : l === "close" ? "Closer" : "Same"}</button>)}
+                    </div>
+                  </div>
+                )}
+                {tool === "swap" && (
+                  <Field label="Put this character in">
+                    <Select value={swapWith} onChange={(e) => setSwapWith(e.target.value)}>
+                      <option value="">{data?.characters.length ? "Choose…" : "Make characters in Movie Studio first"}</option>
+                      {data?.characters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </Select>
+                  </Field>
+                )}
+                {tool === "upscale" && (
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {([2, 4] as const).map((n) => <button key={n} onClick={() => setScale(n)} className={cn("rounded-lg py-2 text-sm", scale === n ? "bg-mint-400/20 text-mint-100" : "bg-white/5 text-white/65")}>{n}× {n === 4 ? "(up to 4K)" : ""}</button>)}
+                  </div>
+                )}
+              </>
+            ) : (
+            <>
             <Field label={mode === "edit" ? "What to change" : "Describe the picture"}>
               <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value.slice(0, 1500))} placeholder={m.placeholder} className="min-h-[110px]" />
             </Field>
@@ -160,8 +230,10 @@ export default function ImageStudio() {
                 </Select>
               </Field>
             </div>
-            <Button variant="primary" size="lg" loading={busy} disabled={busy || !prompt.trim() || !ready || !data?.engine} onClick={make}>
-              <ImagePlus className="h-4 w-4" /> {busy ? "Making the picture…" : `Make it · ${data?.credits ?? 4} credits`}
+            </>
+            )}
+            <Button variant="primary" size="lg" loading={busy} disabled={busy || (mode !== "tools" && !prompt.trim()) || !ready || !data?.engine} onClick={make}>
+              <ImagePlus className="h-4 w-4" /> {busy ? "Working on it…" : `${mode === "tools" ? t.name : "Make it"} · ${cost} credit${cost === 1 ? "" : "s"}`}
             </Button>
             <p className="-mt-1 text-[11px] text-white/40">The first picture after the engine starts loads the picture model, which takes a few minutes. After that each picture takes under a minute.</p>
           </div>
@@ -171,7 +243,7 @@ export default function ImageStudio() {
           {latest && (
             <Card className="mb-6 overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={latest.url} alt={latest.name} className="mx-auto max-h-[70vh] w-auto" />
+              <img src={latest.url} alt={latest.name} className="mx-auto max-h-[70vh] w-auto bg-[conic-gradient(#ffffff14_25%,transparent_0_50%,#ffffff14_0_75%,transparent_0)] bg-[length:20px_20px]" />
               <div className="flex justify-end p-3">
                 <a href={latest.url} download={latest.name}>
                   <Button size="sm"><Download className="h-3.5 w-3.5" /> Download</Button>

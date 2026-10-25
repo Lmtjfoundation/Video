@@ -165,6 +165,19 @@ export async function ownVoiceConvert(o: { source: Buffer; voice: Buffer }): Pro
   return (await sideJob("/v1/speech", { mode: "convert", source: b64(o.source), voice: b64(o.voice) }, "change this voice", 15 * 60_000)).file;
 }
 
+/** A picture tool on the engine: upscale (Real-ESRGAN, up to 4096 px) or cut out the subject (BiRefNet, transparent PNG). */
+export async function ownImageTool(o: { op: "upscale" | "remove-bg"; image: Buffer; mime: string; scale?: 2 | 4 }): Promise<Buffer> {
+  const what = o.op === "upscale" ? "upscale this picture" : "cut out this picture";
+  return (await sideJob("/v1/images", { op: o.op, images: [`data:${o.mime};base64,${b64(o.image)}`], scale: o.scale ?? 4, aspect: "1:1" }, what, 15 * 60_000)).file;
+}
+
+export type VideoEditTask = "restyle" | "relight" | "motion" | "background" | "inpaint";
+/** A video edit on the engine (Wan 2.1 VACE): up to about 5 seconds of `video` changed as `task` says. MP4. */
+export async function ownVideoEdit(o: { task: VideoEditTask; video: Buffer; prompt: string; image?: { bytes: Buffer; mime: string }; box?: [number, number, number, number]; aspect: string; seconds?: number }): Promise<Buffer> {
+  const body = { task: o.task, video: b64(o.video), prompt: o.prompt.slice(0, 4000), image: o.image ? `data:${o.image.mime};base64,${b64(o.image.bytes)}` : undefined, box: o.box, aspect: o.aspect, seconds: Math.min(5, o.seconds ?? 5) };
+  return (await sideJob("/v1/video-edits", body, "edit this clip", 45 * 60_000)).file;
+}
+
 /** Voice isolator (Demucs htdemucs): the voice alone, or everything but the voice (music, noise, effects). WAV. */
 export async function ownIsolate(o: { source: Buffer; stem: "vocals" | "background" }): Promise<Buffer> {
   return (await sideJob("/v1/speech", { mode: "isolate", source: b64(o.source), stem: o.stem }, "separate this recording", 30 * 60_000)).file;

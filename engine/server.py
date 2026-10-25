@@ -26,6 +26,13 @@ API (every call except /health needs `Authorization: Bearer <ENGINE_TOKEN>`):
   POST /v1/images              -> {"id": ...}                       start a picture (with "images": an edit)
   GET  /v1/images/{id}         -> same status shape as videos
   GET  /v1/images/{id}/file    -> the PNG
+                               with "op": "upscale" (Real-ESRGAN x4, BSD-3) or "remove-bg" (BiRefNet, MIT) and one picture,
+                               a picture tool instead: up to 4096 px on the long side, or a transparent PNG
+  POST /v1/video-edits         -> {"id": ...}  change a clip with Wan 2.1 VACE (Apache 2.0): {"task", "video", "prompt",
+                               "image"?, "box"?} where task is restyle | relight (new look, same motion), motion (the
+                               picture's subject performs the clip's motion), background (new background, same subject)
+                               or inpaint (regenerate the box [x, y, w, h] as fractions of the frame)
+  GET  /v1/video-edits/{id}    and /v1/video-edits/{id}/file, as for videos
   POST /v1/chat                -> {"text": ...}                     write: {"system", "user", "max_tokens", "temperature"}
   /v1/audio...                 music and sound effects: forwarded to the audio engine (audio_server.py, AUDIO_URL)
   /v1/speech...                voices, voice cloning, voice-to-voice: forwarded to speech_server.py (SPEECH_URL)
@@ -84,6 +91,11 @@ VOICEDESIGN_URL = os.environ.get("VOICEDESIGN_URL", "http://127.0.0.1:8004").rst
 # Qwen-Image's native sizes per frame shape (from its model card).
 IMAGE_SIZES = {"1:1": (1328, 1328), "16:9": (1664, 928), "9:16": (928, 1664), "4:3": (1472, 1104), "3:4": (1104, 1472), "21:9": (1792, 768)}
 A14B = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
+VACE = os.environ.get("ENGINE_VACE_MODEL", "Wan-AI/Wan2.1-VACE-14B-diffusers")
+DEPTH = "depth-anything/Depth-Anything-V2-Small-hf"  # Apache 2.0: the structure VACE follows when restyling
+UPSCALER = "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth"
+VACE_SIZES = {"16:9": (832, 480), "9:16": (480, 832), "1:1": (624, 624)}
+VACE_FPS, VACE_FRAMES = 16, 81
 # Wan's own default negative prompt (it was trained with it): garish colours, overexposure, static frames, blur,
 # subtitles, low quality, JPEG artefacts, ugly or deformed faces and hands, extra fingers, fused fingers, still
 # images, cluttered backgrounds, three legs, crowds, walking backwards.
@@ -188,7 +200,10 @@ writer = Writer()
 
 
 class ImageRequest(BaseModel):
-    prompt: str = Field(min_length=1, max_length=4000)
+    prompt: str = Field(default="", max_length=4000)
+    # "generate" (from the prompt, or an edit with images) or a picture tool on images[0].
+    op: str = Field(default="generate", pattern="^(generate|upscale|remove-bg)$")
+    scale: int = Field(default=4, ge=2, le=4)
     negative_prompt: str | None = Field(default=None, max_length=2000)
     # Up to three pictures, base64. With them the request is an edit: change the first picture, or put the people
     # and places from all of them into a new scene ("the woman in picture 1 at the table in picture 2").
@@ -199,10 +214,25 @@ class ImageRequest(BaseModel):
     seed: int | None = None
 
 
+class EditRequest(BaseModel):
+    task: str = Field(pattern="^(restyle|relight|motion|background|inpaint)$")
+    video: str
+    prompt: str = Field(min_length=1, max_length=4000)
+    negative_prompt: str | None = Field(default=None, max_length=2000)
+    # motion: the person or thing that performs the clip's motion; others: an optional reference for the new content.
+    image: str | None = None
+    # inpaint: the region to regenerate, as fractions of the frame [x, y, width, height].
+    box: list[float] | None = Field(default=None, min_length=4, max_length=4)
+    aspect: str = "16:9"
+    seconds: float = Field(default=5, gt=0, le=5.1)
+    steps: int | None = Field(default=None, ge=2, le=80)
+    seed: int | None = None
+
+
 @dataclass
 class Job:
     id: str
-    req: VideoRequest | ImageRequest
+    req: VideoRequest | ImageRequest | EditRequest
     status: str = "queued"
     progress: float = 0.0
     error: str | None = None
@@ -216,6 +246,10 @@ class Engine:
         self.t2v = None  # text -> video (TI2V-5B; in "best" loaded when first needed)
         self.t2i = None  # text -> picture (Qwen-Image), loaded when first asked for
         self.edit = None  # picture editing (Qwen-Image-Edit), loaded when first asked for
+        self.vace = None  # video edits (Wan 2.1 VACE), loaded when first asked for
+        self.depth = None  # depth maps for video edits (Depth Anything V2 Small)
+        self.upscaler = None  # Real-ESRGAN x4plus
+        self.cutout = None  # background removal (BiRefNet)
         self.ready = False
         self.load_error: str | None = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -265,7 +299,7 @@ class Engine:
             pipe.to(self.device)
 
     # ── Jobs ─────────────────────────────────────────────────────────────────
-    def submit(self, req: VideoRequest | ImageRequest) -> Job:
+    def submit(self, req: VideoRequest | ImageRequest | EditRequest) -> Job:
         job = Job(id=uuid.uuid4().hex, req=req)
         with self.lock:
             self.jobs[job.id] = job
@@ -284,7 +318,12 @@ class Engine:
                 continue
             job.status = "running"
             try:
-                job.file = self.picture(job) if isinstance(job.req, ImageRequest) else self.render(job)
+                if isinstance(job.req, ImageRequest):
+                    job.file = self.picture(job) if job.req.op == "generate" else self.picture_tool(job)
+                elif isinstance(job.req, EditRequest):
+                    job.file = self.edit_video(job)
+                else:
+                    job.file = self.render(job)
                 job.status, job.progress = "succeeded", 1.0
             except Exception as e:  # noqa: BLE001
                 log.exception("Job %s failed", job.id)
@@ -389,6 +428,172 @@ class Engine:
         with torch.inference_mode():
             pipe(**args).images[0].save(path)
         return path
+
+    def picture_tool(self, job: Job) -> str:
+        """Upscale (Real-ESRGAN x4, tiled) or cut out the subject (BiRefNet through rembg) of images[0]."""
+        r = job.req
+        os.makedirs(OUT_DIR, exist_ok=True)
+        path = os.path.join(OUT_DIR, f"{job.id}.png")
+        img = read_picture(r.images[0])
+        if r.op == "remove-bg":
+            if TINY:
+                # No real weights in tests: the left half is kept, the right half is see-through.
+                out = img.convert("RGBA")
+                out.paste((0, 0, 0, 0), (out.width // 2, 0, out.width, out.height))
+            else:
+                from rembg import new_session, remove
+
+                if self.cutout is None:
+                    self.cutout = new_session("birefnet-general")
+                out = remove(img, session=self.cutout)
+            out.save(path)
+            return path
+        # Upscale: at most 4096 px on the long side; a bigger picture is shrunk first so x4 lands there.
+        target = min(4096, max(img.size) * r.scale)
+        src = img if max(img.size) * 4 <= target * 1.001 else img.resize((max(1, round(img.width * target / max(img.size) / 4)), max(1, round(img.height * target / max(img.size) / 4))), Image.LANCZOS)
+        if TINY:
+            up = src.resize((src.width * 4, src.height * 4), Image.LANCZOS)
+        else:
+            up = self.upscale4(src, job)
+        if max(up.size) != target:
+            up = up.resize((round(up.width * target / max(up.size)), round(up.height * target / max(up.size))), Image.LANCZOS)
+        up.save(path)
+        return path
+
+    def upscale4(self, img: Image.Image, job: Job) -> Image.Image:
+        """Real-ESRGAN x4plus over 256 px tiles (16 px overlap), so any picture fits in memory."""
+        import numpy as np
+
+        if self.upscaler is None:
+            import spandrel
+
+            weights = os.path.join(os.environ.get("HF_HOME", tempfile.gettempdir()), "realesrgan", "RealESRGAN_x4plus.pth")
+            if not os.path.exists(weights):
+                import urllib.request
+
+                os.makedirs(os.path.dirname(weights), exist_ok=True)
+                urllib.request.urlretrieve(UPSCALER, weights + ".part")
+                os.replace(weights + ".part", weights)
+            self.upscaler = spandrel.ModelLoader().load_from_file(weights).model.eval().to(self.device).half() if self.device == "cuda" else spandrel.ModelLoader().load_from_file(weights).model.eval()
+        x = torch.from_numpy(np.asarray(img.convert("RGB"), dtype=np.float32) / 255).permute(2, 0, 1)[None]
+        _, _, h, w = x.shape
+        out = torch.zeros(1, 3, h * 4, w * 4)
+        tile, pad = 256, 16
+        tiles = [(y, x0) for y in range(0, h, tile) for x0 in range(0, w, tile)]
+        for i, (y, x0) in enumerate(tiles):
+            y1, x1 = min(h, y + tile), min(w, x0 + tile)
+            ya, xa, yb, xb = max(0, y - pad), max(0, x0 - pad), min(h, y1 + pad), min(w, x1 + pad)
+            part = x[:, :, ya:yb, xa:xb].to(self.device)
+            with torch.inference_mode():
+                res = self.upscaler(part.half() if self.device == "cuda" else part).float().cpu()
+            out[:, :, y * 4:y1 * 4, x0 * 4:x1 * 4] = res[:, :, (y - ya) * 4:(y - ya + y1 - y) * 4, (x0 - xa) * 4:(x0 - xa + x1 - x0) * 4]
+            job.progress = (i + 1) / len(tiles)
+        arr = (out[0].clamp(0, 1).permute(1, 2, 0).numpy() * 255).round().astype("uint8")
+        return Image.fromarray(arr)
+
+    def edit_video(self, job: Job) -> str:
+        """Changes a clip with Wan 2.1 VACE: restyle, relight, motion transfer, new background or inpaint."""
+        import imageio_ffmpeg
+        from diffusers.utils import export_to_video
+
+        r: EditRequest = job.req
+        width, height = (32, 32) if TINY else VACE_SIZES.get(r.aspect, VACE_SIZES["16:9"])
+        n = 9 if TINY else min(VACE_FRAMES, 4 * round(r.seconds * VACE_FPS / 4) + 1)
+        src = os.path.join(OUT_DIR, f"{job.id}-src.mp4")
+        os.makedirs(OUT_DIR, exist_ok=True)
+        with open(src, "wb") as f:
+            f.write(base64.b64decode(r.video.split(",", 1)[-1]))
+        # Decoded by ffmpeg in its own process (no decoder threads inside the server), only as far as needed.
+        reader = imageio_ffmpeg.read_frames(src)
+        meta = next(reader)
+        fps = float(meta.get("fps") or 24)
+        need = int((n - 1) * fps / VACE_FPS) + 1
+        raw = []
+        try:
+            for buf in reader:
+                raw.append(Image.frombytes("RGB", meta["size"], buf))
+                if len(raw) >= need:
+                    break
+        finally:
+            reader.close()
+            os.remove(src)
+        if not raw:
+            raise ValueError("The clip has no frames.")
+        # Resample to the model's 16 fps and fit the frame size (cropping the edges, not stretching).
+        frames = [ImageOps.fit(raw[min(len(raw) - 1, int(i * fps / VACE_FPS))], (width, height), Image.LANCZOS) for i in range(n)]
+        white = Image.new("L", (width, height), 255)
+        refs = [ImageOps.fit(read_picture(r.image), (width, height), Image.LANCZOS)] if r.image else None
+        if r.task in ("restyle", "relight", "motion"):
+            control = self.depth_frames(frames)
+            masks = [white] * n
+        elif r.task == "background":
+            subject = self.subject_masks(frames)  # white = the person or thing to keep
+            masks = [ImageOps.invert(m) for m in subject]
+            control = [Image.composite(f, Image.new("RGB", (width, height), (127, 127, 127)), m) for f, m in zip(frames, subject)]
+        else:
+            x, y, w, h = r.box or [0.25, 0.25, 0.5, 0.5]
+            box = Image.new("L", (width, height), 0)
+            box.paste(255, (round(x * width), round(y * height), round((x + w) * width), round((y + h) * height)))
+            masks = [box] * n
+            control = [Image.composite(Image.new("RGB", (width, height), (127, 127, 127)), f, box) for f in frames]
+        path = os.path.join(OUT_DIR, f"{job.id}.mp4")
+        if TINY:
+            # No real weights in tests: the conditioning frames themselves, so the plumbing can be checked.
+            export_to_video(control, path, fps=VACE_FPS)
+            return path
+        if self.vace is None:
+            from diffusers import AutoencoderKLWan, WanVACEPipeline
+
+            log.info("First video edit: loading %s", VACE)
+            vae = AutoencoderKLWan.from_pretrained(VACE, subfolder="vae", torch_dtype=torch.float32)
+            self.vace = WanVACEPipeline.from_pretrained(VACE, vae=vae, torch_dtype=self.dtype)
+            self.vace.enable_model_cpu_offload()  # shares the GPU with the other models
+        steps = r.steps or 30
+
+        def on_step(_pipe, i, _t, kwargs):
+            job.progress = min(0.99, (i + 1) / steps)
+            return kwargs
+
+        with torch.inference_mode():
+            video = self.vace(
+                prompt=r.prompt,
+                negative_prompt=r.negative_prompt or NEGATIVE,
+                video=control,
+                mask=masks,
+                reference_images=refs,
+                height=height,
+                width=width,
+                num_frames=n,
+                num_inference_steps=steps,
+                guidance_scale=5.0,
+                generator=torch.Generator(device="cpu").manual_seed(r.seed if r.seed is not None else secrets.randbelow(2**31)),
+                callback_on_step_end=on_step,
+            ).frames[0]
+        export_to_video(video, path, fps=VACE_FPS)
+        return path
+
+    def depth_frames(self, frames: list) -> list:
+        """Each frame's depth as a grey picture (Depth Anything V2 Small): the shapes and motion VACE keeps."""
+        if TINY:
+            return [ImageOps.invert(f) for f in frames]
+        from transformers import pipeline
+
+        if self.depth is None:
+            self.depth = pipeline("depth-estimation", model=DEPTH, device=0 if self.device == "cuda" else -1)
+        return [d["depth"].convert("RGB").resize(f.size) for d, f in zip(self.depth(frames), frames)]
+
+    def subject_masks(self, frames: list) -> list:
+        """White where the main subject is, in every frame (BiRefNet through rembg)."""
+        if TINY:
+            w, h = frames[0].size
+            m = Image.new("L", (w, h), 0)
+            m.paste(255, (w // 4, h // 4, 3 * w // 4, h))
+            return [m] * len(frames)
+        from rembg import new_session, remove
+
+        if self.cutout is None:
+            self.cutout = new_session("birefnet-general")
+        return [remove(f, session=self.cutout, only_mask=True).convert("L") for f in frames]
 
     def cleanup(self) -> None:
         cutoff = time.time() - KEEP_SECONDS
@@ -549,6 +754,10 @@ def file(job_id: str) -> FileResponse:
 def create_image(req: ImageRequest) -> dict:
     if req.aspect not in IMAGE_SIZES:
         raise HTTPException(400, f"aspect must be one of {', '.join(IMAGE_SIZES)}")
+    if req.op == "generate" and not req.prompt.strip():
+        raise HTTPException(400, "Describe the picture.")
+    if req.op != "generate" and len(req.images) != 1:
+        raise HTTPException(400, "Picture tools take exactly one picture.")
     for b in req.images:
         read_picture(b)  # reject an unreadable picture now, not minutes later
     job = engine.submit(req)
@@ -566,6 +775,33 @@ def image_file(job_id: str) -> FileResponse:
     if not job or job.status != "succeeded" or not job.file or not isinstance(job.req, ImageRequest):
         raise HTTPException(404, "The picture isn't ready.")
     return FileResponse(job.file, media_type="image/png", filename=f"{job_id}.png")
+
+
+@app.post("/v1/video-edits", dependencies=[Depends(authorised)])
+def create_edit(req: EditRequest) -> dict:
+    if engine.load_error:
+        raise HTTPException(503, f"The model couldn't load: {engine.load_error}")
+    if req.task == "motion" and not req.image:
+        raise HTTPException(400, "Motion control needs a picture of who (or what) performs the motion.")
+    if req.image:
+        read_picture(req.image)
+    if len(req.video) < 100:
+        raise HTTPException(400, "The clip is empty.")
+    job = engine.submit(req)
+    return {"id": job.id, "status": job.status}
+
+
+@app.get("/v1/video-edits/{job_id}", dependencies=[Depends(authorised)])
+def edit_status(job_id: str) -> dict:
+    return status(job_id)
+
+
+@app.get("/v1/video-edits/{job_id}/file", dependencies=[Depends(authorised)])
+def edit_file(job_id: str) -> FileResponse:
+    job = engine.jobs.get(job_id)
+    if not job or job.status != "succeeded" or not job.file or not isinstance(job.req, EditRequest):
+        raise HTTPException(404, "The clip isn't ready.")
+    return FileResponse(job.file, media_type="video/mp4", filename=f"{job_id}.mp4")
 
 
 @app.post("/v1/chat", dependencies=[Depends(authorised)])

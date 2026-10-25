@@ -10,3 +10,7 @@ ftfy==6.3.1
 pillow==12.3.0
 sentencepiece==0.2.1
 huggingface_hub[hf_transfer]
+# Picture tools and video edits: Real-ESRGAN weights through spandrel (MIT) and BiRefNet cutouts through rembg (MIT).
+spandrel==0.4.1
+rembg==2.0.67
+onnxruntime-gpu==1.22.0
