@@ -76,6 +76,33 @@ Options go before `bash`, e.g. `| LOCATION=eastus2 bash` for another region, or 
 quicker TI2V-5B setting. Azure's A10 VMs (NVadsA10 v5) are not recommended: Microsoft's driver page lists a known CUDA
 problem with the GRID driver they install.
 
+## Start it on AWS (one command)
+
+The default instance, `p5.4xlarge` (one H100 80 GB), runs the `best` setting. `TYPE=g6e.2xlarge` (one L40S 48 GB) is
+cheaper and runs `fast`. Check the current hourly price for your region on the EC2 pricing page; you pay only while it
+runs, plus the 512 GB disk and the fixed address (Elastic IP) while it's stopped. AWS Activate credits can pay for it.
+
+1. **GPU quota first.** New accounts start with no GPU quota. In the console open **Service Quotas → Amazon EC2**,
+   find **Running On-Demand P instances** (for p5; **G and VT** for g6e), choose your region and request **16** vCPUs.
+   Say it is for a nonprofit's AI video generation. Approval can take from minutes to a few days.
+2. Open **CloudShell** (the `>_` button at the top of console.aws.amazon.com) and run:
+
+   ```bash
+   curl -sL https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-autopilot/engine/aws/deploy.sh | bash
+   ```
+
+   It checks your quota, reserves a fixed address, opens ports 80 and 443, starts the instance on AWS's Deep Learning
+   AMI (Ubuntu 22.04, NVIDIA driver included), runs the same installer as the Azure VM, sets a daily automatic stop
+   (07:00 UTC) and prints the engine's **address and token**. Options go before `bash`: `REGION=us-west-2`,
+   `TYPE=g6e.2xlarge`, `SHUTDOWN=off`, `SSH_CIDR=<your-ip>/32` (allows SSH, for reading the install log).
+3. Paste the address and token into Ghost Post (step 6 of the RunPod steps below) and press **Save & test**. The first
+   start downloads the models (allow 30–60 minutes).
+4. The script prints the commands to stop, start and delete it. Stopping keeps the models, the address and the token.
+
+**Azure and AWS together:** both scripts make the same engine with its own address and token. Ghost Post uses one
+engine at a time, so run the cloud whose credit you're spending, and paste the other one's address and token into
+Integrations when you switch. Wake on use (starting a stopped engine automatically) works with the Azure VM only.
+
 ## On a GPU VM you already have (one command)
 
 On any Ubuntu 22.04/24.04 VM with an NVIDIA GPU (Azure NC A100/H100 or NV A10 sizes), SSH in and run:

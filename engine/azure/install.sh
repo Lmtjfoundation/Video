@@ -58,14 +58,14 @@ echo "  NVIDIA driver  : $([ "$DRIVER" = 1 ] && nvidia-smi --query-gpu=name,driv
 echo "  GPU memory     : ${VRAM_GB} GB"
 echo "  Free disk      : ${FREE_GB} GB on /opt (needs about ${MIN_FREE_GB} GB for all the models)"
 echo "  Engine         : $(systemctl is-active ghost-post-engine 2>/dev/null || echo 'not installed')"
-[ -n "$GPU" ] || [ "$CPU" = 1 ] || warn "No NVIDIA GPU found. The full engine needs one (Azure NC A100/H100 or NV A10 sizes); --cpu installs the light tools only."
+[ -n "$GPU" ] || [ "$CPU" = 1 ] || warn "No NVIDIA GPU found. The full engine needs one (Azure NC A100/H100 or NV A10 sizes, AWS p5 or g6e); --cpu installs the light tools only."
 if [ "$CHECK" = 1 ]; then
   [ -f "$ENV_FILE" ] && echo "  Token          : set (in $ENV_FILE)"
   curl -fsS --max-time 10 "https://$DOMAIN/health" >/dev/null 2>&1 && echo "  HTTPS          : answering" || echo "  HTTPS          : not answering yet"
   exit 0
 fi
 [ -n "$GPU" ] || [ "$CPU" = 1 ] || die "Stopping: there is no NVIDIA GPU on this VM. Run it with --cpu for the light tools only."
-[ "$FREE_GB" -ge "$MIN_FREE_GB" ] || die "Only ${FREE_GB} GB free on /opt; the models need about ${MIN_FREE_GB} GB. In Azure: VM -> Disks -> resize the OS disk (or attach a data disk mounted at /opt/ghost-post), then run this again. (--force-disk skips this check.)"
+[ "$FREE_GB" -ge "$MIN_FREE_GB" ] || die "Only ${FREE_GB} GB free on /opt; the models need about ${MIN_FREE_GB} GB. In Azure: VM -> Disks -> resize the OS disk; in AWS: EC2 -> Volumes -> Modify (or attach a data disk mounted at /opt/ghost-post), then run this again. (--force-disk skips this check.)"
 
 # ---- NVIDIA driver -------------------------------------------------------------------------------------------
 if [ "$DRIVER" = 0 ] && [ "$CPU" = 0 ]; then
@@ -203,7 +203,7 @@ if curl -fsS --max-time 10 "https://$DOMAIN/health" >/dev/null 2>&1; then
   echo "  Progress: sudo journalctl -fu ghost-post-engine   (also -audio, -speech, -lipsync, -voicedesign)"
 else
   warn "https://$DOMAIN isn't answering yet."
-  echo "  1. In Azure: VM -> Networking -> add inbound rules for TCP 80 and 443 (Caddy needs both for the certificate)."
+  echo "  1. Open inbound TCP 80 and 443 (Caddy needs both for the certificate). Azure: VM -> Networking. AWS: the instance's security group."
   echo "  2. Check: sudo journalctl -u caddy -n 50   and   sudo journalctl -u ghost-post-engine -n 50"
   echo "  Engine token (keep it): $TOKEN"
 fi
