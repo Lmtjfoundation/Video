@@ -8,6 +8,7 @@ import { api } from "@/lib/client";
 import { jobStarted } from "@/lib/jobs-client";
 import { Badge, Button, Card, Empty, Input, PageHeader, Select, Spinner } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { LutGallery } from "@/components/lut-gallery";
 import {
   FOOTAGE_CATEGORIES, fmtDuration, GENRES, INSTRUMENTS, KIND_LABEL, LENGTHS, MOODS, SFX_CATEGORIES, SORTS, TEMPOS, THEMES, type AssetKind,
 } from "@/lib/library-tags";
@@ -33,7 +34,8 @@ export default function LibraryPage() {
 function Library() {
   const { toast } = useApp();
   const params = useSearchParams();
-  const [kind, setKind] = useState<AssetKind>((params.get("kind") as AssetKind) || "music");
+  const [kind, setKind] = useState<AssetKind>(((["music", "sfx", "footage"] as string[]).includes(params.get("kind") ?? "") ? params.get("kind") : "music") as AssetKind);
+  const [luts, setLuts] = useState(params.get("kind") === "luts");
   const [shelf, setShelf] = useState<Shelf>((params.get("shelf") as Shelf) || "all");
   const [boardId, setBoardId] = useState("");
   const [q, setQ] = useState("");
@@ -103,6 +105,7 @@ function Library() {
   }, [load]);
 
   function switchKind(k: AssetKind) {
+    setLuts(false);
     setKind(k);
     setFacets(NO_FACETS);
     setVocals("");
@@ -176,11 +179,13 @@ function Library() {
       />
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {(["music", "sfx", "footage"] as AssetKind[]).map((k) => (
-          <button key={k} onClick={() => switchKind(k)} className={cn("rounded-full px-4 py-2 text-sm font-medium transition", kind === k ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>
+          <button key={k} onClick={() => switchKind(k)} className={cn("rounded-full px-4 py-2 text-sm font-medium transition", !luts && kind === k ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>
             {KIND_LABEL[k]}
           </button>
         ))}
+        <button onClick={() => setLuts(true)} className={cn("rounded-full px-4 py-2 text-sm font-medium transition", luts ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>LUTs</button>
       </div>
+      {luts ? <LutGallery canDownload={!!data?.canDownload} /> : <>
       <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
         {([["all", "Everything"], ["catalog", "Catalog"], ["mine", "My creations"], ["favorites", "Favorites"]] as [Shelf, string][]).map(([s, label]) => (
           <button key={s} onClick={() => { setShelf(s); setSimilar(null); }} className={cn("rounded-lg px-3 py-1.5", shelf === s ? "bg-white/15 text-white" : "text-white/60 hover:text-white")}>
@@ -319,6 +324,7 @@ function Library() {
         </>
       )}
 
+      </>}
       {/* The player stays at the bottom while you browse. */}
       <audio ref={audio} onPlay={() => setPaused(false)} onPause={() => setPaused(true)} onTimeUpdate={(e) => setPos(e.currentTarget.currentTime)} onEnded={() => step(1)} />
       {playing && (
