@@ -29,7 +29,9 @@ const asked = <T>(p: Promise<T>) => p.catch((e: Error) => {
 export const GET = authed(async (_req, user) => {
   const projects = await listAudioProjects();
   return ok({
-    engine: await ownEngineReady(),
+    engine: await ownEngineReady("speech"),
+    // The voice isolator also runs on an engine without a GPU.
+    isolate: await ownEngineReady("isolate"),
     languages: SPEECH_LANGUAGES,
     credits: { voiceover: CREDIT_COST.voiceover, speech: CREDIT_COST.speech, voiceDesign: CREDIT_COST.voiceDesign, isolateMinute: CREDIT_COST.isolateMinute, lipsyncSecond: CREDIT_COST.lipsyncSecond },
     transcripts: await listTranscripts(),
@@ -44,7 +46,7 @@ const PREVIEW = "Hi there! This is how I sound. I can read your story, your ad o
 /** The Voice Lab tools. Long ones run in the background; the credits are taken now and given back if it fails. */
 export const POST = authed(async (req, user) => {
   const b = await body<Record<string, unknown>>(req);
-  const engine = await ownEngineReady();
+  const engine = await ownEngineReady(b.action === "isolate" ? "isolate" : b.action === "design" ? "voice-design" : "speech");
   const needsEngine = (v?: VoiceChoice) => {
     if (!engine && (!v || v.kind === "engine")) throw new RequestError(ENGINE_OFF, 503);
   };

@@ -70,6 +70,23 @@ def test_speech():
         assert "isolate" in c.get("/v1/speech/info", headers=AUTH).json()["modes"]
 
 
+def test_speech_modes_without_gpu(monkeypatch):
+    import importlib
+
+    monkeypatch.setenv("SPEECH_MODES", "isolate")
+    only = importlib.reload(speech_server)
+    try:
+        with TestClient(only.app) as c:
+            r = c.post("/v1/speech", headers=AUTH, json={"text": "hola", "language": "es"})
+            assert r.status_code == 503 and "isolate" in r.json()["detail"]
+            job = c.post("/v1/speech", headers=AUTH, json={"mode": "isolate", "source": b64(tone(1))}).json()
+            assert wait(c, f"/v1/speech/{job['id']}")["status"] == "succeeded"
+            assert c.get("/v1/speech/info", headers=AUTH).json()["modes"] == ["isolate"]
+    finally:
+        monkeypatch.delenv("SPEECH_MODES")
+        importlib.reload(speech_server)
+
+
 def test_voice_design():
     with TestClient(voicedesign_server.app) as c:
         assert c.post("/v1/voice-design", headers=AUTH, json={"text": "Hello there."}).status_code == 400

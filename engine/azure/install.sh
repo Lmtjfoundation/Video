@@ -6,6 +6,8 @@
 #   curl -fsSL https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-autopilot/engine/azure/install.sh | sudo bash
 #   ... | sudo bash -s -- --check            # only report what's ready and what isn't
 #   ... | sudo bash -s -- my.domain.example  # use your own DNS name instead of <ip>.sslip.io
+#   ... | sudo bash -s -- --cpu              # a VM without a GPU: only the light tools (upscale, background removal,
+#                                            # voice isolation) on the CPU (ENGINE_PROFILE=tools)
 #
 # Safe to run again: finished steps are skipped, and the services restart on the latest code.
 set -euo pipefail
@@ -16,16 +18,19 @@ REPO=/opt/ghost-post/repo
 ENV_FILE=/etc/ghost-post-engine.env
 MIN_FREE_GB=250 # the video, picture, writing, speech and lip-sync models together
 CHECK=0
+CPU=0
 DOMAIN=""
 for a in "$@"; do
   case "$a" in
     --check) CHECK=1 ;;
     --force-disk) MIN_FREE_GB=0 ;;
+    --cpu) CPU=1 ;;
     -*) echo "Unknown option: $a" >&2; exit 2 ;;
     *) DOMAIN="$a" ;;
   esac
 done
 
+[ "$CPU" = 1 ] && MIN_FREE_GB=15
 say() { printf '\n\033[1;32m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[1;33m!!  %s\033[0m\n' "$*"; }
 die() { printf '\033[1;31mXX  %s\033[0m\n' "$*" >&2; exit 1; }
@@ -53,17 +58,17 @@ echo "  NVIDIA driver  : $([ "$DRIVER" = 1 ] && nvidia-smi --query-gpu=name,driv
 echo "  GPU memory     : ${VRAM_GB} GB"
 echo "  Free disk      : ${FREE_GB} GB on /opt (needs about ${MIN_FREE_GB} GB for all the models)"
 echo "  Engine         : $(systemctl is-active ghost-post-engine 2>/dev/null || echo 'not installed')"
-[ -n "$GPU" ] || warn "No NVIDIA GPU found. The engine needs one (Azure NC A100/H100 or NV A10 sizes)."
+[ -n "$GPU" ] || [ "$CPU" = 1 ] || warn "No NVIDIA GPU found. The full engine needs one (Azure NC A100/H100 or NV A10 sizes); --cpu installs the light tools only."
 if [ "$CHECK" = 1 ]; then
   [ -f "$ENV_FILE" ] && echo "  Token          : set (in $ENV_FILE)"
   curl -fsS --max-time 10 "https://$DOMAIN/health" >/dev/null 2>&1 && echo "  HTTPS          : answering" || echo "  HTTPS          : not answering yet"
   exit 0
 fi
-[ -n "$GPU" ] || die "Stopping: there is no NVIDIA GPU on this VM."
+[ -n "$GPU" ] || [ "$CPU" = 1 ] || die "Stopping: there is no NVIDIA GPU on this VM. Run it with --cpu for the light tools only."
 [ "$FREE_GB" -ge "$MIN_FREE_GB" ] || die "Only ${FREE_GB} GB free on /opt; the models need about ${MIN_FREE_GB} GB. In Azure: VM -> Disks -> resize the OS disk (or attach a data disk mounted at /opt/ghost-post), then run this again. (--force-disk skips this check.)"
 
 # ---- NVIDIA driver -------------------------------------------------------------------------------------------
-if [ "$DRIVER" = 0 ]; then
+if [ "$DRIVER" = 0 ] && [ "$CPU" = 0 ]; then
   say "Installing the NVIDIA driver"
   apt-get update -q
   DEBIAN_FRONTEND=noninteractive apt-get install -y -q ubuntu-drivers-common
@@ -93,6 +98,55 @@ TOKEN="$(sed -n 's/^ENGINE_TOKEN=//p' "$ENV_FILE" 2>/dev/null || true)"
 QUALITY=fast
 [ "$VRAM_GB" -ge 70 ] && QUALITY=best
 
+if [ "$CPU" = 1 ]; then
+  # ---- No GPU: the engine in "tools" mode and the speech service for the voice isolator, on CPU builds ----------
+  say "Light tools on the CPU (upscale, background removal, voice isolation)"
+  command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+  export UV_PYTHON_INSTALL_DIR=/opt/ghost-post/python
+  [ -x /opt/ghost-post/venv/bin/python ] || uv venv -q --seed --python 3.12 /opt/ghost-post/venv
+  /opt/ghost-post/venv/bin/pip install -q torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu
+  grep -v '^onnxruntime-gpu' "$REPO/engine/requirements.txt" > /tmp/ghost-post-req-cpu.txt
+  /opt/ghost-post/venv/bin/pip install -q -r /tmp/ghost-post-req-cpu.txt onnxruntime==1.22.0
+  [ -x "$REPO/engine/.speech-venv/bin/python" ] || uv venv -q --seed --python 3.12 "$REPO/engine/.speech-venv"
+  "$REPO/engine/.speech-venv/bin/pip" install -q torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+  "$REPO/engine/.speech-venv/bin/pip" install -q demucs==4.0.1 fastapi==0.142.2 uvicorn==0.54.0 numpy soundfile
+  mkdir -p /opt/ghost-post/hf
+  cat > "$ENV_FILE" <<ENV
+ENGINE_TOKEN=$TOKEN
+ENGINE_PROFILE=tools
+SPEECH_MODES=isolate
+HF_HOME=/opt/ghost-post/hf
+PORT=8000
+ENV
+  chmod 600 "$ENV_FILE"
+  for unit in engine speech; do
+    if [ "$unit" = engine ]; then exe="/opt/ghost-post/venv/bin/python server.py"; else exe="$REPO/engine/.speech-venv/bin/python speech_server.py"; fi
+    cat > "/etc/systemd/system/ghost-post-$unit.service" <<UNIT
+[Unit]
+Description=Ghost Post $unit (light tools, no GPU)
+After=network-online.target
+Wants=network-online.target
+[Service]
+EnvironmentFile=$ENV_FILE
+WorkingDirectory=$REPO/engine
+ExecStart=$exe
+Restart=always
+RestartSec=10
+[Install]
+WantedBy=multi-user.target
+UNIT
+  done
+  if ! command -v caddy >/dev/null; then
+    curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt -o /etc/apt/sources.list.d/caddy-stable.list
+    apt-get update -q && DEBIAN_FRONTEND=noninteractive apt-get install -y -q caddy
+  fi
+  printf '%s {\n  reverse_proxy 127.0.0.1:8000\n}\n' "$DOMAIN" > /etc/caddy/Caddyfile
+  systemctl restart caddy
+  systemctl daemon-reload
+  systemctl enable --now ghost-post-engine ghost-post-speech
+  systemctl restart ghost-post-engine ghost-post-speech
+else
 # ---- Files and steps from cloud-init.yaml ----------------------------------------------------------------------
 say "Services (from cloud-init.yaml)"
 STEPS="$(mktemp)"
@@ -124,6 +178,7 @@ while IFS= read -r step; do
 done < "$STEPS"
 rm -f "$STEPS"
 systemctl restart ghost-post-engine ghost-post-audio ghost-post-speech ghost-post-lipsync ghost-post-voicedesign
+fi
 
 # ---- Ready? -----------------------------------------------------------------------------------------------------
 say "Waiting for https://$DOMAIN (the certificate and the first model load can take a few minutes)"

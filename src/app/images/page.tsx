@@ -14,6 +14,7 @@ type Data = {
   lookGroups: { label: string; looks: string[] }[];
   credits: number;
   toolCredits: { image: number; upscale: number; removeBg: number };
+  toolsReady?: { upscale: boolean; removeBg: boolean };
   made: Pic[];
   pictures: Pic[];
   characters: { id: string; name: string; imageUrl: string }[];
@@ -58,6 +59,7 @@ export default function ImageStudio() {
   const t = IMAGE_TOOLS.find((x) => x.id === tool)!;
   const ready = mode === "edit" ? !!mediaId : mode === "scene" ? cast.length > 0 : mode === "tools" ? !!mediaId && (!t.ask?.required || !!prompt.trim()) && (tool !== "swap" || !!swapWith) : true;
   const cost = mode !== "tools" ? data?.credits ?? 4 : data ? data.toolCredits[t.cost] : 0;
+  const engineOk = mode === "tools" && t.cost !== "image" ? !!data?.toolsReady?.[t.cost] : !!data?.engine;
 
   async function make() {
     setBusy(true);
@@ -232,7 +234,7 @@ export default function ImageStudio() {
             </div>
             </>
             )}
-            <Button variant="primary" size="lg" loading={busy} disabled={busy || (mode !== "tools" && !prompt.trim()) || !ready || !data?.engine} onClick={make}>
+            <Button variant="primary" size="lg" loading={busy} disabled={busy || (mode !== "tools" && !prompt.trim()) || !ready || !engineOk} onClick={make}>
               <ImagePlus className="h-4 w-4" /> {busy ? "Working on it…" : `${mode === "tools" ? t.name : "Make it"} · ${cost} credit${cost === 1 ? "" : "s"}`}
             </Button>
             <p className="-mt-1 text-[11px] text-white/40">The first picture after the engine starts loads the picture model, which takes a few minutes. After that each picture takes under a minute.</p>

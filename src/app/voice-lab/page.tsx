@@ -29,7 +29,7 @@ type Block = { id: string; text: string; voice: VoiceChoice };
 type Chapter = { id: string; title: string; blocks: Block[] };
 type Project = { id: string; title: string; chapters: Chapter[]; updatedAt: string; credits: number; renderUrl?: string };
 type Transcript = { id: string; name: string; seconds: number; lines: TimedText[]; createdAt: string };
-type Info = { engine: boolean; languages: Record<string, string>; credits: Credits; transcripts: Transcript[]; projects: Project[] };
+type Info = { engine: boolean; isolate?: boolean; languages: Record<string, string>; credits: Credits; transcripts: Transcript[]; projects: Project[] };
 
 const DEFAULT_VOICE: VoiceChoice = { kind: "free", id: "af_heart", speed: 1 };
 const voiceCost = (chars: number, v: VoiceChoice, c?: Credits) => (c ? (v.kind === "free" ? c.voiceover : c.speech) * Math.max(1, Math.ceil(chars / 1000)) : 0);
@@ -387,8 +387,8 @@ function IsolateTab({ info }: { info: Info | null }) {
               </button>
             ))}
           </div>
-          <EngineNote info={info} what="The voice isolator" />
-          <Button variant="primary" size="lg" loading={tool.busy} disabled={!mediaId || info?.engine === false} onClick={() => tool.run({ action: "isolate", mediaId, stem })}>
+          {info?.isolate === false && <EngineNote info={{ ...info, engine: false }} what="The voice isolator" />}
+          <Button variant="primary" size="lg" loading={tool.busy} disabled={!mediaId || info?.isolate === false} onClick={() => tool.run({ action: "isolate", mediaId, stem })}>
             Separate · {info?.credits.isolateMinute ?? 1} credit a minute
           </Button>
           <p className="text-xs text-white/45">A video keeps its picture with the new sound. Up to 30 minutes.</p>

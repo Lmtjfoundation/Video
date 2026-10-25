@@ -21,6 +21,8 @@ export const GET = authed(async (_req, user) => {
   const pictures = media.filter((m) => m.kind === "image").sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return ok({
     engine: await picturesReady(),
+    // Upscale and cut-outs also run on an engine without a GPU.
+    toolsReady: { upscale: await ownEngineReady("upscale"), removeBg: await ownEngineReady("remove-bg") },
     lookGroups: CHARACTER_LOOK_GROUPS,
     credits: CREDIT_COST.aiImage,
     toolCredits: { image: CREDIT_COST.aiImage, upscale: CREDIT_COST.upscale, removeBg: CREDIT_COST.removeBg },
@@ -38,7 +40,7 @@ async function runTool(userId: string, b: Partial<ImageToolInput>) {
   if (!t) return fail("Unknown tool.");
   if (!b.mediaId) return fail("Choose the picture.");
   // Upscale and cut-outs run on dedicated models on Ghost Post's own engine; the rest also work with Gemini pictures.
-  if (t.cost === "image" ? !(await picturesReady()) : !(await ownEngineReady())) return fail(ENGINE_OFF, 503);
+  if (t.cost === "image" ? !(await picturesReady()) : !(await ownEngineReady(t.id === "upscale" ? "upscale" : "remove-bg"))) return fail(ENGINE_OFF, 503);
   if (t.ask?.required && !String(b.prompt ?? "").trim()) return fail(`${t.ask.label}?`);
   const credits = imageToolCredits(t.id);
   await spendCredits(userId, credits);

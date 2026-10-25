@@ -14,16 +14,71 @@ export async function videoEngine() {
   const [url, token] = await Promise.all([videoEngineUrl(), videoEngineToken()]);
   return url && token ? { url: url.replace(/\/+$/, ""), token } : null;
 }
-export const ownEngineReady = async () => !!(await videoEngine());
+
+/** What an engine can do (its /v1/info "capabilities"). An engine from before capabilities existed can do everything. */
+export type EngineCapability = "pictures" | "edit-pictures" | "clips" | "video-edits" | "writing" | "upscale" | "remove-bg" | "music" | "sfx" | "speech" | "voice-change" | "isolate" | "lipsync" | "voice-design";
+export const FULL_ENGINE: EngineCapability[] = ["pictures", "edit-pictures", "clips", "video-edits", "writing", "upscale", "remove-bg", "music", "sfx", "speech", "voice-change", "isolate", "lipsync", "voice-design"];
+const CAPS_ROW = "engine-capabilities";
+let capsCache: { url: string; caps: EngineCapability[]; at: number } | null = null;
+
+/**
+ * The connected engine's capabilities: asked of the engine at most every 5 minutes, and remembered (so a machine
+ * that's switched off for the night still counts as able to do its tools; the job then wakes it). Null when the
+ * engine has never answered.
+ */
+export async function engineCapabilities(): Promise<EngineCapability[] | null> {
+  const e = await videoEngine();
+  if (!e) return null;
+  if (capsCache?.url === e.url && Date.now() - capsCache.at < 5 * 60_000) return capsCache.caps;
+  const { gdb } = await import("./db");
+  try {
+    const res = await fetch(`${e.url}/v1/info`, { headers: { Authorization: `Bearer ${e.token}` }, signal: AbortSignal.timeout(8_000), cache: "no-store" });
+    if (res.ok) {
+      const info = (await res.json()) as { capabilities?: EngineCapability[] };
+      const caps = Array.isArray(info.capabilities) ? info.capabilities : FULL_ENGINE;
+      capsCache = { url: e.url, caps, at: Date.now() };
+      await gdb().upsert("kv", { id: CAPS_ROW, value: { url: e.url, caps } }).catch(() => {});
+      return caps;
+    }
+  } catch {
+    /* switched off or unreachable: use what it said last time */
+  }
+  const saved = (await gdb().get<{ id: string; value: { url: string; caps: EngineCapability[] } }>("kv", CAPS_ROW).catch(() => null))?.value;
+  return saved?.url === e.url ? saved.caps : null;
+}
+/** Tests only. */
+export function resetEngineCapabilities() {
+  capsCache = null;
+}
+
+/**
+ * Whether the engine is connected and can do `cap`. Without `cap`: whether a full (GPU) engine is connected, which
+ * is what every tool but upscale, background removal and voice isolation needs. An engine that has never answered
+ * is given the benefit of the doubt (the job reports what goes wrong).
+ */
+export async function ownEngineReady(cap: EngineCapability = "pictures"): Promise<boolean> {
+  if (!(await videoEngine())) return false;
+  const caps = await engineCapabilities();
+  return caps === null || caps.includes(cap);
+}
 
 async function call<T>(path: string, init: RequestInit = {}, raw = false): Promise<T> {
   const e = await videoEngine();
   if (!e) throw new MediaGenError("Ghost Post's video engine isn't connected. The admin adds its address and token in Admin → App settings → Integrations → Ghost Post Video Engine.", "config");
   let res: Response;
+  const send = () => fetch(`${e.url}${path}`, { ...init, headers: { Authorization: `Bearer ${e.token}`, ...(init.headers ?? {}) }, signal: AbortSignal.timeout(120_000) });
   try {
-    res = await fetch(`${e.url}${path}`, { ...init, headers: { Authorization: `Bearer ${e.token}`, ...(init.headers ?? {}) }, signal: AbortSignal.timeout(120_000) });
+    res = await send();
   } catch (err) {
-    throw new MediaGenError(`Ghost Post's video engine didn't answer at ${e.url} (${(err as Error).message}). Check the GPU server is running.`);
+    // The machine may be switched off for the night: start it (when wake on use is set up) and try once more.
+    const { wakeConfigured, wakeEngine } = await import("./vm-wake");
+    if (!(await wakeConfigured())) throw new MediaGenError(`Ghost Post's video engine didn't answer at ${e.url} (${(err as Error).message}). Check the GPU server is running.`);
+    try {
+      await wakeEngine(e.url);
+      res = await send();
+    } catch (again) {
+      throw new MediaGenError(`Ghost Post's engine couldn't be woken: ${(again as Error).message}`);
+    }
   }
   if (res.status === 401) throw new MediaGenError("The video engine rejected the token. Paste the ENGINE_TOKEN the engine was started with.", "config");
   if (!res.ok) {
@@ -221,7 +276,9 @@ export async function ownWrite(o: { system: string; user: string; maxTokens: num
 /** Admin → Integrations → Test. */
 export async function testOwnEngine(): Promise<{ ok: boolean; message: string }> {
   try {
-    const i = await call<{ ready: boolean; error?: string | null; model: string; device: string; vram_gb: number; queue: number }>("/v1/info");
+    const i = await call<{ ready: boolean; error?: string | null; model: string; device: string; vram_gb: number; queue: number; profile?: string }>("/v1/info");
+    resetEngineCapabilities();
+    if (i.profile === "tools") return { ok: true, message: "Connected to a machine without a GPU: upscaling, background removal and voice isolation work. Pictures, clips and voices need a GPU engine." };
     if (i.error) return { ok: false, message: `The engine is running but its model failed to load: ${i.error}` };
     return {
       ok: true,

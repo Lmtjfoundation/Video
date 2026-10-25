@@ -156,3 +156,27 @@ def test_video_edits(tmp_path):
             out.write_bytes(client.get(f"/v1/video-edits/{job['id']}/file", headers=AUTH).content)
             frames = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0", "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", str(out)], capture_output=True, text=True).stdout.strip()
             assert frames == "9", (task, frames)
+
+
+def test_tools_profile_without_gpu(monkeypatch):
+    """ENGINE_PROFILE=tools: no big model loads; upscale and cut-outs work; everything else says it needs a GPU."""
+    import importlib
+
+    monkeypatch.setenv("ENGINE_PROFILE", "tools")
+    tools = importlib.reload(server)
+    try:
+        with TestClient(tools.app) as client:
+            info = client.get("/v1/info", headers=AUTH).json()
+            assert info["profile"] == "tools" and info["ready"] is True
+            assert info["capabilities"] == ["upscale", "remove-bg", "isolate"]
+            assert tools.engine.i2v is None  # the video model was never loaded
+            for path, body in [("/v1/videos", {"prompt": "x"}), ("/v1/images", {"prompt": "a cat"}), ("/v1/chat", {"user": "hi"})]:
+                r = client.post(path, headers=AUTH, json=body)
+                assert r.status_code == 503 and "without a GPU" in r.json()["detail"], (path, r.text)
+            job = client.post("/v1/images", headers=AUTH, json={"op": "upscale", "scale": 2, "images": [picture()]}).json()
+            assert wait(client, job["id"])["status"] == "succeeded"
+            job = client.post("/v1/images", headers=AUTH, json={"op": "remove-bg", "images": [picture()]}).json()
+            assert wait(client, job["id"])["status"] == "succeeded"
+    finally:
+        monkeypatch.delenv("ENGINE_PROFILE")
+        importlib.reload(server)

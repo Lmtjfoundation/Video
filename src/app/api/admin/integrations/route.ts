@@ -21,6 +21,7 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   replicateKey: { re: /^r8_[A-Za-z0-9]{20,}$/, msg: "A Replicate API token starts with r8_ (replicate.com → Account → API tokens)." },
   videoEngineUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the engine's web address, e.g. https://ghostpost-1a2b3c.eastus.cloudapp.azure.com (Azure) or https://abc123-8000.proxy.runpod.net (RunPod)." },
   videoEngineToken: { re: /^[A-Za-z0-9_.~-]{12,}$/, msg: "Paste the ENGINE_TOKEN you started the engine with (12+ letters, numbers, - or _)." },
+  vmWake: { re: /^(?=.*tenant=)(?=.*client=)(?=.*secret=)(?=.*subscription=)(?=.*group=)(?=.*vm=)[^\s]{40,1000}$/, msg: "Paste the whole wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" },
   pixabayKey: { re: /^[A-Za-z0-9-]{20,}$/, msg: "That doesn't look like a Pixabay API key. Sign in at pixabay.com/api/docs and copy the value in the \"key\" row (numbers, a dash, then letters and numbers)." },
   pexelsKey: { re: /^[A-Za-z0-9]{20,}$/, msg: "That doesn't look like a Pexels API key (pexels.com/api)." },
   resendKey: { re: /^re_[A-Za-z0-9_]{10,}$/, msg: "A Resend API key starts with re_ (resend.com → API Keys)." },

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bot, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, Users, X } from "lucide-react";
+import { Bot, Power, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, Users, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { PLANS, type PlanId } from "@/lib/plans";
@@ -70,6 +70,7 @@ interface IntegrationStatus {
   elevenlabs: KeyState & { voiceId: string };
   replicate: KeyState;
   videoEngine: KeyState & { url: string };
+  vmWake?: KeyState & { vm: string };
   pixabay: KeyState;
   pexels: KeyState;
   email: KeyState & { from: string };
@@ -675,6 +676,23 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             <Button size="sm" loading={busy === "test:videoEngine"} disabled={!st.videoEngine.set} onClick={() => check("videoEngine")}>Test</Button>
             {st.videoEngine.set && st.videoEngine.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:videoEngineToken"} onClick={() => remove("videoEngineToken", "Video engine")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Power className="h-4 w-4" />}
+          title="Wake the engine's VM — start it when it's needed"
+          desc="When the engine's machine is switched off (for example by its nightly shutdown), Ghost Post starts it through Azure the next time someone uses an engine tool, and waits for it (about 2–4 minutes). Paste the wake line you were given: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…. It can only read and start that one VM."
+          link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/engine/README.md", label: "Setup guide" }}
+          state={st.vmWake ?? { set: false }}
+        >
+          {st.vmWake?.set && <p className="text-xs text-white/55">Set for the VM “{st.vmWake.vm}”.</p>}
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" value={vals.vmWake ?? ""} onChange={set("vmWake")} />
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Wake"} onClick={() => save(["vmWake"], "Wake")}>Save</Button>
+            {st.vmWake?.set && st.vmWake.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:vmWake"} onClick={() => remove("vmWake", "Wake")}><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
           </Actions>
         </Service>

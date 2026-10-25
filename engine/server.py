@@ -83,6 +83,16 @@ FIVE_B = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 T2I = os.environ.get("ENGINE_IMAGE_MODEL", "Qwen/Qwen-Image")
 WRITER = os.environ.get("ENGINE_TEXT_MODEL", "Qwen/Qwen3-8B")
 WRITING = os.environ.get("ENGINE_TEXT", "on") != "off"
+# "full" (a GPU: every model) or "tools" (a machine without a GPU: only the light picture and sound tools, on the CPU).
+PROFILE = os.environ.get("ENGINE_PROFILE", "full")
+if PROFILE not in ("full", "tools"):
+    raise SystemExit(f"ENGINE_PROFILE must be full or tools, not {PROFILE!r}")
+CAPABILITIES = (
+    ["upscale", "remove-bg", "isolate"]
+    if PROFILE == "tools"
+    else ["pictures", "edit-pictures", "clips", "video-edits", "writing", "upscale", "remove-bg", "music", "sfx", "speech", "voice-change", "isolate", "lipsync", "voice-design"]
+)
+NO_GPU = "This engine runs without a GPU (ENGINE_PROFILE=tools): it does upscaling, background removal and voice isolation only."
 EDIT = os.environ.get("ENGINE_EDIT_MODEL", "Qwen/Qwen-Image-Edit-2511")
 AUDIO_URL = os.environ.get("AUDIO_URL", "http://127.0.0.1:8001").rstrip("/")
 SPEECH_URL = os.environ.get("SPEECH_URL", "http://127.0.0.1:8002").rstrip("/")
@@ -444,12 +454,13 @@ class Engine:
                 from rembg import new_session, remove
 
                 if self.cutout is None:
-                    self.cutout = new_session("birefnet-general")
+                    self.cutout = new_session("birefnet-general" if self.device == "cuda" else "birefnet-general-lite")
                 out = remove(img, session=self.cutout)
             out.save(path)
             return path
         # Upscale: at most 4096 px on the long side; a bigger picture is shrunk first so x4 lands there.
-        target = min(4096, max(img.size) * r.scale)
+        # Up to 4096 px on a GPU; 2048 px on a CPU, where memory and time are tighter.
+        target = min(4096 if self.device == "cuda" else 2048, max(img.size) * r.scale)
         src = img if max(img.size) * 4 <= target * 1.001 else img.resize((max(1, round(img.width * target / max(img.size) / 4)), max(1, round(img.height * target / max(img.size) / 4))), Image.LANCZOS)
         if TINY:
             up = src.resize((src.width * 4, src.height * 4), Image.LANCZOS)
@@ -681,7 +692,11 @@ engine = Engine()
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     os.makedirs(OUT_DIR, exist_ok=True)
-    threading.Thread(target=engine.load, daemon=True).start()
+    if PROFILE == "tools":
+        engine.ready = True  # no big models to load: the tools load their small ones on first use
+        torch.set_num_threads(max(1, os.cpu_count() or 1))
+    else:
+        threading.Thread(target=engine.load, daemon=True).start()
     threading.Thread(target=engine.worker, daemon=True).start()
     yield
 
@@ -703,6 +718,8 @@ def health() -> dict:
 def info() -> dict:
     return {
         "engine": "Ghost Post Video Engine",
+        "profile": PROFILE,
+        "capabilities": CAPABILITIES,
         "quality": QUALITY,
         "model": MAIN.model,
         "text_model": TEXT.model,
@@ -724,6 +741,8 @@ def info() -> dict:
 
 @app.post("/v1/videos", dependencies=[Depends(authorised)])
 def create(req: VideoRequest) -> dict:
+    if PROFILE == "tools":
+        raise HTTPException(503, NO_GPU)
     if engine.load_error:
         raise HTTPException(503, f"The model couldn't load: {engine.load_error}")
     if req.aspect not in ASPECTS:
@@ -754,6 +773,8 @@ def file(job_id: str) -> FileResponse:
 def create_image(req: ImageRequest) -> dict:
     if req.aspect not in IMAGE_SIZES:
         raise HTTPException(400, f"aspect must be one of {', '.join(IMAGE_SIZES)}")
+    if PROFILE == "tools" and req.op == "generate":
+        raise HTTPException(503, NO_GPU)
     if req.op == "generate" and not req.prompt.strip():
         raise HTTPException(400, "Describe the picture.")
     if req.op != "generate" and len(req.images) != 1:
@@ -779,6 +800,8 @@ def image_file(job_id: str) -> FileResponse:
 
 @app.post("/v1/video-edits", dependencies=[Depends(authorised)])
 def create_edit(req: EditRequest) -> dict:
+    if PROFILE == "tools":
+        raise HTTPException(503, NO_GPU)
     if engine.load_error:
         raise HTTPException(503, f"The model couldn't load: {engine.load_error}")
     if req.task == "motion" and not req.image:
@@ -806,6 +829,8 @@ def edit_file(job_id: str) -> FileResponse:
 
 @app.post("/v1/chat", dependencies=[Depends(authorised)])
 def chat(req: ChatRequest) -> dict:
+    if PROFILE == "tools":
+        raise HTTPException(503, NO_GPU)
     if not WRITING:
         raise HTTPException(503, "Writing is switched off on this engine (ENGINE_TEXT=off).")
     try:

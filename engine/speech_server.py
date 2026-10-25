@@ -49,7 +49,13 @@ class SpeechRequest(BaseModel):
 models: dict = {}
 
 
+# A machine without a GPU runs only the voice isolator (SPEECH_MODES=isolate): Chatterbox needs a GPU.
+MODES = [m for m in os.environ.get("SPEECH_MODES", "tts,convert,isolate").split(",") if m]
+
+
 def check(r: SpeechRequest) -> None:
+    if r.mode not in MODES:
+        raise HTTPException(503, f"This speech engine only does: {', '.join(MODES)} (it has no GPU).")
     if r.mode == "tts":
         if not r.text.strip():
             raise HTTPException(400, "Text is required.")
@@ -130,7 +136,11 @@ def isolate(job: Job, r: SpeechRequest, out: str) -> str:
         return out
     job.progress = 0.1
     sep = os.path.join(job.dir, "sep")
-    subprocess.run([sys.executable, "-m", "demucs.separate", "-n", "htdemucs", "--two-stems", "vocals", "-o", sep, src],
+    import torch
+
+    # On a CPU, short segments keep memory low (a 4 GB machine is enough).
+    cpu = [] if torch.cuda.is_available() else ["-d", "cpu", "--segment", "7"]
+    subprocess.run([sys.executable, "-m", "demucs.separate", "-n", "htdemucs", "--two-stems", "vocals", *cpu, "-o", sep, src],
                    check=True, capture_output=True, timeout=3600)
     found = os.path.join(sep, "htdemucs", "source", "vocals.wav" if r.stem == "vocals" else "no_vocals.wav")
     shutil.move(found, out)
@@ -140,7 +150,7 @@ def isolate(job: Job, r: SpeechRequest, out: str) -> str:
 
 app = create_app("Ghost Post Speech Engine", "/v1/speech", SpeechRequest, run, "audio/wav", check=check,
                  info=lambda: {"model": "Chatterbox Multilingual + Chatterbox VC (MIT), Demucs htdemucs (MIT)",
-                              "languages": LANGUAGES, "modes": ["tts", "convert", "isolate"]})
+                              "languages": LANGUAGES, "modes": MODES})
 
 if __name__ == "__main__":
     import uvicorn
