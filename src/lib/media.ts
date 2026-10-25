@@ -19,6 +19,7 @@ export const ALLOWED_TYPES: Record<string, { ext: string; kind: MediaItem["kind"
   "image/gif": { ext: "gif", kind: "image" },
   "video/mp4": { ext: "mp4", kind: "video" },
   "video/quicktime": { ext: "mov", kind: "video" },
+  "video/webm": { ext: "webm", kind: "video" },
   // Voice lines, music and sound for the Film Engine (Seedance lip-syncs to them).
   "audio/mpeg": { ext: "mp3", kind: "audio" },
   "audio/wav": { ext: "wav", kind: "audio" },

@@ -10,11 +10,13 @@ import { cn } from "@/lib/utils";
 import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, Select, Switch, Textarea } from "@/components/ui";
 import { MediaSelect, useMedia, useVoices } from "@/components/voice-tools";
 import { VoicePicker } from "@/components/voice-picker";
+import { RecordVoiceTab } from "@/components/record-voice";
 import { EMOTION_TAGS, stripTags, toSrt, toTxt, toVtt, type TimedText } from "@/lib/speech-text";
 import { DESIGN_PRESETS, STOCK_VOICES, VOICE_USES, type VoiceChoice, type VoiceUse } from "@/lib/voice-catalog";
 
-type Tab = "tts" | "library" | "design" | "stt" | "isolate" | "studio" | "v2v";
+type Tab = "record" | "tts" | "library" | "design" | "stt" | "isolate" | "studio" | "v2v";
 const TABS: { id: Tab; label: string; icon: typeof Mic }[] = [
+  { id: "record", label: "Record Voice", icon: Mic },
   { id: "tts", label: "Text to Speech", icon: AudioLines },
   { id: "library", label: "Voice Library", icon: Library },
   { id: "design", label: "Voice Design", icon: Sparkles },
@@ -528,7 +530,7 @@ function StudioTab({ info, reload }: { info: Info | null; reload: () => void }) 
   );
 }
 
-function VoiceToVideoTab({ info, voice, setVoice }: { info: Info | null; voice: VoiceChoice; setVoice: (v: VoiceChoice) => void }) {
+function VoiceToVideoTab({ info, voice, setVoice, onRecord }: { info: Info | null; voice: VoiceChoice; setVoice: (v: VoiceChoice) => void; onRecord: () => void }) {
   const { items, reload } = useMedia();
   const tool = useRun();
   const [videoId, setVideoId] = useState("");
@@ -560,6 +562,7 @@ function VoiceToVideoTab({ info, voice, setVoice }: { info: Info | null; voice: 
           ) : (
             <div className="grid gap-2">
               <div className="flex flex-wrap items-center gap-2"><Recorder onSaved={(id) => { reload(); setRecId(id); }} /><span className="text-xs text-white/50">or choose:</span></div>
+              <p className="text-xs text-white/50">Want to talk while the video plays, so your voice lands right on the picture? Use <button onClick={onRecord} className="text-mint-300 underline">Record Voice</button>.</p>
               <MediaSelect items={items} kinds={["audio"]} value={recId} onChange={setRecId} empty="No recordings yet" />
             </div>
           )}
@@ -572,8 +575,8 @@ function VoiceToVideoTab({ info, voice, setVoice }: { info: Info | null; voice: 
             ))}
           </div>
           <div className="flex flex-wrap gap-6">
-            <Switch checked={captions} onChange={setCaptions} label="Burned-in captions (free)" />
-            <Switch checked={lipsync} onChange={setLipsync} label="Lip sync the face" />
+            <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={captions} onChange={setCaptions} label="Burned-in captions (free)" /> Burned-in captions (free)</label>
+            <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={lipsync} onChange={setLipsync} label="Lip sync the face" /> Lip sync the face</label>
           </div>
           {needsEngine && <EngineNote info={info} what={lipsync ? "Lip sync" : "This voice"} />}
           <Button variant="primary" size="lg" loading={tool.busy} disabled={!videoId || (source === "script" ? !chars : !recId) || (needsEngine && info?.engine === false)} onClick={() => tool.run({ action: "voice-to-video", videoId, voice: source === "script" ? { text, choice: voice } : { mediaId: recId }, mix, captions, lipsync })}>
@@ -589,8 +592,13 @@ function VoiceToVideoTab({ info, voice, setVoice }: { info: Info | null; voice: 
 
 function VoiceLab() {
   const params = useSearchParams();
-  const initial = TABS.some((t) => t.id === params.get("tab")) ? (params.get("tab") as Tab) : "tts";
+  const initial = TABS.some((t) => t.id === params.get("tab")) ? (params.get("tab") as Tab) : "record";
   const [tab, setTab] = useState<Tab>(initial);
+  // The side menu's Record Voice shortcut links here with ?tab=record: follow it while the page is open too.
+  useEffect(() => {
+    const t = params.get("tab");
+    if (TABS.some((x) => x.id === t)) setTab(t as Tab);
+  }, [params]);
   const { info, reload } = useInfo();
   const [voice, setVoice] = useState<VoiceChoice>(DEFAULT_VOICE);
   const [description, setDescription] = useState("");
@@ -601,7 +609,7 @@ function VoiceLab() {
   }, [tab]);
   return (
     <>
-      <PageHeader title="Voice Lab" subtitle="Lifelike speech, voice design, a voice library, transcripts, voice isolation, audiobooks and voice-over for video, all built into Ghost Post. No outside voice service needed." />
+      <PageHeader title="Voice Lab" subtitle="Record your voice over a video, lifelike speech, voice design, a voice library, transcripts, voice isolation, audiobooks and voice-over for video, all built into Ghost Post. No outside voice service needed." />
       <div ref={strip} className="mb-5 flex gap-2 overflow-x-auto pb-1">
         {TABS.map((t) => (
           <button key={t.id} data-active={tab === t.id} onClick={() => setTab(t.id)} className={cn("flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition", tab === t.id ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>
@@ -609,13 +617,19 @@ function VoiceLab() {
           </button>
         ))}
       </div>
+      {tab === "record" && (
+        <div className="grid gap-6">
+          <RecordVoiceTab engine={info?.engine} lipsyncSecond={info?.credits.lipsyncSecond} />
+          <Recent prefixes={["voiced-"]} kind="video" title="Latest voiced videos" />
+        </div>
+      )}
       {tab === "tts" && <TtsTab info={info} voice={voice} setVoice={setVoice} />}
       {tab === "library" && <LibraryTab onUse={(v) => { setVoice(v); setTab("tts"); }} onDesign={(d) => { setDescription(d); setTab("design"); }} />}
       {tab === "design" && <DesignTab info={info} description={description} setDescription={setDescription} />}
       {tab === "stt" && <SttTab info={info} reload={reload} />}
       {tab === "isolate" && <IsolateTab info={info} />}
       {tab === "studio" && <StudioTab info={info} reload={reload} />}
-      {tab === "v2v" && <VoiceToVideoTab info={info} voice={voice} setVoice={setVoice} />}
+      {tab === "v2v" && <VoiceToVideoTab info={info} voice={voice} setVoice={setVoice} onRecord={() => setTab("record")} />}
     </>
   );
 }

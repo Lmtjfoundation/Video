@@ -1,7 +1,8 @@
 "use client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Clapperboard, Music2, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Clapperboard, Mic, Music2, Sparkles } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { jobStarted } from "@/lib/jobs-client";
@@ -221,7 +222,7 @@ function VideoTools() {
   }, []);
   return (
     <>
-      <PageHeader title="Video Tools" subtitle="Multi-camera Smart Shots, beat-cut music videos, and edits to clips you already have: restyle, relight, motion control, new backgrounds and inpainting." />
+      <PageHeader title="Video Tools" subtitle="Multi-camera Smart Shots, beat-cut music videos, and edits to clips you already have: restyle, relight, motion control, new backgrounds and inpainting." actions={<Link href="/voice-lab?tab=record"><Button><Mic className="h-4 w-4" /> Record your voice over a video</Button></Link>} />
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
         {([["smart", "Smart Shot", Clapperboard], ["music", "Music Video", Music2], ["edit", "Video Edits", Sparkles]] as const).map(([id, label, Icon]) => (
           <button key={id} onClick={() => setTab(id)} className={cn("flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition", tab === id ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Activity, AudioLines, BookOpen, Video as VideoIcon, BookOpenText, CalendarDays, Clapperboard, Compass, CreditCard, Feather, Film, Flame, Images, LayoutDashboard, Library, Wand2, Workflow, Code2, Lightbulb, ListVideo, LogOut, Menu, MessageSquare, MessagesSquare, Palette, ScrollText, Settings, Share2, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Activity, AudioLines, BookOpen, Video as VideoIcon, BookOpenText, CalendarDays, Clapperboard, Compass, CreditCard, Feather, Film, Flame, Images, LayoutDashboard, Library, Wand2, Workflow, Code2, Lightbulb, ListVideo, LogOut, Menu, Mic, MessageSquare, MessagesSquare, Palette, ScrollText, Settings, Share2, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { JobsTray } from "./jobs-tray";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ const NAV: NavItem[] = [
   { href: "/create", label: "AI Studio", short: "AI Studio", icon: Wand2 },
   { href: "/story-video", label: "Story to Video", short: "Stories", icon: BookOpen },
   { href: "/voice-lab", label: "Voice Lab", short: "Voices", icon: AudioLines },
+  { href: "/voice-lab?tab=record", label: "Record Voice", short: "Record", icon: Mic },
   { href: "/video-tools", label: "Video Tools", short: "Video", icon: VideoIcon },
   { href: "/library", label: "Library", short: "Library", icon: Library },
   { href: "/flows", label: "Flows", short: "Flows", icon: Workflow },

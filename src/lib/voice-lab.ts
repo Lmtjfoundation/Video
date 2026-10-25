@@ -299,7 +299,16 @@ export interface VoiceToVideoOptions {
   mix: "replace" | "duck";
   captions: boolean;
   lipsync: boolean;
+  /** Seconds into the video where the voice starts (a recording made while the video played from there). */
+  offset?: number;
+  /** Clean up a home recording: cut rumble and steady background noise, even out the level. */
+  cleanup?: boolean;
 }
+
+/** Voice clean-up for home recordings: rumble below 80 Hz, steady noise, a gentle compressor, broadcast loudness. */
+/** A hard ceiling at about −1.5 dBFS after loudness normalising: one-pass loudnorm can let a sudden loud word overshoot. */
+const CEILING = `aresample=${SR},alimiter=limit=0.84:level=0:attack=1:release=50`;
+export const VOICE_CLEANUP = "highpass=f=80,afftdn=nf=-25,acompressor=threshold=-20dB:ratio=3:attack=10:release=200,loudnorm=I=-16:TP=-1.5";
 
 /** Caption style for libass: Poppins Bold, white with a black outline, low in the frame. */
 const captionStyle = (portrait: boolean) =>
@@ -314,14 +323,23 @@ export async function voiceToVideo(userId: string, o: VoiceToVideoOptions, deps:
   const v = await media(o.videoId, ["video"], "a video");
   return tmp(async (dir) => {
     let src = await toFile(v, dir, "src");
-    const voice = path.join(dir, "voice.wav");
+    let voice = path.join(dir, "voice.wav");
     if ("mediaId" in o.voice) {
       const a = await media(o.voice.mediaId, ["audio", "video"], "the recording");
       await ff(["-i", await toFile(a, dir, "rec"), "-vn", "-ac", "1", "-ar", String(SR), voice]);
     } else await fs.writeFile(voice, await (deps.speak ?? voiceWav)(o.voice.text, o.voice.choice));
     const vSecs = await duration(src);
+    if ((await duration(voice)) < 0.3) throw new Error("The voice is empty.");
+    // One voice track that starts where it was spoken (silence before it) and, if asked, cleaned up: lip sync,
+    // captions and the length then all follow it as they are.
+    const offset = Math.min(Math.max(0, Number(o.offset) || 0), vSecs);
+    if (offset > 0 || o.cleanup) {
+      const placed = path.join(dir, "placed.wav");
+      const af = [o.cleanup ? VOICE_CLEANUP : "", offset > 0 ? `adelay=${Math.round(offset * 1000)}:all=1` : ""].filter(Boolean).join(",");
+      await ff(["-i", voice, "-af", af, "-ac", "1", "-ar", String(SR), placed]);
+      voice = placed;
+    }
     const aSecs = await duration(voice);
-    if (aSecs < 0.3) throw new Error("The voice is empty.");
     const hadSound = !!(await probe(src, "stream=index", "a"));
     if (o.lipsync) {
       const synced = path.join(dir, "synced.mp4");
@@ -342,8 +360,8 @@ export async function voiceToVideo(userId: string, o: VoiceToVideoOptions, deps:
     filters.push(`${vf},format=yuv420p[v]`);
     // The original sound only when it should stay (duck) and the picture wasn't replaced by lip sync's own track.
     if (o.mix === "duck" && hadSound) {
-      filters.push(`[2:a]aresample=${SR},apad,asplit=2[vo][sc]`, `[1:a]aresample=${SR},volume=0.9[bg0]`, `[bg0][sc]sidechaincompress=threshold=0.015:ratio=10:attack=15:release=450:makeup=1[bg]`, `[bg][vo]amix=inputs=2:duration=longest:normalize=0,loudnorm=I=-14:TP=-1.5[a]`);
-    } else filters.push(`[2:a]aresample=${SR},apad,loudnorm=I=-14:TP=-1.5[a]`);
+      filters.push(`[2:a]aresample=${SR},apad,asplit=2[vo][sc]`, `[1:a]aresample=${SR},volume=0.9[bg0]`, `[bg0][sc]sidechaincompress=threshold=0.015:ratio=10:attack=15:release=450:makeup=1[bg]`, `[bg][vo]amix=inputs=2:duration=longest:normalize=0,loudnorm=I=-14:TP=-1.5,${CEILING}[a]`);
+    } else filters.push(`[2:a]aresample=${SR},apad,loudnorm=I=-14:TP=-1.5,${CEILING}[a]`);
     const out = path.join(dir, "out.mp4");
     await ff([
       "-stream_loop", "-1", "-i", src,

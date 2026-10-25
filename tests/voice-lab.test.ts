@@ -224,4 +224,49 @@ describe("Voice Lab", () => {
       expect(probe(fileOf(user, out2), "stream=codec_type").split("\n")).toEqual(["video", "audio"]);
     });
   });
+
+  it("places a voice recorded over the video where it was spoken, cleaned up, with captions at the same moment", { timeout: 120_000 }, async () => {
+    const { asUser } = await import("@/lib/db");
+    const { storeFile } = await import("@/lib/media");
+    const { voiceToVideo } = await import("@/lib/voice-lab");
+    const user = "usr_lab5";
+    await asUser(user, async () => {
+      const vid = path.join(dir, "four.mp4");
+      ff("-f", "lavfi", "-i", "testsrc=s=320x568:r=30:d=4", "-f", "lavfi", "-i", "sine=f=200:d=4", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", vid);
+      const video = await storeFile(user, { name: "four.mp4", type: "video/mp4", bytes: readFileSync(vid) });
+      const take = await storeFile(user, { name: "take.wav", type: "audio/wav", bytes: tone(2, 600, 48000) });
+      const heardAt: number[] = [];
+      const out = await voiceToVideo(user, { videoId: video.id, voice: { mediaId: take.id }, mix: "replace", captions: true, lipsync: false, offset: 1.5, cleanup: true }, {
+        hear: async (f) => {
+          // The track handed to captions already starts with the 1.5 s of silence.
+          heardAt.push(Number(probe(f, "format=duration")));
+          return [{ start: 1.5, end: 3.4, text: "Right here, right now." }];
+        },
+      });
+      expect(heardAt[0]).toBeCloseTo(3.5, 1);
+      const f = fileOf(user, out);
+      expect(Number(probe(f, "format=duration"))).toBeCloseTo(4, 0);
+      const mean = (from: number, len: number) => {
+        let txt = "";
+        try {
+          txt = execFileSync("sh", ["-c", `ffmpeg -hide_banner -ss ${from} -t ${len} -i '${f}' -vn -af volumedetect -f null - 2>&1`]).toString();
+        } catch (e) {
+          txt = String((e as { stdout?: Buffer }).stdout ?? "");
+        }
+        return Number(txt.match(/mean_volume: (-?[\d.]+) dB/)?.[1] ?? -99);
+      };
+      // Silence before the offset, the voice after it.
+      expect(mean(1.6, 1.6) - mean(0.1, 1.1)).toBeGreaterThan(30);
+      // However loud the take, the finished video never reaches 0 dBFS.
+      const peak = Number(execFileSync("sh", ["-c", `ffmpeg -hide_banner -i '${f}' -vn -af volumedetect -f null - 2>&1 || true`]).toString().match(/max_volume: (-?[\d.]+) dB/)?.[1] ?? 0);
+      expect(peak).toBeLessThan(-0.5);
+      // A caption at 2.5 s, none at 0.5 s (the bottom of the frame changes only once the voice starts).
+      const strip = (t: number) => execFileSync("ffmpeg", ["-v", "error", "-ss", String(t), "-i", f, "-vf", "crop=320:110:0:440,scale=32:11", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "gray", "-"]);
+      const src = (t: number) => execFileSync("ffmpeg", ["-v", "error", "-ss", String(t), "-i", vid, "-vf", "crop=320:110:0:440,scale=32:11", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "gray", "-"]);
+      const diff = (a: Buffer, b: Buffer) => a.reduce((n, x, i) => n + Math.abs(x - b[i]), 0) / a.length;
+      const before = diff(strip(0.5), src(0.5));
+      const during = diff(strip(2.5), src(2.5));
+      expect(during).toBeGreaterThan(before * 3 + 1);
+    });
+  });
 });

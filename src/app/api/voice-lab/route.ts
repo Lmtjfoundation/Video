@@ -157,7 +157,8 @@ export const POST = authed(async (req, user) => {
         secs = stripTags(text).length / 14;
       }
       if (secs > 10 * 60) return fail("Voice to video takes up to 10 minutes of voice.");
-      const o: VoiceToVideoOptions = { videoId: String(b.videoId ?? ""), voice, mix: b.mix === "duck" ? "duck" : "replace", captions: b.captions === true, lipsync: b.lipsync === true };
+      const offset = Math.min(600, Math.max(0, Number(b.offset) || 0));
+      const o: VoiceToVideoOptions = { videoId: String(b.videoId ?? ""), voice, mix: b.mix === "duck" ? "duck" : "replace", captions: b.captions === true, lipsync: b.lipsync === true, offset, cleanup: b.cleanup === true };
       if (!o.videoId) return fail("Choose the video.");
       if (o.lipsync) needsEngine();
       credits = voiceToVideoCredits(o, secs);
