@@ -248,7 +248,7 @@ export function DubPanel() {
         )}
         <label className="flex items-center gap-2 text-sm text-white/80"><input type="checkbox" checked={keep} onChange={(e) => setKeep(e.target.checked)} className="accent-mint-400" /> Keep the original sound quietly underneath (music and effects)</label>
         <label className="flex items-center gap-2 text-sm text-white/80"><input type="checkbox" checked={lips} onChange={(e) => setLips(e.target.checked)} className="accent-mint-400" /> Lip sync the face to the new words</label>
-        <Button variant="primary" size="lg" loading={tool.busy} disabled={!mediaId || (voice === "original" && !rights) || info?.engine === false}
+        <Button variant="primary" size="lg" className="h-auto min-h-12 whitespace-normal py-2 text-left" loading={tool.busy} disabled={!mediaId || (voice === "original" && !rights) || info?.engine === false}
           onClick={() => tool.run({ tool: "dub", mediaId, language, voice, rightsConfirmed: rights, keepBackground: keep, lipsync: lips })}>
           <Languages className="h-4 w-4" /> Dub it{info ? ` · ${info.credits.dubMinute} credits a minute${lips ? ` + ${info.credits.lipsyncSecond} a second for lip sync` : ""}` : ""}
         </Button>
@@ -305,7 +305,7 @@ export function AvatarPanel() {
           </div>
           <Field label="…or a recording"><MediaSelect items={items} kinds={["audio"]} value={audioId} onChange={(v) => { setAudioId(v); if (v) setText(""); }} empty="No recordings yet" /></Field>
           <Field label="Direction" hint="Optional"><Input value={direction} maxLength={300} onChange={(e) => setDirection(e.target.value)} placeholder="e.g. She smiles a little at the end" /></Field>
-          <Button variant="primary" size="lg" loading={tool.busy} disabled={!pictureId || (!text.trim() && !audioId) || info?.engine === false}
+          <Button variant="primary" size="lg" className="h-auto min-h-12 whitespace-normal py-2 text-left" loading={tool.busy} disabled={!pictureId || (!text.trim() && !audioId) || info?.engine === false}
             onClick={() => tool.run({ tool: "avatar", pictureId, text: audioId ? undefined : text, language, voiceId: voiceId || undefined, audioId: audioId || undefined, aspect, direction })}>
             <UserRound className="h-4 w-4" /> Make the avatar{info ? ` · about ${info.credits.footageSecond * 5 + info.credits.lipsyncSecond * Math.max(1, Math.ceil((text.length || 70) / 14))} credits` : ""}
           </Button>

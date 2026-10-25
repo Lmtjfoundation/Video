@@ -14,7 +14,9 @@ export default function Developers() {
   const [keys, setKeys] = useState<Key[]>([]);
   const [name, setName] = useState("");
   const [fresh, setFresh] = useState<string | null>(null);
-  const origin = typeof window === "undefined" ? "https://your-app" : window.location.origin;
+  // The examples show this site's own address (read after the first render, so the server and browser match).
+  const [origin, setOrigin] = useState("https://your-app");
+  useEffect(() => setOrigin(window.location.origin), []);
   const load = useCallback(() => api<{ keys: Key[] }>("/api/developers").then((d) => setKeys(d.keys)).catch((e) => toast((e as Error).message, "error")), [toast]);
   useEffect(() => {
     load();
