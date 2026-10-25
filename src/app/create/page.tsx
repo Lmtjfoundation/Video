@@ -2,7 +2,9 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AudioLines, Clapperboard, Library, Mic, Music, Palette, Sparkles, Wand2 } from "lucide-react";
+import { AudioLines, Clapperboard, Languages, Library, Mic, Music, Palette, Sparkles, UserRound, Wand2 } from "lucide-react";
+import { AvatarPanel, DubPanel, useRunTool, useVoiceInfo, useVoices, VoicesPanel } from "@/components/voice-tools";
+import { SPEECH_LANGUAGES } from "@/lib/languages";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import { jobStarted } from "@/lib/jobs-client";
@@ -11,7 +13,8 @@ import { cn } from "@/lib/utils";
 import { FOOTAGE_CATEGORIES, GENRES, MOODS, SFX_CATEGORIES } from "@/lib/library-tags";
 import { fillSubject, presetsFor, type Preset } from "@/lib/presets";
 
-type Tab = "music" | "sfx" | "footage" | "voice";
+type Tab = "music" | "sfx" | "footage" | "voice" | "voices" | "dub" | "avatar";
+const ALL_TABS: Tab[] = ["music", "sfx", "footage", "voice", "voices", "dub", "avatar"];
 type Info = { engine: boolean; credits: { music: number; sfx: number; footageSecond: number; autoPrompt: number } };
 type Voices = { voices: { id: string; label: string }[]; maxChars: number; creditsPer1000: number; enabled: boolean };
 
@@ -20,6 +23,9 @@ const TABS: { id: Tab; label: string; icon: typeof Music; text: string }[] = [
   { id: "sfx", label: "Sound effects", icon: AudioLines, text: "Any sound from a description, up to 30 seconds." },
   { id: "footage", label: "Footage", icon: Clapperboard, text: "Stock-style video clips from a description or a picture." },
   { id: "voice", label: "Voiceover", icon: Mic, text: "Your script read aloud by a natural voice." },
+  { id: "voices", label: "My Voices", icon: UserRound, text: "Voice cloning with consent, and the voice changer." },
+  { id: "dub", label: "Dubbing", icon: Languages, text: "Your video in 23 languages." },
+  { id: "avatar", label: "Avatars & lip sync", icon: UserRound, text: "Pictures that speak; new words on any face." },
 ];
 
 export default function CreatePage() {
@@ -32,7 +38,7 @@ export default function CreatePage() {
 
 function AiStudio() {
   const params = useSearchParams();
-  const [tab, setTab] = useState<Tab>(((["music", "sfx", "footage", "voice"] as Tab[]).includes(params.get("kind") as Tab) ? params.get("kind") : "music") as Tab);
+  const [tab, setTab] = useState<Tab>((ALL_TABS.includes(params.get("kind") as Tab) ? params.get("kind") : "music") as Tab);
   const [info, setInfo] = useState<Info | null>(null);
   const { toast } = useApp();
   useEffect(() => {
@@ -54,12 +60,14 @@ function AiStudio() {
         ))}
         <Link href="/images" className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10"><Palette className="h-4 w-4" /> Pictures</Link>
       </div>
-      {info && !info.engine && tab !== "voice" && (
+      {info && !info.engine && (
         <Card className="mb-5 p-4 text-sm text-white/70">
-          Music, sound effects and footage are made on Ghost Post&apos;s own engine. The admin connects it in Admin → App settings → Integrations → Ghost Post Video Engine.
+          {tab === "voice"
+            ? "English voiceovers work now. Other languages and My Voices need Ghost Post's engine, which the admin connects in Admin → App settings → Integrations."
+            : "These tools run on Ghost Post's own engine. The admin connects it in Admin → App settings → Integrations → Ghost Post Video Engine."}
         </Card>
       )}
-      {tab === "voice" ? <VoiceForm /> : <GenForm key={tab} kind={tab} info={info} />}
+      {tab === "voice" ? <VoiceForm /> : tab === "voices" ? <VoicesPanel /> : tab === "dub" ? <DubPanel /> : tab === "avatar" ? <AvatarPanel /> : <GenForm key={tab} kind={tab} info={info} />}
     </>
   );
 }
@@ -259,7 +267,11 @@ function GenForm({ kind, info }: { kind: "music" | "sfx" | "footage"; info: Info
 function VoiceForm() {
   const { toast, refresh } = useApp();
   const [v, setV] = useState<Voices | null>(null);
+  const { data: mine } = useVoices();
+  const info = useVoiceInfo();
+  const tool = useRunTool();
   const [text, setText] = useState("");
+  const [language, setLanguage] = useState("en");
   const [voice, setVoice] = useState("af_heart");
   const [speed, setSpeed] = useState(1);
   const [busy, setBusy] = useState(false);
@@ -267,8 +279,17 @@ function VoiceForm() {
   useEffect(() => {
     api<Voices>("/api/library/voiceover").then(setV).catch((e) => toast((e as Error).message, "error"));
   }, [toast]);
+  // English stock voices run free on Ghost Post's server; any other language, or one of My Voices, uses the engine.
+  const free = language === "en" && !!v?.voices.some((x) => x.id === voice);
+  useEffect(() => {
+    if (language !== "en" && v?.voices.some((x) => x.id === voice)) setVoice("standard");
+  }, [language, voice, v]);
 
   async function make() {
+    if (!free) {
+      await tool.run({ tool: "speech", text, language, voiceId: voice === "standard" ? undefined : voice });
+      return;
+    }
     setBusy(true);
     try {
       const r = await api<{ id: string; name: string; url: string; credits: number }>("/api/library/voiceover", { body: { text, voice, speed } });
@@ -281,31 +302,44 @@ function VoiceForm() {
       setBusy(false);
     }
   }
-  const credits = v ? v.creditsPer1000 * Math.max(1, Math.ceil(text.length / 1000)) : null;
+  const per = free ? v?.creditsPer1000 : info?.credits.speech;
+  const credits = per !== undefined ? per * Math.max(1, Math.ceil(text.length / 1000)) : null;
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <Card>
-        <CardHeader title="Voiceover" subtitle="Natural narration from your script, made on Ghost Post's own server. Saved to your Media Library as an MP3." icon={<Mic className="h-4 w-4" />} />
+        <CardHeader title="Voiceover" subtitle="Natural narration from your script in 23 languages, in a stock voice or one of My Voices. Saved to your Media Library." icon={<Mic className="h-4 w-4" />} />
         <div className="grid gap-4 p-5">
           <Field label="Script" hint={v ? `${text.length.toLocaleString()} / ${v.maxChars.toLocaleString()} characters` : undefined}>
             <Textarea rows={8} maxLength={v?.maxChars ?? 5000} value={text} onChange={(e) => setText(e.target.value)} placeholder="Every marriage has a settlement. Most people just never see the bill." />
           </Field>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Voice">
-              <Select value={voice} onChange={(e) => setVoice(e.target.value)}>
-                {v?.voices.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Language">
+              <Select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                {Object.entries(SPEECH_LANGUAGES).map(([k, n]) => <option key={k} value={k}>{n}</option>)}
               </Select>
             </Field>
-            <Field label={`Speed: ${speed.toFixed(2)}×`}>
-              <input type="range" min={0.7} max={1.3} step={0.05} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} className="w-full accent-mint-400" />
+            <Field label="Voice">
+              <Select value={voice} onChange={(e) => setVoice(e.target.value)}>
+                {language === "en" && <optgroup label="Free English voices">{v?.voices.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}</optgroup>}
+                <optgroup label="Engine voices">
+                  <option value="standard">Standard voice</option>
+                  {mine?.voices.map((x) => <option key={x.id} value={x.id}>{x.name} (My Voices)</option>)}
+                </optgroup>
+              </Select>
             </Field>
+            {free && (
+              <Field label={`Speed: ${speed.toFixed(2)}×`}>
+                <input type="range" min={0.7} max={1.3} step={0.05} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} className="w-full accent-mint-400" />
+              </Field>
+            )}
           </div>
           <div className="flex items-center gap-3 border-t border-white/5 pt-4">
-            <Button variant="primary" size="lg" onClick={make} loading={busy} disabled={!text.trim() || (v !== null && !v.enabled)}>
+            <Button variant="primary" size="lg" onClick={make} loading={busy || tool.busy} disabled={!text.trim() || (free ? v !== null && !v.enabled : info?.engine === false)}>
               <Mic className="h-4 w-4" /> Make voiceover{credits !== null ? ` · ${credits} credit${credits === 1 ? "" : "s"}` : ""}
             </Button>
             {busy && <span className="text-xs text-white/50">About a second of work per sentence…</span>}
+            {!free && <span className="text-xs text-white/50">Made on the engine in the background.</span>}
           </div>
         </div>
       </Card>

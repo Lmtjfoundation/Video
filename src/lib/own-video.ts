@@ -137,6 +137,39 @@ export async function ownAudio(o: OwnAudioRequest): Promise<{ wav: Buffer; bpm?:
   }
 }
 
+/** Waits for a side-service job (speech, lip sync) and returns its file. */
+async function sideJob(path: string, body: unknown, what: string, timeoutMs: number): Promise<{ file: Buffer; meta: Record<string, unknown> }> {
+  const job = await call<{ id: string }>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const s = await call<{ status: string; error?: string | null } & Record<string, unknown>>(`${path}/${job.id}`);
+    if (s.status === "succeeded") return { file: await call<Buffer>(`${path}/${job.id}/file`, {}, true), meta: s };
+    if (s.status === "failed") throw new MediaGenError(`The engine couldn't ${what}: ${(s.error ?? "no reason given").slice(0, 300)}`);
+    if (Date.now() > deadline) throw new MediaGenError(`The engine took too long to ${what}.`);
+    await sleep(3000);
+  }
+}
+const b64 = (b: Buffer) => b.toString("base64");
+
+/**
+ * Speech on the engine (Chatterbox Multilingual): `text` in one of 23 languages, in the voice of `voice` (a 5–20 s
+ * recording) when given. Returns a WAV. Up to about 1,200 characters per call; callers split longer text.
+ */
+export async function ownSpeech(o: { text: string; language: string; voice?: Buffer; exaggeration?: number }): Promise<Buffer> {
+  const r = await sideJob("/v1/speech", { mode: "tts", text: o.text.slice(0, 1200), language: o.language, voice: o.voice ? b64(o.voice) : undefined, exaggeration: o.exaggeration ?? 0.5 }, "speak this", 10 * 60_000);
+  return r.file;
+}
+
+/** Voice-to-voice (Chatterbox VC): the same performance in another voice. Returns a WAV. */
+export async function ownVoiceConvert(o: { source: Buffer; voice: Buffer }): Promise<Buffer> {
+  return (await sideJob("/v1/speech", { mode: "convert", source: b64(o.source), voice: b64(o.voice) }, "change this voice", 15 * 60_000)).file;
+}
+
+/** Lip sync (MuseTalk 1.5): the face in `video` mouths `audio`; a shorter video loops. Returns an MP4 with the audio. */
+export async function ownLipsync(o: { video: Buffer; audio: Buffer }): Promise<Buffer> {
+  return (await sideJob("/v1/lipsync", { video: b64(o.video), audio: b64(o.audio) }, "lip-sync this video", 60 * 60_000)).file;
+}
+
 /** Until when the engine's writing is skipped after it said writing is off or failed to load (0 = try it). */
 let writingOffUntil = 0;
 export const engineWritingSkipped = () => Date.now() < writingOffUntil;

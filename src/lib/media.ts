@@ -25,6 +25,9 @@ export const ALLOWED_TYPES: Record<string, { ext: string; kind: MediaItem["kind"
   "audio/x-wav": { ext: "wav", kind: "audio" },
   "audio/mp4": { ext: "m4a", kind: "audio" },
   "audio/x-m4a": { ext: "m4a", kind: "audio" },
+  // Recorded in the browser (My Voices).
+  "audio/webm": { ext: "webm", kind: "audio" },
+  "audio/ogg": { ext: "ogg", kind: "audio" },
 };
 /** Largest file a person can upload or link (MAX_UPLOAD_MB, 2 GB by default). Videos Ghost Post makes itself have no cap. */
 export const MAX_FILE_BYTES = Math.max(1, Number(process.env.MAX_UPLOAD_MB) || 2048) * 1024 * 1024;
@@ -38,7 +41,7 @@ const localDir = (owner: string) => path.join(process.env.DATA_DIR || path.join(
 
 export async function storeFile(owner: string, file: { name: string; type: string; bytes: Buffer }, opts: { uncapped?: boolean } = {}): Promise<MediaItem> {
   const t = ALLOWED_TYPES[file.type];
-  if (!t) throw new Error("That file type isn't supported. Use JPG, PNG, WebP, GIF, MP4, MOV, MP3, WAV or M4A.");
+  if (!t) throw new Error("That file type isn't supported. Use JPG, PNG, WebP, GIF, MP4, MOV, MP3, WAV, M4A, WebM or OGG.");
   if (!opts.uncapped && file.bytes.length > MAX_FILE_BYTES) throw new Error(`Files can be up to ${MAX_FILE_LABEL}.`);
   const id = uid("med");
   const storagePath = `${owner}/${id}.${t.ext}`;

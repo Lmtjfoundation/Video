@@ -193,6 +193,14 @@ export const CREDIT_COST = {
   aiSfx: 3,
   /** AI Voiceover on the app's own server (Kokoro): per started 1,000 characters. */
   voiceover: 1,
+  /** Speech on the GPU (Chatterbox, 23 languages, My Voices): per started 1,000 characters. */
+  speech: 2,
+  /** Voice-to-voice, per started minute of recording. */
+  voiceChangeMinute: 3,
+  /** Dubbing a video into another language (hearing, translating, speaking every line), per started minute. */
+  dubMinute: 12,
+  /** Lip sync (MuseTalk), per started second of speech. */
+  lipsyncSecond: 2,
   /** Turn a short idea into a full generator prompt. */
   autoPrompt: 1,
   /** Film Engine: plan a whole film as Seedance beats with timestamped shot lists, or write one more beat. */
@@ -228,6 +236,10 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   aiSfx: "AI Sound Effects: one sound up to 30 seconds, with the license",
   autoPrompt: "Auto-prompt: turn a short idea into a full prompt",
   voiceover: "AI Voiceover: each started 1,000 characters",
+  speech: "Voiceover in 23 languages or in one of My Voices: each started 1,000 characters",
+  voiceChangeMinute: "Voice changer: each started minute",
+  dubMinute: "Dubbing into another language: each started minute",
+  lipsyncSecond: "Lip sync and avatars: each started second of speech",
   filmDevelop: "Writers' Room: develop or revise a short film (titles, characters, world, structure, scene outline)",
   filmDevelopLong: "Writers' Room: develop or revise a feature film or series pilot",
   filmPage: "Writers' Room: screenplay pages, per scene",
