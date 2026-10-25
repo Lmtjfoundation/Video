@@ -1,4 +1,6 @@
 # Ghost Post Speech Engine (speech_server.py), in its own environment: Chatterbox pins its own torch and transformers.
 chatterbox-tts==0.1.7
+# The voice isolator (Demucs htdemucs, MIT).
+demucs==4.0.1
 fastapi==0.142.2
 uvicorn==0.54.0

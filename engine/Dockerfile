@@ -12,8 +12,8 @@ RUN python -m venv --system-site-packages .audio-venv && .audio-venv/bin/pip ins
  && .audio-venv/bin/pip install --no-cache-dir --no-deps -r requirements-audio-nodeps.txt
 # Speech (Chatterbox) and lip sync (MuseTalk) in their own environments.
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
-COPY requirements-speech.txt setup-sidecars.sh ./
+COPY requirements-speech.txt requirements-voicedesign.txt setup-sidecars.sh ./
 RUN ./setup-sidecars.sh
-COPY server.py audio_server.py sidecar.py speech_server.py lipsync_server.py ./
+COPY server.py audio_server.py sidecar.py speech_server.py lipsync_server.py voicedesign_server.py ./
 EXPOSE 8000
-CMD ["sh", "-c", ".audio-venv/bin/python audio_server.py & .speech-venv/bin/python speech_server.py & .lipsync-venv/bin/python lipsync_server.py & exec python server.py"]
+CMD ["sh", "-c", ".audio-venv/bin/python audio_server.py & .speech-venv/bin/python speech_server.py & .lipsync-venv/bin/python lipsync_server.py & .design-venv/bin/python voicedesign_server.py & exec python server.py"]

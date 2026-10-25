@@ -201,6 +201,10 @@ export const CREDIT_COST = {
   dubMinute: 12,
   /** Lip sync (MuseTalk), per started second of speech. */
   lipsyncSecond: 2,
+  /** Voice design (Parler-TTS on the GPU): one sample in a new voice described in words. */
+  voiceDesign: 2,
+  /** Voice isolator (Demucs on the GPU), per started minute. */
+  isolateMinute: 1,
   /** Turn a short idea into a full generator prompt. */
   autoPrompt: 1,
   /** Film Engine: plan a whole film as Seedance beats with timestamped shot lists, or write one more beat. */
@@ -240,6 +244,8 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   voiceChangeMinute: "Voice changer: each started minute",
   dubMinute: "Dubbing into another language: each started minute",
   lipsyncSecond: "Lip sync and avatars: each started second of speech",
+  voiceDesign: "Voice design: a new voice from a description",
+  isolateMinute: "Voice isolator: each started minute",
   filmDevelop: "Writers' Room: develop or revise a short film (titles, characters, world, structure, scene outline)",
   filmDevelopLong: "Writers' Room: develop or revise a feature film or series pilot",
   filmPage: "Writers' Room: screenplay pages, per scene",

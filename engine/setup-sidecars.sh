@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Sets up the speech and lip-sync side services, each in its own Python environment, next to this script:
-#   .speech-venv   Chatterbox (requirements-speech.txt)
+#   .speech-venv   Chatterbox and Demucs (requirements-speech.txt)
+#   .design-venv   Parler-TTS for voice design (requirements-voicedesign.txt)
 #   .lipsync-venv  MuseTalk 1.5 in vendor/MuseTalk (Python 3.10, PyTorch 2.0.1, its pinned packages and weights)
 # Safe to run again: finished steps are skipped. Needs uv (https://astral.sh/uv), git, curl and ffmpeg.
 set -euo pipefail
@@ -10,6 +11,9 @@ MUSETALK_COMMIT=0a89dec45a0192b824e3cf4daf96c239440c5ed8
 
 if [ ! -x .speech-venv/bin/python ]; then uv venv -q --seed --python 3.12 .speech-venv; fi
 .speech-venv/bin/pip install -q -r requirements-speech.txt
+
+if [ ! -x .design-venv/bin/python ]; then uv venv -q --seed --python 3.12 .design-venv; fi
+.design-venv/bin/pip install -q -r requirements-voicedesign.txt
 
 if [ ! -d vendor/MuseTalk ]; then
   git clone -q https://github.com/TMElyralab/MuseTalk vendor/MuseTalk

@@ -30,10 +30,11 @@ API (every call except /health needs `Authorization: Bearer <ENGINE_TOKEN>`):
   /v1/audio...                 music and sound effects: forwarded to the audio engine (audio_server.py, AUDIO_URL)
   /v1/speech...                voices, voice cloning, voice-to-voice: forwarded to speech_server.py (SPEECH_URL)
   /v1/lipsync...               lip sync and talking avatars: forwarded to lipsync_server.py (LIPSYNC_URL)
+  /v1/voice-design...          a new voice from a description: forwarded to voicedesign_server.py (VOICEDESIGN_URL)
 
 Settings (environment): ENGINE_TOKEN (required in production), ENGINE_QUALITY (best|fast), ENGINE_OFFLOAD
 (auto|on|off: keep idle model parts in CPU memory), ENGINE_STEPS (default 40), HF_HOME (model cache).
-AUDIO_URL / SPEECH_URL / LIPSYNC_URL (defaults 127.0.0.1:8001 / 8002 / 8003): where the side services listen, each in
+AUDIO_URL / SPEECH_URL / LIPSYNC_URL / VOICEDESIGN_URL (defaults 127.0.0.1:8001 / 8002 / 8003 / 8004): where the side services listen, each in
 its own Python environment (start.sh runs them).
 ENGINE_MODEL=tiny / tiny-best build tiny random models of each profile for tests.
 """
@@ -79,6 +80,7 @@ EDIT = os.environ.get("ENGINE_EDIT_MODEL", "Qwen/Qwen-Image-Edit-2511")
 AUDIO_URL = os.environ.get("AUDIO_URL", "http://127.0.0.1:8001").rstrip("/")
 SPEECH_URL = os.environ.get("SPEECH_URL", "http://127.0.0.1:8002").rstrip("/")
 LIPSYNC_URL = os.environ.get("LIPSYNC_URL", "http://127.0.0.1:8003").rstrip("/")
+VOICEDESIGN_URL = os.environ.get("VOICEDESIGN_URL", "http://127.0.0.1:8004").rstrip("/")
 # Qwen-Image's native sizes per frame shape (from its model card).
 IMAGE_SIZES = {"1:1": (1328, 1328), "16:9": (1664, 928), "9:16": (928, 1664), "4:3": (1472, 1104), "3:4": (1104, 1472), "21:9": (1792, 768)}
 A14B = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
@@ -615,6 +617,13 @@ async def speech(request: Request, rest: str = "") -> Response:
 async def lipsync(request: Request, rest: str = "") -> Response:
     """Lip sync and talking avatars: lipsync_server.py."""
     return await forward(request, f"{LIPSYNC_URL}/v1/lipsync" + (f"/{rest}" if rest else ""), "lip-sync engine")
+
+
+@app.api_route("/v1/voice-design", methods=["POST"], dependencies=[Depends(authorised)])
+@app.api_route("/v1/voice-design/{rest:path}", methods=["GET"], dependencies=[Depends(authorised)])
+async def voice_design(request: Request, rest: str = "") -> Response:
+    """A new voice from a description: voicedesign_server.py."""
+    return await forward(request, f"{VOICEDESIGN_URL}/v1/voice-design" + (f"/{rest}" if rest else ""), "voice-design engine")
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 import lipsync_server  # noqa: E402
 import speech_server  # noqa: E402
+import voicedesign_server  # noqa: E402
 
 AUTH = {"Authorization": "Bearer test-token-123456"}
 
@@ -58,6 +59,25 @@ def test_speech():
             assert w.getnframes() / w.getframerate() > 1.5
         job = c.post("/v1/speech", headers=AUTH, json={"mode": "convert", "source": b64(tone(1)), "voice": b64(tone(5))}).json()
         assert wait(c, f"/v1/speech/{job['id']}")["status"] == "succeeded"
+        # The voice isolator: a recording, and which part to keep.
+        assert c.post("/v1/speech", headers=AUTH, json={"mode": "isolate"}).status_code == 400
+        assert c.post("/v1/speech", headers=AUTH, json={"mode": "isolate", "source": b64(tone(1)), "stem": "drums"}).status_code == 422
+        job = c.post("/v1/speech", headers=AUTH, json={"mode": "isolate", "source": b64(tone(2)), "stem": "background"}).json()
+        s = wait(c, f"/v1/speech/{job['id']}")
+        assert s["status"] == "succeeded" and s["stem"] == "background", s
+        with wave.open(io.BytesIO(c.get(f"/v1/speech/{job['id']}/file", headers=AUTH).content)) as w:
+            assert abs(w.getnframes() / w.getframerate() - 2) < 0.05
+        assert "isolate" in c.get("/v1/speech/info", headers=AUTH).json()["modes"]
+
+
+def test_voice_design():
+    with TestClient(voicedesign_server.app) as c:
+        assert c.post("/v1/voice-design", headers=AUTH, json={"text": "Hello there."}).status_code == 400
+        job = c.post("/v1/voice-design", headers=AUTH, json={"text": "Welcome back to the show, everybody.", "description": "A warm older man, slow and calm."}).json()
+        s = wait(c, f"/v1/voice-design/{job['id']}")
+        assert s["status"] == "succeeded" and s["designed"] is True, s
+        with wave.open(io.BytesIO(c.get(f"/v1/voice-design/{job['id']}/file", headers=AUTH).content)) as w:
+            assert w.getnframes() / w.getframerate() > 2
 
 
 def test_lipsync():
@@ -98,5 +118,7 @@ def test_video_engine_forwards_speech():
             # Lip sync isn't running in this test: a clear 503, not a crash.
             r = c.post("/v1/lipsync", headers=AUTH, json={"video": "x", "audio": "y"})
             assert r.status_code == 503 and "lip-sync engine" in r.json()["detail"]
+            r = c.post("/v1/voice-design", headers=AUTH, json={"text": "x", "description": "y"})
+            assert r.status_code == 503 and "voice-design engine" in r.json()["detail"]
     finally:
         srv.should_exit = True

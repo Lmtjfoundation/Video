@@ -155,14 +155,24 @@ const b64 = (b: Buffer) => b.toString("base64");
  * Speech on the engine (Chatterbox Multilingual): `text` in one of 23 languages, in the voice of `voice` (a 5–20 s
  * recording) when given. Returns a WAV. Up to about 1,200 characters per call; callers split longer text.
  */
-export async function ownSpeech(o: { text: string; language: string; voice?: Buffer; exaggeration?: number }): Promise<Buffer> {
-  const r = await sideJob("/v1/speech", { mode: "tts", text: o.text.slice(0, 1200), language: o.language, voice: o.voice ? b64(o.voice) : undefined, exaggeration: o.exaggeration ?? 0.5 }, "speak this", 10 * 60_000);
+export async function ownSpeech(o: { text: string; language: string; voice?: Buffer; exaggeration?: number; cfg?: number }): Promise<Buffer> {
+  const r = await sideJob("/v1/speech", { mode: "tts", text: o.text.slice(0, 1200), language: o.language, voice: o.voice ? b64(o.voice) : undefined, exaggeration: o.exaggeration ?? 0.5, cfg: o.cfg ?? 0.5 }, "speak this", 10 * 60_000);
   return r.file;
 }
 
 /** Voice-to-voice (Chatterbox VC): the same performance in another voice. Returns a WAV. */
 export async function ownVoiceConvert(o: { source: Buffer; voice: Buffer }): Promise<Buffer> {
   return (await sideJob("/v1/speech", { mode: "convert", source: b64(o.source), voice: b64(o.voice) }, "change this voice", 15 * 60_000)).file;
+}
+
+/** Voice isolator (Demucs htdemucs): the voice alone, or everything but the voice (music, noise, effects). WAV. */
+export async function ownIsolate(o: { source: Buffer; stem: "vocals" | "background" }): Promise<Buffer> {
+  return (await sideJob("/v1/speech", { mode: "isolate", source: b64(o.source), stem: o.stem }, "separate this recording", 30 * 60_000)).file;
+}
+
+/** Voice design (Parler-TTS Mini v1): `text` read in a new voice described in words. WAV. */
+export async function ownDesignVoice(o: { text: string; description: string; seed?: number }): Promise<Buffer> {
+  return (await sideJob("/v1/voice-design", { text: o.text.slice(0, 600), description: o.description.slice(0, 600), seed: o.seed }, "design this voice", 10 * 60_000)).file;
 }
 
 /** Lip sync (MuseTalk 1.5): the face in `video` mouths `audio`; a shorter video loops. Returns an MP4 with the audio. */

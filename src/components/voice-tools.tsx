@@ -64,7 +64,7 @@ export function useRunTool() {
 
 const pickFrom = (items: MediaItem[], kinds: MediaItem["kind"][]) => items.filter((m) => kinds.includes(m.kind));
 
-function MediaSelect({ items, kinds, value, onChange, empty }: { items: MediaItem[]; kinds: MediaItem["kind"][]; value: string; onChange: (v: string) => void; empty: string }) {
+export function MediaSelect({ items, kinds, value, onChange, empty }: { items: MediaItem[]; kinds: MediaItem["kind"][]; value: string; onChange: (v: string) => void; empty: string }) {
   const list = pickFrom(items, kinds);
   return (
     <Select value={value} onChange={(e) => onChange(e.target.value)}>

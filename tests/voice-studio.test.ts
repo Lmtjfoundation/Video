@@ -67,7 +67,7 @@ describe("voice tools", () => {
       await expect(createVoice(user, { name: "Me", mediaId: rec.id, consentBy: "Monica H", agreed: false }, async () => CONSENT_SENTENCE)).rejects.toThrow(/Confirm/);
       await expect(createVoice(user, { name: "Me", mediaId: rec.id, consentBy: "Monica H", agreed: true }, async () => "just some speech from a podcast")).rejects.toThrow(/consent sentence wasn't heard/);
       const v = await createVoice(user, { name: "Me", mediaId: rec.id, consentBy: "Monica H", agreed: true }, async () => `${CONSENT_SENTENCE} And now my normal voice.`);
-      expect(v.consent.by).toBe("Monica H");
+      expect(v.consent!.by).toBe("Monica H");
       const sample = await db().get<{ id: string; storagePath: string }>("media", v.sampleId);
       const p = path.join(dir, "uploads", user, sample!.storagePath.split("/")[1]);
       expect(Number(probe(p, "format=duration"))).toBeCloseTo(20, 0); // 20 s reference, skipping the sentence

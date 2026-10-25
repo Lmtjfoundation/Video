@@ -9,6 +9,7 @@ import { FOOTAGE_CATEGORIES, GENRES, INSTRUMENTS, MOODS, pickTags, SFX_CATEGORIE
 import { readFile, storeFile } from "./media";
 import { ENGINE_CLIP_SECONDS, ownAudio, ownClip } from "./own-video";
 import { runCmd } from "./render";
+import { stripTags } from "./speech-text";
 import type { MediaItem } from "./types";
 import { nowIso, uid } from "./utils";
 
@@ -201,7 +202,8 @@ export async function makeFootage(userId: string, o: FootageInput): Promise<Libr
 export const VOICE_MAX_CHARS = 5000;
 export async function makeVoiceover(userId: string, o: { text: string; voice: string; speed?: number }): Promise<MediaItem> {
   const { freeVoice } = await import("./free-voice");
-  const text = o.text.trim().slice(0, VOICE_MAX_CHARS);
+  // Kokoro can't act emotion tags ("[whispers]"), so they're taken out rather than read aloud.
+  const text = stripTags(o.text).slice(0, VOICE_MAX_CHARS);
   // Kokoro reads up to about 2,000 characters at a time: split at sentence ends and join the parts.
   const parts: string[] = [];
   let cur = "";

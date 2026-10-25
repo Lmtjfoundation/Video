@@ -1,0 +1,7 @@
+# Ghost Post Voice Design (voicedesign_server.py), in its own environment: Parler-TTS pins transformers 4.46.
+parler-tts @ git+https://github.com/huggingface/parler-tts.git@d108732cd57788ec86bc857d99a6cabd66663d68
+torch==2.6.0
+torchaudio==2.6.0
+numpy<2
+fastapi==0.142.2
+uvicorn==0.54.0

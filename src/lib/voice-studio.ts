@@ -8,6 +8,7 @@ import { claudeJson } from "./llm";
 import { readFile, storeFile } from "./media";
 import { ownClip, ownLipsync, ownSpeech, ownVoiceConvert } from "./own-video";
 import { runCmd } from "./render";
+import { parseScript } from "./speech-text";
 import type { MediaItem } from "./types";
 import { voiceSample } from "./voices";
 
@@ -87,17 +88,28 @@ async function toFile(m: MediaItem, dir: string, name: string) {
 }
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "audio";
 
-/** Text read by the engine in any of its languages, in one of My Voices (or its own stock voice). Mono WAV, 48 kHz. */
+/**
+ * Text read by the engine in any of its languages, in one of My Voices (or its own stock voice). Mono WAV, 48 kHz.
+ * Emotion tags in the text ("[whispers]", "[excited]", "[pause]"; see EMOTION_TAGS) change how the words after them
+ * are read.
+ */
 export async function speak(text: string, language: string, voiceId?: string): Promise<Buffer> {
   if (!(language in SPEECH_LANGUAGES)) throw new Error("Choose a language.");
   const voice = voiceId ? await voiceSample(voiceId) : undefined;
   return tmp(async (dir) => {
     const parts: Float32Array[] = [];
-    for (const [i, c] of chunks(text).entries()) {
-      const f = path.join(dir, `p${i}.wav`);
-      await fs.writeFile(f, await ownSpeech({ text: c, language, voice }));
-      parts.push(await pcm(f), new Float32Array(Math.round(SR * 0.25)));
+    let n = 0;
+    for (const part of parseScript(text)) {
+      if (part.pause) parts.push(new Float32Array(Math.round(SR * part.pause)));
+      for (const c of part.text ? chunks(part.text) : []) {
+        const f = path.join(dir, `p${n++}.wav`);
+        await fs.writeFile(f, await ownSpeech({ text: c, language, voice, exaggeration: part.exaggeration, cfg: part.cfg }));
+        const x = await pcm(f);
+        if (part.gain !== 1) for (let i = 0; i < x.length; i++) x[i] *= part.gain;
+        parts.push(x, new Float32Array(Math.round(SR * 0.25)));
+      }
     }
+    if (!n) throw new Error("Type what the voice should say.");
     const out = new Float32Array(parts.reduce((n, p) => n + p.length, 0));
     let at = 0;
     for (const p of parts) {

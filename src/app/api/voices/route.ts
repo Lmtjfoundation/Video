@@ -9,7 +9,7 @@ export const maxDuration = 300;
 export const GET = authed(async (_req, user) =>
   ok({
     consentSentence: CONSENT_SENTENCE,
-    voices: (await listVoices()).map((v) => ({ id: v.id, name: v.name, createdAt: v.createdAt, consentBy: v.consent.by, sampleUrl: signedUrl(user.id, v.sampleId, 6 * 3600) })),
+    voices: (await listVoices()).map((v) => ({ id: v.id, name: v.name, createdAt: v.createdAt, consentBy: v.consent?.by ?? "", designed: v.designed, sampleUrl: signedUrl(user.id, v.sampleId, 6 * 3600) })),
   }),
 );
 

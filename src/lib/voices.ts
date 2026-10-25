@@ -24,7 +24,10 @@ export interface MyVoice {
   name: string;
   /** The reference the engine copies (mono WAV, at most 20 seconds, after the consent sentence when it's long enough). */
   sampleId: string;
-  consent: { by: string; statement: string; heard: string; at: string };
+  /** A cloned voice: who agreed, and what was heard. */
+  consent?: { by: string; statement: string; heard: string; at: string };
+  /** A designed voice: the description it was made from (no real person is copied). */
+  designed?: string;
   createdAt: string;
 }
 
@@ -85,6 +88,19 @@ export async function createVoice(userId: string, o: { name: string; mediaId: st
     await kvSet(ROW, [v, ...list]);
     return v;
   });
+}
+
+/** Keeps a voice made in Voice Design (a sample in the Media Library) in My Voices. */
+export async function addDesignedVoice(o: { name: string; mediaId: string; description: string }): Promise<MyVoice> {
+  const name = o.name.trim().slice(0, 40);
+  if (!name) throw new Error("Name the voice.");
+  const list = await listVoices();
+  if (list.length >= MAX_VOICES) throw new Error(`You can keep up to ${MAX_VOICES} voices.`);
+  const m = await db().get<MediaItem>("media", o.mediaId);
+  if (!m || m.kind !== "audio") throw new Error("That voice sample wasn't found.");
+  const v: MyVoice = { id: uid("vox"), name, sampleId: m.id, designed: o.description.trim().slice(0, 600), createdAt: nowIso() };
+  await kvSet(ROW, [v, ...list]);
+  return v;
 }
 
 export async function deleteVoice(id: string) {

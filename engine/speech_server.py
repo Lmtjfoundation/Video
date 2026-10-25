@@ -5,8 +5,13 @@ the voice of a 5–20 second reference recording; Chatterbox VC to turn a record
 makes carries Resemble's inaudible Perth watermark, so AI speech can be identified. Runs in its own environment
 (requirements-speech.txt); the video engine forwards /v1/speech here (SPEECH_URL, default http://127.0.0.1:8002).
 
+Also the voice isolator: Demucs v4 htdemucs (MIT) splits a recording into the voice and everything else (music,
+noise, effects); `stem` picks which one comes back. Voice design (a new voice from a description) is
+voicedesign_server.py: its model needs other library versions than Chatterbox.
+
   POST /v1/speech  {"mode": "tts", "text", "language", "voice"?: base64 reference audio, "exaggeration"?, "cfg"?}
                    {"mode": "convert", "source": base64 audio to change, "voice": base64 target voice}
+                   {"mode": "isolate", "source": base64 audio, "stem"?: "vocals" | "background"}
                    -> {"id"}; then GET /v1/speech/{id} and /v1/speech/{id}/file (WAV)
 """
 
@@ -30,7 +35,7 @@ LANGUAGES = {
 
 
 class SpeechRequest(BaseModel):
-    mode: str = Field(default="tts", pattern="^(tts|convert)$")
+    mode: str = Field(default="tts", pattern="^(tts|convert|isolate)$")
     text: str = Field(default="", max_length=1200)
     language: str = "en"
     voice: str | None = None
@@ -38,6 +43,7 @@ class SpeechRequest(BaseModel):
     exaggeration: float = Field(default=0.5, ge=0.25, le=2.0)
     cfg: float = Field(default=0.5, ge=0.0, le=1.0)
     seed: int | None = None
+    stem: str = Field(default="vocals", pattern="^(vocals|background)$")
 
 
 models: dict = {}
@@ -49,6 +55,9 @@ def check(r: SpeechRequest) -> None:
             raise HTTPException(400, "Text is required.")
         if r.language not in LANGUAGES:
             raise HTTPException(400, f"language must be one of {', '.join(LANGUAGES)}")
+    elif r.mode == "isolate":
+        if not r.source:
+            raise HTTPException(400, "The voice isolator needs a recording (source).")
     elif not (r.source and r.voice):
         raise HTTPException(400, "Voice-to-voice needs the recording (source) and the target voice.")
 
@@ -68,6 +77,8 @@ def run(job: Job) -> str:
     r: SpeechRequest = job.req  # type: ignore[assignment]
     out = os.path.join(job.dir, "speech.wav")
     voice = decode_file(r.voice, os.path.join(job.dir, "voice.wav"), "voice sample") if r.voice else None
+    if r.mode == "isolate":
+        return isolate(job, r, out)
     if TINY:
         # No real weights in tests: a tone as long as the words would take (about 14 characters a second).
         import numpy as np
@@ -105,8 +116,31 @@ def run(job: Job) -> str:
     return out
 
 
+def isolate(job: Job, r: SpeechRequest, out: str) -> str:
+    """Splits a recording with Demucs htdemucs and returns the voice (or everything but the voice)."""
+    import shutil
+    import subprocess
+    import sys
+
+    src = decode_file(r.source or "", os.path.join(job.dir, "source.wav"), "recording")
+    if TINY:
+        # No real weights in tests: the recording comes back as it is.
+        shutil.copyfile(src, out)
+        job.meta = {"stem": r.stem}
+        return out
+    job.progress = 0.1
+    sep = os.path.join(job.dir, "sep")
+    subprocess.run([sys.executable, "-m", "demucs.separate", "-n", "htdemucs", "--two-stems", "vocals", "-o", sep, src],
+                   check=True, capture_output=True, timeout=3600)
+    found = os.path.join(sep, "htdemucs", "source", "vocals.wav" if r.stem == "vocals" else "no_vocals.wav")
+    shutil.move(found, out)
+    job.meta = {"stem": r.stem}
+    return out
+
+
 app = create_app("Ghost Post Speech Engine", "/v1/speech", SpeechRequest, run, "audio/wav", check=check,
-                 info=lambda: {"model": "Chatterbox Multilingual + Chatterbox VC (MIT)", "languages": LANGUAGES})
+                 info=lambda: {"model": "Chatterbox Multilingual + Chatterbox VC (MIT), Demucs htdemucs (MIT)",
+                              "languages": LANGUAGES, "modes": ["tts", "convert", "isolate"]})
 
 if __name__ == "__main__":
     import uvicorn
