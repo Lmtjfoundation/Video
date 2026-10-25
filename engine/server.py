@@ -104,6 +104,9 @@ A14B = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 VACE = os.environ.get("ENGINE_VACE_MODEL", "Wan-AI/Wan2.1-VACE-14B-diffusers")
 DEPTH = "depth-anything/Depth-Anything-V2-Small-hf"  # Apache 2.0: the structure VACE follows when restyling
 UPSCALER = "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth"
+# Background removal: BiRefNet (MIT) on a GPU; on a CPU the much lighter ISNet (MIT, about 1 GB of memory at most
+# instead of 3+), so a small machine can't run out of memory.
+CUTOUT_MODEL, CUTOUT_MODEL_CPU = "birefnet-general", "isnet-general-use"
 VACE_SIZES = {"16:9": (832, 480), "9:16": (480, 832), "1:1": (624, 624)}
 VACE_FPS, VACE_FRAMES = 16, 81
 # Wan's own default negative prompt (it was trained with it): garish colours, overexposure, static frames, blur,
@@ -454,7 +457,7 @@ class Engine:
                 from rembg import new_session, remove
 
                 if self.cutout is None:
-                    self.cutout = new_session("birefnet-general" if self.device == "cuda" else "birefnet-general-lite")
+                    self.cutout = new_session(CUTOUT_MODEL if self.device == "cuda" else CUTOUT_MODEL_CPU)
                 out = remove(img, session=self.cutout)
             out.save(path)
             return path
@@ -603,7 +606,7 @@ class Engine:
         from rembg import new_session, remove
 
         if self.cutout is None:
-            self.cutout = new_session("birefnet-general")
+            self.cutout = new_session(CUTOUT_MODEL if self.device == "cuda" else CUTOUT_MODEL_CPU)
         return [remove(f, session=self.cutout, only_mask=True).convert("L") for f in frames]
 
     def cleanup(self) -> None:

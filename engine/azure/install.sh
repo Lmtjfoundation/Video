@@ -111,6 +111,12 @@ if [ "$CPU" = 1 ]; then
   "$REPO/engine/.speech-venv/bin/pip" install -q torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
   "$REPO/engine/.speech-venv/bin/pip" install -q demucs==4.0.1 fastapi==0.142.2 uvicorn==0.54.0 numpy soundfile
   mkdir -p /opt/ghost-post/hf
+  # Swap: a memory spike then slows the machine down instead of freezing it (a 4 GB VM has none by default).
+  if ! swapon --show | grep -q /swapfile; then
+    [ -f /swapfile ] || { fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null; }
+    swapon /swapfile
+    grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  fi
   cat > "$ENV_FILE" <<ENV
 ENGINE_TOKEN=$TOKEN
 ENGINE_PROFILE=tools
@@ -120,7 +126,8 @@ PORT=8000
 ENV
   chmod 600 "$ENV_FILE"
   for unit in engine speech; do
-    if [ "$unit" = engine ]; then exe="/opt/ghost-post/venv/bin/python server.py"; else exe="$REPO/engine/.speech-venv/bin/python speech_server.py"; fi
+    # Each service is capped (it restarts if it overruns), so one big job can't take the whole machine down.
+    if [ "$unit" = engine ]; then exe="/opt/ghost-post/venv/bin/python server.py"; mem=60%; else exe="$REPO/engine/.speech-venv/bin/python speech_server.py"; mem=50%; fi
     cat > "/etc/systemd/system/ghost-post-$unit.service" <<UNIT
 [Unit]
 Description=Ghost Post $unit (light tools, no GPU)
@@ -130,6 +137,7 @@ Wants=network-online.target
 EnvironmentFile=$ENV_FILE
 WorkingDirectory=$REPO/engine
 ExecStart=$exe
+MemoryMax=$mem
 Restart=always
 RestartSec=10
 [Install]
