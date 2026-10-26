@@ -149,7 +149,10 @@ UNIT
     curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt -o /etc/apt/sources.list.d/caddy-stable.list
     apt-get update -q && DEBIAN_FRONTEND=noninteractive apt-get install -y -q caddy
   fi
-  printf '%s {\n  reverse_proxy 127.0.0.1:8000\n}\n' "$DOMAIN" > /etc/caddy/Caddyfile
+  # One file per site: the Ghost Post app (deploy/azure-app/install.sh) may share this machine and its Caddy.
+  mkdir -p /etc/caddy/sites
+  printf '%s {\n  reverse_proxy 127.0.0.1:8000\n}\n' "$DOMAIN" > /etc/caddy/sites/engine.caddy
+  printf 'import sites/*.caddy\n' > /etc/caddy/Caddyfile
   systemctl restart caddy
   systemctl daemon-reload
   systemctl enable --now ghost-post-engine ghost-post-speech
