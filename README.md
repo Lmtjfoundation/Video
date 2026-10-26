@@ -207,7 +207,33 @@ Then flip **Autopilot posting** (and, if you want it, **Auto-engagement**) on in
    | YouTube | Resumable upload (Shorts for vertical) | Needs `youtube.upload` — reconnect YouTube. Apps that haven't passed Google's API audit have uploads locked to private. |
    | TikTok | Upload to the creator's TikTok inbox (drafts) | The creator taps Post in TikTok. Public direct posting needs TikTok's app audit. |
 
-## Go live on Railway (recommended: one always-on server)
+## Go live on an Azure VM (what Ghost Post runs on)
+
+The app runs on its own always-on VM; the engines run on VMs that start when used and stop themselves when idle.
+
+| Machine | Size | What it does | Billed |
+|---|---|---|---|
+| GhostApp | D4ads v7 (4 vCPU, 16 GB), regular | the website, database folder, scheduler | always ($0.228/h ≈ $166/month) |
+| Ghost | D2nlds v6, Spot | tools engine: upscale, background removal, voice isolation | only while on ($0.0295/h) |
+| GhostGPU | NV36ads A10 v5 (one A10, 24 GB) | pictures, clips, voices, lip sync, writing | only while on ($3.20/h) |
+
+1. **App:** on an Ubuntu 24.04 VM with ports 80 and 443 open, run
+   `curl -fsSL https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-autopilot/deploy/azure-app/install.sh | sudo bash`
+   (add `-s -- --migrate-from https://your-old-address` to move an existing Ghost Post). It serves
+   `https://ghostpost.<ip>.sslip.io` and deploys new commits of the branch by itself every 2 minutes.
+2. **Moving from another server:** on the old one, Admin → App settings → **Move to a new server** → Make a move code;
+   on the new one open `/restore` and paste it. Everything (accounts, posts, uploads, settings and keys) is copied server
+   to server, and the old address then sends everyone to the new one and stops its scheduler. Afterwards press
+   **Connect Stripe** on the new server (it points Stripe's webhook at the new address) and add the new
+   `APP_URL/api/connect/<platform>/callback` redirect URLs in each platform's developer settings.
+3. **Engines:** `engine/azure/deploy.sh` (GPU: `SIZE=Standard_NV36ads_A10_v5 QUALITY=fast`) or `engine/azure/install.sh --cpu`.
+   Each engine VM deallocates itself after 20 idle minutes (`engine/azure/idle-stop.sh`); Ghost Post starts it again with
+   its wake line (Admin → Integrations). GPU sizes need GPU quota, which a Free Trial subscription can't get: upgrade to
+   Pay-As-You-Go first.
+4. **Costs:** Admin → Overview → Profit & operating costs shows this month's profit after card fees, AI, engine hours and
+   servers. Put your real bills there.
+
+## Go live on Railway (one always-on server)
 
 Railway runs the app as an always-on server, so the built-in scheduler posts on time without extra cron services.
 
