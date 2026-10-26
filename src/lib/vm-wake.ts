@@ -38,11 +38,14 @@ export function parseWake(line: string | undefined | null): WakeSettings | null 
   return ok ? (Object.fromEntries(KEYS.map((k) => [k, parts[k]])) as unknown as WakeSettings) : null;
 }
 
-async function wakeLine() {
-  const { vmWake } = await import("./integrations");
-  return parseWake(await vmWake());
+/** Which engine machine: "main" (the first engine) or "gpu" (the GPU engine). Each has its own wake line. */
+export type WakeKind = "main" | "gpu";
+
+async function wakeLine(kind: WakeKind) {
+  const { vmWake, vmWakeGpu } = await import("./integrations");
+  return parseWake(await (kind === "gpu" ? vmWakeGpu() : vmWake()));
 }
-export const wakeConfigured = async () => !!(await wakeLine());
+export const wakeConfigured = async (kind: WakeKind = "main") => !!(await wakeLine(kind));
 
 /** Whether the engine at `url` answers its health check within 8 seconds. */
 export const engineHealthy = async (url: string) => {
@@ -54,16 +57,19 @@ export const engineHealthy = async (url: string) => {
   }
 };
 
-let starting: Promise<void> | null = null;
+const starting = new Map<WakeKind, Promise<void>>();
 
 /**
  * Starts the VM (if wake is set up) and waits until the engine at `url` answers, up to `waitMs`. One start at a
  * time: requests that arrive meanwhile wait for the same one. Throws with a plain reason when it can't.
  */
-export function wakeEngine(url: string, o: { waitMs?: number; pollMs?: number } = {}): Promise<void> {
-  starting ??= (async () => {
+export function wakeEngine(url: string, o: { waitMs?: number; pollMs?: number; kind?: WakeKind } = {}): Promise<void> {
+  const kind = o.kind ?? "main";
+  const running = starting.get(kind);
+  if (running) return running;
+  const p = (async () => {
     try {
-      const w = await wakeLine();
+      const w = await wakeLine(kind);
       if (!w) throw new Error("The engine's machine is off and wake on use isn't set up (Admin → Integrations → Wake the engine's VM).");
       const tok = await fetch(`https://login.microsoftonline.com/${w.tenant}/oauth2/v2.0/token`, {
         method: "POST",
@@ -85,8 +91,9 @@ export function wakeEngine(url: string, o: { waitMs?: number; pollMs?: number } 
       }
       throw new Error(`The VM “${w.vm}” was started but the engine didn't answer within ${Math.round((o.waitMs ?? 300_000) / 60_000)} minutes. Try again in a minute.`);
     } finally {
-      starting = null;
+      starting.delete(kind);
     }
   })();
-  return starting;
+  starting.set(kind, p);
+  return p;
 }

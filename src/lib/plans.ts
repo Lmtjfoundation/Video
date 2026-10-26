@@ -186,17 +186,17 @@ export const CREDIT_COST = {
   ownSecond: 16,
   /**
    * Music and sound effects on the same GPU (Library generators). ACE-Step 1.5 turbo makes a full song in well under a
-   * minute even on a 24 GB card and MOSS-SoundEffect v2 a 30-second sound in about a minute, a few cents of GPU time
-   * each at the A100 price above; the prices keep the same margin as footage.
+   * minute even on a 24 GB card and MOSS-SoundEffect v2 a 30-second sound in about a minute. Every GPU price is held to
+   * a 40% margin at the GPU engine's hourly rate by tests/plans-margin.test.ts (GPU_JOB_SECONDS in operating-costs.ts).
    */
-  aiMusic: 6,
-  aiSfx: 3,
+  aiMusic: 7,
+  aiSfx: 4,
   /** AI Voiceover on the app's own server (Kokoro): per started 1,000 characters. */
   voiceover: 1,
-  /** Speech on the GPU (Chatterbox, 23 languages, My Voices): per started 1,000 characters. */
-  speech: 2,
+  /** Speech on the GPU (Chatterbox, 23 languages, My Voices): per started 1,000 characters (about a GPU minute). */
+  speech: 4,
   /** Voice-to-voice, per started minute of recording. */
-  voiceChangeMinute: 3,
+  voiceChangeMinute: 4,
   /** Dubbing a video into another language (hearing, translating, speaking every line), per started minute. */
   dubMinute: 12,
   /** Lip sync (MuseTalk), per started second of speech. */
@@ -276,12 +276,14 @@ export interface CreditPack {
   credits: number;
   /** Price in dollars. */
   price: number;
+  /** Earlier prices: a checkout opened before a price change still gets its credits when it's paid. */
+  legacyPrices?: number[];
   label: string;
 }
 export const CREDIT_PACKS: CreditPack[] = [
   { id: "small", credits: 300, price: 12, label: "About 40 seconds of Gemini video, or 300 posts" },
   { id: "medium", credits: 1_000, price: 35, label: "About 2 minutes of Gemini video" },
-  { id: "large", credits: 3_000, price: 90, label: "About 7 minutes of Gemini video" },
+  { id: "large", credits: 3_000, price: 100, legacyPrices: [90], label: "About 7 minutes of Gemini video" },
 ];
 export const packById = (id: string | undefined) => CREDIT_PACKS.find((p) => p.id === id);
 

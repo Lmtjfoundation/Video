@@ -45,7 +45,15 @@ interface Stats {
   pool: { balance: number; availableToday: number; swept: number; drawn: number };
   postsPublishedThisMonth: number;
   awaitingReview: number;
+  creditsComp: number;
+  trialing: number;
+  pastDue: number;
+  costs: Costs;
+  engineHours: { main: number; gpu: number };
+  profit: { revenue: number; fees: number; aiPaid: number; aiComp: number; engines: number; fixed: number; costs: number; profit: number; margin: number | null; breakEven: Record<string, number | null> };
+  planEconomics: { id: PlanId; name: string; monthly: number; annual: number; typical: number; full: number; fullYearly: number; breakEven: number | null }[];
 }
+type Costs = { appServerMonthly: number; storageNetworkMonthly: number; otherMonthly: number; cpuEngineHourly: number; gpuEngineHourly: number; targetMargin: number };
 interface AppSettingsPayload {
   settings: { allowSignups: boolean; requireApprovalForNewUsers: boolean; supportEmail: string; legalName: string; legalJurisdiction: string };
   env: {
@@ -113,7 +121,7 @@ export default function AdminPage() {
           </button>
         ))}
       </div>
-      {tab === "overview" && <Overview stats={stats} />}
+      {tab === "overview" && <Overview stats={stats} onStats={setStats} />}
       {tab === "review" && <Review onChange={loadStats} />}
       {tab === "users" && <UsersTab onChange={loadStats} />}
       {tab === "settings" && <AppSettingsTab />}
@@ -121,15 +129,15 @@ export default function AdminPage() {
   );
 }
 
-function Overview({ stats }: { stats: Stats | null }) {
+function Overview({ stats, onStats }: { stats: Stats | null; onStats: (s: Stats) => void }) {
   if (!stats) return <div className="glass h-64 animate-pulse" />;
-  const margin = stats.mrr > 0 ? Math.round(((stats.mrr - stats.aiCostEstimate) / stats.mrr) * 100) : null;
+  const margin = stats.profit.margin;
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Monthly recurring revenue" value={<span className="text-gradient">{usd(stats.mrr)}</span>} sub={`From active Stripe subscriptions`} icon={<CircleDollarSign className="h-4 w-4" />} accent="gold" />
+        <Stat label="Monthly recurring revenue" value={<span className="text-gradient">{usd(stats.mrr)}</span>} sub={`Paid-up subscriptions${stats.trialing ? ` · ${stats.trialing} on a free trial` : ""}${stats.pastDue ? ` · ${stats.pastDue} payment overdue` : ""}`} icon={<CircleDollarSign className="h-4 w-4" />} accent="gold" />
         <Stat label="Users" value={stats.users} sub={`${stats.active} active · ${stats.newThisMonth} new this month`} icon={<Users className="h-4 w-4" />} accent="violet" />
-        <Stat label="AI cost this month (est.)" value={`≈ ${usd(stats.aiCostEstimate)}`} sub={`${stats.creditsUsed.toLocaleString()} credits used at ~2¢ each${margin !== null ? ` · ~${margin}% margin before fees` : ""}`} accent="mint" />
+        <Stat label="AI cost this month (est.)" value={`≈ ${usd(stats.aiCostEstimate)}`} sub={`${(stats.creditsUsed + stats.creditsComp).toLocaleString()} credits used at ~2¢ each${stats.creditsComp ? `, ${stats.creditsComp.toLocaleString()} by you and your team` : ""}${margin !== null ? ` · ${margin}% profit after all costs` : ""}`} accent="mint" />
         <Stat label="Waiting for review" value={stats.awaitingReview} sub={`${stats.postsPublishedThisMonth.toLocaleString()} posts published this month`} accent={stats.awaitingReview ? "red" : "mint"} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -138,6 +146,7 @@ function Overview({ stats }: { stats: Stats | null }) {
         <Stat label="Expired into the pool" value={stats.pool.swept.toLocaleString()} sub="all time" accent="gold" />
         <Stat label="Given out from the pool" value={stats.pool.drawn.toLocaleString()} sub="all time, to accounts that ran out" accent="gold" />
       </div>
+      <ProfitCard stats={stats} onStats={onStats} />
       <Card>
         <CardHeader title="Users by plan" />
         <div className="grid gap-3 p-5">
@@ -158,6 +167,100 @@ function Overview({ stats }: { stats: Stats | null }) {
         <p className="mt-1">Connect buttons for X, Facebook, Instagram, LinkedIn, YouTube and TikTok are set up once by you in <Link className="text-mint-300 hover:underline" href="/platforms">Platforms</Link>. Every user then links their own accounts with one click.</p>
       </Card>
     </div>
+  );
+}
+
+const COST_FIELDS: [keyof Costs, string, string][] = [
+  ["appServerMonthly", "App server, $ a month", "Azure D4ads v6 always on: $166.44"],
+  ["storageNetworkMonthly", "Disks and IP addresses, $ a month", "Billed even while a machine is off"],
+  ["otherMonthly", "Other fixed bills, $ a month", "Domain, email, anything else"],
+  ["gpuEngineHourly", "GPU engine, $ an hour while on", "NV36ads A10 v5: $3.20"],
+  ["cpuEngineHourly", "Tools engine, $ an hour while on", "0 when it runs on the app server"],
+];
+
+/** Revenue minus every cost of running Ghost Post, what each plan leaves, and how many subscribers pay the bills. */
+function ProfitCard({ stats, onStats }: { stats: Stats; onStats: (s: Stats) => void }) {
+  const toast = useApp((s) => s.toast);
+  const [edit, setEdit] = useState(false);
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const p = stats.profit;
+  const rows: [string, number, string][] = [
+    ["Subscription revenue", p.revenue, ""],
+    ["Card fees (Stripe 2.9% + 30¢)", -p.fees, ""],
+    ["AI for subscribers", -p.aiPaid, ""],
+    ["AI used free by you and your team", -p.aiComp, ""],
+    ["Engine machines", -p.engines, `${stats.engineHours.gpu} GPU hours, ${stats.engineHours.main} tools-engine hours this month`],
+    ["Servers, disks and other fixed bills", -p.fixed, ""],
+  ];
+  async function save() {
+    setBusy(true);
+    try {
+      const patch = Object.fromEntries(Object.entries(draft).filter(([, v]) => v.trim() !== "").map(([k, v]) => [k, k === "targetMargin" ? Number(v) / 100 : Number(v)]));
+      onStats(await api<Stats>("/api/admin/stats", { method: "PUT", body: patch }));
+      setEdit(false);
+      setDraft({});
+      toast("Costs saved.", "success");
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Card>
+      <CardHeader
+        title="Profit & operating costs"
+        subtitle="This month so far. Replace the cost estimates with your real bills for an exact figure."
+        icon={<CircleDollarSign className="h-4 w-4" />}
+        action={<Button size="sm" variant="ghost" onClick={() => setEdit(!edit)}><Pencil className="h-3.5 w-3.5" /> {edit ? "Close" : "Edit costs"}</Button>}
+      />
+      <div className="grid gap-5 p-5">
+        <div className="grid gap-1.5 text-sm">
+          {rows.map(([label, v, note]) => (
+            <div key={label} className="flex items-baseline justify-between gap-4">
+              <span className="text-white/70">{label}{note && <span className="block text-xs text-white/40">{note}</span>}</span>
+              <span className={cn("tabular-nums", v < 0 ? "text-white/70" : "text-white")}>{v < 0 ? `−${usd(-v)}` : usd(v)}</span>
+            </div>
+          ))}
+          <div className="mt-1 flex items-baseline justify-between gap-4 border-t border-white/10 pt-2 font-semibold">
+            <span>Profit</span>
+            <span className={cn("tabular-nums", p.profit < 0 ? "text-red-300" : "text-mint-300")}>{p.profit < 0 ? `−${usd(-p.profit)}` : usd(p.profit)}{p.margin !== null ? ` (${p.margin}%)` : ""}</span>
+          </div>
+        </div>
+        {edit && (
+          <div className="grid gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-2">
+            {COST_FIELDS.map(([k, label, hint]) => (
+              <Field key={k} label={label} hint={hint}>
+                <Input type="number" min={0} step="0.01" inputMode="decimal" placeholder={String(stats.costs[k])} value={draft[k] ?? ""} onChange={(e) => setDraft({ ...draft, [k]: e.target.value })} />
+              </Field>
+            ))}
+            <Field label="Target profit, %" hint="After card fees">
+              <Input type="number" min={0} max={95} inputMode="decimal" placeholder={String(Math.round(stats.costs.targetMargin * 100))} value={draft.targetMargin ?? ""} onChange={(e) => setDraft({ ...draft, targetMargin: e.target.value })} />
+            </Field>
+            <div className="flex items-end"><Button variant="primary" loading={busy} onClick={save}>Save costs</Button></div>
+          </div>
+        )}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-left text-sm">
+            <thead className="text-xs text-white/45">
+              <tr><th className="py-2 font-medium">Plan</th><th className="font-medium">Leaves a month, typical use</th><th className="font-medium">Every credit used</th><th className="font-medium">Subscribers to pay all fixed bills</th></tr>
+            </thead>
+            <tbody>
+              {stats.planEconomics.map((x) => (
+                <tr key={x.id} className="border-t border-white/[0.06]">
+                  <td className="py-2 text-white/85">{x.name} <span className="text-white/40">${x.monthly}</span></td>
+                  <td className="tabular-nums">{usd(x.typical)}</td>
+                  <td className="tabular-nums">{usd(x.full)}<span className="text-white/40"> · yearly {usd(x.fullYearly)}</span></td>
+                  <td className="tabular-nums">{x.breakEven ?? "never"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-white/45">After card fees and AI. GPU work (clips, voices, lip sync) is priced in credits per job, so it is covered by the credits it uses. Anyone who needs more buys a credit pack.</p>
+        </div>
+      </div>
+    </Card>
   );
 }
 

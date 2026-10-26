@@ -400,7 +400,7 @@ export async function handleStripeEvent(evt: { id: string; type: string; data: {
     const meta = (o.metadata ?? {}) as { userId?: string; pack?: string };
     const pack = packById(meta.pack);
     const userId = String(o.client_reference_id ?? meta.userId ?? "");
-    if (pack && o.payment_status === "paid" && o.amount_subtotal === pack.price * 100) await addPackCredits(userId, pack.credits);
+    if (pack && o.payment_status === "paid" && [pack.price, ...(pack.legacyPrices ?? [])].some((d) => o.amount_subtotal === d * 100)) await addPackCredits(userId, pack.credits);
   } else if (evt.type === "checkout.session.completed") {
     const u = await getUser(String(o.client_reference_id ?? (o.metadata as { userId?: string })?.userId ?? ""));
     if (u) {

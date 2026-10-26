@@ -3,6 +3,9 @@ import { allOwners, asUser } from "./db";
 import { destroyAllSessions, getUser, hashPassword, listUsers, publicUser, saveUser, validatePassword, type User } from "./auth";
 import { EST_COST_CENTS_PER_CREDIT, PLANS, planById, type PlanId } from "./plans";
 import { poolSnapshot } from "./credit-pool";
+import { gdb } from "./db";
+import { engineHours } from "./engine-hours";
+import { breakEven, cleanCosts, contribution, profit, type OperatingCosts } from "./operating-costs";
 import { balance } from "./vault-core";
 import { getPost, getSettings, log, savePost } from "./repo";
 import { finalizePost } from "./generate";
@@ -175,16 +178,30 @@ export async function adminStats() {
   const month = new Date().toISOString().slice(0, 7);
   const byPlan = Object.fromEntries(PLANS.map((p) => [p.id, 0])) as Record<PlanId, number>;
   let mrr = 0;
+  let charges = 0;
+  let trialing = 0;
+  let pastDue = 0;
   let creditsUsed = 0;
+  let creditsComp = 0;
   let vaultCredits = 0;
   const now = Date.now();
   for (const u of users) {
     if (u.vault) vaultCredits += balance(u.vault.lots, now);
     byPlan[u.plan] = (byPlan[u.plan] ?? 0) + 1;
     const plan = planById(u.plan);
-    const paying = u.billing?.status ? ["active", "trialing", "past_due"].includes(u.billing.status) : false;
-    if (paying) mrr += u.billing?.interval === "year" ? plan.annual : plan.monthly;
-    if (u.usage?.period === month) creditsUsed += u.usage.credits;
+    // Revenue counts only subscriptions that are paid up: a free trial hasn't paid yet, and a past-due one may not.
+    const status = u.billing?.status;
+    if (status === "trialing") trialing++;
+    if (status === "past_due") pastDue++;
+    if (status === "active" && plan.monthly > 0) {
+      const yearly = u.billing?.interval === "year";
+      mrr += yearly ? plan.annual : plan.monthly;
+      charges += yearly ? 1 / 12 : 1;
+    }
+    if (u.usage?.period === month) {
+      creditsUsed += u.usage.credits;
+      creditsComp += u.usage.comp ?? 0;
+    }
   }
   return {
     users: users.length,
@@ -194,11 +211,47 @@ export async function adminStats() {
     mrr,
     creditsUsed,
     // An estimate: about 2 cents of Claude usage per credit (measured from the app's prompt sizes; see plans.ts).
-    aiCostEstimate: Math.round(creditsUsed * EST_COST_CENTS_PER_CREDIT) / 100,
+    aiCostEstimate: Math.round((creditsUsed + creditsComp) * EST_COST_CENTS_PER_CREDIT) / 100,
+    creditsComp,
+    trialing,
+    pastDue,
+    ...(await profitStats({ mrr, charges, creditsUsed, creditsComp })),
     /** Credits sitting in vaults right now, and the community pool they expire into. */
     vaultCredits,
     pool: await poolSnapshot(),
     postsPublishedThisMonth: posts.filter(({ row }) => row.status === "published" && (row.publishedAt ?? "").startsWith(month)).length,
     awaitingReview: posts.filter(({ row }) => row.status === "pending_review").length,
+  };
+}
+
+const COSTS_ROW = "operating_costs";
+export async function getOperatingCosts(): Promise<OperatingCosts> {
+  return cleanCosts((await gdb().get<{ id: string; value: Partial<OperatingCosts> }>("kv", COSTS_ROW))?.value);
+}
+export async function saveOperatingCosts(patch: Partial<OperatingCosts>) {
+  const next = cleanCosts({ ...(await getOperatingCosts()), ...patch });
+  await gdb().upsert("kv", { id: COSTS_ROW, value: next });
+  return next;
+}
+
+/** This month's profit after card fees, AI, engine hours and fixed costs, and what each plan contributes. */
+async function profitStats(i: { mrr: number; charges: number; creditsUsed: number; creditsComp: number }) {
+  const costs = await getOperatingCosts();
+  const hours = await engineHours();
+  const engineHoursUsed = { main: hours.main ?? 0, gpu: hours.gpu ?? 0 };
+  return {
+    costs,
+    engineHours: engineHoursUsed,
+    profit: profit({ mrr: i.mrr, charges: Math.round(i.charges), creditsUsedPaid: i.creditsUsed, creditsUsedComp: i.creditsComp, cpuEngineHours: engineHoursUsed.main, gpuEngineHours: engineHoursUsed.gpu }, costs),
+    planEconomics: PLANS.filter((p) => p.monthly > 0).map((p) => ({
+      id: p.id,
+      name: p.name,
+      monthly: p.monthly,
+      annual: p.annual,
+      typical: Math.round(contribution(p, "month", 0.5).left * 100) / 100,
+      full: Math.round(contribution(p, "month", 1).left * 100) / 100,
+      fullYearly: Math.round(contribution(p, "year", 1).left * 100) / 100,
+      breakEven: breakEven(p, costs),
+    })),
   };
 }

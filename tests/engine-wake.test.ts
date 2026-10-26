@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-wake-"));
 process.env.DATA_DIR = dir;
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "0".repeat(64);
-for (const k of ["SUPABASE_URL", "DATABASE_URL", "GEMINI_API_KEY", "VIDEO_ENGINE_URL", "VIDEO_ENGINE_TOKEN", "VM_WAKE"]) delete process.env[k];
+for (const k of ["SUPABASE_URL", "DATABASE_URL", "GEMINI_API_KEY", "VIDEO_ENGINE_URL", "VIDEO_ENGINE_TOKEN", "VM_WAKE", "VIDEO_ENGINE_GPU_URL", "VIDEO_ENGINE_GPU_TOKEN", "VM_WAKE_GPU"]) delete process.env[k];
 
 const T = "11111111-2222-3333-4444-555555555555";
 const LINE = `tenant=${T};client=${T};secret=s3cr3t~value.123;subscription=${T};group=GHOSTPOST;vm=Ghost`;
@@ -19,7 +19,7 @@ beforeEach(async () => {
 });
 afterEach(() => {
   vi.unstubAllGlobals();
-  for (const k of ["VIDEO_ENGINE_URL", "VIDEO_ENGINE_TOKEN", "VM_WAKE"]) delete process.env[k];
+  for (const k of ["VIDEO_ENGINE_URL", "VIDEO_ENGINE_TOKEN", "VM_WAKE", "VIDEO_ENGINE_GPU_URL", "VIDEO_ENGINE_GPU_TOKEN", "VM_WAKE_GPU"]) delete process.env[k];
 });
 
 describe("engine capabilities and wake on use", () => {
@@ -110,6 +110,7 @@ describe("engine capabilities and wake on use", () => {
 
   it("keeps the engine's own 503 as its answer (no wake)", async () => {
     process.env.VM_WAKE = LINE;
+    process.env.VIDEO_ENGINE_URL = "https://never-answered.example"; // no capabilities remembered for this one
     let starts = 0;
     vi.stubGlobal("fetch", vi.fn(async (u: string) => {
       const url = String(u);
@@ -128,5 +129,57 @@ describe("engine capabilities and wake on use", () => {
     }));
     const { ownImageTool } = await import("@/lib/own-video");
     await expect(ownImageTool({ op: "upscale", image: PNG, mime: "image/png" })).rejects.toThrow(/didn't answer at https:\/\/ghost.example/);
+  });
+
+  it("sends tools to the always-on engine and the rest to the GPU engine, waking only the GPU machine", async () => {
+    const GPU_LINE = LINE.replace("vm=Ghost", "vm=GhostGPU");
+    process.env.VIDEO_ENGINE_URL = "https://tools.example";
+    process.env.VIDEO_ENGINE_GPU_URL = "https://gpu.example";
+    process.env.VIDEO_ENGINE_GPU_TOKEN = "gpu-token-123456";
+    process.env.VM_WAKE_GPU = GPU_LINE;
+    let gpuUp = false;
+    const hits: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (u: string, init?: RequestInit) => {
+      const url = String(u);
+      if (url.startsWith("https://login.microsoftonline.com/")) return Response.json({ access_token: "t" });
+      if (url.startsWith("https://management.azure.com/")) {
+        hits.push(`start ${url.match(/virtualMachines\/([^/]+)/)?.[1]}`);
+        gpuUp = true;
+        return new Response(null, { status: 202 });
+      }
+      if (url.startsWith("https://tools.example")) {
+        if (url.endsWith("/v1/info")) return Response.json({ profile: "tools", capabilities: ["upscale", "remove-bg", "isolate"] });
+        if (url.endsWith("/health")) return Response.json({ ok: true });
+        hits.push(`tools ${init?.method ?? "GET"} ${url.replace("https://tools.example", "")}`);
+        if (url.endsWith("/v1/images")) return Response.json({ id: "t1" });
+        if (url.endsWith("/v1/images/t1")) return Response.json({ status: "succeeded" });
+        return new Response(new Uint8Array(PNG));
+      }
+      // The GPU machine is off until woken; while off, its info is unknown.
+      if (!gpuUp) throw new TypeError("fetch failed: connect ETIMEDOUT");
+      if (url.endsWith("/v1/info")) return Response.json({ profile: "full", capabilities: ["pictures", "clips", "speech", "lipsync"] });
+      if (url.endsWith("/health")) return Response.json({ ok: true });
+      hits.push(`gpu ${init?.method ?? "GET"} ${url.replace("https://gpu.example", "")}`);
+      expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer gpu-token-123456");
+      if (url.endsWith("/v1/images")) return Response.json({ id: "g1" });
+      if (url.endsWith("/v1/images/g1")) return Response.json({ status: "succeeded" });
+      return new Response(new Uint8Array(PNG));
+    }));
+    const { ownImageTool, ownImage, ownEngineReady } = await import("@/lib/own-video");
+    expect(await ownEngineReady("upscale")).toBe(true);
+    expect(await ownEngineReady("pictures")).toBe(true); // the GPU engine hasn't answered yet: benefit of the doubt
+    await ownImageTool({ op: "upscale", image: PNG, mime: "image/png" });
+    expect(hits).toEqual(["tools POST /v1/images", "tools GET /v1/images/t1", "tools GET /v1/images/t1/file"]);
+    hits.length = 0;
+    await ownImage({ prompt: "a cat", aspect: "1:1" });
+    expect(hits).toEqual(["start GhostGPU", "gpu POST /v1/images", "gpu GET /v1/images/g1", "gpu GET /v1/images/g1/file"]);
+  });
+
+  it("estimates engine hours from use: boot and idle tail for a new session, the gap within one", async () => {
+    const { addedMinutes, IDLE_MINUTES } = await import("@/lib/engine-hours");
+    const t = Date.parse("2026-10-26T10:00:00Z");
+    expect(addedMinutes(0, t)).toBe(3 + IDLE_MINUTES);
+    expect(addedMinutes(t, t + 5 * 60_000)).toBe(5);
+    expect(addedMinutes(t, t + (IDLE_MINUTES + 1) * 60_000)).toBe(3 + IDLE_MINUTES);
   });
 });

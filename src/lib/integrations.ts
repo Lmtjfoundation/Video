@@ -38,6 +38,13 @@ export interface Integrations {
   videoEngineToken?: string;
   /** Wake on use: "tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" for a service principal that may start the engine's VM. */
   vmWake?: string;
+  /**
+   * A second engine on a GPU machine (pictures, clips, voices, lip sync), used for everything the first engine can't
+   * do. The first one can then be a small always-on machine for the picture and voice tools. Its own wake line.
+   */
+  videoEngineGpuUrl?: string;
+  videoEngineGpuToken?: string;
+  vmWakeGpu?: string;
   /** Pixabay (https://pixabay.com/api/docs/) — free stock video, the main footage source. */
   pixabayKey?: string;
   /** Pexels — optional second footage source. */
@@ -139,6 +146,9 @@ export const replicateKey = () => pick("replicateKey", "REPLICATE_API_TOKEN");
 export const videoEngineUrl = () => pick("videoEngineUrl", "VIDEO_ENGINE_URL");
 export const videoEngineToken = () => pick("videoEngineToken", "VIDEO_ENGINE_TOKEN");
 export const vmWake = () => pick("vmWake", "VM_WAKE");
+export const videoEngineGpuUrl = () => pick("videoEngineGpuUrl", "VIDEO_ENGINE_GPU_URL");
+export const videoEngineGpuToken = () => pick("videoEngineGpuToken", "VIDEO_ENGINE_GPU_TOKEN");
+export const vmWakeGpu = () => pick("vmWakeGpu", "VM_WAKE_GPU");
 export const elevenlabsVoice = () => pick("elevenlabsVoiceId", "ELEVENLABS_VOICE_ID");
 export const pixabayKey = () => pick("pixabayKey", "PIXABAY_API_KEY");
 /** True when any stock-footage source is connected. */
@@ -192,6 +202,8 @@ export async function integrationStatus() {
     replicate: entry("REPLICATE_API_TOKEN", i.replicateKey),
     videoEngine: { ...entry("VIDEO_ENGINE_TOKEN", i.videoEngineToken), url: i.videoEngineUrl || process.env.VIDEO_ENGINE_URL || "" },
     vmWake: { ...entry("VM_WAKE", i.vmWake), vm: (i.vmWake || process.env.VM_WAKE || "").match(/vm=([^;]+)/)?.[1] ?? "" },
+    videoEngineGpu: { ...entry("VIDEO_ENGINE_GPU_TOKEN", i.videoEngineGpuToken), url: i.videoEngineGpuUrl || process.env.VIDEO_ENGINE_GPU_URL || "" },
+    vmWakeGpu: { ...entry("VM_WAKE_GPU", i.vmWakeGpu), vm: (i.vmWakeGpu || process.env.VM_WAKE_GPU || "").match(/vm=([^;]+)/)?.[1] ?? "" },
     pixabay: entry("PIXABAY_API_KEY", i.pixabayKey),
     pexels: entry("PEXELS_API_KEY", i.pexelsKey),
     email: { ...entry("RESEND_API_KEY", i.resendKey), from: i.emailFrom || process.env.EMAIL_FROM || "" },
