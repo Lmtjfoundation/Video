@@ -79,6 +79,8 @@ interface IntegrationStatus {
   replicate: KeyState;
   videoEngine: KeyState & { url: string };
   vmWake?: KeyState & { vm: string };
+  videoEngineGpu?: KeyState & { url: string };
+  vmWakeGpu?: KeyState & { vm: string };
   pixabay: KeyState;
   pexels: KeyState;
   email: KeyState & { from: string };
@@ -171,11 +173,11 @@ function Overview({ stats, onStats }: { stats: Stats | null; onStats: (s: Stats)
 }
 
 const COST_FIELDS: [keyof Costs, string, string][] = [
-  ["appServerMonthly", "App server, $ a month", "Azure D4ads v6 always on: $166.44"],
+  ["appServerMonthly", "App server, $ a month", "Azure D4ads v7 always on: $166.44"],
   ["storageNetworkMonthly", "Disks and IP addresses, $ a month", "Billed even while a machine is off"],
   ["otherMonthly", "Other fixed bills, $ a month", "Domain, email, anything else"],
   ["gpuEngineHourly", "GPU engine, $ an hour while on", "NV36ads A10 v5: $3.20"],
-  ["cpuEngineHourly", "Tools engine, $ an hour while on", "0 when it runs on the app server"],
+  ["cpuEngineHourly", "Tools engine, $ an hour while on", "Ghost (Spot D2nlds v6): $0.0295"],
 ];
 
 /** Revenue minus every cost of running Ghost Post, what each plan leaves, and how many subscribers pay the bills. */
@@ -607,7 +609,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine") {
+  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -653,7 +655,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine") {
+  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -829,6 +831,26 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             <Button size="sm" variant="primary" loading={busy === "save:Wake"} onClick={() => save(["vmWake"], "Wake")}>Save</Button>
             {st.vmWake?.set && st.vmWake.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:vmWake"} onClick={() => remove("vmWake", "Wake")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Sparkles className="h-4 w-4" />}
+          title="GPU engine — pictures, clips, voices and lip sync"
+          desc="A second engine on a GPU machine (for example an Azure NV36ads A10 v5, billed only while it runs). Ghost Post sends it everything the engine above can't do, starts it when needed with its own wake line, and it stops itself after 20 idle minutes. Writing and pictures use it only while it's already on (otherwise Claude and Gemini are cheaper than starting a GPU)."
+          link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/engine/README.md", label: "Setup guide" }}
+          state={st.videoEngineGpu ?? { set: false }}
+          result={results.videoEngineGpu}
+        >
+          <Input autoComplete="off" spellCheck={false} placeholder={st.videoEngineGpu?.url || "GPU engine address, e.g. https://20-1-2-3.sslip.io"} value={vals.videoEngineGpuUrl ?? ""} onChange={set("videoEngineGpuUrl")} />
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="ENGINE_TOKEN" value={vals.videoEngineGpuToken ?? ""} onChange={set("videoEngineGpuToken")} />
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder={st.vmWakeGpu?.set ? `Wake line set for “${st.vmWakeGpu.vm}”` : "Wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…"} value={vals.vmWakeGpu ?? ""} onChange={set("vmWakeGpu")} />
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:GPU engine"} onClick={() => save(["videoEngineGpuUrl", "videoEngineGpuToken", "vmWakeGpu"].filter((k) => vals[k]), "GPU engine", "videoEngineGpu")}>Save &amp; test</Button>
+            <Button size="sm" loading={busy === "test:videoEngineGpu"} disabled={!st.videoEngineGpu?.set} onClick={() => check("videoEngineGpu")}>Test</Button>
+            {st.videoEngineGpu?.set && st.videoEngineGpu.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:videoEngineGpuToken"} onClick={() => remove("videoEngineGpuToken", "GPU engine")}><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
           </Actions>
         </Service>

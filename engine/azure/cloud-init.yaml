@@ -133,3 +133,5 @@ runcmd:
   - systemctl enable --now ghost-post-engine
   - systemctl enable --now ghost-post-audio
   - systemctl enable --now ghost-post-speech ghost-post-lipsync ghost-post-voicedesign
+  # Idle stop: the VM deallocates itself after __IDLE__ minutes without a request (off when __IDLE__ is "off").
+  - '[ "__IDLE__" = off ] || bash /opt/ghost-post/repo/engine/azure/idle-stop.sh --install __IDLE__'

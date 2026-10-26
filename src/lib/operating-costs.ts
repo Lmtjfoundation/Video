@@ -2,8 +2,8 @@
  * What it costs to run Ghost Post, so the admin sees real profit and every plan is priced to pay for its share.
  *
  * Defaults are Azure list prices (East US, Linux, pay-as-you-go, Oct 2026, prices.azure.com):
- *   app server D4ads_v6 $0.228/h (≈ $166/month always on) · P10 disk $19.71/month · static IPv4 $0.005/h (≈ $3.65)
- *   CPU tools engine: on the app server (no extra hours) · GPU engine NV36ads_A10_v5 (one full A10, 24 GB) $3.20/h.
+ *   app server D4ads_v7 $0.228/h (≈ $166/month always on) · P10 disk $19.71/month · static IPv4 $0.005/h (≈ $3.65)
+ *   tools engine: a D2nlds_v6 Spot VM $0.0295/h while on · GPU engine NV36ads_A10_v5 (one full A10, 24 GB) $3.20/h.
  * The admin replaces any of them with the real bill (Admin → Profit & operating costs).
  */
 import { CREDIT_PACKS, EST_COST_CENTS_PER_CREDIT, PLANS, type Plan } from "./plans";
@@ -27,7 +27,7 @@ export const DEFAULT_COSTS: OperatingCosts = {
   // Two P10 disks (app server and GPU engine) and two static IPs.
   storageNetworkMonthly: 2 * 19.71 + 2 * 3.65,
   otherMonthly: 0,
-  cpuEngineHourly: 0,
+  cpuEngineHourly: 0.0295,
   gpuEngineHourly: 3.2,
   targetMargin: 0.4,
 };
