@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Bot, Power, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, Users, X } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { api } from "@/lib/client";
+import { api, copyToClipboard } from "@/lib/client";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { copyText } from "@/lib/compose";
 import { DEFAULT_SETTINGS } from "@/lib/defaults";
@@ -525,7 +525,40 @@ function AppSettingsTab() {
           ))}
         </ul>
       </Card>
+      <MoveServerCard />
     </div>
+  );
+}
+
+/** Makes the one-time code a new server uses to copy everything from this one (see src/lib/migrate.ts). */
+function MoveServerCard() {
+  const toast = useApp((s) => s.toast);
+  const [code, setCode] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function make() {
+    setBusy(true);
+    try {
+      setCode((await api<{ code: string }>("/api/admin/migrate", { method: "POST" })).code);
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Card>
+      <CardHeader title="Move to a new server" subtitle="Copies every account, post, upload and setting to a new Ghost Post server, then sends everyone from this address to the new one." />
+      <div className="grid gap-3 p-5 text-sm">
+        <p className="text-white/65">On the new server, open <span className="font-mono text-white/85">/restore</span> and paste the code. It works once and only for 15 minutes. Keep it private: it lets the new server copy everything, including your keys.</p>
+        {code ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="min-w-0 flex-1 break-all rounded-lg bg-white/[0.05] px-3 py-2 font-mono text-xs text-white/90">{code}</code>
+            <Button size="sm" onClick={() => copyToClipboard(code).then(() => toast("Code copied.", "success"))}>Copy</Button>
+          </div>
+        ) : null}
+        <div><Button loading={busy} onClick={make}>{code ? "Make a new code" : "Make a move code"}</Button></div>
+      </div>
+    </Card>
   );
 }
 

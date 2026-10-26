@@ -14,6 +14,8 @@ export const maxDuration = 120;
  */
 export const GET = handle(async (req: Request) => {
   if (!cronAuthorized(req)) return fail("Unauthorized", 401);
+  // This server was moved: the new one runs the schedule, so nothing is posted twice.
+  if (await (await import("@/lib/migrate")).movedTo()) return ok({ skipped: "moved" });
   const key = await stripeSecretKey();
   const appUrl = process.env.APP_URL ?? "";
   const i = await getIntegrations();

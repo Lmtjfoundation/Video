@@ -8,5 +8,7 @@ export const maxDuration = 300;
 /** Checks comments and drafts/sends replies for every account whose plan includes automatic replies. */
 export const GET = handle(async (req: Request) => {
   if (!cronAuthorized(req)) return fail("Unauthorized", 401);
+  // This server was moved: the new one runs the schedule, so nothing is posted twice.
+  if (await (await import("@/lib/migrate")).movedTo()) return ok({ skipped: "moved" });
   return ok(await forEachActiveUser(() => runEngage(), hasAutoReplies));
 });
