@@ -22,7 +22,14 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
   const { platform } = await params;
   const url = new URL(req.url);
   const origin = appOrigin(req);
-  const back = (q: Record<string, string>) => NextResponse.redirect(`${origin}/platforms?${new URLSearchParams(q)}`);
+  // Back to where linking started: the "Connect your accounts" screen after sign-in, or the Platforms tab.
+  const ret = req.headers.get("cookie")?.match(/(?:^|;\s*)gp_connect_return=([^;]+)/)?.[1];
+  const base = ret && /^\/(connect|platforms)(\?|$)/.test(decodeURIComponent(ret)) ? decodeURIComponent(ret) : "/platforms";
+  const back = (q: Record<string, string>) => {
+    const res = NextResponse.redirect(`${origin}${base}${base.includes("?") ? "&" : "?"}${new URLSearchParams(q)}`);
+    res.cookies.delete("gp_connect_return");
+    return res;
+  };
   if (!PLATFORMS.includes(platform as Platform) || !isOAuthPlatform(platform)) return back({ error: "Unknown platform." });
   const p = platform;
   const label = OAUTH[p].label;

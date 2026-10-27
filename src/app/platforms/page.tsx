@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Share2 } from "lucide-react";
+import { ArrowUpRight, Share2, Zap } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api } from "@/lib/client";
 import type { Platform, Settings } from "@/lib/types";
@@ -9,7 +9,7 @@ import { PLATFORMS } from "@/lib/types";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import { Accounts } from "@/components/accounts";
 import { MetricoolCard } from "@/components/metricool-card";
-import { Card, PageHeader, PlatformChip } from "@/components/ui";
+import { Button, Card, PageHeader, PlatformChip } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 /**
@@ -66,6 +66,7 @@ export default function PlatformsPage() {
       <PageHeader
         title="Platforms"
         subtitle="Connect the social accounts Ghost Post posts to, and switch each one on or off."
+        actions={<Link href="/connect?next=%2Fplatforms"><Button variant="primary"><Zap className="h-4 w-4" /> Quick connect</Button></Link>}
       />
 
       <Card className="mb-5 grid grid-cols-1 gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">

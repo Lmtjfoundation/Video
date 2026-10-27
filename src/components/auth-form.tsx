@@ -34,7 +34,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     setError(null);
     try {
       await api(mode === "login" ? "/api/auth/login" : "/api/auth/signup", { body: { email, password, name, setupCode: setupCode || undefined } });
-      window.location.href = mode === "signup" ? afterSignup : next;
+      const dest = mode === "signup" ? afterSignup : next;
+      // No social account connected yet: the one-tap "Connect your accounts" screen comes first.
+      const linked = await api<{ platform: string; connected: boolean }[]>("/api/credentials").catch(() => null);
+      const none = linked && !linked.some((c) => c.connected && c.platform !== "webhook");
+      window.location.href = none ? `/connect?next=${encodeURIComponent(dest)}` : dest;
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);

@@ -10,6 +10,9 @@ import { PLATFORMS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+/** Where the network's sign-in returns to (read by the callback). */
+const RETURN_COOKIE = "gp_connect_return";
+
 /** "Connect with …" — sends the browser to the platform's own sign-in page. */
 export async function GET(req: Request, ctx: { params: Promise<{ platform: string }> }) {
   const user = await userFromRequest(req);
@@ -32,7 +35,11 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
     account = newAccountId();
   }
   try {
-    return NextResponse.redirect(await startAuth(platform as Platform, origin, account));
+    const res = NextResponse.redirect(await startAuth(platform as Platform, origin, account));
+    // ?return=/connect: come back to the "Connect your accounts" screen after the network's sign-in, not to Platforms.
+    const ret = new URL(req.url).searchParams.get("return") ?? "";
+    if (/^\/(connect|platforms)(\?[\w=&%./-]*)?$/.test(ret)) res.cookies.set(RETURN_COOKIE, ret, { httpOnly: true, sameSite: "lax", secure: origin.startsWith("https://"), path: "/", maxAge: 900 });
+    return res;
   } catch (e) {
     await log("error", "system", `Couldn't start ${platform} linking: ${(e as Error).message}`, { platform: platform as Platform });
     return back({ error: (e as Error).message });
