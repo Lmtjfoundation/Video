@@ -182,4 +182,16 @@ describe("engine capabilities and wake on use", () => {
     expect(addedMinutes(t, t + 5 * 60_000)).toBe(5);
     expect(addedMinutes(t, t + (IDLE_MINUTES + 1) * 60_000)).toBe(3 + IDLE_MINUTES);
   });
+
+  it("doesn't keep asking a switched-off engine what it can do (each ask would wait for a timeout)", async () => {
+    process.env.VIDEO_ENGINE_URL = "https://off-machine.example";
+    let asks = 0;
+    vi.stubGlobal("fetch", vi.fn(async (u: string) => {
+      if (String(u).endsWith("/v1/info")) asks++;
+      throw new TypeError("fetch failed: connect ETIMEDOUT");
+    }));
+    const { ownEngineReady } = await import("@/lib/own-video");
+    for (let i = 0; i < 5; i++) await ownEngineReady("upscale");
+    expect(asks).toBe(1);
+  });
 });

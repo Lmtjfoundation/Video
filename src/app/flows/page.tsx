@@ -74,10 +74,10 @@ export default function FlowsPage() {
     <>
       <PageHeader title="Flows" subtitle="Chain the AI tools into one pipeline you can run again with any idea: pictures, footage, music, sound, voice, and a finished video at the end." />
       {data && !data.engine && <Card className="mb-5 p-4 text-sm text-white/70">Flows run on Ghost Post&apos;s own engine. The admin connects it in Admin → App settings → Integrations → Ghost Post Video Engine.</Card>}
-      <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
         <Card className="h-fit">
           <CardHeader title="Your flows" icon={<Workflow className="h-4 w-4" />} action={<Button size="sm" onClick={() => setEdit({ name: "New flow", steps: [{ type: "image" }, { type: "footage" }, { type: "music" }, { type: "finish" }], credits: 0 })}><Plus className="h-3.5 w-3.5" /> New</Button>} />
-          <div className="grid gap-1.5 p-3">
+          <div className="grid grid-cols-1 gap-1.5 p-3">
             {!data?.flows.length && <div className="px-2 text-sm text-white/50">None saved yet. Start from a ready-made one:</div>}
             {data?.flows.map((f) => (
               <button key={f.id} onClick={() => setEdit(f)} className={cn("rounded-lg px-3 py-2 text-left text-sm", edit?.id === f.id ? "bg-white/10" : "hover:bg-white/5")}>
@@ -94,9 +94,9 @@ export default function FlowsPage() {
         </Card>
 
         {edit && (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <Card className="p-5">
-              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <Input value={edit.name} maxLength={60} onChange={(e) => setEdit({ ...edit, name: e.target.value })} aria-label="Flow name" />
                 <div className="flex gap-2">
                   <Button onClick={save}><Save className="h-4 w-4" /> Save</Button>
@@ -113,13 +113,13 @@ export default function FlowsPage() {
                   </Select>
                   <span className="hidden text-xs text-white/50 md:inline">{STEP_LABEL[s.type].hint}</span>
                   <div className="ml-auto flex gap-1">
-                    <button className="grid h-8 w-8 place-items-center rounded-lg text-white/60 hover:bg-white/10" aria-label="Move up" onClick={() => move(i, -1)}><ArrowUp className="h-4 w-4" /></button>
-                    <button className="grid h-8 w-8 place-items-center rounded-lg text-white/60 hover:bg-white/10" aria-label="Move down" onClick={() => move(i, 1)}><ArrowDown className="h-4 w-4" /></button>
-                    <button className="grid h-8 w-8 place-items-center rounded-lg text-white/60 hover:bg-white/10 hover:text-red-300" aria-label="Remove step" onClick={() => setEdit({ ...edit, steps: edit.steps.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></button>
+                    <button className="grid grid-cols-1 h-8 w-8 place-items-center rounded-lg text-white/60 hover:bg-white/10" aria-label="Move up" onClick={() => move(i, -1)}><ArrowUp className="h-4 w-4" /></button>
+                    <button className="grid grid-cols-1 h-8 w-8 place-items-center rounded-lg text-white/60 hover:bg-white/10" aria-label="Move down" onClick={() => move(i, 1)}><ArrowDown className="h-4 w-4" /></button>
+                    <button className="grid grid-cols-1 h-8 w-8 place-items-center rounded-lg text-white/60 hover:bg-white/10 hover:text-red-300" aria-label="Remove step" onClick={() => setEdit({ ...edit, steps: edit.steps.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
                 {s.type !== "finish" && (
-                  <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
                     <Textarea rows={2} value={s.prompt ?? ""} maxLength={600} onChange={(e) => setStep(i, { prompt: e.target.value })}
                       placeholder={s.type === "voiceover" ? "{idea} (the words to read)" : s.type === "prompt" ? "{idea}" : "Blank uses {text}, or {idea}"} />
                     <div className="flex flex-wrap gap-2 md:w-56 md:flex-col">

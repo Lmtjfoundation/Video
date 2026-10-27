@@ -108,7 +108,7 @@ export default function EngagePage() {
         )}
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {shown.map((r) => (
           <ReplyRow key={r.id} reply={r} onUpdate={update} onDone={() => { load(); refresh(); }} />
         ))}

@@ -122,7 +122,7 @@ export default function TrendsPage() {
     <>
       <PageHeader title="Trend Radar" subtitle="Live stories from established newsrooms, refreshed every 30 minutes. Turn any of them into a post or a faceless video, or let Trend Autopilot do it for you." />
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="xl:order-2">
           <Card>
             <CardHeader
@@ -131,7 +131,7 @@ export default function TrendsPage() {
               action={ap ? <Switch checked={!!ta?.enabled} onChange={(v) => saveAp({ trendAutopilot: { enabled: v } })} label="Trend Autopilot" /> : undefined}
             />
             {ap && ta && (
-              <div className="grid gap-3 p-5 text-[13px]">
+              <div className="grid grid-cols-1 gap-3 p-5 text-[13px]">
                 <Field label="What it does">
                   <Select value={ta.mode} onChange={(e) => saveAp({ trendAutopilot: { mode: e.target.value as "schedule" | "drafts" } })}>
                     <option value="schedule">Fill open calendar slots (posts go out on schedule)</option>
@@ -213,7 +213,7 @@ export default function TrendsPage() {
         ))}
       </div>
 
-      <Card className="mb-4 grid gap-3 p-4">
+      <Card className="mb-4 grid grid-cols-1 gap-3 p-4">
         <div>
           <p className="text-sm font-medium text-white">{g.name}</p>
           <p className="text-[13px] text-white/55">{g.brief}</p>
@@ -234,7 +234,7 @@ export default function TrendsPage() {
       </Card>
 
       {!g.feeds.length ? (
-        <Card className="grid gap-3 p-6">
+        <Card className="grid grid-cols-1 gap-3 p-6">
           <p className="text-sm text-white/70">{g.name} is an evergreen genre: it uses documented stories and ties them to today's date or headlines when the link is real.</p>
           <div className="flex flex-wrap gap-2">
             <Button variant="primary" loading={busy === "pick-text"} onClick={() => make(null, "text")}><PenLine className="h-4 w-4" /> Write a post · {CREDIT_COST.post} credit</Button>
@@ -246,9 +246,9 @@ export default function TrendsPage() {
       ) : !data.stories.length ? (
         <Card className="p-6 text-sm text-white/60">No fresh stories came through for {g.name} right now. Try Refresh in a few minutes, or check the sources below.</Card>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {data.stories.map((st) => (
-            <Card key={st.id} className="grid gap-3 p-4 md:grid-cols-[64px_1fr_auto] md:items-center">
+            <Card key={st.id} className="grid grid-cols-1 gap-3 p-4 md:grid-cols-[64px_1fr_auto] md:items-center">
               <div className="flex items-center gap-2 md:flex-col md:gap-1">
                 <Flame className={cn("h-5 w-5", st.heat >= 70 ? "text-red-400" : st.heat >= 45 ? "text-gold-300" : "text-white/35")} />
                 <span className="text-[12px] tabular-nums text-white/60">{st.heat}</span>
@@ -320,7 +320,7 @@ function CustomFeeds({ genre, onSaved }: { genre: string; onSaved: () => void })
   }
   const mine = all.filter((f) => f.genre === genre);
   return (
-    <div className="grid gap-2 px-4 py-3">
+    <div className="grid grid-cols-1 gap-2 px-4 py-3">
       <p className="text-[12px] font-medium text-white/70">Admin: add an RSS feed to this genre</p>
       {mine.map((f) => (
         <div key={f.url} className="flex items-center gap-2 text-[12px] text-white/60">
@@ -328,7 +328,7 @@ function CustomFeeds({ genre, onSaved }: { genre: string; onSaved: () => void })
           <button className="ml-auto text-red-300 hover:underline" onClick={() => save(all.filter((x) => x !== f))}>Remove</button>
         </div>
       ))}
-      <div className="grid gap-2 sm:grid-cols-[1fr_2fr_140px_auto]">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_2fr_140px_auto]">
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Outlet name" />
         <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://outlet.com/feed/" />
         <Select value={tier} onChange={(e) => setTier(e.target.value as FeedTier)}>

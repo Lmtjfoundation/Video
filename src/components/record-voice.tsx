@@ -124,10 +124,18 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
     setPlayhead(0);
   }, [videoId]);
 
+  /** Recording and take playback lower or mute the video; it plays at full sound again afterwards. */
+  const unmute = () => {
+    if (video.current) {
+      video.current.muted = false;
+      video.current.volume = 1;
+    }
+  };
   const stopPlayback = () => {
     player.current?.pause();
     player.current = null;
     video.current?.pause();
+    unmute();
     setPlaying("");
   };
 
@@ -155,6 +163,7 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
     };
     r.onstop = () => {
       v.pause();
+      unmute();
       setRecording(false);
       const secs = (performance.now() - recStart.current) / 1000;
       if (secs < 0.5) return toast("That take was too short. Press Record and speak.", "error");
@@ -236,11 +245,11 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
   const lipCost = lipsync && lipsyncSecond && take ? lipsyncSecond * Math.max(1, Math.ceil(take.secs)) : 0;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
       <Card className="min-w-0">
         <CardHeader title="Record your voice over a video" subtitle="The video plays while you talk, so your voice lands exactly where you say it. Record a few takes, keep the best one." icon={<Mic className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
-          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div className="grid grid-cols-1 gap-4 p-5">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
             <Field label="Video"><MediaSelect items={items} kinds={["video"]} value={videoId} onChange={setVideoId} empty="Upload a video first" /></Field>
             <label className={cn("inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm font-medium text-white/90 hover:bg-white/[0.08]", uploading && "pointer-events-none opacity-50")}>
               <Upload className="h-4 w-4" /> {uploading ? "Uploading…" : "Upload a video"}
@@ -262,9 +271,9 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
                 onEnded={() => (recording ? stop() : setPlaying(""))}
               />
             ) : (
-              <div className="grid aspect-video place-items-center p-6 text-center text-sm text-white/45">Choose or upload a video to record over.</div>
+              <div className="grid grid-cols-1 aspect-video place-items-center p-6 text-center text-sm text-white/45">Choose or upload a video to record over.</div>
             )}
-            {count > 0 && <div className="absolute inset-0 grid place-items-center bg-black/55 text-7xl font-bold text-white" aria-live="assertive">{count}</div>}
+            {count > 0 && <div className="absolute inset-0 grid grid-cols-1 place-items-center bg-black/55 text-7xl font-bold text-white" aria-live="assertive">{count}</div>}
             {recording && (
               <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-red-600/90 px-3 py-1 text-xs font-semibold text-white">
                 <Circle className="h-2.5 w-2.5 animate-pulse fill-white" /> REC {clock(playhead)}
@@ -273,8 +282,8 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
           </div>
           {src && <div className="text-xs text-white/50">Recording starts at the playhead: <span className="font-mono text-white/80">{clock(playhead)}</span>{length ? ` of ${clock(length)}` : ""}. Move it with the video&apos;s controls to add a line in the middle.</div>}
 
-          <div className="grid gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {micOn && mics.length ? (
                 <Field label="Microphone">
                   <Select value={micId} onChange={(e) => { setMicId(e.target.value); openMic(e.target.value); }}>
@@ -295,7 +304,7 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
                 </Select>
               </Field>
             </div>
-            <div className="grid gap-1">
+            <div className="grid grid-cols-1 gap-1">
               <div className="h-2.5 overflow-hidden rounded-full bg-white/10"><div ref={meter} className="h-full w-0 rounded-full transition-[width] duration-75" /></div>
               <div className="flex items-center gap-1.5 text-[11px] text-white/45"><Headphones className="h-3.5 w-3.5" /> {micOn ? "Speak at your normal level: the bar should reach the yellow on loud words, never the red." : "Turn on the microphone to see your level."}</div>
             </div>
@@ -308,10 +317,10 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
         </div>
       </Card>
 
-      <div className="grid content-start gap-6">
+      <div className="grid grid-cols-1 content-start gap-6">
         <Card>
           <CardHeader title="Takes" subtitle={takes.length ? `Choose the one to use. Up to ${MAX_TAKES}.` : "Your recordings appear here."} />
-          <div className="grid gap-2 p-4">
+          <div className="grid grid-cols-1 gap-2 p-4">
             {!takes.length && <div className="text-sm text-white/45">No takes yet. Press Record, wait for 3-2-1, then talk.</div>}
             {takes.map((t, i) => (
               <div key={t.id} className={cn("flex items-center gap-2 rounded-xl border p-2.5", chosen === t.id ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03]")}>
@@ -331,8 +340,8 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
 
         <Card>
           <CardHeader title="Put it in the video" />
-          <div className="grid gap-4 p-4">
-            <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-4 p-4">
+            <div className="grid grid-cols-1 gap-2">
               {([["duck", "Keep the video's sound", "Lowered automatically under your voice."], ["replace", "Replace the sound", "Only your voice."]] as const).map(([k, t, d]) => (
                 <button key={k} onClick={() => setMix(k)} className={cn("rounded-xl border p-3 text-left", mix === k ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03]")}>
                   <div className="text-sm font-medium">{t}</div>
@@ -340,7 +349,7 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
                 </button>
               ))}
             </div>
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={cleanup} onChange={setCleanup} label="Clean up my voice: less hiss and rumble, even level (free)" /> Clean up my voice: less hiss and rumble, even level (free)</label>
               <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={captions} onChange={setCaptions} label="Burned-in captions (free)" /> Burned-in captions (free)</label>
               <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={lipsync && engine === true} disabled={engine !== true} onChange={(v) => setLipsync(v && engine === true)} label="Lip sync the face" /> Lip sync the face</label>

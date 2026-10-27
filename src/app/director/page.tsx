@@ -155,7 +155,7 @@ export default function Director() {
                   </div>
                 ))
               ) : (
-                <div className="grid gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <p className="text-sm text-white/60">Describe the video: the story, who&apos;s in it, the mood. You can change everything afterwards just by saying so.</p>
                   <div className="flex flex-wrap gap-1.5">
                     {DIRECTOR_TEMPLATES.map((t) => (
@@ -175,7 +175,7 @@ export default function Director() {
                       ))}
                     </div>
                   )}
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <Field label="Style">
                       <Select value={look} onChange={(e) => setLook(e.target.value)}>
                         <option value="">The cast&apos;s style</option>
@@ -284,7 +284,7 @@ function Timeline({ open, pictures, onSaved, onRender }: { open: Open; pictures:
       <div className="flex gap-2 overflow-x-auto pb-2">
         {scenes.map((x, i) => (
           <button key={i} onClick={() => setSel(i === sel ? null : i)} className={cn("focus-ring relative w-24 shrink-0 overflow-hidden rounded-lg text-left ring-2", sel === i ? "ring-mint-400" : "ring-white/10 hover:ring-white/30")}>
-            <div className="grid aspect-[9/16] place-items-center bg-ink-900">
+            <div className="grid grid-cols-1 aspect-[9/16] place-items-center bg-ink-900">
               {x.picture ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={x.picture} alt="" className="h-full w-full object-cover" />
@@ -298,7 +298,7 @@ function Timeline({ open, pictures, onSaved, onRender }: { open: Open; pictures:
         ))}
       </div>
       {s && sel !== null && (
-        <div className="mt-3 grid gap-3 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.07]">
+        <div className="mt-3 grid grid-cols-1 gap-3 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.07]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-semibold text-white">Scene {sel + 1}</p>
             <div className="flex gap-1">
@@ -312,7 +312,7 @@ function Timeline({ open, pictures, onSaved, onRender }: { open: Open; pictures:
           <Field label="What's said">
             <Textarea value={s.narration} onChange={(e) => patch(sel, { narration: e.target.value })} className="min-h-[60px]" />
           </Field>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="On-screen text">
               <Input value={s.onScreen} onChange={(e) => patch(sel, { onScreen: e.target.value })} />
             </Field>

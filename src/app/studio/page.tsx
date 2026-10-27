@@ -219,7 +219,7 @@ export default function Studio() {
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[380px_1fr]">
         <Card className="h-fit xl:sticky xl:top-10">
           <CardHeader
             title="Generate"
@@ -228,14 +228,14 @@ export default function Studio() {
             action={kind ? <Button size="sm" variant="ghost" onClick={() => setKind(null)}>Change</Button> : undefined}
           />
           {!kind ? (
-            <div className="grid gap-3 p-5">
+            <div className="grid grid-cols-1 gap-3 p-5">
               <KindButton icon={<PenLine className="h-5 w-5" />} title="Text post" text="Posts, threads, carousels and captions, ready to publish." onClick={() => { setKind("text"); setFromText(false); setFromAudio(false); if (count > 5) setCount(1); }} />
               <KindButton icon={<Clapperboard className="h-5 w-5" />} title="Video post" text="Full script, scene-by-scene visuals, on-screen text, voice and music direction, titles, thumbnail and caption. Up to 10 minutes." onClick={() => { setKind("video"); setFromText(false); setFromAudio(false); if (count > 3) setCount(1); }} />
               <KindButton icon={<FileText className="h-5 w-5" />} title="Text to video" text="Paste an article, notes or a script. Get a faceless video built only from it, and render it to MP4 in one go." onClick={() => { setKind("video"); setFromText(true); setFromAudio(false); setRenderNow(true); setCount(1); }} />
               <KindButton icon={<AudioLines className="h-5 w-5" />} title="Audio to video" text="Upload a podcast, voice note, sermon or song. Get a video whose pictures and captions follow what's said, with your recording as the sound. Up to 10 minutes." onClick={() => { setKind("video"); setFromAudio(true); setFromText(false); setRenderNow(true); setCount(1); }} />
             </div>
           ) : (
-          <div className="grid gap-4 p-5">
+          <div className="grid grid-cols-1 gap-4 p-5">
             <div>
               <span className="mb-1.5 block text-[13px] font-medium text-white/80">Platform</span>
               <div className="grid grid-cols-6 gap-1.5">
@@ -311,7 +311,7 @@ export default function Studio() {
                   </div>
                   <Switch checked={faceless} onChange={setFaceless} label="Faceless video" />
                 </div>
-                <div className="grid gap-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+                <div className="grid grid-cols-1 gap-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[13px] font-medium text-white">Voiceover</p>
@@ -395,7 +395,7 @@ export default function Studio() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={m.url} alt={m.name} className="h-full w-full object-cover" />
                       ) : (
-                        <span className="grid h-full w-full place-items-center bg-ink-900 text-[10px] text-white/60">video</span>
+                        <span className="grid grid-cols-1 h-full w-full place-items-center bg-ink-900 text-[10px] text-white/60">video</span>
                       )}
                     </button>
                   ))}
@@ -418,7 +418,7 @@ export default function Studio() {
                 <Switch checked={mature} onChange={setMature} label="Mature post" tone="red" />
               </div>
             )}
-            <div className="grid gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+            <div className="grid grid-cols-1 gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[13px] font-medium text-white">Post automatically</p>
@@ -491,7 +491,7 @@ export default function Studio() {
             </div>
           </div>
           {busy && <div className="glass mb-4 h-28 animate-pulse" />}
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {settings && shown.map((p) => <PostCard key={p.id} post={p} settings={settings} onChange={onChange(p.id)} compact={shown.length > 3} />)}
           </div>
           {!shown.length && !busy && (
@@ -524,7 +524,7 @@ function ImportDialog({ onClose, onDone }: { onClose: () => void; onDone: () => 
   const [errors, setErrors] = useState<string[]>([]);
   const allowed = status?.me.plan.features.bulkImport ?? false;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink-950/80 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 grid grid-cols-1 place-items-center bg-ink-950/80 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="glass w-full max-w-2xl p-6" role="dialog" aria-modal="true" aria-label="Import CSV" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-white">Import posts from CSV</h3>
         <p className="mt-1 text-sm text-white/55">Columns: <code>platform</code>, <code>text</code>, and optional <code>date</code> (YYYY-MM-DD), <code>time</code> (HH:MM, your timezone), <code>hashtags</code>. Rows with a date and time are scheduled; the rest become drafts. Importing uses no credits.</p>
@@ -606,7 +606,7 @@ function AudioPanel(p: {
           />
         </label>
         {recordings.length > 0 && (
-          <div className="mt-2 grid max-h-44 gap-1.5 overflow-y-auto">
+          <div className="mt-2 grid grid-cols-1 max-h-44 gap-1.5 overflow-y-auto">
             {recordings.slice(0, 20).map((m) => (
               <button
                 key={m.id}
@@ -623,7 +623,7 @@ function AudioPanel(p: {
       <Field label="What is it?" hint="optional — helps pick the pictures">
         <Input value={p.about} onChange={(e) => p.setAbout(e.target.value.slice(0, 500))} placeholder="e.g. Sunday sermon on forgiveness · a love song · my podcast about credit" />
       </Field>
-      <div className="grid gap-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+      <div className="grid grid-cols-1 gap-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
         {wide && (
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -658,7 +658,7 @@ function AudioPanel(p: {
 function KindButton({ icon, title, text, onClick }: { icon: React.ReactNode; title: string; text: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className="focus-ring grid grid-cols-[40px_1fr] gap-x-3 rounded-2xl bg-white/[0.02] p-4 text-left ring-1 ring-white/10 transition-all hover:bg-mint-400/[0.06] hover:ring-mint-400/40">
-      <span className="row-span-2 grid h-10 w-10 place-items-center rounded-xl bg-mint-400/10 text-mint-300 ring-1 ring-mint-400/25">{icon}</span>
+      <span className="row-span-2 grid grid-cols-1 h-10 w-10 place-items-center rounded-xl bg-mint-400/10 text-mint-300 ring-1 ring-mint-400/25">{icon}</span>
       <span className="text-[15px] font-semibold text-white">{title}</span>
       <span className="text-xs leading-relaxed text-white/55">{text}</span>
     </button>

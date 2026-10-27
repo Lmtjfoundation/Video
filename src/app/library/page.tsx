@@ -25,7 +25,7 @@ const NO_FACETS: Facets = { genres: [], moods: [], themes: [], instruments: [], 
 
 export default function LibraryPage() {
   return (
-    <Suspense fallback={<div className="grid place-items-center py-20"><Spinner /></div>}>
+    <Suspense fallback={<div className="grid grid-cols-1 place-items-center py-20"><Spinner /></div>}>
       <Library />
     </Suspense>
   );
@@ -227,7 +227,7 @@ function Library() {
       )}
 
       {showFilters && (
-        <Card className="mb-4 grid gap-4 p-4">
+        <Card className="mb-4 grid grid-cols-1 gap-4 p-4">
           {tags.map(([key, label, list]) => (
             <div key={key}>
               <div className="mb-1.5 text-xs uppercase tracking-wide text-white/40">{label}</div>
@@ -270,7 +270,7 @@ function Library() {
       )}
 
       {!data ? (
-        <div className="grid place-items-center py-20"><Spinner /></div>
+        <div className="grid grid-cols-1 place-items-center py-20"><Spinner /></div>
       ) : !data.items.length ? (
         <Empty
           icon={<LibraryIcon className="h-6 w-6" />}
@@ -302,7 +302,7 @@ function Library() {
             <Card className="divide-y divide-white/5">
               {data.items.map((it) => (
                 <div key={it.id} id={`item-${it.id}`} className={cn("grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 p-3 md:grid-cols-[auto_minmax(0,240px)_minmax(0,1fr)_auto]", playing?.id === it.id && "bg-white/[0.04]")}>
-                  <button onClick={() => play(it)} className="grid h-10 w-10 place-items-center rounded-full bg-white/10 hover:bg-mint-400 hover:text-ink-950" aria-label={playing?.id === it.id && !paused ? "Pause" : "Play"}>
+                  <button onClick={() => play(it)} className="grid grid-cols-1 h-10 w-10 place-items-center rounded-full bg-white/10 hover:bg-mint-400 hover:text-ink-950" aria-label={playing?.id === it.id && !paused ? "Pause" : "Play"}>
                     {playing?.id === it.id && !paused ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </button>
                   <div className="min-w-0">
@@ -330,7 +330,7 @@ function Library() {
       {playing && (
         <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] z-40 border-t border-white/10 bg-ink-950/95 px-4 py-3 backdrop-blur lg:bottom-0 lg:left-64">
           <div className="mx-auto flex max-w-5xl items-center gap-3">
-            <button onClick={() => play(playing)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-mint-400 text-ink-950" aria-label={paused ? "Play" : "Pause"}>
+            <button onClick={() => play(playing)} className="grid grid-cols-1 h-10 w-10 shrink-0 place-items-center rounded-full bg-mint-400 text-ink-950" aria-label={paused ? "Play" : "Pause"}>
               {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
             </button>
             <div className="w-40 min-w-0 shrink-0">
@@ -434,7 +434,7 @@ function Wave({ peaks, progress, onSeek, tall }: { peaks: number[]; progress: nu
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 grid grid-cols-1 place-items-center bg-black/70 p-4" onClick={onClose}>
       <Card className="w-full max-w-lg p-5" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center gap-2">
           <div className="font-semibold">{title}</div>
@@ -452,7 +452,7 @@ function BoardPicker({ item, boards, onClose, onAct, reload }: {
   const [name, setName] = useState("");
   return (
     <Modal title={`Add “${item.title}” to a board`} onClose={onClose}>
-      <div className="grid gap-1.5">
+      <div className="grid grid-cols-1 gap-1.5">
         {boards.map((b) => (
           <button key={b.id} className="rounded-lg bg-white/5 px-3 py-2 text-left text-sm hover:bg-white/10"
             onClick={async () => { if (await onAct({ action: "board-add", boardId: b.id, id: item.id }, `Added to ${b.name}`)) { onClose(); reload(); } }}>

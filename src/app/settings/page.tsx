@@ -99,10 +99,10 @@ export default function SettingsPage() {
       </div>
 
       {tab === "general" && (
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <Card className="lg:col-span-2">
             <CardHeader title="Post automatically" subtitle="New posts publish the moment they're written, and videos as soon as they're rendered — Reels, feed posts, carousels and Stories. You can still turn it off for any single post in Content Studio." />
-            <div className="grid gap-4 p-5 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-3">
               <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06] sm:col-span-3">
                 <div>
                   <p className="text-sm text-white">Post new content automatically</p>
@@ -124,7 +124,7 @@ export default function SettingsPage() {
           </Card>
           <Card>
             <CardHeader title="Schedule" subtitle="Default cadence: 3 posts per day per platform." />
-            <div className="grid gap-4 p-5">
+            <div className="grid grid-cols-1 gap-4 p-5">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Timezone" hint="IANA name">
                   <Input value={s.timezone} onChange={(e) => set("timezone", e.target.value)} />
@@ -140,15 +140,15 @@ export default function SettingsPage() {
                 </Field>
               </div>
               {s.postsPerDay > 10 && <p className="rounded-lg bg-gold-400/[0.06] px-3 py-2 text-xs text-gold-300 ring-1 ring-gold-400/20">More than 10 posts a day on one account often gets flagged as spam and lowers reach. Raise it gradually and watch your analytics. Extra slots are spread evenly through the day.</p>}
-              <div className="flex items-center justify-between rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
                 <div>
                   <p className="text-sm text-white">Quiet hours</p>
                   <p className="text-xs text-white/45">No posts or replies in this window</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input type="time" value={s.quietHours.start} onChange={(e) => set("quietHours", { ...s.quietHours, start: e.target.value })} className="w-28" />
+                  <Input type="time" value={s.quietHours.start} onChange={(e) => set("quietHours", { ...s.quietHours, start: e.target.value })} className="w-[8.5rem]" />
                   <span className="text-white/40">–</span>
-                  <Input type="time" value={s.quietHours.end} onChange={(e) => set("quietHours", { ...s.quietHours, end: e.target.value })} className="w-28" />
+                  <Input type="time" value={s.quietHours.end} onChange={(e) => set("quietHours", { ...s.quietHours, end: e.target.value })} className="w-[8.5rem]" />
                   <Switch checked={s.quietHours.enabled} onChange={(v) => set("quietHours", { ...s.quietHours, enabled: v })} label="Quiet hours" />
                 </div>
               </div>
@@ -156,7 +156,7 @@ export default function SettingsPage() {
           </Card>
           <Card>
             <CardHeader title="Posting slots" subtitle="Local times, comma-separated. The first N are used." />
-            <div className="grid gap-3 p-5">
+            <div className="grid grid-cols-1 gap-3 p-5">
               {PLATFORMS.map((p) => (
                 <div key={p} className="grid grid-cols-[34px_1fr] items-center gap-3">
                   <PlatformChip platform={p} />
@@ -172,7 +172,7 @@ export default function SettingsPage() {
           </Card>
           <Card className="lg:col-span-2">
             <CardHeader title="Content mix" subtitle="Relative weights used when the agent picks pillars. Finance & AI carry the highest advertiser demand." />
-            <div className="grid gap-4 p-5 sm:grid-cols-5">
+            <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-5">
               {PILLARS.map((p) => (
                 <Field key={p} label={PILLAR_LABEL[p]} hint={`${s.pillarMix[p]}`}>
                   <input
@@ -193,7 +193,7 @@ export default function SettingsPage() {
       {tab === "ai" && <AiProviderTab />}
 
       {tab === "safety" && (
-        <div className="grid gap-5">
+        <div className="grid grid-cols-1 gap-5">
           <Card>
             <CardHeader title="Rate limits per platform" subtitle="Conservative app defaults. Platforms don't publish exact anti-spam thresholds — staying well under them is the safest approach." />
             <div className="overflow-x-auto p-5">
@@ -230,7 +230,7 @@ export default function SettingsPage() {
           </Card>
           <Card className="p-5">
             <p className="mb-3 text-sm font-semibold text-white">Built-in protections (always on)</p>
-            <ul className="grid gap-2 text-[13px] text-white/65 sm:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-2 text-[13px] text-white/65 sm:grid-cols-2">
               <li>• Kill switch stops every post and reply instantly</li>
               <li>• Exponential back-off (15 min → 6 h) after any rate-limit response</li>
               <li>• Randomised spacing between actions — never exact intervals</li>
@@ -245,16 +245,16 @@ export default function SettingsPage() {
       )}
 
       {tab === "money" && (
-        <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_1.4fr]">
           <Card>
             <CardHeader title="Revenue model" subtitle="Used only for estimates. Plug in your real numbers from platform analytics." />
-            <div className="grid gap-4 p-5">
+            <div className="grid grid-cols-1 gap-4 p-5">
               <div className="grid grid-cols-3 gap-3">
                 <Field label="RPM ($/1k views)"><Input type="number" step="0.1" value={s.rpmUsd} onChange={(e) => set("rpmUsd", Number(e.target.value))} /></Field>
                 <Field label="Link CTR"><Input type="number" step="0.001" value={s.affiliateCtr} onChange={(e) => set("affiliateCtr", Number(e.target.value))} /></Field>
                 <Field label="Conversion"><Input type="number" step="0.005" value={s.affiliateConversion} onChange={(e) => set("affiliateConversion", Number(e.target.value))} /></Field>
               </div>
-              <div className="grid gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <span className="text-[13px] font-medium text-white/80">Audience per platform</span>
                 {PLATFORMS.map((p) => (
                   <div key={p} className="grid grid-cols-[34px_1fr_1fr] items-center gap-2">
@@ -277,7 +277,7 @@ export default function SettingsPage() {
                 </Button>
               }
             />
-            <div className="grid gap-3 p-5">
+            <div className="grid grid-cols-1 gap-3 p-5">
               {s.offers.map((o, i) => (
                 <OfferRow
                   key={o.id}
@@ -298,7 +298,7 @@ export default function SettingsPage() {
       {tab === "account" && <AccountTab />}
 
       {tab === "voice" && (
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <Card>
             <CardHeader title="Creator notes" subtitle="Added to every generation on top of the locked personality." />
             <div className="p-5">
@@ -312,7 +312,7 @@ export default function SettingsPage() {
           </Card>
           <Card className="lg:col-span-2">
             <CardHeader title="Mature (18+) mode for X" subtitle="Frank, flirtatious, adult-perspective posts about dating, attraction and relationships. Never explicit, never on other platforms, never auto-published." />
-            <div className="grid gap-3 p-5">
+            <div className="grid grid-cols-1 gap-3 p-5">
               <div className="flex items-start justify-between gap-4 rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.06]">
                 <div>
                   <p className="text-sm font-medium text-white">Allow mature posts on X</p>
@@ -327,7 +327,7 @@ export default function SettingsPage() {
                 </div>
                 <Switch checked={s.xSensitiveConfirmed} onChange={(v) => set("xSensitiveConfirmed", v)} label="X sensitive setting confirmed" />
               </div>
-              <ul className="grid gap-1.5 text-xs text-white/55">
+              <ul className="grid grid-cols-1 gap-1.5 text-xs text-white/55">
                 <li>• Mature posts are always published by hand (Post now), so a person checks every one.</li>
                 <li>• Never put adult content in your X profile photo, header, Lists, Communities or live video.</li>
                 <li>• X restricts creator monetization for sexual or overly suggestive content, so these posts earn less.</li>
@@ -337,7 +337,7 @@ export default function SettingsPage() {
           </Card>
           <Card>
             <CardHeader title="Replies" />
-            <div className="grid gap-4 p-5">
+            <div className="grid grid-cols-1 gap-4 p-5">
               <Field label="Default reply mode">
                 <Select value={s.defaultReplyMode} onChange={(e) => set("defaultReplyMode", e.target.value as Settings["defaultReplyMode"])}>
                   {REPLY_MODES.map((m) => <option key={m} value={m}>{MODE_LABEL[m]}</option>)}
@@ -357,7 +357,7 @@ export default function SettingsPage() {
 
 function OfferRow({ offer, onChange, onRemove }: { offer: Offer; onChange: (o: Offer) => void; onRemove: () => void }) {
   return (
-    <div className="grid gap-2 rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06] sm:grid-cols-[1.2fr_1.6fr_1fr_90px_auto]">
+    <div className="grid grid-cols-1 gap-2 rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06] sm:grid-cols-[1.2fr_1.6fr_1fr_90px_auto]">
       <Input value={offer.name} onChange={(e) => onChange({ ...offer, name: e.target.value })} placeholder="Name" />
       <Input value={offer.url} onChange={(e) => onChange({ ...offer, url: e.target.value })} placeholder="https://affiliate-link" />
       <Select value={offer.pillar} onChange={(e) => onChange({ ...offer, pillar: e.target.value as Pillar | "any" })}>
@@ -379,10 +379,10 @@ function AccountTab() {
   if (!status) return null;
   const me = status.me;
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <Card>
         <CardHeader title="Your account" />
-        <div className="grid gap-3 p-5 text-sm">
+        <div className="grid grid-cols-1 gap-3 p-5 text-sm">
           <p><span className="text-white/50">Email</span><br /><span className="text-white">{me.user.email}</span></p>
           <p><span className="text-white/50">Plan</span><br /><span className="text-white">{me.plan.name}</span> · <a href="/plans" className="text-mint-300 hover:underline">Change plan</a></p>
           <p><span className="text-white/50">Role</span><br /><span className="text-white">{me.user.role === "admin" ? "Admin" : "Member"}</span>{me.user.requireApproval ? <span className="text-gold-300"> · posts need admin approval</span> : null}</p>
@@ -392,7 +392,7 @@ function AccountTab() {
       <Card>
         <CardHeader title="Change password" subtitle="Signs you out on every other device." />
         <form
-          className="grid gap-3 p-5"
+          className="grid grid-cols-1 gap-3 p-5"
           onSubmit={async (e) => {
             e.preventDefault();
             setBusy(true);
@@ -427,11 +427,11 @@ function DeleteAccount() {
   return (
     <Card className="border-red-400/20 lg:col-span-2">
       <CardHeader title="Delete account" subtitle="Cancels your subscription and permanently deletes your posts, stories, uploads, linked accounts and logs. This can't be undone." />
-      <div className="grid gap-3 p-5">
+      <div className="grid grid-cols-1 gap-3 p-5">
         {!open ? (
           <Button variant="danger" className="w-fit" onClick={() => setOpen(true)}>Delete my account…</Button>
         ) : (
-          <div className="grid max-w-md gap-3">
+          <div className="grid grid-cols-1 max-w-md gap-3">
             <Field label="Password"><Input type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} /></Field>
             <Field label='Type "DELETE" to confirm'><Input value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="off" /></Field>
             <div className="flex gap-2">

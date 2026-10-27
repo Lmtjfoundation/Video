@@ -104,10 +104,10 @@ export default function StoryVideo() {
   return (
     <>
       <PageHeader title="Story to Video" subtitle="A whole narrated video from an idea, a script, a recording, a web page or a file: storyboard, pictures, voice, music and captions, in 23 languages. Then change any scene in the Director." />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Card className="min-w-0">
           <CardHeader title="New story" subtitle={t?.blurb} icon={<BookOpen className="h-4 w-4" />} />
-          <div className="grid gap-5 p-5">
+          <div className="grid grid-cols-1 gap-5 p-5">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {data?.templates.map((x) => (
                 <button key={x.id} onClick={() => { setTemplate(x.id); setLength(""); }} className={cn("rounded-xl border p-2.5 text-left", template === x.id ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]")}>
@@ -117,7 +117,7 @@ export default function StoryVideo() {
               ))}
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <div className="flex flex-wrap gap-1.5">
                 {SOURCES.map((s) => (
                   <button key={s.id} onClick={() => setKind(s.id)} className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium", kind === s.id ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>
@@ -132,14 +132,14 @@ export default function StoryVideo() {
               {kind === "link" && <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" inputMode="url" />}
               {kind === "media" && <MediaSelect items={items} kinds={["audio", "video"]} value={mediaId} onChange={setMediaId} empty="Upload a recording or video to the Media Library first" />}
               {kind === "file" && (
-                <div className="grid gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   <input type="file" accept=".txt,.md,.markdown,.srt,.vtt,text/plain,text/markdown" onChange={(e) => e.target.files?.[0] && readFile(e.target.files[0])} className="text-sm text-white/70 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-white" />
                   {fileName && <p className="text-xs text-white/50">{fileName}: {text.length.toLocaleString()} characters</p>}
                 </div>
               )}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Story language">
                 <Select value={language} onChange={(e) => setLanguage(e.target.value)}>{Object.entries(data?.languages ?? { en: "English" }).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
               </Field>
@@ -170,7 +170,7 @@ export default function StoryVideo() {
                 </div>
               </Field>
             )}
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Style">
                 <Select value={look} onChange={(e) => setLook(e.target.value)}>
                   <option value="">{t ? `Template style: ${t.look.split(",")[0]}` : "Template style"}</option>
@@ -182,7 +182,7 @@ export default function StoryVideo() {
               </Field>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {([[true, "Instant", "Write it and render the video in one go.", Rocket], [false, "Director mode", "Review the storyboard, change any scene or camera move, then render.", SlidersHorizontal]] as const).map(([v, title, d, Icon]) => (
                 <button key={title} onClick={() => setInstant(v)} className={cn("rounded-xl border p-3 text-left", instant === v ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03]")}>
                   <div className="flex items-center gap-2 text-sm font-medium"><Icon className="h-4 w-4" /> {title}</div>
@@ -197,7 +197,7 @@ export default function StoryVideo() {
           </div>
         </Card>
 
-        <div className="grid h-fit gap-4">
+        <div className="grid grid-cols-1 h-fit gap-4">
           <h2 className="text-sm font-semibold text-white/80">Your stories</h2>
           {!data?.stories.length && <Card className="p-5 text-sm text-white/50">Stories you make appear here, with their video, thumbnail and story package.</Card>}
           {data?.stories.map((s) => (
@@ -206,7 +206,7 @@ export default function StoryVideo() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={s.thumbnailUrl} alt="" className="max-h-64 w-full object-cover" />
               ) : null}
-              <div className="grid gap-2 p-4">
+              <div className="grid grid-cols-1 gap-2 p-4">
                 <div className="flex items-start gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{s.title}</div>

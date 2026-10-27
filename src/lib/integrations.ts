@@ -45,6 +45,14 @@ export interface Integrations {
   videoEngineGpuUrl?: string;
   videoEngineGpuToken?: string;
   vmWakeGpu?: string;
+  /**
+   * Ghost Post's own writer (src/lib/own-writer.ts): an OpenAI-compatible address, its key and model. It writes before
+   * Claude and Gemini; with ownWriterOnly, Claude and Gemini are never used.
+   */
+  ownWriterUrl?: string;
+  ownWriterKey?: string;
+  ownWriterModel?: string;
+  ownWriterOnly?: boolean;
   /** Pixabay (https://pixabay.com/api/docs/) — free stock video, the main footage source. */
   pixabayKey?: string;
   /** Pexels — optional second footage source. */
@@ -98,7 +106,7 @@ export async function saveIntegrations(patch: Partial<Record<keyof Integrations,
   return next as Integrations;
 }
 
-const pick = async (field: keyof Integrations, envName: string) => ((await getIntegrations())[field] as string | undefined) || process.env[envName] || "";
+export const pick = async (field: keyof Integrations, envName: string) => ((await getIntegrations())[field] as string | undefined) || process.env[envName] || "";
 
 export const anthropicKey = () => pick("anthropicKey", "ANTHROPIC_API_KEY");
 export const anthropicWorkspace = () => pick("anthropicWorkspaceId", "ANTHROPIC_WORKSPACE_ID");
@@ -202,6 +210,12 @@ export async function integrationStatus() {
     replicate: entry("REPLICATE_API_TOKEN", i.replicateKey),
     videoEngine: { ...entry("VIDEO_ENGINE_TOKEN", i.videoEngineToken), url: i.videoEngineUrl || process.env.VIDEO_ENGINE_URL || "" },
     vmWake: { ...entry("VM_WAKE", i.vmWake), vm: (i.vmWake || process.env.VM_WAKE || "").match(/vm=([^;]+)/)?.[1] ?? "" },
+    ownWriter: {
+      ...entry("OWN_WRITER_KEY", i.ownWriterKey),
+      url: i.ownWriterUrl || process.env.OWN_WRITER_URL || "",
+      model: i.ownWriterModel || process.env.OWN_WRITER_MODEL || "",
+      only: i.ownWriterOnly === true || ["1", "true"].includes(process.env.OWN_WRITER_ONLY ?? ""),
+    },
     videoEngineGpu: { ...entry("VIDEO_ENGINE_GPU_TOKEN", i.videoEngineGpuToken), url: i.videoEngineGpuUrl || process.env.VIDEO_ENGINE_GPU_URL || "" },
     vmWakeGpu: { ...entry("VM_WAKE_GPU", i.vmWakeGpu), vm: (i.vmWakeGpu || process.env.VM_WAKE_GPU || "").match(/vm=([^;]+)/)?.[1] ?? "" },
     pixabay: entry("PIXABAY_API_KEY", i.pixabayKey),

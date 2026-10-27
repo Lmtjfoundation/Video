@@ -21,6 +21,8 @@ export default function RestorePage() {
         const r = await fetch("/api/migrate/status", { cache: "no-store" });
         const j = (await r.json()) as Status;
         if (!stop) setStatus(r.ok ? j : { state: "failed", copied: 0, total: 0, bytes: 0, error: j.error });
+        // Not set up for a move: nothing will change, so stop asking.
+        if (r.status === 404) return;
       } catch {
         /* the server restarts at the end of a move */
       }
@@ -46,19 +48,19 @@ export default function RestorePage() {
 
   const s = status;
   return (
-    <div className="mx-auto grid max-w-xl gap-6 py-10">
+    <div className="mx-auto grid grid-cols-1 max-w-xl gap-6 py-10">
       <Card>
         <CardHeader title="Move Ghost Post to this server" subtitle={s?.from ? `Copies every account, post, upload and setting from ${s.from}.` : "Copies every account, post, upload and setting from your old server."} icon={<ArrowRightLeft className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5 text-sm">
+        <div className="grid grid-cols-1 gap-4 p-5 text-sm">
           {s?.error && <p className="text-white/70">{s.error}</p>}
           {s?.state === "done" ? (
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <p className="flex items-center gap-2 text-mint-300"><CheckCircle2 className="h-4 w-4" /> {s.message ?? "Moved."}</p>
               <p className="text-white/65">The server restarts with your settings in a few seconds. Sign in with your usual email and password. Your old address now sends everyone here.</p>
               <a href="/login"><Button variant="primary">Sign in</Button></a>
             </div>
           ) : s?.state === "copying" ? (
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <p>Copying… {s.copied.toLocaleString()} of {s.total.toLocaleString()} files ({mb(s.bytes)})</p>
               <div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-mint-400 transition-all" style={{ width: `${s.total ? (s.copied / s.total) * 100 : 5}%` }} /></div>
               <p className="text-xs text-white/50">Keep this page open. Large media libraries take a few minutes.</p>

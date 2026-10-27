@@ -80,6 +80,7 @@ interface IntegrationStatus {
   videoEngine: KeyState & { url: string };
   vmWake?: KeyState & { vm: string };
   videoEngineGpu?: KeyState & { url: string };
+  ownWriter?: KeyState & { url: string; model: string; only: boolean };
   vmWakeGpu?: KeyState & { vm: string };
   pixabay: KeyState;
   pexels: KeyState;
@@ -135,14 +136,14 @@ function Overview({ stats, onStats }: { stats: Stats | null; onStats: (s: Stats)
   if (!stats) return <div className="glass h-64 animate-pulse" />;
   const margin = stats.profit.margin;
   return (
-    <div className="grid gap-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Monthly recurring revenue" value={<span className="text-gradient">{usd(stats.mrr)}</span>} sub={`Paid-up subscriptions${stats.trialing ? ` · ${stats.trialing} on a free trial` : ""}${stats.pastDue ? ` · ${stats.pastDue} payment overdue` : ""}`} icon={<CircleDollarSign className="h-4 w-4" />} accent="gold" />
         <Stat label="Users" value={stats.users} sub={`${stats.active} active · ${stats.newThisMonth} new this month`} icon={<Users className="h-4 w-4" />} accent="violet" />
         <Stat label="AI cost this month (est.)" value={`≈ ${usd(stats.aiCostEstimate)}`} sub={`${(stats.creditsUsed + stats.creditsComp).toLocaleString()} credits used at ~2¢ each${stats.creditsComp ? `, ${stats.creditsComp.toLocaleString()} by you and your team` : ""}${margin !== null ? ` · ${margin}% profit after all costs` : ""}`} accent="mint" />
         <Stat label="Waiting for review" value={stats.awaitingReview} sub={`${stats.postsPublishedThisMonth.toLocaleString()} posts published this month`} accent={stats.awaitingReview ? "red" : "mint"} />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Credits in vaults" value={stats.vaultCredits.toLocaleString()} sub="unspent, each lot expires 30 days after it was added" accent="violet" />
         <Stat label="Community pool" value={stats.pool.balance.toLocaleString()} sub={`${stats.pool.availableToday.toLocaleString()} can go out today`} accent="mint" />
         <Stat label="Expired into the pool" value={stats.pool.swept.toLocaleString()} sub="all time" accent="gold" />
@@ -151,7 +152,7 @@ function Overview({ stats, onStats }: { stats: Stats | null; onStats: (s: Stats)
       <ProfitCard stats={stats} onStats={onStats} />
       <Card>
         <CardHeader title="Users by plan" />
-        <div className="grid gap-3 p-5">
+        <div className="grid grid-cols-1 gap-3 p-5">
           {PLANS.map((p) => {
             const n = stats.byPlan[p.id] ?? 0;
             return (
@@ -217,8 +218,8 @@ function ProfitCard({ stats, onStats }: { stats: Stats; onStats: (s: Stats) => v
         icon={<CircleDollarSign className="h-4 w-4" />}
         action={<Button size="sm" variant="ghost" onClick={() => setEdit(!edit)}><Pencil className="h-3.5 w-3.5" /> {edit ? "Close" : "Edit costs"}</Button>}
       />
-      <div className="grid gap-5 p-5">
-        <div className="grid gap-1.5 text-sm">
+      <div className="grid grid-cols-1 gap-5 p-5">
+        <div className="grid grid-cols-1 gap-1.5 text-sm">
           {rows.map(([label, v, note]) => (
             <div key={label} className="flex items-baseline justify-between gap-4">
               <span className="text-white/70">{label}{note && <span className="block text-xs text-white/40">{note}</span>}</span>
@@ -231,7 +232,7 @@ function ProfitCard({ stats, onStats }: { stats: Stats; onStats: (s: Stats) => v
           </div>
         </div>
         {edit && (
-          <div className="grid gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-2">
             {COST_FIELDS.map(([k, label, hint]) => (
               <Field key={k} label={label} hint={hint}>
                 <Input type="number" min={0} step="0.01" inputMode="decimal" placeholder={String(stats.costs[k])} value={draft[k] ?? ""} onChange={(e) => setDraft({ ...draft, [k]: e.target.value })} />
@@ -289,8 +290,8 @@ function Review({ onChange }: { onChange: () => void }) {
 
   const shown = rows.filter((r) => !q || r.email.includes(q.toLowerCase()) || r.post.hook.toLowerCase().includes(q.toLowerCase()));
   return (
-    <div className="grid gap-4">
-      <Card className="grid gap-3 p-4 sm:grid-cols-[220px_1fr]">
+    <div className="grid grid-cols-1 gap-4">
+      <Card className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-[220px_1fr]">
         <Select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter">
           <option value="pending_review">Waiting for review</option>
           <option value="scheduled">Scheduled (all users)</option>
@@ -336,7 +337,7 @@ function ReviewCard({ row, onDone }: { row: ContentRow; onDone: () => void }) {
 
   const preview = useMemo(() => copyText(p, DEFAULT_SETTINGS), [p]);
   return (
-    <Card className="grid gap-3 p-5">
+    <Card className="grid grid-cols-1 gap-3 p-5">
       <div className="flex flex-wrap items-center gap-2">
         <PlatformChip platform={p.platform} />
         <StatusBadge status={p.status} />
@@ -345,7 +346,7 @@ function ReviewCard({ row, onDone }: { row: ContentRow; onDone: () => void }) {
         <span className="ml-auto text-xs text-white/45">{p.scheduledAt ? new Date(p.scheduledAt).toLocaleString() : "No date"}</span>
       </div>
       {edit ? (
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <Input value={hook} onChange={(e) => setHook(e.target.value)} aria-label="Hook" />
           <Textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)} className="min-h-[140px]" aria-label="Body" />
         </div>
@@ -492,11 +493,11 @@ function AppSettingsTab() {
     ["Database", env.storage === "supabase" || env.dataDir, env.storage === "supabase" ? "Supabase" : "Mount a volume and set DATA_DIR"],
   ];
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <IntegrationsCard onChange={load} />
       <Card>
         <CardHeader title="Sign-ups and approval" />
-        <div className="grid gap-3 p-5">
+        <div className="grid grid-cols-1 gap-3 p-5">
           <Row title="Allow new sign-ups" desc="Turn off to make the app invite-only." control={<Switch checked={s.allowSignups} onChange={(v) => save({ allowSignups: v })} label="Allow sign-ups" />} />
           <Row title="New users need approval" desc="Their scheduled posts wait in Content review until you approve them." control={<Switch checked={s.requireApprovalForNewUsers} onChange={(v) => save({ requireApprovalForNewUsers: v })} label="Require approval for new users" />} />
           <Field label="Support email" hint="shown to users and on the legal pages">
@@ -550,7 +551,7 @@ function MoveServerCard() {
   return (
     <Card>
       <CardHeader title="Move to a new server" subtitle="Copies every account, post, upload and setting to a new Ghost Post server, then sends everyone from this address to the new one." />
-      <div className="grid gap-3 p-5 text-sm">
+      <div className="grid grid-cols-1 gap-3 p-5 text-sm">
         <p className="text-white/65">On the new server, open <span className="font-mono text-white/85">/restore</span> and paste the code. It works once and only for 15 minutes. Keep it private: it lets the new server copy everything, including your keys.</p>
         {code ? (
           <div className="flex flex-wrap items-center gap-2">
@@ -609,7 +610,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu") {
+  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -655,7 +656,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu") {
+  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -696,7 +697,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         subtitle="Paste your service keys here. They're encrypted on the server and never shown again — only the first and last characters."
         icon={<KeyRound className="h-4 w-4" />}
       />
-      <div className="grid gap-4 p-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
         <Service
           icon={<Bot className="h-4 w-4" />}
           title="Claude — AI writing"
@@ -795,6 +796,32 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             {st.replicate.set && st.replicate.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:replicateKey"} onClick={() => remove("replicateKey", "Replicate")}><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Bot className="h-4 w-4" />}
+          title="Ghost Post's own writer — no Claude or Gemini credits"
+          desc="An open AI model (Qwen3-4B) running on your own Azure server, which writes posts, scripts, plans and replies before Claude or Gemini are asked. It costs nothing per use: it loads when someone writes and unloads after 30 quiet minutes. It's slower than Claude (a post takes about 30–90 seconds) and can't read pictures or search the web."
+          link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/README.md#go-live-on-an-azure-vm-what-ghost-post-runs-on", label: "Setup guide" }}
+          state={st.ownWriter ?? { set: false }}
+          result={results.ownWriter}
+        >
+          {st.ownWriter?.url && <p className="text-xs text-white/55">Writing with {st.ownWriter.model || "the default model"} at {st.ownWriter.url}.</p>}
+          <Input autoComplete="off" spellCheck={false} placeholder={st.ownWriter?.url || "Writer address, e.g. https://writer.20-127-104-87.sslip.io/v1"} value={vals.ownWriterUrl ?? ""} onChange={set("ownWriterUrl")} />
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="Writer key (OWN_WRITER_KEY)" value={vals.ownWriterKey ?? ""} onChange={set("ownWriterKey")} />
+          <label className="flex items-center gap-3 text-sm text-white/80">
+            <Switch
+              checked={!!st.ownWriter?.only}
+              disabled={!st.ownWriter?.url || busy === "only"}
+              onChange={(v) => run("only", () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { ownWriterOnly: v } }), (next) => { setSt(next); toast(v ? "Only the own writer is used now." : "Claude and Gemini can step in again.", "success"); })}
+              label="Only use the own writer (never Claude or Gemini)"
+            />
+            Only use the own writer (never Claude or Gemini)
+          </label>
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Own writer"} onClick={() => save(["ownWriterUrl", "ownWriterKey"], "Own writer", "ownWriter")}>Save &amp; test</Button>
+            <Button size="sm" loading={busy === "test:ownWriter"} disabled={!st.ownWriter?.url} onClick={() => check("ownWriter")}>Test</Button>
           </Actions>
         </Service>
 
@@ -1000,9 +1027,9 @@ function Service({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid content-start gap-2.5 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.06]">
+    <div className="grid grid-cols-1 content-start gap-2.5 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.06]">
       <div className="flex items-start gap-2.5">
-        <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/80">{icon}</span>
+        <span className="mt-0.5 grid grid-cols-1 h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/80">{icon}</span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-semibold text-white">{title}</p>

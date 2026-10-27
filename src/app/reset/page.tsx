@@ -34,7 +34,7 @@ export default function ResetPage() {
   return (
     <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 py-12">
       <Link href="/login" className="mb-8 flex items-center gap-3">
-        <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
+        <span className="grid grid-cols-1 h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
           <Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} />
         </span>
         <span className="text-lg font-semibold text-white">Ghost Post</span>
@@ -50,7 +50,7 @@ export default function ResetPage() {
           <form onSubmit={submit} noValidate>
             <h1 className="text-xl font-semibold text-white">Choose a new password</h1>
             <p className="mt-1 text-sm text-white/50">You&apos;ll be signed out everywhere else and signed in here.</p>
-            <div className="mt-6 grid gap-4">
+            <div className="mt-6 grid grid-cols-1 gap-4">
               <Field label="New password" hint="10+ characters, include a number">
                 <Input id="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
               </Field>

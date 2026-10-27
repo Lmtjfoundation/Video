@@ -138,10 +138,10 @@ export function VoicesPanel() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
       <Card>
         <CardHeader title="Make a voice from your own" subtitle="Speak for 20–60 seconds. Ghost Post checks the consent sentence before it copies any voice." icon={<UserRound className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <div className="rounded-xl border border-mint-400/30 bg-mint-400/10 p-4 text-sm">
             <div className="mb-1 text-xs uppercase tracking-wide text-mint-200">Start the recording by saying</div>
             <div className="text-base font-medium">“{data?.consentSentence ?? "…"}”</div>
@@ -156,7 +156,7 @@ export function VoicesPanel() {
             <span className="text-xs text-white/50">or choose a recording you uploaded:</span>
           </div>
           <MediaSelect items={items} kinds={["audio", "video"]} value={mediaId} onChange={setMediaId} empty="No recordings yet" />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Voice name"><Input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder="e.g. My narrator voice" /></Field>
             <Field label="Your full name"><Input value={by} maxLength={80} onChange={(e) => setBy(e.target.value)} placeholder="As your signature" /></Field>
           </div>
@@ -168,10 +168,10 @@ export function VoicesPanel() {
           <p className="text-xs text-white/40">Speech made from a voice carries an inaudible watermark, so it can be identified as AI.</p>
         </div>
       </Card>
-      <div className="grid h-fit gap-6">
+      <div className="grid grid-cols-1 h-fit gap-6">
         <Card>
           <CardHeader title="My Voices" subtitle="Use them in Voiceover, the voice changer, dubbing and avatars." />
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4">
             {!data?.voices.length && <div className="text-sm text-white/50">No voices yet.</div>}
             {data?.voices.map((v) => (
               <div key={v.id} className="flex items-center gap-3">
@@ -194,7 +194,7 @@ export function VoicesPanel() {
         </Card>
         <Card>
           <CardHeader title="Voice changer" subtitle="Keep the performance, change the voice: a recording or a video in one of My Voices." icon={<Wand2 className="h-4 w-4" />} />
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4">
             <MediaSelect items={items} kinds={["audio", "video"]} value={changeId} onChange={setChangeId} empty="Upload a recording first" />
             <Select value={changeVoice} onChange={(e) => setChangeVoice(e.target.value)}>
               <option value="">Into which voice?</option>
@@ -225,9 +225,9 @@ export function DubPanel() {
   return (
     <Card className="max-w-3xl">
       <CardHeader title="Dubbing" subtitle="Ghost Post hears every line, translates it, speaks it at the same moment in the new language and can sync the lips." icon={<Languages className="h-4 w-4" />} />
-      <div className="grid gap-4 p-5">
+      <div className="grid grid-cols-1 gap-4 p-5">
         <Field label="Video or recording"><MediaSelect items={items} kinds={["video", "audio"]} value={mediaId} onChange={setMediaId} empty="Upload a video to the Media Library first" /></Field>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Dub into">
             <Select value={language} onChange={(e) => setLanguage(e.target.value)}>
               {Object.entries(SPEECH_LANGUAGES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -274,10 +274,10 @@ export function AvatarPanel() {
   const [speechId, setSpeechId] = useState("");
   const pics = pickFrom(items, ["image"]);
   return (
-    <div className="grid gap-6 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
       <Card>
         <CardHeader title="Avatar" subtitle="A picture of a person, brought to life and speaking your words with synced lips." icon={<UserRound className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <div>
             <div className="mb-1.5 text-xs uppercase tracking-wide text-white/40">Picture (face clearly visible)</div>
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -291,7 +291,7 @@ export function AvatarPanel() {
           <Field label="What they say" hint="Or choose a recording below">
             <Textarea rows={4} maxLength={3000} value={text} onChange={(e) => { setText(e.target.value); if (e.target.value) setAudioId(""); }} placeholder="Baby, I handle the money. That's what I'm good at." />
           </Field>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Select value={language} onChange={(e) => setLanguage(e.target.value)} disabled={!!audioId}>
               {Object.entries(SPEECH_LANGUAGES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </Select>
@@ -313,7 +313,7 @@ export function AvatarPanel() {
       </Card>
       <Card className="h-fit">
         <CardHeader title="Lip sync" subtitle="Make the face in a video say a new recording. A shorter video plays back and forth until the words end." icon={<Mic className="h-4 w-4" />} />
-        <div className="grid gap-3 p-5">
+        <div className="grid grid-cols-1 gap-3 p-5">
           <Field label="Video with a face"><MediaSelect items={items} kinds={["video"]} value={videoId} onChange={setVideoId} empty="Upload a video first" /></Field>
           <Field label="Speech"><MediaSelect items={items} kinds={["audio"]} value={speechId} onChange={setSpeechId} empty="Make a voiceover or upload a recording" /></Field>
           <Button variant="primary" loading={tool.busy} disabled={!videoId || !speechId || info?.engine === false} onClick={() => tool.run({ tool: "lipsync", videoId, audioId: speechId })}>

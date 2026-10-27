@@ -138,9 +138,9 @@ function Recent({ prefixes, kind = "audio", title = "Latest" }: { prefixes: stri
   return (
     <Card>
       <CardHeader title={title} subtitle="Also in your Media Library." />
-      <div className="grid gap-3 p-4">
+      <div className="grid grid-cols-1 gap-3 p-4">
         {list.map((m) => (
-          <div key={m.id} className="grid gap-1">
+          <div key={m.id} className="grid grid-cols-1 gap-1">
             <div className="truncate text-xs text-white/60">{m.name}</div>
             {kind === "audio" ? <audio src={m.url} controls className="h-9 w-full" /> : <video src={m.url} controls playsInline className="max-h-80 w-full rounded-lg bg-black" />}
           </div>
@@ -163,10 +163,10 @@ function TtsTab({ info, voice, setVoice }: { info: Info | null; voice: VoiceChoi
     requestAnimationFrame(() => el?.focus());
   };
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <Card className="min-w-0">
         <CardHeader title="Text to speech" subtitle="Type or paste a script. Emotion tags change how the words after them are read." icon={<AudioLines className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <Textarea ref={area} rows={9} value={text} maxLength={5000} onChange={(e) => setText(e.target.value)} placeholder={"Welcome back. [whispers] I have a secret for you. [pause] [excited] And it changes everything!"} />
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(EMOTION_TAGS).map(([k, t]) => (
@@ -181,7 +181,7 @@ function TtsTab({ info, voice, setVoice }: { info: Info | null; voice: VoiceChoi
           </Button>
         </div>
       </Card>
-      <div className="grid h-fit gap-6">
+      <div className="grid grid-cols-1 h-fit gap-6">
         <Recent prefixes={["speech-"]} title="Your latest speech" />
         <Card className="p-4 text-sm text-white/65">
           Need a voice of your own? <Link href="/create?kind=voices" className="text-mint-300 underline">Clone your voice</Link> (with spoken consent) or <Link href="/voice-lab?tab=design" className="text-mint-300 underline">design one from a description</Link>.
@@ -216,7 +216,7 @@ function LibraryTab({ use, onUse, onDesign }: { use?: VoiceUse; onUse: (v: Voice
     }
   }
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <div className="flex flex-wrap items-center gap-2">
         {(["", ...VOICE_USES] as const).map((u) => (
           <button key={u || "all"} onClick={() => setFilter(u)} className={cn("rounded-full px-3 py-1.5 text-xs font-medium", filter === u ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>{u || "All uses"}</button>
@@ -224,11 +224,11 @@ function LibraryTab({ use, onUse, onDesign }: { use?: VoiceUse; onUse: (v: Voice
         <Select aria-label="Gender" value={gender} onChange={(e) => setGender(e.target.value)} className="w-32"><option value="">Any voice</option><option>Female</option><option>Male</option></Select>
         <Select aria-label="Accent" value={accent} onChange={(e) => setAccent(e.target.value)} className="w-36"><option value="">Any accent</option><option>American</option><option>British</option></Select>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {list.map((v) => (
           <Card key={v.id} className="flex flex-col gap-3 p-4">
             <div className="flex items-start gap-3">
-              <button onClick={() => preview(v.id)} aria-label={`Preview ${v.name}`} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-mint-400/15 text-mint-200 hover:bg-mint-400/25">
+              <button onClick={() => preview(v.id)} aria-label={`Preview ${v.name}`} className="grid grid-cols-1 h-11 w-11 shrink-0 place-items-center rounded-full bg-mint-400/15 text-mint-200 hover:bg-mint-400/25">
                 {playing === v.id ? <Waves className="h-5 w-5 animate-pulse" /> : <Play className="h-5 w-5" />}
               </button>
               <div className="min-w-0">
@@ -245,9 +245,9 @@ function LibraryTab({ use, onUse, onDesign }: { use?: VoiceUse; onUse: (v: Voice
       {!!data?.voices.length && (
         <Card>
           <CardHeader title="My Voices" subtitle="Cloned with consent or designed. They speak all 23 languages on the engine." />
-          <div className="grid gap-3 p-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
             {data.voices.map((v) => (
-              <div key={v.id} className="grid gap-2 rounded-xl bg-white/[0.03] p-3">
+              <div key={v.id} className="grid grid-cols-1 gap-2 rounded-xl bg-white/[0.03] p-3">
                 <div className="flex items-center gap-2 text-sm font-medium">{v.name} <Badge tone={(v as { designed?: string }).designed ? "violet" : "gold"}>{(v as { designed?: string }).designed ? "designed" : "cloned"}</Badge></div>
                 <audio src={v.sampleUrl} controls className="h-8 w-full" />
                 <Button size="sm" onClick={() => onUse({ kind: "engine", language: "en", voiceId: v.id })}>Use this voice</Button>
@@ -258,7 +258,7 @@ function LibraryTab({ use, onUse, onDesign }: { use?: VoiceUse; onUse: (v: Voice
       )}
       <Card>
         <CardHeader title="Design a voice for…" subtitle="Starting points for Voice Design. Each makes a new voice that speaks 23 languages." icon={<Sparkles className="h-4 w-4" />} />
-        <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
           {DESIGN_PRESETS.filter((p) => !filter || p.uses.includes(filter)).map((p) => (
             <button key={p.name} onClick={() => onDesign(p.description)} className="rounded-xl bg-white/[0.03] p-3 text-left hover:bg-white/[0.07]">
               <div className="text-sm font-medium">{p.name}</div>
@@ -280,10 +280,10 @@ function DesignTab({ info, description, setDescription }: { info: Info | null; d
   const [names, setNames] = useState<Record<string, string>>({});
   const samples = items.filter((m) => m.kind === "audio" && m.name.startsWith("designed-voice-")).slice(0, 6);
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <Card className="min-w-0">
         <CardHeader title="Voice design" subtitle="Describe a voice that doesn't exist yet: age, tone, pace, accent, how close to the mic." icon={<Sparkles className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <Textarea rows={4} maxLength={600} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="A warm older man with a slight Southern drawl, unhurried and friendly, close to the microphone." />
           <div className="flex flex-wrap gap-1.5">
             {DESIGN_PRESETS.map((p) => <button key={p.name} onClick={() => setDescription(p.description)} className="rounded-lg bg-white/5 px-2.5 py-1 text-xs text-white/70 hover:bg-white/10">{p.name}</button>)}
@@ -298,10 +298,10 @@ function DesignTab({ info, description, setDescription }: { info: Info | null; d
       </Card>
       <Card className="h-fit">
         <CardHeader title="Your designed samples" subtitle="Name one and keep it in My Voices." />
-        <div className="grid gap-4 p-4">
+        <div className="grid grid-cols-1 gap-4 p-4">
           {!samples.length && <div className="text-sm text-white/50">Nothing yet. Describe a voice and press Design.</div>}
           {samples.map((m) => (
-            <div key={m.id} className="grid gap-2 rounded-xl bg-white/[0.03] p-3">
+            <div key={m.id} className="grid grid-cols-1 gap-2 rounded-xl bg-white/[0.03] p-3">
               <audio src={m.url} controls className="h-8 w-full" />
               <div className="flex gap-2">
                 <Input value={names[m.id] ?? ""} maxLength={40} onChange={(e) => setNames({ ...names, [m.id]: e.target.value })} placeholder="Voice name" className="h-9" />
@@ -331,17 +331,17 @@ function SttTab({ info, reload }: { info: Info | null; reload: () => void }) {
   const tool = useRun();
   const base = (t: Transcript) => t.name.replace(/\.[a-z0-9]+$/i, "");
   return (
-    <div className="grid gap-6 xl:grid-cols-[400px_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[400px_minmax(0,1fr)]">
       <Card className="h-fit">
         <CardHeader title="Speech to text" subtitle="Every word with its timing, in any language Whisper knows. Free, on Ghost Post's own server." icon={<Captions className="h-4 w-4" />} />
-        <div className="grid gap-3 p-4">
+        <div className="grid grid-cols-1 gap-3 p-4">
           <MediaSelect items={items} kinds={["audio", "video"]} value={mediaId} onChange={setMediaId} empty="Upload a recording or video first" />
           <div className="flex items-center gap-2 text-xs text-white/50"><Recorder label="Record now" onSaved={(id) => { reloadMedia(); setMediaId(id); }} /> or pick a file above.</div>
           <Button variant="primary" loading={tool.busy} disabled={!mediaId} onClick={() => tool.run({ action: "transcribe", mediaId }, "The transcript appears here when it's ready.")}>Transcribe (free)</Button>
           <p className="text-xs text-white/45">Up to an hour per file. Download as SRT or VTT captions, or plain text.</p>
         </div>
       </Card>
-      <div className="grid h-fit gap-3">
+      <div className="grid grid-cols-1 h-fit gap-3">
         {!info?.transcripts.length && <Card className="p-5 text-sm text-white/50">Your transcripts appear here.</Card>}
         {info?.transcripts.map((t) => (
           <Card key={t.id} className="min-w-0">
@@ -376,12 +376,12 @@ function IsolateTab({ info }: { info: Info | null }) {
   const [stem, setStem] = useState<"vocals" | "background">("vocals");
   const tool = useRun();
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <Card className="min-w-0">
         <CardHeader title="Voice isolator" subtitle="Pull a clean voice out of music, wind, traffic and room noise, or remove the voice and keep the rest." icon={<Waves className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <MediaSelect items={items} kinds={["audio", "video"]} value={mediaId} onChange={setMediaId} empty="Upload a recording or video first" />
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {([["vocals", "Keep the voice", "Removes music and noise: clean dialogue, podcasts, interviews."], ["background", "Remove the voice", "Keeps music and effects: karaoke, re-voicing, dubbing beds."]] as const).map(([k, t, d]) => (
               <button key={k} onClick={() => setStem(k)} className={cn("rounded-xl border p-3 text-left", stem === k ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]")}>
                 <div className="text-sm font-medium">{t}</div>
@@ -452,10 +452,10 @@ function StudioTab({ info, reload }: { info: Info | null; reload: () => void }) 
   }
   if (!proj) {
     return (
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card className="min-w-0">
           <CardHeader title="Audio Studio" subtitle="Audiobooks, podcasts and long narration: chapters, a voice for every paragraph, one MP3 with chapter markers." icon={<BookAudio className="h-4 w-4" />} action={<Button variant="primary" onClick={() => setProj(blank())}><Plus className="h-4 w-4" /> New project</Button>} />
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4">
             {!info?.projects.length && <div className="text-sm text-white/50">No projects yet.</div>}
             {info?.projects.map((p) => (
               <div key={p.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-white/[0.03] p-3">
@@ -475,7 +475,7 @@ function StudioTab({ info, reload }: { info: Info | null; reload: () => void }) 
         </Card>
         <Card className="h-fit">
           <CardHeader title="Start from a manuscript" subtitle="Paste your text. Lines starting with “Chapter” or “#” begin chapters; blank lines split paragraphs." />
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4">
             <Textarea rows={8} value={paste} onChange={(e) => setPaste(e.target.value)} placeholder={"# Chapter One\n\nIt was the summer the river went dry.\n\nNobody in town talked about it."} />
             <Field label="Narrator"><VoicePicker value={voice} onChange={setVoice} languages={info?.languages} compact /></Field>
             <Button disabled={!paste.trim()} onClick={() => {
@@ -491,7 +491,7 @@ function StudioTab({ info, reload }: { info: Info | null; reload: () => void }) 
   }
   const engineNeeded = proj.chapters.some((c) => c.blocks.some((b) => b.voice.kind === "engine"));
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" onClick={() => { setProj(null); reload(); }}>← Projects</Button>
         <Input value={proj.title} maxLength={80} onChange={(e) => set((p) => ({ ...p, title: e.target.value }))} className="min-w-0 flex-1" aria-label="Project title" />
@@ -511,9 +511,9 @@ function StudioTab({ info, reload }: { info: Info | null; reload: () => void }) 
             <Button size="sm" variant="ghost" aria-label="Move chapter down" disabled={ci === proj.chapters.length - 1} onClick={() => set((p) => { [p.chapters[ci + 1], p.chapters[ci]] = [p.chapters[ci], p.chapters[ci + 1]]; return p; })}><ChevronDown className="h-4 w-4" /></Button>
             <Button size="sm" variant="ghost" aria-label="Delete chapter" disabled={proj.chapters.length === 1} onClick={() => set((p) => { p.chapters.splice(ci, 1); return p; })}><Trash2 className="h-4 w-4" /></Button>
           </div>
-          <div className="grid gap-3 p-3">
+          <div className="grid grid-cols-1 gap-3 p-3">
             {c.blocks.map((b, bi) => (
-              <div key={b.id} className="grid gap-2 rounded-xl bg-white/[0.03] p-3">
+              <div key={b.id} className="grid grid-cols-1 gap-2 rounded-xl bg-white/[0.03] p-3">
                 <Textarea rows={3} value={b.text} maxLength={5000} onChange={(e) => set((p) => { p.chapters[ci].blocks[bi].text = e.target.value; return p; })} placeholder="A paragraph. Emotion tags like [whispers] work here too." />
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="min-w-0 flex-1"><VoicePicker value={b.voice} onChange={(v) => set((p) => { p.chapters[ci].blocks[bi].voice = v; return p; })} languages={info?.languages} /></div>
@@ -544,10 +544,10 @@ function VoiceToVideoTab({ info, voice, setVoice, onRecord }: { info: Info | nul
   const estimate = (source === "script" ? voiceCost(chars, voice, info?.credits) : 0) + (lipsync && info ? info.credits.lipsyncSecond * Math.max(1, Math.ceil(source === "script" ? chars / 14 : 30)) : 0);
   const needsEngine = lipsync || (source === "script" && voice.kind === "engine");
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <Card className="min-w-0">
         <CardHeader title="Voice to video" subtitle="Give any video a voice: type a script, record yourself, or use a recording. Add captions and lip sync." icon={<Video className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <Field label="Video"><MediaSelect items={items} kinds={["video"]} value={videoId} onChange={setVideoId} empty="Upload or make a video first" /></Field>
           <div className="grid grid-cols-2 gap-2">
             {(["script", "recording"] as const).map((k) => (
@@ -560,13 +560,13 @@ function VoiceToVideoTab({ info, voice, setVoice, onRecord }: { info: Info | nul
               <VoicePicker value={voice} onChange={setVoice} languages={info?.languages} />
             </>
           ) : (
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <div className="flex flex-wrap items-center gap-2"><Recorder onSaved={(id) => { reload(); setRecId(id); }} /><span className="text-xs text-white/50">or choose:</span></div>
               <p className="text-xs text-white/50">Want to talk while the video plays, so your voice lands right on the picture? Use <button onClick={onRecord} className="text-mint-300 underline">Record Voice</button>.</p>
               <MediaSelect items={items} kinds={["audio"]} value={recId} onChange={setRecId} empty="No recordings yet" />
             </div>
           )}
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {([["duck", "Keep the video's sound", "Lowered automatically while the voice speaks."], ["replace", "Replace the sound", "Only the new voice."]] as const).map(([k, t, d]) => (
               <button key={k} onClick={() => setMix(k)} className={cn("rounded-xl border p-3 text-left", mix === k ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03]")}>
                 <div className="text-sm font-medium">{t}</div>
@@ -618,7 +618,7 @@ function VoiceLab() {
         ))}
       </div>
       {tab === "record" && (
-        <div className="grid gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <RecordVoiceTab engine={info?.engine} lipsyncSecond={info?.credits.lipsyncSecond} />
           <Recent prefixes={["voiced-"]} kind="video" title="Latest voiced videos" />
         </div>

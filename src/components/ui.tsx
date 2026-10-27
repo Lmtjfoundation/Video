@@ -97,7 +97,7 @@ export function Select({ className, children, ...p }: React.SelectHTMLAttributes
 
 export function Label({ children, hint }: { children: React.ReactNode; hint?: React.ReactNode }) {
   return (
-    <div className="mb-1.5 flex items-baseline justify-between gap-2">
+    <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2">
       <span className="text-[13px] font-medium text-white/80">{children}</span>
       {hint && <span className="text-[11px] text-white/40">{hint}</span>}
     </div>
@@ -106,7 +106,7 @@ export function Label({ children, hint }: { children: React.ReactNode; hint?: Re
 
 export function Field({ label, hint, children, className }: { label: string; hint?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <label className={cn("block", className)}>
+    <label className={cn("block min-w-0", className)}>
       <Label hint={hint}>{label}</Label>
       {children}
     </label>
@@ -196,7 +196,7 @@ export function ScoreRing({ score, size = 44 }: { score: number; size?: number }
           style={{ transition: "stroke-dashoffset .6s ease", filter: `drop-shadow(0 0 6px ${color}66)` }}
         />
       </svg>
-      <span className="absolute inset-0 grid place-items-center text-[12px] font-semibold tabular-nums text-white">{score}</span>
+      <span className="absolute inset-0 grid grid-cols-1 place-items-center text-[12px] font-semibold tabular-nums text-white">{score}</span>
     </div>
   );
 }

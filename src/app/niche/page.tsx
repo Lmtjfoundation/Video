@@ -74,11 +74,11 @@ export default function NicheLab() {
 
         <Card className="mb-6">
           <CardHeader title="Generate niches" subtitle="Leave it blank for the highest-earning niches overall, or add your interests for picks that fit you. Results appear only after you press Generate." />
-          <div className="grid gap-4 p-5">
+          <div className="grid grid-cols-1 gap-4 p-5">
             <Field label="What you know or enjoy" hint="optional">
               <Textarea value={form.interests} onChange={(e) => setForm({ ...form, interests: e.target.value })} placeholder="e.g. aviation, true crime documentaries, personal finance, ancient history" />
             </Field>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Field label="Main platform">
                 <Select value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })}>{["YouTube long-form", "YouTube Shorts", "TikTok", "All of them"].map((x) => <option key={x}>{x}</option>)}</Select>
               </Field>
@@ -116,15 +116,15 @@ export default function NicheLab() {
             subtitle={`${new Date(rep.createdAt).toLocaleString()} · ${rep.input.interests ? `for: ${rep.input.interests.slice(0, 60)}` : "highest-earning overall"} · ${rep.source === "builtin" ? "built-in picks" : "researched by Claude"}`}
             action={<Button size="sm" variant="ghost" onClick={() => setCurrent(null)}>Clear</Button>}
           />
-          <div className="grid gap-4 p-5">
+          <div className="grid grid-cols-1 gap-4 p-5">
             {rep.note && <p className="rounded-xl bg-sky-400/[0.06] p-3 text-sm text-sky-100/90 ring-1 ring-sky-300/20">{rep.note}</p>}
             {rep.summary && <p className="max-w-3xl text-white/80">{rep.summary}</p>}
             {rep.niches.map((n, i) => {
               const match = NICHES.find((x) => x.name === n.dataNiche);
               return (
-                <div key={i} className="grid gap-4 rounded-2xl bg-ink-900/70 p-5 ring-1 ring-white/[0.06]">
+                <div key={i} className="grid grid-cols-1 gap-4 rounded-2xl bg-ink-900/70 p-5 ring-1 ring-white/[0.06]">
                   <div className="flex items-start gap-3">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint-400/10 font-semibold text-mint-300 ring-1 ring-mint-400/30">{i + 1}</span>
+                    <span className="grid grid-cols-1 h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint-400/10 font-semibold text-mint-300 ring-1 ring-mint-400/30">{i + 1}</span>
                     <div>
                       <h3 className="text-[17px] font-semibold text-white">{n.name}</h3>
                       <div className="mt-1 flex flex-wrap gap-1.5">
@@ -133,14 +133,14 @@ export default function NicheLab() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid gap-4 text-sm md:grid-cols-2">
-                    <div className="grid gap-2 text-white/75">
+                  <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-2 text-white/75">
                       <p><span className="font-medium text-white">Why it earns.</span> {n.whyItEarns}</p>
                       {n.rpmBasis && <p className="text-white/45">{n.rpmBasis}</p>}
                       <p><span className="font-medium text-white">Format.</span> {n.facelessFormat}</p>
                       <p><span className="font-medium text-white">Audience.</span> {n.audience}</p>
                     </div>
-                    <div className="grid gap-2 text-white/75">
+                    <div className="grid grid-cols-1 gap-2 text-white/75">
                       <p className="font-medium text-white">Money stack</p>
                       <ul className="list-disc pl-5">{(n.monetization ?? []).map((m) => <li key={m}>{m}</li>)}</ul>
                       <p className="font-medium text-white">Risks</p>
@@ -149,9 +149,9 @@ export default function NicheLab() {
                   </div>
                   <div>
                     <p className="mb-2 text-sm font-medium text-white">Story ideas</p>
-                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                       {(n.storyIdeas ?? []).map((s, k) => (
-                        <div key={k} className="grid gap-2 rounded-xl bg-ink-850 p-3 ring-1 ring-white/[0.06]">
+                        <div key={k} className="grid grid-cols-1 gap-2 rounded-xl bg-ink-850 p-3 ring-1 ring-white/[0.06]">
                           <Badge tone={s.type === "fiction" ? "violet" : s.type === "true" ? "mint" : s.type === "funny" ? "gold" : "sky"}>{s.type === "funny" ? "funny history" : s.type ?? "idea"}</Badge>
                           <p className="text-sm font-medium text-white">{s.title}</p>
                           {s.hook && <p className="text-xs text-white/50">{s.hook}</p>}
@@ -213,11 +213,11 @@ export default function NicheLab() {
         <p className="px-5 py-4 text-xs text-white/45">Shorts pay far less than long-form: measured Shorts RPMs in the same study range from $0.02 to $1.48. TikTok's Creator Rewards benchmark is about ${TT_US_RPM} per 1,000 qualified US views, and only videos over one minute earn.</p>
       </Card>
 
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="Revenue calculator" subtitle="Ad revenue only. Sponsors and affiliates come on top." />
-          <div className="grid gap-4 p-5">
-            <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 p-5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Niche">
                 <Select value={calcId} onChange={(e) => setCalcId(e.target.value)}>
                   {NICHES.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
@@ -227,7 +227,7 @@ export default function NicheLab() {
                 <Input type="number" min={0} step={1000} value={views} onChange={(e) => setViews(Math.max(0, Number(e.target.value) || 0))} />
               </Field>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <CalcTile label="YouTube long-form" value={usd((views / 1000) * calc.rpm)} sub={`${usd((views / 1000) * calc.lo)}–${usd((views / 1000) * calc.hi)}`} accent />
               <CalcTile label="TikTok (US, >1 min)" value={usd((views / 1000) * TT_US_RPM * calc.tt)} sub={`${calc.tt}× niche multiplier`} />
               <CalcTile label="Per year (YouTube)" value={usd((views / 1000) * calc.rpm * 12)} sub="at median RPM" />
@@ -239,7 +239,7 @@ export default function NicheLab() {
       </div>
       <Card className="p-5 text-sm">
         <p className="font-medium text-white">Sources</p>
-        <ul className="mt-2 grid gap-1.5">
+        <ul className="mt-2 grid grid-cols-1 gap-1.5">
           {NICHE_SOURCES.map(([t, u]) => (
             <li key={u}><a href={u} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sky-300 hover:underline">{t} <ExternalLink className="h-3 w-3" /></a></li>
           ))}

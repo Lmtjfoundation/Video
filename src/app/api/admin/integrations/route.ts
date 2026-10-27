@@ -5,6 +5,7 @@ import { appOrigin } from "@/lib/oauth";
 import { emailLayout, emailReady, sendEmail, validFrom } from "@/lib/email";
 import { testReplicate } from "@/lib/replicate-video";
 import { testOwnEngine } from "@/lib/own-video";
+import { testOwnWriter } from "@/lib/own-writer";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,9 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   videoEngineUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the engine's web address, e.g. https://ghostpost-1a2b3c.eastus.cloudapp.azure.com (Azure) or https://abc123-8000.proxy.runpod.net (RunPod)." },
   videoEngineToken: { re: /^[A-Za-z0-9_.~-]{12,}$/, msg: "Paste the ENGINE_TOKEN you started the engine with (12+ letters, numbers, - or _)." },
   vmWake: { re: /^(?=.*tenant=)(?=.*client=)(?=.*secret=)(?=.*subscription=)(?=.*group=)(?=.*vm=)[^\s]{40,1000}$/, msg: "Paste the whole wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" },
+  ownWriterUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the writer's address, e.g. https://writer.20-127-104-87.sslip.io/v1 (it ends in /v1)." },
+  ownWriterKey: { re: /^[A-Za-z0-9_.~-]{12,200}$/, msg: "Paste the writer's key (OWN_WRITER_KEY on the server)." },
+  ownWriterModel: { re: /^[A-Za-z0-9_.:/-]{2,120}$/, msg: "A model name looks like qwen3:4b-instruct-2507-q4_K_M." },
   videoEngineGpuUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the GPU engine's web address, e.g. https://20-1-2-3.sslip.io." },
   videoEngineGpuToken: { re: /^[A-Za-z0-9_.~-]{12,}$/, msg: "Paste the ENGINE_TOKEN the GPU engine was started with (12+ letters, numbers, - or _)." },
   vmWakeGpu: { re: /^(?=.*tenant=)(?=.*client=)(?=.*secret=)(?=.*subscription=)(?=.*group=)(?=.*vm=)[^\s]{40,1000}$/, msg: "Paste the GPU machine's whole wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" },
@@ -44,6 +48,8 @@ export const PUT = authed(async (req) => {
   for (const flag of ["geminiForTrials", "geminiBackup"] as const) {
     if (flag in b) (patch as Record<string, unknown>)[flag] = b[flag] === false ? false : "";
   }
+  // Off unless switched on: only then are Claude and Gemini never used.
+  if ("ownWriterOnly" in b) (patch as Record<string, unknown>).ownWriterOnly = b.ownWriterOnly === true ? true : "";
   if ("emailFrom" in b) {
     const from = typeof b.emailFrom === "string" ? b.emailFrom.trim() : "";
     if (from && !validFrom(from)) return fail('Use an address like "Ghost Post <support@yourdomain.com>" or support@yourdomain.com.');
@@ -74,6 +80,7 @@ export const POST = authed(async (req, user) => {
     }
   }
   if (b.action === "test" && b.which === "replicate") return ok(await testReplicate());
+  if (b.action === "test" && b.which === "ownWriter") return ok(await testOwnWriter());
   if (b.action === "test" && b.which === "videoEngine") return ok(await testOwnEngine("main"));
   if (b.action === "test" && b.which === "videoEngineGpu") return ok(await testOwnEngine("gpu"));
   if (b.action === "test") {

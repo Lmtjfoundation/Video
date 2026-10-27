@@ -32,7 +32,8 @@ export async function engines(): Promise<Engine[]> {
 export type EngineCapability = "pictures" | "edit-pictures" | "clips" | "video-edits" | "writing" | "upscale" | "remove-bg" | "music" | "sfx" | "speech" | "voice-change" | "isolate" | "lipsync" | "voice-design";
 export const FULL_ENGINE: EngineCapability[] = ["pictures", "edit-pictures", "clips", "video-edits", "writing", "upscale", "remove-bg", "music", "sfx", "speech", "voice-change", "isolate", "lipsync", "voice-design"];
 const capsRow = (e: Engine) => (e.kind === "main" ? "engine-capabilities" : `engine-capabilities-${e.kind}`);
-const capsCache = new Map<string, { caps: EngineCapability[]; at: number }>();
+/** `caps` null: the engine hasn't said yet. `ttl`: how long the answer is trusted. */
+const capsCache = new Map<string, { caps: EngineCapability[] | null; at: number; ttl: number }>();
 
 /**
  * An engine's capabilities: asked of the engine at most every 5 minutes, and remembered (so a machine that's switched
@@ -43,14 +44,14 @@ export async function engineCapabilities(e?: Engine | null): Promise<EngineCapab
   e ??= await videoEngine();
   if (!e) return null;
   const hit = capsCache.get(e.url);
-  if (hit && Date.now() - hit.at < 5 * 60_000) return hit.caps;
+  if (hit && Date.now() - hit.at < hit.ttl) return hit.caps;
   const { gdb } = await import("./db");
   try {
-    const res = await fetch(`${e.url}/v1/info`, { headers: { Authorization: `Bearer ${e.token}` }, signal: AbortSignal.timeout(8_000), cache: "no-store" });
+    const res = await fetch(`${e.url}/v1/info`, { headers: { Authorization: `Bearer ${e.token}` }, signal: AbortSignal.timeout(4_000), cache: "no-store" });
     if (res.ok) {
       const info = (await res.json()) as { capabilities?: EngineCapability[] };
       const caps = Array.isArray(info.capabilities) ? info.capabilities : FULL_ENGINE;
-      capsCache.set(e.url, { caps, at: Date.now() });
+      capsCache.set(e.url, { caps, at: Date.now(), ttl: 5 * 60_000 });
       await gdb().upsert("kv", { id: capsRow(e), value: { url: e.url, caps } }).catch(() => {});
       return caps;
     }
@@ -58,7 +59,10 @@ export async function engineCapabilities(e?: Engine | null): Promise<EngineCapab
     /* switched off or unreachable: use what it said last time */
   }
   const saved = (await gdb().get<{ id: string; value: { url: string; caps: EngineCapability[] } }>("kv", capsRow(e)).catch(() => null))?.value;
-  return saved?.url === e.url ? saved.caps : null;
+  const caps = saved?.url === e.url ? saved.caps : null;
+  // Remembered for a minute: a switched-off machine makes every ask wait for the timeout, and pages ask often.
+  capsCache.set(e.url, { caps, at: Date.now(), ttl: 60_000 });
+  return caps;
 }
 /** Tests only. */
 export function resetEngineCapabilities() {

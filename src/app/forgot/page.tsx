@@ -29,7 +29,7 @@ export default function ForgotPage() {
   return (
     <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 py-12">
       <Link href="/login" className="mb-8 flex items-center gap-3">
-        <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
+        <span className="grid grid-cols-1 h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
           <Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} />
         </span>
         <span className="text-lg font-semibold text-white">Ghost Post</span>
@@ -46,7 +46,7 @@ export default function ForgotPage() {
           <form onSubmit={submit} noValidate>
             <h1 className="text-xl font-semibold text-white">Forgot your password?</h1>
             <p className="mt-1 text-sm text-white/50">Enter your account email and we&apos;ll send you a link to choose a new one.</p>
-            <div className="mt-6 grid gap-4">
+            <div className="mt-6 grid grid-cols-1 gap-4">
               <Field label="Email">
                 <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
               </Field>

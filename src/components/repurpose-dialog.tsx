@@ -17,7 +17,7 @@ export function RepurposeDialog({ storyId, postId, onClose }: { storyId?: string
   const [busy, setBusy] = useState(false);
   const allowed = status?.me.plan.features.repurpose ?? false;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink-950/80 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 grid grid-cols-1 place-items-center bg-ink-950/80 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="glass w-full max-w-md p-6" role="dialog" aria-modal="true" aria-label="Repurpose" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-white">Repurpose everywhere</h3>
         <p className="mt-1 text-sm text-white/55">Writes a native draft for each platform: different hook, length and structure. {CREDIT_COST.repurposePerPlatform} credit per platform.</p>

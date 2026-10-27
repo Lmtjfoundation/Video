@@ -72,7 +72,7 @@ export function AiProviderTab() {
   }
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <Card className="p-4 text-[13px] leading-relaxed text-white/65">
         <span className="font-medium text-white">You don't need a Claude account.</span> Ghost Post comes with its own AI built in, paid for by your plan's credits. If you'd rather use an AI you already pay for (ChatGPT, Gemini, Claude or any model on OpenRouter), connect it below with your own API key: everything you generate then runs on your key and <span className="text-mint-300">uses no credits</span>. Your key is stored encrypted and only ever sent to that provider.
       </Card>
@@ -82,8 +82,8 @@ export function AiProviderTab() {
           title={<span className="flex items-center gap-2"><Brain className="h-4 w-4 text-mint-300" /> Which AI writes your content</span>}
           subtitle={own ? <span className="text-mint-300">Now using {AI_PROVIDERS[own.provider].name} · {own.model} · key {own.keyPreview}</span> : "Now using the built-in AI (Claude), included in your plan"}
         />
-        <div className="grid gap-4 p-5">
-          <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="AI service">
+        <div className="grid grid-cols-1 gap-4 p-5">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label="AI service">
             {(["builtin", ...AI_PROVIDER_IDS] as Choice[]).map((c) => {
               const name = c === "builtin" ? "Built-in (included)" : AI_PROVIDERS[c].name;
               const blurb = c === "builtin" ? "Claude, run by Ghost Post. Uses your plan's credits. Nothing to set up." : AI_PROVIDERS[c].blurb;
@@ -114,7 +114,7 @@ export function AiProviderTab() {
           </div>
 
           {info && (
-            <div className="grid gap-3 rounded-xl bg-white/[0.02] p-4 ring-1 ring-white/[0.06]">
+            <div className="grid grid-cols-1 gap-3 rounded-xl bg-white/[0.02] p-4 ring-1 ring-white/[0.06]">
               <Field
                 label={`${info.name} API key`}
                 hint={

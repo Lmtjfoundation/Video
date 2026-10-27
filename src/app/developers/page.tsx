@@ -25,10 +25,10 @@ export default function Developers() {
   return (
     <>
       <PageHeader title="Developers" subtitle="Ghost Post's API: search the Library and make music, sound effects and footage from your own code. Requests use your plan's credits." />
-      <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
         <Card className="h-fit">
           <CardHeader title="API keys" subtitle="Keep keys secret: anyone with one can spend your credits." icon={<KeyRound className="h-4 w-4" />} />
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4">
             <form className="flex gap-2" onSubmit={async (e) => {
               e.preventDefault();
               try {
@@ -70,27 +70,27 @@ export default function Developers() {
         </Card>
         <Card className="min-w-0">
           <CardHeader title="Reference" subtitle="JSON over HTTPS. Send the key as a Bearer token. 60 requests a minute per key." />
-          <div className="grid gap-5 p-5 text-sm text-white/80">
-            <section className="grid gap-2">
+          <div className="grid grid-cols-1 gap-5 p-5 text-sm text-white/80">
+            <section className="grid grid-cols-1 gap-2">
               <div className="font-semibold text-white">Search the Library</div>
               <div>GET <code>/api/v1/library</code> with <code>kind</code> (music, sfx, footage), <code>q</code>, <code>genres</code>, <code>moods</code>, <code>themes</code>, <code>instruments</code>, <code>categories</code>, <code>vocals</code> (instrumental, vocals), <code>tempo</code> (slow, medium, fast, very-fast), <code>length</code> (short, mid, long), <code>shelf</code> (catalog, mine), <code>sort</code> (new, popular, short, long), <code>similar</code> (an item id) and <code>limit</code> (up to 100). Each item has a <code>preview_url</code> that plays for six hours.</div>
               <Code>{`curl "${origin}/api/v1/library?kind=music&moods=Tense&tempo=slow" \\\n  -H "Authorization: Bearer gp_live_…"`}</Code>
             </section>
-            <section className="grid gap-2">
+            <section className="grid grid-cols-1 gap-2">
               <div className="font-semibold text-white">Make music, a sound effect or footage</div>
               <div>POST <code>/api/v1/generate</code> answers <code>202</code> with a job right away; the credits are taken then and given back if it fails. Fields as in AI Studio: <code>kind</code>, <code>prompt</code>, <code>seconds</code>, and for music <code>lyrics</code>, <code>bpm</code>, <code>key</code>, <code>genres</code>, <code>moods</code>; for footage <code>aspect</code>.</div>
               <Code>{`curl -X POST "${origin}/api/v1/generate" \\\n  -H "Authorization: Bearer gp_live_…" -H "Content-Type: application/json" \\\n  -d '{"kind":"music","prompt":"Warm lo-fi with Rhodes and vinyl crackle","seconds":90,"bpm":82}'`}</Code>
             </section>
-            <section className="grid gap-2">
+            <section className="grid grid-cols-1 gap-2">
               <div className="font-semibold text-white">Check a job</div>
               <div>GET <code>/api/v1/jobs/&#123;id&#125;</code> until <code>status</code> is <code>done</code> (or <code>failed</code>, with the reason in <code>message</code>). <code>item_id</code> is the new Library item.</div>
               <Code>{`curl "${origin}/api/v1/jobs/job_…" -H "Authorization: Bearer gp_live_…"`}</Code>
             </section>
-            <section className="grid gap-2">
+            <section className="grid grid-cols-1 gap-2">
               <div className="font-semibold text-white">Download with the license</div>
               <div>POST <code>/api/v1/library/download</code> with <code>&#123;&quot;id&quot;&#125;</code> returns a 15-minute <code>url</code> to the full-quality file and the <code>license</code> text (paid plans).</div>
             </section>
-            <section className="grid gap-1 text-xs text-white/50">
+            <section className="grid grid-cols-1 gap-1 text-xs text-white/50">
               <div>Errors are JSON <code>&#123;&quot;error&quot;&#125;</code> with 400 (bad request), 401 (key), 402 (credits or plan), 404, 429 (rate limit) or 503 (engine not connected).</div>
             </section>
           </div>

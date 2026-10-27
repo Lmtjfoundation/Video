@@ -91,6 +91,10 @@ class LocalBackend implements Backend {
 
   private async load(): Promise<LocalData> {
     if (this.state.data) return this.state.data;
+    // A database moved here from another server (src/lib/migrate.ts) arrives under its own name and takes its place
+    // only now, when the server starts: the process that received it still holds the old one in memory and could
+    // otherwise write that back over it.
+    await fs.rename(this.file + ".incoming", this.file).catch(() => {});
     try {
       this.state.data = JSON.parse(await fs.readFile(this.file, "utf8")) as LocalData;
     } catch {

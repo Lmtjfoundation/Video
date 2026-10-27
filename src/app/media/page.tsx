@@ -85,20 +85,20 @@ export default function MediaPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={m.url} alt={m.name} className="h-full w-full object-cover" loading="lazy" />
                 ) : m.kind === "audio" ? (
-                  <div className="grid h-full w-full place-items-center bg-gradient-to-br from-violet-500/20 to-mint-400/10 p-3">
+                  <div className="grid grid-cols-1 h-full w-full place-items-center bg-gradient-to-br from-violet-500/20 to-mint-400/10 p-3">
                     <audio src={m.url} controls preload="none" className="w-full" />
                   </div>
                 ) : (
                   <button className="focus-ring group relative block h-full w-full" onClick={() => setPlaying(m)} aria-label={`Play ${m.name}`}>
                     {/* #t=0.1 makes iPhones show the first frame as the thumbnail. */}
                     <video src={`${m.url}#t=0.1`} className="pointer-events-none h-full w-full object-cover" muted playsInline preload="metadata" />
-                    <span className="absolute inset-0 grid place-items-center bg-black/25 transition group-hover:bg-black/40">
-                      <span className="grid h-12 w-12 place-items-center rounded-full bg-white/90 text-ink-950 shadow-lg"><Play className="ml-0.5 h-5 w-5 fill-current" /></span>
+                    <span className="absolute inset-0 grid grid-cols-1 place-items-center bg-black/25 transition group-hover:bg-black/40">
+                      <span className="grid grid-cols-1 h-12 w-12 place-items-center rounded-full bg-white/90 text-ink-950 shadow-lg"><Play className="ml-0.5 h-5 w-5 fill-current" /></span>
                     </span>
                   </button>
                 )}
               </div>
-              <div className="grid gap-2 p-3">
+              <div className="grid grid-cols-1 gap-2 p-3">
                 <p className="truncate text-sm text-white" title={m.name}>{m.name}</p>
                 <div className="flex items-center gap-2">
                   <Badge tone={m.kind === "image" ? "violet" : m.kind === "audio" ? "gold" : "sky"}>{m.kind}</Badge>
@@ -131,8 +131,8 @@ export default function MediaPage() {
         <Card><Empty icon={<Images className="h-6 w-6" />} title="No uploads yet" body="Upload images and clips here, then attach them to posts in Content Studio." /></Card>
       )}
       {playing && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-label={playing.name} onClick={() => setPlaying(null)}>
-          <div className="grid w-full max-w-3xl gap-3" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 grid grid-cols-1 place-items-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-label={playing.name} onClick={() => setPlaying(null)}>
+          <div className="grid grid-cols-1 w-full max-w-3xl gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
               <p className="truncate text-sm text-white">{playing.name}</p>
               <a href={`${playing.url}&dl=${encodeURIComponent(playing.name.replace(/[^A-Za-z0-9._-]/g, "_"))}`} className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-white/80 ring-1 ring-white/15 hover:text-white">

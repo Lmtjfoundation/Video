@@ -53,7 +53,7 @@ export default function PlansPage() {
     <>
       <PageHeader title="Plans & Billing" subtitle="Credits pay for AI writing. Everything else is included on every plan. Pro and Unlimited start with a 14-day free trial." />
       {me && (
-        <Card className="mb-6 grid gap-5 p-5 md:grid-cols-[auto_1fr_1fr_auto] md:items-center">
+        <Card className="mb-6 grid grid-cols-1 gap-5 p-5 md:grid-cols-[auto_1fr_1fr_auto] md:items-center">
           <div>
             <p className="label">Current plan</p>
             <p className="mt-1 text-2xl font-semibold text-white">{me.plan.name}</p>
@@ -136,7 +136,7 @@ function PacksCard() {
     <Card className="mb-6 p-5">
       <p className="label">Need more credits?</p>
       <p className="mt-1 text-[13px] text-white/60">One-time packs, no subscription change. Pack credits last {PACK_DAYS} days and are used after your plan credits.</p>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {CREDIT_PACKS.map((p) => (
           <div key={p.id} className="flex flex-col gap-2 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.06]">
             <p className="text-lg font-semibold text-white">
@@ -174,7 +174,7 @@ function VaultCard({ me }: { me: Me }) {
         </p>
       </div>
       {vault.lots.length > 0 ? (
-        <ul className="mt-4 grid gap-2">
+        <ul className="mt-4 grid grid-cols-1 gap-2">
           {vault.lots.map((l, i) => (
             <li key={`${l.expiresAt}-${i}`} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 rounded-lg bg-white/[0.03] px-3 py-2 text-sm ring-1 ring-white/[0.06]">
               <span className="text-white/80">

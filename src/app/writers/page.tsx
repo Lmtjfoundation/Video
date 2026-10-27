@@ -57,12 +57,12 @@ export default function WritersRoom() {
         title="Writers' Room"
         subtitle="Develop an original film like a professional room: title, logline, theme, world, characters with full backstories, structure, scene outline, screenplay pages, an honest awards-readiness review and a promotion kit. Then make it in Movie Studio."
       />
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-        <div className="grid content-start gap-5">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 content-start gap-5">
           <NewProject lib={lib} onMade={put} />
           <Card>
             <CardHeader title="Your projects" subtitle={lib ? `${lib.films.length} of ${lib.max}` : undefined} icon={<Feather className="h-4 w-4" />} />
-            <div className="grid gap-1.5 p-3">
+            <div className="grid grid-cols-1 gap-1.5 p-3">
               {lib?.films.length ? (
                 lib.films.map((f) => (
                   <button
@@ -118,7 +118,7 @@ function NewProject({ lib, onMade }: { lib: Library | null; onMade: (f: FilmProj
   return (
     <Card>
       <CardHeader title="New project" subtitle="Original fiction only" icon={<Sparkles className="h-4 w-4" />} />
-      <div className="grid gap-3 p-5">
+      <div className="grid grid-cols-1 gap-3 p-5">
         <Field label="Your idea">
           <Textarea rows={4} value={premise} onChange={(e) => setPremise(e.target.value)} maxLength={4000} placeholder="A divorced couple has to split the one thing they both refuse to give up: the house where their son learned to walk…" />
         </Field>
@@ -190,7 +190,7 @@ function Project({ film, onChange, onDeleted }: { film: FilmProject; onChange: (
 
   return (
     <Card className="min-w-0">
-      <div className="grid gap-3 border-b border-white/[0.06] p-5">
+      <div className="grid grid-cols-1 gap-3 border-b border-white/[0.06] p-5">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="violet">{film.genre}</Badge>
           <Badge>{FORMAT_LABEL[film.format]} · {FORMAT_HINT[film.format]}</Badge>
@@ -230,7 +230,7 @@ type Act = (key: string, b: Record<string, unknown>, ok?: string) => Promise<Fil
 
 function Block({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid gap-1">
+    <div className="grid grid-cols-1 gap-1">
       <p className="text-[11px] font-medium uppercase tracking-wider text-white/40">{label}</p>
       <div className="text-[14px] leading-relaxed text-white/80">{children}</div>
     </div>
@@ -239,13 +239,13 @@ function Block({ label, children }: { label: string; children: React.ReactNode }
 
 function StoryTab({ film }: { film: FilmProject }) {
   return (
-    <div className="grid gap-5">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Block label="Theme">{film.theme}</Block>
         <Block label="Dramatic question">{film.dramaticQuestion}</Block>
       </div>
       {film.tone && <Block label="Tone">{film.tone}</Block>}
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <p className="text-[11px] font-medium uppercase tracking-wider text-white/40">Structure</p>
         {film.structure.map((b, i) => (
           <div key={i} className="rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
@@ -265,16 +265,16 @@ function StoryTab({ film }: { film: FilmProject }) {
 
 function CharactersTab({ film }: { film: FilmProject }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {film.characters.map((c) => (
-        <div key={c.name} className="grid content-start gap-3 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.07]">
+        <div key={c.name} className="grid grid-cols-1 content-start gap-3 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.07]">
           <div>
             <p className="text-base font-semibold text-white">{c.name}</p>
             <p className="text-[13px] text-white/55">{c.role}</p>
           </div>
           <Block label="Look">{c.look}</Block>
           <Block label="Backstory">{c.backstory}</Block>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Block label="Wound">{c.wound}</Block>
             <Block label="Flaw">{c.flaw}</Block>
             <Block label="Wants">{c.want}</Block>
@@ -292,7 +292,7 @@ function CharactersTab({ film }: { film: FilmProject }) {
 function WorldTab({ film }: { film: FilmProject }) {
   const w = film.world;
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Block label="Setting">{w.setting}</Block>
       <Block label="Era">{w.era}</Block>
       <Block label="Rules of this world">{w.rules}</Block>
@@ -313,7 +313,7 @@ function ScriptTab({ film, busy, act }: { film: FilmProject; busy: string | null
   }
   const write = (from: number) => act(`pages${from}`, { action: "pages", from, to: from + 3 }, "Pages written");
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[13px] text-white/60">{written} of {film.scenes.length} scenes written</span>
         {firstUnwritten && (
@@ -334,7 +334,7 @@ function ScriptTab({ film, busy, act }: { film: FilmProject; busy: string | null
               )}
             </div>
             <p className="mt-1.5 text-[14px] leading-relaxed text-white/75">{s.summary}</p>
-            <div className="mt-2 grid gap-2 text-[12.5px] text-white/55 sm:grid-cols-3">
+            <div className="mt-2 grid grid-cols-1 gap-2 text-[12.5px] text-white/55 sm:grid-cols-3">
               <p><span className="text-white/75">Purpose:</span> {s.purpose}</p>
               <p><span className="text-white/75">Conflict:</span> {s.conflict}</p>
               <p><span className="text-white/75">Turn:</span> {s.turn}</p>
@@ -352,7 +352,7 @@ function ReviewTab({ film, busy, act }: { film: FilmProject; busy: string | null
   const r = film.review;
   const revise = (n: string) => act("revise", { action: "revise", notes: n }, "Revised — the outline and characters are updated").then((f) => f && setNotes(""));
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-[13px] leading-relaxed text-white/60">An honest read against what script readers, festival programmers and awards voters look for. Scores are tough on purpose: a 10 is rare.</p>
         <Button variant="primary" size="sm" className="ml-auto" loading={busy === "review"} onClick={() => act("review", { action: "review" }, "Review ready")}>
@@ -362,9 +362,9 @@ function ReviewTab({ film, busy, act }: { film: FilmProject; busy: string | null
       {r && (
         <>
           <p className="rounded-xl bg-gold-400/[0.06] p-3 text-[14px] text-gold-300 ring-1 ring-gold-400/20">{r.verdict}</p>
-          <div className="grid gap-2.5">
+          <div className="grid grid-cols-1 gap-2.5">
             {r.scores.map((s) => (
-              <div key={s.area} className="grid gap-1">
+              <div key={s.area} className="grid grid-cols-1 gap-1">
                 <div className="flex items-center justify-between text-[13px]">
                   <span className="text-white/85">{s.area}</span>
                   <span className={cn("font-mono", s.score >= 8 ? "text-mint-300" : s.score >= 6 ? "text-gold-300" : "text-red-300")}>{s.score}/10</span>
@@ -376,7 +376,7 @@ function ReviewTab({ film, busy, act }: { film: FilmProject; busy: string | null
               </div>
             ))}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Block label="Strengths"><ul className="list-disc space-y-1 pl-5">{r.strengths.map((x, i) => <li key={i}>{x}</li>)}</ul></Block>
             <Block label="Where it could compete"><ul className="list-disc space-y-1 pl-5">{r.fit.map((x, i) => <li key={i}>{x}</li>)}</ul></Block>
           </div>
@@ -419,7 +419,7 @@ function PromoteTab({ film, busy, act }: { film: FilmProject; busy: string | nul
     }
   }
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <MakeIt film={film} />
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-[13px] text-white/60">Tagline, synopsis, poster art, trailer beats and a spotlight post for every character.</p>
@@ -436,13 +436,13 @@ function PromoteTab({ film, busy, act }: { film: FilmProject; busy: string | nul
           <Copyable label="Synopsis" text={p.synopsis} onCopy={copy} />
           <Copyable label="Poster art prompt" text={p.posterPrompt} onCopy={copy} />
           <Block label="Trailer (60 seconds)"><ol className="list-decimal space-y-1 pl-5">{p.trailer.map((x, i) => <li key={i}>{x}</li>)}</ol></Block>
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <p className="text-[11px] font-medium uppercase tracking-wider text-white/40">Character spotlights</p>
             {p.characterSpotlights.map((c) => <Copyable key={c.name} label={c.name} text={c.caption} onCopy={copy} />)}
           </div>
           <Copyable label="Behind the story (pinned post)" text={p.behindTheStory} onCopy={copy} />
           <p className="text-[13px] text-violet-300">{p.hashtags.map((h) => `#${h}`).join(" ")}</p>
-          <div className="grid gap-3 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.07]">
+          <div className="grid grid-cols-1 gap-3 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.07]">
             <p className="text-sm font-medium text-white">Promotion posts</p>
             <div className="flex flex-wrap gap-2">
               {PROMO_PLATFORMS.map((pl) => (
@@ -513,13 +513,13 @@ function MakeIt({ film }: { film: FilmProject }) {
   }
 
   return (
-    <div className="grid gap-3 rounded-xl bg-mint-400/[0.05] p-4 ring-1 ring-mint-400/20">
+    <div className="grid grid-cols-1 gap-3 rounded-xl bg-mint-400/[0.05] p-4 ring-1 ring-mint-400/20">
       <p className="flex items-center gap-2 text-sm font-medium text-white"><Clapperboard className="h-4 w-4 text-mint-300" /> Make it</p>
       <p className="text-[13px] leading-relaxed text-white/65">
         Movie Studio keeps each character looking the same in every scene from their portrait. {missing.length ? `${missing.length} of ${film.characters.length} cast members don't have one yet.` : "Every cast member has a portrait."} For real actors, create their characters from photos in Movie Studio instead.
       </p>
       {!!missing.length && lib?.ready && (
-        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <Field label="Art style for the cast">
             <Select value={chosen} onChange={(e) => setStyle(e.target.value)}>
               {groups.map((g) => (

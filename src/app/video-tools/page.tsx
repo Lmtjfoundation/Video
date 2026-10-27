@@ -55,9 +55,9 @@ function Recent({ prefixes }: { prefixes: string[] }) {
   return (
     <Card>
       <CardHeader title="Latest" subtitle="Also in your Media Library." />
-      <div className="grid gap-3 p-4">
+      <div className="grid grid-cols-1 gap-3 p-4">
         {list.map((m) => (
-          <div key={m.id} className="grid gap-1">
+          <div key={m.id} className="grid grid-cols-1 gap-1">
             <div className="truncate text-xs text-white/60">{m.name}</div>
             <video src={m.url} controls playsInline className="max-h-96 w-full rounded-lg bg-black" />
           </div>
@@ -77,10 +77,10 @@ function SmartShot({ info }: { info: Info | null }) {
   const [imageId, setImageId] = useState("");
   const credits = info ? info.credits.image * (shots - 1 + (imageId ? 0 : 1)) + info.credits.second * secs * shots : 0;
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <Card className="min-w-0">
         <CardHeader title="Smart Shot" subtitle="One moment, filmed like a real crew would: a wide, a medium, a close-up and more, cut together as one scene." icon={<Clapperboard className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <Field label="The moment"><Textarea rows={4} value={prompt} maxLength={1500} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. A tired nurse walks out of the hospital at dawn and finally smiles as the sun hits her face" /></Field>
           <Field label="Start from a picture" hint="optional: its people and place stay the same in every shot"><MediaSelect items={items} kinds={["image"]} value={imageId} onChange={setImageId} empty="No pictures yet" /></Field>
           <div className="grid grid-cols-3 gap-3">
@@ -119,15 +119,15 @@ function MusicVideo({ info }: { info: Info | null }) {
       .finally(() => setChecking(false));
   }, [audioId, toast]);
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <Card className="min-w-0">
         <CardHeader title="Music video" subtitle="Ghost Post finds the beat and cuts on it: a new shot every bar or two, in one look, over your song." icon={<Music2 className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <Field label="Song"><MediaSelect items={items} kinds={["audio"]} value={audioId} onChange={setAudioId} empty="Upload a song or make one in AI Studio" /></Field>
           {checking && <p className="text-xs text-white/50">Finding the beat…</p>}
           {quote && <p className="text-xs text-white/60">{Math.round(quote.seconds)} s at about {quote.bpm} BPM: {quote.shots} shots, cut on the beat.</p>}
           <Field label="Look and story"><Textarea rows={4} value={idea} maxLength={1500} onChange={(e) => setIdea(e.target.value)} placeholder="e.g. A lonely astronaut on a pink desert planet, retro 80s film look, teal and magenta" /></Field>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {([["pictures", "Pictures in motion", "Stills with slow camera moves. Fast and affordable."], ["clips", "Filmed clips", "Every shot filmed by the engine. Real motion, more credits."]] as const).map(([k, t, d]) => (
               <button key={k} onClick={() => setMotion(k)} className={cn("rounded-xl border p-3 text-left", motion === k ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03]")}>
                 <div className="text-sm font-medium">{t}{quote ? ` · ${quote.credits[k]} credits` : ""}</div>
@@ -181,10 +181,10 @@ function VideoEdit({ info }: { info: Info | null }) {
   const t = TASKS.find((x) => x.id === task)!;
   const video = items.find((m) => m.id === videoId);
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <Card className="min-w-0">
         <CardHeader title="Video edits" subtitle="Change a clip after it's filmed: up to its first 5 seconds, with its own sound kept." icon={<Sparkles className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
             {TASKS.map((x) => (
               <button key={x.id} onClick={() => { setTask(x.id); setBox(null); }} className={cn("rounded-lg px-2 py-2 text-xs font-semibold ring-1", task === x.id ? "bg-mint-400/15 text-mint-200 ring-mint-400/40" : "bg-white/[0.03] text-white/60 ring-white/10")}>{x.name}</button>

@@ -5,6 +5,11 @@
 #   curl -fsSL https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-autopilot/deploy/azure-app/install.sh | sudo bash
 #   ... | sudo bash -s -- --migrate-from https://ghost-post-autopilot.up.railway.app   # then open /restore
 #   ... | sudo bash -s -- --domain app.example.com                                      # your own DNS name
+#   ... | sudo bash -s -- --no-writer                       # skip Ghost Post's own writer (an open AI model on this CPU)
+#
+# Ghost Post's own writer: Ollama with Qwen3-4B on this machine's processor, so writing needs no Claude or Gemini
+# credits. It loads when a request comes in and unloads after 30 idle minutes. Published (with a key) at
+# https://writer.<this address> so another Ghost Post server can use it too.
 #
 # Updates: the VM checks the branch every 2 minutes and deploys new commits by itself (ghostpost-deploy), building
 # each release in its own folder so the live site never serves a half-built one.
@@ -15,10 +20,13 @@ DATA=/var/lib/ghostpost
 ENV_DIR=/etc/ghostpost
 DOMAIN=""
 MIGRATE_FROM=""
+WRITER=1
+WRITER_MODEL="${GHOST_POST_WRITER_MODEL:-qwen3:4b-instruct-2507-q4_K_M}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --domain) DOMAIN="$2"; shift 2 ;;
     --migrate-from) MIGRATE_FROM="${2%/}"; shift 2 ;;
+    --no-writer) WRITER=0; shift ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -77,6 +85,30 @@ if [ -f /etc/ghost-post-engine.env ] && ! grep -q '^VIDEO_ENGINE_URL=' "$ENV_DIR
   [ -n "$TOKEN" ] && printf 'VIDEO_ENGINE_URL=http://127.0.0.1:8000\nVIDEO_ENGINE_TOKEN=%s\n' "$TOKEN" >> "$ENV_DIR/env"
 fi
 chmod 600 "$ENV_DIR/env"
+
+if [ "$WRITER" = 1 ]; then
+  say "Ghost Post's own writer ($WRITER_MODEL on this CPU)"
+  command -v ollama >/dev/null || curl -fsSL https://ollama.com/install.sh | HOME=/root sh
+  mkdir -p /etc/systemd/system/ollama.service.d
+  cat > /etc/systemd/system/ollama.service.d/ghostpost.conf <<'CONF'
+[Service]
+Environment=OLLAMA_HOST=127.0.0.1:11434
+Environment=OLLAMA_KEEP_ALIVE=30m
+Environment=OLLAMA_NUM_PARALLEL=2
+Environment=OLLAMA_CONTEXT_LENGTH=12288
+Environment=OLLAMA_FLASH_ATTENTION=1
+Environment=OLLAMA_KV_CACHE_TYPE=q8_0
+MemoryMax=8G
+CONF
+  systemctl daemon-reload
+  systemctl enable -q ollama
+  systemctl restart ollama
+  for _ in $(seq 30); do curl -fsS -o /dev/null http://127.0.0.1:11434/api/version && break; sleep 1; done
+  HOME=/root ollama pull "$WRITER_MODEL" >/dev/null
+  grep -q '^OWN_WRITER_KEY=' "$ENV_DIR/env" || echo "OWN_WRITER_KEY=$(head -c 48 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 40)" >> "$ENV_DIR/env"
+  grep -q '^OWN_WRITER_URL=' "$ENV_DIR/env" || echo "OWN_WRITER_URL=http://127.0.0.1:11434/v1" >> "$ENV_DIR/env"
+  grep -q '^OWN_WRITER_MODEL=' "$ENV_DIR/env" && sed -i "s|^OWN_WRITER_MODEL=.*|OWN_WRITER_MODEL=$WRITER_MODEL|" "$ENV_DIR/env" || echo "OWN_WRITER_MODEL=$WRITER_MODEL" >> "$ENV_DIR/env"
+fi
 
 say "Deploy script and service"
 install -m 755 /dev/stdin /usr/local/bin/ghostpost-deploy <<'DEPLOY'
@@ -155,6 +187,14 @@ if [ -f /etc/caddy/Caddyfile ] && ! grep -q 'import sites/' /etc/caddy/Caddyfile
   grep -q 'reverse_proxy 127.0.0.1:8000' /etc/caddy/Caddyfile && cp /etc/caddy/Caddyfile /etc/caddy/sites/engine.caddy
 fi
 printf '%s {\n  encode zstd gzip\n  request_body {\n    max_size 2GB\n  }\n  reverse_proxy 127.0.0.1:3000 {\n    transport http {\n      read_timeout 15m\n      write_timeout 15m\n    }\n  }\n}\n' "$DOMAIN" > /etc/caddy/sites/app.caddy
+if [ "$WRITER" = 1 ]; then
+  # Only the chat endpoint, and only with the key: the writer's other controls stay on this machine.
+  WKEY="$(sed -n 's/^OWN_WRITER_KEY=//p' "$ENV_DIR/env")"
+  umask 027
+  printf 'writer.%s {\n  @key {\n    header Authorization "Bearer %s"\n    path /v1/chat/completions /v1/models\n  }\n  handle @key {\n    reverse_proxy 127.0.0.1:11434 {\n      transport http {\n        read_timeout 15m\n      }\n    }\n  }\n  handle {\n    respond "Unauthorized" 401\n  }\n}\n' "${DOMAIN#ghostpost.}" "$WKEY" > /etc/caddy/sites/writer.caddy
+  umask 022
+  chgrp caddy /etc/caddy/sites/writer.caddy
+fi
 printf 'import sites/*.caddy\n' > /etc/caddy/Caddyfile
 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
 systemctl reload caddy || systemctl restart caddy
@@ -164,3 +204,4 @@ for _ in $(seq 60); do curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:3000
 echo "  Ghost Post : https://$DOMAIN  ($(systemctl is-active ghostpost))"
 [ -n "$MIGRATE_FROM" ] && echo "  Next       : open https://$DOMAIN/restore and paste a move code from $MIGRATE_FROM (Admin -> App settings -> Move to a new server)."
 echo "  Logs       : sudo journalctl -u ghostpost -n 100"
+[ "$WRITER" = 1 ] && echo "  Writer     : https://writer.${DOMAIN#ghostpost.} (key in $ENV_DIR/env as OWN_WRITER_KEY)"

@@ -95,11 +95,11 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
   };
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       <Card className="p-4 text-[13px] leading-relaxed text-white/65">
         <span className="font-medium text-white">How linking works.</span> “Connect” sends you to the platform's own sign-in page. You approve the permissions there, and you're brought back here. Your password is never seen by this app; only an access token is stored, encrypted. You can disconnect here at any time, or revoke access from the platform's security settings.
       </Card>
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {PLATFORMS.map((p) => {
           const spec = PLATFORM_SPECS[p];
           if (p === "webhook") {
@@ -111,7 +111,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
                   subtitle={st.connected ? <span className="text-mint-300">Connected</span> : "Not connected"}
                   action={<Switch checked={settings.platforms[p]} onChange={(v) => setSettings({ ...settings.platforms, [p]: v })} label={`Use ${spec.name}`} />}
                 />
-                <div className="grid gap-3 p-5">
+                <div className="grid grid-cols-1 gap-3 p-5">
                   <p className="text-[13px] leading-relaxed text-white/65">
                     Works with any app that can receive a webhook: Zapier, Make, n8n, Slack, Discord, Buffer or Notion automations, or your own server. Create a “catch webhook” in that tool, paste its URL here, and every post you schedule for this connection is sent there as JSON.
                   </p>
@@ -145,7 +145,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
                       </>
                     )}
                   </div>
-                  <div className="grid gap-1 text-[12px]">
+                  <div className="grid grid-cols-1 gap-1 text-[12px]">
                     <p className="text-white/60"><span className="text-white/85">Sends:</span> {spec.publish}</p>
                     <p className="text-white/60"><span className="text-white/85">Security:</span> https addresses only. Internal addresses are blocked. With a signing secret, each request carries an HMAC signature (X-GhostPost-Signature) over “timestamp.body”.</p>
                   </div>
@@ -174,7 +174,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
                 }
                 action={<Switch checked={settings.platforms[p]} onChange={(v) => setSettings({ ...settings.platforms, [p]: v })} label={`Use ${spec.name}`} />}
               />
-              <div className="grid gap-3 p-5">
+              <div className="grid grid-cols-1 gap-3 p-5">
                 {direct ? (
                   <div className="flex flex-wrap items-center gap-2 rounded-xl bg-mint-400/[0.05] p-3 ring-1 ring-mint-400/20">
                     <Badge tone="mint">{st.mode === "profile" ? "Profile · one-tap posting" : st.method === "oauth" ? "Linked with " + o.label : "Manual token"}</Badge>
@@ -230,7 +230,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
                 {st.oauthReady && isAdmin && (
                   <AppKeysLine platform={p} source={st.keySource} preview={st.keyPreview} origin={origin} onChanged={refresh} />
                 )}
-                <div className="grid gap-1 text-[12px]">
+                <div className="grid grid-cols-1 gap-1 text-[12px]">
                   <p className="text-white/60"><span className="text-white/85">Asks permission to:</span> {o.permissions.join(" · ")}</p>
                   <p className="text-white/60"><span className="text-white/85">Publishing:</span> {spec.publish}</p>
                   <p className="text-white/60"><span className="text-white/85">Engagement:</span> {spec.engage}</p>
@@ -240,7 +240,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press �
                   {manual[p] ? "Hide manual token entry" : "Advanced: paste a token instead"}
                 </button>
                 {manual[p] && (
-                  <div className="grid gap-3 rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]">
+                  <div className="grid grid-cols-1 gap-3 rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.06]">
                     {CRED_FIELDS[p].map((f) => (
                       <Field key={f.key} label={f.label} hint={st.fields.includes(f.key) ? <Badge tone="mint">stored</Badge> : undefined}>
                         <Input
@@ -317,7 +317,7 @@ function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; o
 
   if (!open) {
     return (
-      <div className="grid gap-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
+      <div className="grid grid-cols-1 gap-2 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
         <p className="text-[13px] text-white/80">
           <span className="font-medium text-white">One-time setup needed</span> · about {g.minutes}. After this, linking is one click for you and your subscribers.
         </p>
@@ -327,7 +327,7 @@ function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; o
   }
 
   return (
-    <div className="grid gap-3 rounded-xl bg-ink-900/80 p-4 ring-1 ring-gold-400/25">
+    <div className="grid grid-cols-1 gap-3 rounded-xl bg-ink-900/80 p-4 ring-1 ring-gold-400/25">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">Set up {o.label}</p>
@@ -335,7 +335,7 @@ function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; o
         </div>
         <span className="shrink-0 text-xs tabular-nums text-white/45">{finished}/{g.steps.length} done</span>
       </div>
-      <ol className="grid gap-2.5">
+      <ol className="grid grid-cols-1 gap-2.5">
         {g.steps.map((st, i) => (
           <li key={i} className={cn("flex gap-3 rounded-lg p-2.5 ring-1", done[i] ? "bg-mint-400/[0.04] ring-mint-400/20" : "bg-white/[0.02] ring-white/[0.06]")}>
             <button
@@ -365,7 +365,7 @@ function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; o
           </li>
         ))}
       </ol>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Field label={g.idLabel}>
           <Input value={id} onChange={(e) => setId(e.target.value)} autoComplete="off" spellCheck={false} placeholder={`Paste ${g.idLabel}`} />
         </Field>
@@ -380,7 +380,7 @@ function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; o
         </Button>
         <Button variant="ghost" onClick={() => setOpen(false)}>Close</Button>
       </div>
-      <div className="grid gap-1 border-t border-white/[0.06] pt-3 text-xs leading-relaxed text-white/55">
+      <div className="grid grid-cols-1 gap-1 border-t border-white/[0.06] pt-3 text-xs leading-relaxed text-white/55">
         <p><span className="text-white/80">Testing:</span> {g.testing}</p>
         <p><span className="text-white/80">Before subscribers can connect:</span> {g.review}</p>
       </div>
@@ -393,7 +393,7 @@ function AppKeysLine({ platform, source, preview, origin, onChanged }: { platfor
   const [confirm, setConfirm] = useState(false);
   const [show, setShow] = useState(false);
   return (
-    <div className="grid gap-1.5 text-[12px] text-white/50">
+    <div className="grid grid-cols-1 gap-1.5 text-[12px] text-white/50">
       <p>
         App keys: <span className="font-mono text-white/70">{preview}</span> · {source === "env" ? "from environment variables" : "saved in the app"}
         {" · "}
@@ -487,12 +487,12 @@ function ExtraAccounts({ platform, st, label, onChanged }: { platform: Platform;
   }
 
   return (
-    <div className="grid gap-2.5 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
+    <div className="grid grid-cols-1 gap-2.5 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[13px] font-medium text-white">Accounts</span>
         <span className="text-[11.5px] text-white/45">{extras.length + 1} of {MAX_EXTRA_ACCOUNTS + 1}</span>
       </div>
-      <ul className="grid gap-1.5 text-[13px]">
+      <ul className="grid grid-cols-1 gap-1.5 text-[13px]">
         <li className="flex items-center gap-2 text-white/80"><Check className="h-3.5 w-3.5 text-mint-300" /> {st.handle || "Main account"} <span className="text-[11px] text-white/40">main</span></li>
         {extras.map((a) => (
           <li key={a.id} className="flex items-center gap-2 text-white/80">
@@ -511,7 +511,7 @@ function ExtraAccounts({ platform, st, label, onChanged }: { platform: Platform;
         </div>
       )}
       {paste && (
-        <div className="grid gap-3 rounded-xl bg-ink-900/80 p-3 ring-1 ring-white/[0.08]">
+        <div className="grid grid-cols-1 gap-3 rounded-xl bg-ink-900/80 p-3 ring-1 ring-white/[0.08]">
           {CRED_FIELDS[platform].map((f) => (
             <Field key={f.key} label={f.label}>
               <Input type={f.secret ? "password" : "text"} autoComplete="off" value={form[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
@@ -529,9 +529,9 @@ function ExtraAccounts({ platform, st, label, onChanged }: { platform: Platform;
 function FacebookChoice({ oauthReady, isAdmin, origin, onSaved }: { oauthReady: boolean; isAdmin: boolean; origin: string; onSaved: () => void }) {
   const [form, setForm] = useState(false);
   return (
-    <div className="grid gap-3">
-      <div className="grid gap-2.5 sm:grid-cols-2">
-        <div className="grid content-between gap-3 rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.07]">
+    <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 content-between gap-3 rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.07]">
           <div>
             <p className="flex items-center gap-1.5 text-sm font-medium text-white"><Zap className="h-4 w-4 text-mint-300" /> Facebook Page</p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-white/55">Posts automatically at your time slots, and replies to comments.</p>
@@ -544,7 +544,7 @@ function FacebookChoice({ oauthReady, isAdmin, origin, onSaved }: { oauthReady: 
             <p className="text-[12px] text-white/40">{isAdmin ? "Set up Facebook below first." : "The workspace admin switches this on once for everyone."}</p>
           )}
         </div>
-        <div className="grid content-between gap-3 rounded-xl bg-gold-400/[0.04] p-3.5 ring-1 ring-gold-400/20">
+        <div className="grid grid-cols-1 content-between gap-3 rounded-xl bg-gold-400/[0.04] p-3.5 ring-1 ring-gold-400/20">
           <div>
             <p className="flex items-center gap-1.5 text-sm font-medium text-white"><UserRound className="h-4 w-4 text-gold-300" /> Your profile</p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-white/55">Monetized or not. Each post is ready at its time with the HD video and caption — you post it with one tap.</p>
@@ -605,7 +605,7 @@ function FacebookTargets({ st, handoffEmail, igConnected, onChanged }: { st: Cre
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-1 gap-3">
       {options.length > 1 && (
         <Field label="Post to" hint={`${pages.length} Page${pages.length === 1 ? "" : "s"}${st.profileName ? " + your profile" : ""}`}>
           <Select value={value} onChange={(e) => choose(e.target.value)}>
@@ -614,7 +614,7 @@ function FacebookTargets({ st, handoffEmail, igConnected, onChanged }: { st: Cre
         </Field>
       )}
       {st.mode === "profile" && (
-        <div className="grid gap-2.5 rounded-xl bg-mint-400/[0.04] p-3 ring-1 ring-mint-400/20">
+        <div className="grid grid-cols-1 gap-2.5 rounded-xl bg-mint-400/[0.04] p-3 ring-1 ring-mint-400/20">
           <div className="flex items-center justify-between gap-3">
             <span className="flex items-center gap-1.5 text-[13px] font-medium text-white"><Zap className="h-4 w-4 text-mint-300" /> Autopilot through Instagram</span>
             <Switch checked={viaIg} onChange={setAutopilot} label="Post to my Facebook profile automatically through Instagram" />
@@ -634,7 +634,7 @@ function FacebookTargets({ st, handoffEmail, igConnected, onChanged }: { st: Cre
         </div>
       )}
       {st.mode === "profile" && !viaIg && (
-        <div className="grid gap-2.5 rounded-xl bg-gold-400/[0.04] p-3 ring-1 ring-gold-400/20">
+        <div className="grid grid-cols-1 gap-2.5 rounded-xl bg-gold-400/[0.04] p-3 ring-1 ring-gold-400/20">
           <p className="text-[13px] leading-relaxed text-white/70">
             At each post's time it's marked <b className="text-white">Ready for you</b> on your dashboard. Open it on your phone, tap <b className="text-white">Share to Facebook</b>, paste the caption (already copied), done.
           </p>
@@ -673,8 +673,8 @@ function ProfileForm({ initialName = "", onSaved, onCancel }: { initialName?: st
     }
   }
   return (
-    <div className="grid gap-3 rounded-xl bg-ink-900/80 p-3.5 ring-1 ring-white/[0.08]">
-      <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 rounded-xl bg-ink-900/80 p-3.5 ring-1 ring-white/[0.08]">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Name on your profile">
           <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoComplete="name" placeholder="Your name as it shows on Facebook" />
         </Field>

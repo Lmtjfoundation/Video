@@ -1,5 +1,6 @@
 import "server-only";
 import { engineWritingSkipped, ownEngineAwake, ownWrite } from "./own-video";
+import { ownWriter, writeWithOwnWriter } from "./own-writer";
 import { sleep } from "./utils";
 import { anthropicHeaders, anthropicKey, anthropicWorkspaceHint, ownerGemini, type OwnerGemini } from "./integrations";
 import { recordLlmHealth } from "./llm-health";
@@ -52,6 +53,8 @@ interface CallOpts {
    * web search isn't enabled for the organization.
    */
   webSearch?: { domains: string[]; maxUses?: number };
+  /** The answer must be a JSON object (Ghost Post's own writer enforces it; the others are told in the prompt). */
+  json?: boolean;
 }
 
 /** Set when the API refuses the web search tool (not enabled for the org), so we stop asking for an hour. */
@@ -59,7 +62,7 @@ let webSearchOffUntil = 0;
 export const webSearchAvailable = () => Date.now() > webSearchOffUntil;
 
 export async function llmConfigured() {
-  return !!(await anthropicKey()) || !!(await ownerGemini()) || !!(await getOwnAi());
+  return !!(await ownWriter()) || !!(await anthropicKey()) || !!(await ownerGemini()) || !!(await getOwnAi());
 }
 
 /**
@@ -284,6 +287,28 @@ export async function claude(opts: CallOpts): Promise<string> {
     }
   }
 
+  // Next, Ghost Post's own writer (an open model on the owner's server), so no outside AI credits are used. It can't
+  // read pictures or search the web, so those requests go on to Claude or Gemini, unless the owner allows only the
+  // own writer (then web searches are written without the search).
+  const writer = await ownWriter();
+  if (writer) {
+    const canRead = !opts.images?.length;
+    if (canRead && (!opts.webSearch?.domains.length || writer.only)) {
+      try {
+        return await writeWithOwnWriter(writer, { system: opts.system, user: opts.user, maxTokens: opts.maxTokens ?? 2500, temperature: opts.temperature ?? 0.85, json: opts.json });
+      } catch (e) {
+        console.warn(`[llm] own writer: ${(e as Error).message.slice(0, 200)}`);
+        if (writer.only) throw new LLMError("AI writing failed this time. Please try again in a minute.", (e as Error).message, "busy");
+      }
+    } else if (writer.only) {
+      throw new LLMError(
+        "This needs an AI that can read pictures, which isn't switched on here.",
+        "Reading pictures needs Claude or Gemini. They're switched off (Admin → App settings → Integrations → Own writer → Only use the own writer).",
+        "config",
+      );
+    }
+  }
+
   const gemini = await ownerGemini();
   const claudeConfigured = !!(await anthropicKey());
   const order: Engine[] = engineOrder({
@@ -357,12 +382,12 @@ export function parseJson<T>(text: string): T {
 
 export async function claudeJson<T>(opts: CallOpts): Promise<T> {
   try {
-    return parseJson<T>(await claude(opts));
+    return parseJson<T>(await claude({ ...opts, json: true }));
   } catch (e) {
     if (!(e instanceof LLMError) || e.kind || /API error|not set|Settings → AI/.test(e.message)) throw e;
     // One repair attempt with a stricter instruction.
     return parseJson<T>(
-      await claude({ ...opts, temperature: 0.4, user: opts.user + "\n\nReturn ONLY valid JSON. No prose, no code fences." }),
+      await claude({ ...opts, json: true, temperature: 0.4, user: opts.user + "\n\nReturn ONLY valid JSON. No prose, no code fences." }),
     );
   }
 }

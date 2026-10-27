@@ -42,10 +42,10 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   return (
-    <div className="relative z-10 grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+    <div className="relative z-10 grid grid-cols-1 min-h-screen lg:grid-cols-[1.1fr_1fr]">
       <section className="hidden flex-col justify-between border-r border-white/[0.06] bg-ink-950/50 p-12 lg:flex">
         <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
+          <div className="grid grid-cols-1 h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
             <Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} />
           </div>
           <span className="text-lg font-semibold text-white">Ghost Post</span>
@@ -54,7 +54,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           <h1 className="text-[40px] font-semibold leading-[1.05] tracking-tight text-white">
             Find the niche that pays. <span className="text-gradient">Post the stories that hold attention.</span>
           </h1>
-          <ul className="mt-8 grid gap-4 text-[15px] text-white/70">
+          <ul className="mt-8 grid grid-cols-1 gap-4 text-[15px] text-white/70">
             <li className="flex gap-3"><Compass className="mt-0.5 h-5 w-5 shrink-0 text-mint-300" /> Niche research built on real revenue-per-view data, not guesses.</li>
             <li className="flex gap-3"><BookOpenText className="mt-0.5 h-5 w-5 shrink-0 text-mint-300" /> Faceless story scripts with hooks, scenes, visuals and a fact-check list.</li>
             <li className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-mint-300" /> Posts to six platforms on schedule, with rules checks that protect your accounts.</li>
@@ -67,7 +67,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         <form onSubmit={submit} className="glass w-full max-w-sm p-7" noValidate>
           <h2 className="text-xl font-semibold text-white">{mode === "login" ? "Sign in" : owner?.ownerNeeded ? "Create the owner account" : "Create your account"}</h2>
           <p className="mt-1 text-sm text-white/50">{mode === "login" ? "Welcome back." : owner?.ownerNeeded ? "The first account becomes the admin, on the Unlimited plan." : "Free plan, no card needed."}</p>
-          <div className="mt-6 grid gap-4">
+          <div className="mt-6 grid grid-cols-1 gap-4">
             {mode === "signup" && (
               <Field label="Name">
                 <Input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name or brand" />

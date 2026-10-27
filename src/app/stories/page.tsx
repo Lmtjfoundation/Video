@@ -126,10 +126,10 @@ export default function StoryStudio() {
   return (
     <>
       <PageHeader title="Story Studio" subtitle="Faceless story scripts built for retention: hook, scene-by-scene narration, on-screen text, visuals to source, titles and a fact-check list." />
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[380px_1fr]">
         <Card className="h-fit xl:sticky xl:top-10">
           <CardHeader title="New story" subtitle={status ? (status.me.user.role === "admin" ? "Owner account · no credits used" : `${status.me.creditsLeft} credits left · this costs ${cost}`) : undefined} icon={<BookOpenText className="h-4 w-4" />} />
-          <div className="grid gap-4 p-5">
+          <div className="grid grid-cols-1 gap-4 p-5">
             <Field label="Niche">
               <Select value={f.niche} onChange={(e) => setF({ ...f, niche: e.target.value })}>
                 {NICHES.filter((n) => n.id !== "kids").map((n) => <option key={n.id} value={n.id}>{n.name} · ${n.rpm.toFixed(2)} RPM</option>)}
@@ -162,7 +162,7 @@ export default function StoryStudio() {
               </Field>
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <span className="text-[13px] font-medium text-white/80">Your source material <span className="font-normal text-white/40">· optional</span></span>
               <label className="flex cursor-pointer flex-col items-center gap-1 rounded-xl border border-dashed border-white/15 bg-ink-900/60 p-4 text-center hover:border-mint-400/60">
                 <FileText className="h-5 w-5 text-mint-300" />
@@ -189,7 +189,7 @@ export default function StoryStudio() {
                     <img src={m.url} alt={m.name} className="h-full w-full object-cover" />
                   </button>
                 ))}
-                <label className="grid h-14 w-14 cursor-pointer place-items-center rounded-lg border border-dashed border-white/15 text-white/50 hover:border-mint-400/60" title="Upload images">
+                <label className="grid grid-cols-1 h-14 w-14 cursor-pointer place-items-center rounded-lg border border-dashed border-white/15 text-white/50 hover:border-mint-400/60" title="Upload images">
                   <Upload className="h-4 w-4" />
                   <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => { uploadImages(e.target.files); e.target.value = ""; }} />
                 </label>
@@ -205,7 +205,7 @@ export default function StoryStudio() {
           </div>
         </Card>
 
-        <div className="grid min-w-0 gap-6">
+        <div className="grid grid-cols-1 min-w-0 gap-6">
           {st ? (
             <StoryView
               st={st}
@@ -259,9 +259,9 @@ function StoryView({ st, onPost, onRepurpose, onDelete }: { st: Story; onPost: (
   return (
     <Card>
       <CardHeader title={o.titles?.[0]?.title ?? st.topic} subtitle={`${st.niche} · ${STORY_FORMATS[st.format].label} · ${STORY_TYPES[st.type]}${o.runtimeSec ? ` · ~${o.runtimeSec}s` : ""}${o.label ? ` · ${o.label}` : ""}`} />
-      <div className="grid gap-5 p-5">
+      <div className="grid grid-cols-1 gap-5 p-5">
         {st.videoUrl && (
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <p className="label">Watch the episode</p>
             <video src={`/api/media/remote?u=${encodeURIComponent(st.videoUrl)}`} controls playsInline preload="metadata" className="mx-auto aspect-[9/16] max-h-[560px] rounded-lg bg-black ring-1 ring-white/10" />
             <p className="text-center text-xs text-white/45">Voiced by an AI cast with a narrator · the Instagram and Facebook drafts with this video are in your post queue.</p>
@@ -277,7 +277,7 @@ function StoryView({ st, onPost, onRepurpose, onDelete }: { st: Story; onPost: (
         </div>
         <div>
           <p className="label mb-2">Title options</p>
-          <ol className="grid list-decimal gap-1.5 pl-5 text-sm">{(o.titles ?? []).map((t) => <li key={t.title}><span className="font-medium text-white">{t.title}</span> <span className="text-white/45">{t.why}</span></li>)}</ol>
+          <ol className="grid grid-cols-1 list-decimal gap-1.5 pl-5 text-sm">{(o.titles ?? []).map((t) => <li key={t.title}><span className="font-medium text-white">{t.title}</span> <span className="text-white/45">{t.why}</span></li>)}</ol>
         </div>
         <div className="rounded-xl bg-gradient-to-br from-mint-400/10 to-gold-400/[0.06] p-4 ring-1 ring-mint-400/25">
           <p className="label mb-1.5">Hook · first 3 seconds</p>
@@ -285,14 +285,14 @@ function StoryView({ st, onPost, onRepurpose, onDelete }: { st: Story; onPost: (
         </div>
         <div>
           <p className="label mb-2">Storyboard</p>
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             {o.scenes.map((s, i) => (
               <div key={i} className="grid grid-cols-[52px_1fr] gap-3 rounded-xl bg-ink-900/70 p-3 ring-1 ring-white/[0.06]">
                 <span className="pt-0.5 font-mono text-xs text-mint-300">{s.time ?? i + 1}</span>
                 <div className="min-w-0">
                   {s.heading && <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gold-300/90">{s.heading}</p>}
                   <p className="whitespace-pre-line text-[14px] leading-relaxed text-white/90">{s.narration}</p>
-                  <div className="mt-2 grid gap-1 text-xs text-white/50">
+                  <div className="mt-2 grid grid-cols-1 gap-1 text-xs text-white/50">
                     {s.onScreen && <span><b className="text-white/70">On screen</b> {s.onScreen}</span>}
                     {s.visual && <span><b className="text-white/70">Visual</b> {s.visual}</span>}
                     {s.audio && <span><b className="text-white/70">Audio</b> {s.audio}</span>}
@@ -302,7 +302,7 @@ function StoryView({ st, onPost, onRepurpose, onDelete }: { st: Story; onPost: (
             ))}
           </div>
         </div>
-        <div className="grid gap-4 text-sm md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
           <div><p className="label mb-1.5">Ending</p><p className="text-white/80">{o.ending}</p><p className="label mb-1.5 mt-3">Call to action</p><p className="text-white/80">{o.cta}</p></div>
           <div><p className="label mb-1.5">Thumbnail text</p><div className="flex flex-wrap gap-1.5">{(o.thumbnailText ?? []).map((x) => <Badge key={x} tone="gold">{x}</Badge>)}</div><p className="label mb-1.5 mt-3">Pinned comment</p><p className="text-white/80">{o.pinnedComment}</p></div>
         </div>

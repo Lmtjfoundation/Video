@@ -68,8 +68,8 @@ export default function PlatformsPage() {
         subtitle="Connect the social accounts Ghost Post posts to, and switch each one on or off."
       />
 
-      <Card className="mb-5 grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
-        <div className="grid gap-2">
+      <Card className="mb-5 grid grid-cols-1 gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+        <div className="grid grid-cols-1 gap-2">
           <div className="flex items-center gap-2 text-sm font-medium text-white">
             <Share2 className="h-4 w-4 text-mint-300" /> {linked.length} linked · {posting.length} posting · {plan.name} plan includes {plan.maxPlatforms >= PLATFORMS.length ? "every platform" : `${plan.maxPlatforms} platforms`}
           </div>

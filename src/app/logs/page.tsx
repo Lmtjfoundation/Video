@@ -58,7 +58,7 @@ export default function LogsPage() {
         }
       />
 
-      <Card className="mb-4 grid gap-3 p-4 sm:grid-cols-[1fr_180px_160px]">
+      <Card className="mb-4 grid grid-cols-1 gap-3 p-4 sm:grid-cols-[1fr_180px_160px]">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search messages and details…" className="pl-9" />

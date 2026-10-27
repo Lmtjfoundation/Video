@@ -76,7 +76,7 @@ export function PricingTable({
   const offersTrial = (p: PlansPayload["plans"][number]) => !!p.trial && trialEligible && !hasSubscription && currentPlan !== p.id;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/10">
           {(["month", "year"] as const).map((c) => (
@@ -88,7 +88,7 @@ export function PricingTable({
         {native && <p className="text-sm text-white/55">Plans can be changed on the Ghost Post website.</p>}
       </div>
       {error && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-200 ring-1 ring-red-400/25">{error}</p>}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {data.plans.map((p) => {
           const price = cycle === "year" ? p.annual : p.monthly;
           const current = currentPlan === p.id;
@@ -104,7 +104,7 @@ export function PricingTable({
                 <span className="text-sm text-white/45">/ month{cycle === "year" && p.monthly ? ", billed yearly" : ""}</span>
               </div>
               {offersTrial(p) && (
-                <div className="-mt-2 grid gap-1 rounded-xl bg-mint-400/[0.07] p-3 text-[13px] ring-1 ring-mint-400/20">
+                <div className="-mt-2 grid grid-cols-1 gap-1 rounded-xl bg-mint-400/[0.07] p-3 text-[13px] ring-1 ring-mint-400/20">
                   <span className="font-semibold text-mint-200">{p.trial!.days} days free</span>
                   <span className="text-white/65">
                     {cycle === "month" && p.introReady
@@ -116,7 +116,7 @@ export function PricingTable({
                   <span className="text-[11.5px] text-white/45">Free AI writing every day of the trial. Card required; cancel before day {p.trial!.days} and you pay nothing.</span>
                 </div>
               )}
-              <ul className="grid flex-1 gap-2 text-sm text-white/75">
+              <ul className="grid grid-cols-1 flex-1 gap-2 text-sm text-white/75">
                 {p.highlights.map((h) => (
                   <li key={h} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-mint-300" /> {h}</li>
                 ))}
@@ -139,7 +139,7 @@ export function PricingTable({
         })}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="What credits buy" subtitle="Credits pay for AI-written content. Posting, scheduling, analytics and safety checks never use credits." />
           <div className="overflow-x-auto">
@@ -155,7 +155,7 @@ export function PricingTable({
         </Card>
         <Card>
           <CardHeader title="How the price compares" subtitle="Entry plans of popular tools (2026 list prices). Most cover only scheduling or only video." />
-          <div className="grid gap-2.5 p-5">
+          <div className="grid grid-cols-1 gap-2.5 p-5">
             {[...COMPETITORS, ["Ghost Post Creator", 12] as [string, number], ["Ghost Post Pro", 29] as [string, number]]
               .sort((a, b) => a[1] - b[1])
               .map(([n, pr]) => (

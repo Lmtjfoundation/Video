@@ -73,7 +73,7 @@ export default function MovieStudio() {
             : "Movie Studio isn't switched on yet. The app's owner needs to connect Google Gemini."}
         </div>
       )}
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         <CharactersCard lib={lib} admin={admin} creditsLeft={status?.me.creditsLeft} onChange={() => { load(); refresh(); }} />
         <MovieCard lib={lib} admin={admin} creditsLeft={status?.me.creditsLeft} />
       </div>
@@ -81,7 +81,7 @@ export default function MovieStudio() {
         <CardHeader title="Your AI videos" subtitle="Open one to watch the render, edit the caption, schedule it or post it." icon={<Film className="h-4 w-4" />} />
         <div className="p-5">
           {videos.length ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {videos.map((p) => (
                 <Link key={p.id} href={`/post/${p.id}`} className="rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.06] transition hover:bg-white/[0.06]">
                   <div className="mb-2 flex flex-wrap items-center gap-1.5">
@@ -172,7 +172,7 @@ function CharactersCard({ lib, admin, creditsLeft, onChange }: { lib: Library | 
   return (
     <Card>
       <CardHeader title="Characters" subtitle="Made once, the same in every scene: each character's portrait guides every picture they appear in." icon={<Users className="h-4 w-4" />} />
-      <div className="grid gap-5 p-5">
+      <div className="grid grid-cols-1 gap-5 p-5">
         {lib?.characters.length ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {lib.characters.map((c) => (
@@ -195,9 +195,9 @@ function CharactersCard({ lib, admin, creditsLeft, onChange }: { lib: Library | 
           <Empty icon={<UserRound className="h-5 w-5" />} title="No characters yet" body="Upload a photo (of you, a pet, a toy, or anyone who said yes) or describe someone new." />
         )}
 
-        <div className="grid gap-4 rounded-xl bg-white/[0.02] p-4 ring-1 ring-white/[0.06]">
+        <div className="grid grid-cols-1 gap-4 rounded-xl bg-white/[0.02] p-4 ring-1 ring-white/[0.06]">
           <p className="text-sm font-medium text-white">New character</p>
-          <div className="grid gap-4 sm:grid-cols-[120px_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[120px_minmax(0,1fr)]">
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
@@ -213,7 +213,7 @@ function CharactersCard({ lib, admin, creditsLeft, onChange }: { lib: Library | 
               )}
             </button>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <Field label="Name">
                 <Input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder="e.g. Maya" />
               </Field>
@@ -345,7 +345,7 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
         subtitle={costLine(admin, creditsLeft, `about ${est.low}–${est.high} credits${renderNow ? "" : ` (script only: a few credits now, the rest when you render)`}`)}
         icon={<Clapperboard className="h-4 w-4" />}
       />
-      <div className="grid gap-4 p-5">
+      <div className="grid grid-cols-1 gap-4 p-5">
         <div className="inline-flex w-fit rounded-xl bg-white/[0.04] p-1 ring-1 ring-white/[0.06]">
           {(["movie", "explainer"] as const).map((k) => (
             <button key={k} onClick={() => setKind(k)} className={cn("rounded-lg px-4 py-1.5 text-sm transition", kind === k ? "bg-white/[0.1] text-white" : "text-white/55 hover:text-white")}>
@@ -379,7 +379,7 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
             <p className="text-xs text-white/45">No characters yet. Create some on the left, or go without: scenes will show places, objects and anonymous figures.</p>
           )}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Art style">
             <Select value={look || firstLook} onChange={(e) => setLook(e.target.value)}>
               <LookOptions lib={lib} extra={[firstLook, ...chars.map((c) => c.look)]} />

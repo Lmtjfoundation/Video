@@ -194,7 +194,7 @@ export default function PostToProfile() {
         <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-white/55">{post.hook}</p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,420px)_1fr]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,420px)_1fr]">
         {/* Media */}
         <Card className="self-start overflow-hidden p-0">
           {media?.kind === "video" ? (
@@ -204,7 +204,7 @@ export default function PostToProfile() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={media.url} alt="" className="mx-auto block max-h-[62vh] w-full bg-black object-contain" />
           ) : (
-            <div className="grid min-h-[220px] place-items-center bg-gradient-to-br from-blue-500/10 via-transparent to-mint-400/10 p-6">
+            <div className="grid grid-cols-1 min-h-[220px] place-items-center bg-gradient-to-br from-blue-500/10 via-transparent to-mint-400/10 p-6">
               <p className="max-w-xs text-center text-[15px] font-medium leading-relaxed text-white/85">“{post.hook}”</p>
             </div>
           )}
@@ -220,7 +220,7 @@ export default function PostToProfile() {
         </Card>
 
         {/* Steps */}
-        <div className="grid content-start gap-4">
+        <div className="grid grid-cols-1 content-start gap-4">
           {posted ? (
             <Card className="p-5">
               <div className="flex items-start gap-3">
@@ -271,7 +271,7 @@ export default function PostToProfile() {
                   </div>
                 )}
                 {media && !shareable && !preparing ? (
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <a href={media.downloadUrl} className="block">
                       <Button variant="primary" size="lg" className="w-full"><Download className="h-4 w-4" /> Save {media.kind === "video" ? "video" : "image"}</Button>
                     </a>
@@ -321,7 +321,7 @@ export default function PostToProfile() {
           {waiting.length > 0 && (
             <Card className="p-4">
               <p className="mb-2 text-xs uppercase tracking-[0.16em] text-white/40">Also ready</p>
-              <ul className="grid gap-1">
+              <ul className="grid grid-cols-1 gap-1">
                 {waiting.slice(0, 5).map((w) => (
                   <li key={w.id}>
                     <Link href={`/post/${w.id}`} className="focus-ring flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/80 hover:bg-white/[0.04] hover:text-white">

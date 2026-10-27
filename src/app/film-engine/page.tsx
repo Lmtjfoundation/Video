@@ -144,12 +144,12 @@ export default function FilmEngine() {
             : "Full-motion filming isn't switched on yet (the app's owner needs to start Ghost Post's video engine). You can direct and film with the free engine now."}
         </div>
       )}
-      <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="grid content-start gap-5">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 content-start gap-5">
           <NewFilm data={data} admin={admin} onMade={(c) => { load().then(() => open(c)); refresh(); }} />
           <Card>
             <CardHeader title="Your films" icon={<Film className="h-4 w-4" />} />
-            <div className="grid gap-2 p-4">
+            <div className="grid grid-cols-1 gap-2 p-4">
               {data?.cuts.length ? (
                 data.cuts.map((c) => (
                   <button key={c.id} onClick={() => open(c)} className={cn("rounded-xl p-3 text-left ring-1 transition", openId === c.id ? "bg-mint-400/[0.08] ring-mint-400/30" : "bg-white/[0.03] ring-white/[0.06] hover:bg-white/[0.06]")}>
@@ -167,7 +167,7 @@ export default function FilmEngine() {
         </div>
 
         {draft && data ? (
-          <div className="grid content-start gap-5">
+          <div className="grid grid-cols-1 content-start gap-5">
             <Card>
               <CardHeader
                 title={<Input value={draft.title} onChange={(e) => edit({ title: e.target.value })} className="h-9 max-w-md text-base font-semibold" aria-label="Film title" />}
@@ -189,7 +189,7 @@ export default function FilmEngine() {
                   </div>
                 }
               />
-              <div className="grid gap-4 p-5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
                 <Field label="Logline"><Input value={draft.logline} onChange={(e) => edit({ logline: e.target.value })} placeholder="One sentence: who, what they want, what stands in the way." /></Field>
                 <Field label="Look and tone (every beat)"><Input value={draft.style} onChange={(e) => edit({ style: e.target.value })} placeholder="Photorealistic, anamorphic, teal and amber, rain-soaked nights" /></Field>
                 <Field label="Engine" hint={!engineReady ? "Needs a Replicate token (see above)." : undefined}>
@@ -237,7 +237,7 @@ export default function FilmEngine() {
 
             <Card>
               <CardHeader title="Edit room" subtitle="Joins every filmed beat in order at the film's frame, keeps each beat's sound, adds the score if chosen, and sets the loudness for social platforms (−14 LUFS)." icon={<Scissors className="h-4 w-4" />} />
-              <div className="grid gap-4 p-5">
+              <div className="grid grid-cols-1 gap-4 p-5">
                 <div className="flex flex-wrap items-center gap-3">
                   <Button variant="gold" loading={busy(draft.final)} disabled={!draft.segments.some((s) => s.clipMediaId)} onClick={() => act({ action: "assemble" }, "Cutting the film together…")}>
                     <Film className="h-4 w-4" /> {draft.final?.status === "done" ? "Re-cut the film" : "Make the film"}
@@ -246,9 +246,9 @@ export default function FilmEngine() {
                   {draft.final?.message && <span className="text-xs text-white/50">{draft.final.message}</span>}
                 </div>
                 {draft.finalUrl && (
-                  <div className="grid gap-3 md:grid-cols-[minmax(0,360px)_1fr]">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,360px)_1fr]">
                     <video src={draft.finalUrl} controls playsInline className={cn("w-full rounded-xl bg-black", draft.aspect === "9:16" ? "aspect-[9/16]" : "aspect-video")} />
-                    <div className="grid content-start gap-2 text-sm text-white/60">
+                    <div className="grid grid-cols-1 content-start gap-2 text-sm text-white/60">
                       <p>The film is saved in your Media Library, where you can attach it to posts and schedule it.</p>
                       <a href={`${draft.finalUrl}&dl=${encodeURIComponent(draft.title.replace(/[^\w-]+/g, "-"))}.mp4`}><Button variant="secondary"><Download className="h-4 w-4" /> Download MP4</Button></a>
                     </div>
@@ -300,7 +300,7 @@ function NewFilm({ data, admin, onMade }: { data: Data | null; admin: boolean; o
   return (
     <Card>
       <CardHeader title="New film" subtitle="The director breaks your story into beats of up to 30 seconds, each a timestamped shot list in camera language." icon={<Sparkles className="h-4 w-4" />} />
-      <div className="grid gap-3 p-4">
+      <div className="grid grid-cols-1 gap-3 p-4">
         <Field label="Title"><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="The Settlement" /></Field>
         {!!data?.films.length && (
           <Field label="From the Writers' Room">
@@ -383,7 +383,7 @@ function References({ draft, data, onChange }: { draft: Cut; data: Data; onChang
           </div>
         }
       />
-      <div className="grid gap-4 p-5">
+      <div className="grid grid-cols-1 gap-4 p-5">
         {picker === "cast" && (
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-7">
             {cast.length ? cast.map((c) => (
@@ -407,7 +407,7 @@ function References({ draft, data, onChange }: { draft: Cut; data: Data; onChang
           </div>
         )}
         {picker === "voice" && (
-          <div className="grid gap-2 sm:grid-cols-[160px_1fr_auto]">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_1fr_auto]">
             <Input value={who} onChange={(e) => setWho(e.target.value)} placeholder="Who (e.g. Tasha)" />
             <Input value={line} onChange={(e) => setLine(e.target.value)} placeholder="The line, as spoken: Where were you last night?" />
             <Button variant="primary" loading={voicing} disabled={line.trim().length < 2} onClick={voice}><AudioLines className="h-4 w-4" /> Voice it</Button>
@@ -455,7 +455,7 @@ function Thumb({ kind, url, name }: { kind: Kind; url: string | null; name: stri
   }
   if (kind === "video") return <video src={`${url}#t=0.1`} muted playsInline preload="metadata" className="aspect-square w-full object-cover" />;
   return (
-    <div className="grid aspect-square place-items-center bg-gradient-to-br from-gold-400/15 to-violet-500/10 p-2">
+    <div className="grid grid-cols-1 aspect-square place-items-center bg-gradient-to-br from-gold-400/15 to-violet-500/10 p-2">
       <audio src={url} controls preload="none" className="w-full" />
     </div>
   );
@@ -471,7 +471,7 @@ function Beat({ seg, index, count, engine, engineReady, costLabel, onEdit, onMov
   return (
     <Card>
       <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.06] px-5 py-3">
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-white/[0.06] text-xs font-semibold text-white/80">{index + 1}</span>
+        <span className="grid grid-cols-1 h-7 w-7 place-items-center rounded-full bg-white/[0.06] text-xs font-semibold text-white/80">{index + 1}</span>
         <Input value={seg.title} onChange={(e) => onEdit({ title: e.target.value })} className="h-8 max-w-xs flex-1" aria-label="Beat title" />
         <div className="flex items-center gap-1.5 text-xs text-white/50">
           <Input type="number" min={3} max={30} value={seg.seconds} onChange={(e) => onEdit({ seconds: Math.max(3, Math.min(30, Number(e.target.value) || 10)) })} className="h-8 w-16" aria-label="Seconds" /> s
@@ -483,8 +483,8 @@ function Beat({ seg, index, count, engine, engineReady, costLabel, onEdit, onMov
           <Button size="icon" variant="ghost" disabled={working} onClick={() => confirm("Remove this beat?") && onDelete()} aria-label="Remove beat"><Trash2 className="h-4 w-4" /></Button>
         </div>
       </div>
-      <div className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_240px]">
-        <div className="grid content-start gap-3">
+      <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="grid grid-cols-1 content-start gap-3">
           <Textarea
             rows={Math.min(12, Math.max(5, seg.shots.split("\n").length + 1))}
             value={seg.shots}
@@ -502,17 +502,17 @@ function Beat({ seg, index, count, engine, engineReady, costLabel, onEdit, onMov
             {!!seg.history?.length && <Button variant="ghost" disabled={working} onClick={onUndo}><Undo2 className="h-4 w-4" /> Earlier take</Button>}
           </div>
           {fixing && (
-            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
               <Input value={fix} onChange={(e) => setFix(e.target.value)} placeholder={engine === "seedance" ? "At 12–15s, make the phone screen glow blue and keep his hand still" : "Describe the change; the beat is re-filmed with it"} />
               <Button variant="gold" disabled={fix.trim().length < 4 || working} onClick={() => { onFilm(fix); setFixing(false); setFix(""); }}>Apply · {costLabel}</Button>
             </div>
           )}
         </div>
-        <div className="grid content-start">
+        <div className="grid grid-cols-1 content-start">
           {seg.clipUrl ? (
             <video key={seg.clipUrl} src={seg.clipUrl} controls playsInline className="aspect-[9/16] w-full rounded-xl bg-black object-contain" />
           ) : (
-            <div className="grid aspect-[9/16] place-items-center rounded-xl bg-white/[0.03] p-4 text-center text-xs text-white/35 ring-1 ring-white/[0.06]">{working ? "Filming… this takes a few minutes." : "The beat's footage appears here."}</div>
+            <div className="grid grid-cols-1 aspect-[9/16] place-items-center rounded-xl bg-white/[0.03] p-4 text-center text-xs text-white/35 ring-1 ring-white/[0.06]">{working ? "Filming… this takes a few minutes." : "The beat's footage appears here."}</div>
           )}
         </div>
       </div>
@@ -526,7 +526,7 @@ function NextBeat({ price, onBlank, onWrite }: { price: string; onBlank: () => v
   return (
     <Card>
       <CardHeader title="Extend the film" subtitle="The director writes the next beat, picking up from the exact last moment, or add a blank beat and write the shots yourself." icon={<Plus className="h-4 w-4" />} />
-      <div className="grid gap-2 p-5 sm:grid-cols-[1fr_auto_auto]">
+      <div className="grid grid-cols-1 gap-2 p-5 sm:grid-cols-[1fr_auto_auto]">
         <Input value={direction} onChange={(e) => setDirection(e.target.value)} placeholder="What happens next (optional): Dre watches from the car across the street" />
         <Button variant="primary" loading={busyNow} onClick={async () => { setBusy(true); await onWrite(direction); setDirection(""); setBusy(false); }}><Wand2 className="h-4 w-4" /> Write next beat · {price}</Button>
         <Button variant="secondary" onClick={onBlank}>Blank beat</Button>

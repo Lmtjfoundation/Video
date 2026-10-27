@@ -103,11 +103,11 @@ export function PostCard({
       {open && (
         <div className="border-t border-white/[0.06] px-4 pb-4 pt-4 sm:px-5">
           {editing ? (
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <Input value={draft.hook} onChange={(e) => setDraft({ ...draft, hook: e.target.value })} placeholder="Hook" />
               <Textarea value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} placeholder="Body" className="min-h-[120px]" />
               <Textarea value={draft.parts} onChange={(e) => setDraft({ ...draft, parts: e.target.value })} placeholder={post.kind === "video" ? "Narration — one block per scene, keep the [time] at the start" : "Thread parts / slides / script beats — separate with a blank line"} />
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Input value={draft.cta} onChange={(e) => setDraft({ ...draft, cta: e.target.value })} placeholder="Call to action" />
                 <Input value={draft.hashtags} onChange={(e) => setDraft({ ...draft, hashtags: e.target.value })} placeholder="hashtags separated by spaces" />
               </div>
@@ -139,7 +139,7 @@ export function PostCard({
               </div>
             </div>
           ) : post.kind === "video" && post.video ? (
-            <div className="grid gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <RenderPanel post={post} locked={locked} onChange={onChange} />
               <VideoPlanView plan={post.video} caption={renderPost(post, settings).join("\n")} />
             </div>
@@ -323,13 +323,13 @@ export function PostCard({
 function VideoPlanView({ plan, caption }: { plan: VideoPlan; caption: string }) {
   const words = plan.scenes.map((s) => s.narration).join(" ").split(/\s+/).filter(Boolean).length;
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge tone="violet">{VIDEO_LENGTHS[plan.length]?.label ?? "Video"}</Badge>
         <Badge>{VIDEO_STYLES[plan.style]}</Badge>
         <span className="text-xs text-white/45">{plan.scenes.length} scenes · {words} words · ≈{Math.round(words / 2.6)} s at a natural pace</span>
       </div>
-      <div className="grid gap-4 text-sm md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
         <div>
           <p className="font-medium text-white">Title options</p>
           <ol className="mt-1 list-decimal pl-5 text-white/75">{plan.titles.map((t) => <li key={t}>{t}</li>)}</ol>
@@ -356,7 +356,7 @@ function VideoPlanView({ plan, caption }: { plan: VideoPlan; caption: string }) 
           </tbody>
         </table>
       </div>
-      <div className="grid gap-3 text-sm text-white/75 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 text-sm text-white/75 md:grid-cols-2">
         <p><span className="font-medium text-white">Voice.</span> {plan.voice}</p>
         <p><span className="font-medium text-white">Music & sound.</span> {plan.music}</p>
       </div>
@@ -431,7 +431,7 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
 
   const r = info?.render ?? post.render;
   return (
-    <div className="grid gap-3 rounded-xl bg-violet-400/[0.05] p-4 ring-1 ring-violet-300/20">
+    <div className="grid grid-cols-1 gap-3 rounded-xl bg-violet-400/[0.05] p-4 ring-1 ring-violet-300/20">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-sm font-medium text-white">Finished video</p>
@@ -475,7 +475,7 @@ function RenderPanel({ post, locked, onChange }: { post: Post; locked: boolean; 
       )}
       {status === "failed" && <p className="text-xs text-red-300">Render failed: {r?.message}</p>}
       {status === "done" && info?.url && (
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <video src={info.url} controls playsInline preload="metadata" className={cn("max-h-[520px] rounded-lg bg-black ring-1 ring-white/10", post.video?.length === "long" ? "w-full" : "mx-auto aspect-[9/16]")} />
           <p className="text-xs text-white/50">{r?.message} · attached to this post — Post now or schedule it and it uploads automatically.</p>
           <a href={info.url} download className="text-xs text-sky-300 hover:underline">Download MP4</a>

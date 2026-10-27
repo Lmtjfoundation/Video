@@ -13,7 +13,7 @@ export default function Dashboard() {
 
   if (!status) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="glass h-32 animate-pulse" />
         ))}
@@ -59,7 +59,7 @@ export default function Dashboard() {
       {readyForYouCount > 0 && (
         <Card className="mb-6 overflow-hidden border-gold-400/25 p-0">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold-400/[0.08] via-transparent to-blue-500/[0.07]" />
-          <div className="relative grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div className="relative grid grid-cols-1 gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <PlatformChip platform="facebook" />
@@ -67,7 +67,7 @@ export default function Dashboard() {
                   {readyForYouCount === 1 ? "1 post is ready for your Facebook profile" : `${readyForYouCount} posts are ready for your Facebook profile`}
                 </p>
               </div>
-              <ul className="mt-2 grid min-w-0 gap-1">
+              <ul className="mt-2 grid grid-cols-1 min-w-0 gap-1">
                 {readyForYou.slice(0, 3).map((r) => (
                   <li key={r.id} className="min-w-0">
                     <Link href={`/post/${r.id}`} className="flex min-w-0 items-center gap-2 text-[13px] text-white/65 hover:text-white">
@@ -88,8 +88,8 @@ export default function Dashboard() {
       {/* Control panel */}
       <Card className={cn("mb-6 overflow-hidden", settings.killSwitch && "border-red-400/30")}>
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-mint-400/[0.06] via-transparent to-violet-500/[0.06]" />
-        <div className="relative grid gap-5 p-5 md:grid-cols-[1fr_auto] md:items-center">
-          <div className="grid gap-4 sm:grid-cols-3">
+        <div className="relative grid grid-cols-1 gap-5 p-5 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Toggle
               icon={<Rocket className="h-4 w-4" />}
               title="Autopilot posting"
@@ -149,7 +149,7 @@ export default function Dashboard() {
             <TriangleAlert className="h-4 w-4" />
             <span className="text-sm font-semibold">Finish setup</span>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {setup.map((s) => (
               <div key={s.label} className={cn("rounded-xl p-3 ring-1", s.ok ? "bg-mint-400/[0.05] ring-mint-400/20" : "bg-white/[0.02] ring-white/10")}>
                 <div className="flex items-center gap-2 text-[13px] font-medium text-white">
@@ -167,7 +167,7 @@ export default function Dashboard() {
         </Card>
       )}
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Scheduled" value={stats.scheduled} sub={`${stats.drafts} drafts · ${stats.copyReady} copy-ready`} icon={<CalendarDays className="h-4 w-4" />} accent="violet" />
         <Stat label="Published today" value={stats.publishedToday} sub={stats.failed ? `${stats.failed} need attention` : "No failures"} icon={<Send className="h-4 w-4" />} accent={stats.failed ? "red" : "mint"} />
         <Stat
@@ -185,7 +185,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <Card className="mb-6 grid gap-4 p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+      <Card className="mb-6 grid grid-cols-1 gap-4 p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
         <UsageBar label={`AI credits · ${me.plan.name}`} used={Math.max(0, Math.max(me.plan.credits, me.creditsLeft) - me.creditsLeft)} total={Math.max(me.plan.credits, me.creditsLeft)} />
         <UsageBar label="Posts this month" used={me.user.usage.posts} total={me.plan.postsPerMonth} />
         <Link href="/plans"><Button size="sm" variant={me.creditsLeft < me.plan.credits * 0.15 ? "gold" : "secondary"}>{me.plan.id === "unlimited" ? "Plan & billing" : "Upgrade"}</Button></Link>
@@ -196,7 +196,7 @@ export default function Dashboard() {
           <Link href="/studio"><Button size="sm">Review in Content Studio</Button></Link>
         </Card>
       )}
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader
             title="Up next"

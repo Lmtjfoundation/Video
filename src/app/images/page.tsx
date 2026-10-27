@@ -88,10 +88,10 @@ export default function ImageStudio() {
           Pictures need Ghost Post&apos;s own engine. The admin connects it in Admin → App settings → Integrations → Ghost Post Video Engine.
         </Card>
       )}
-      <div className="grid gap-6 xl:grid-cols-[400px_1fr]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[400px_1fr]">
         <Card className="h-fit xl:sticky xl:top-10">
           <CardHeader title="Make a picture" subtitle={m.text} icon={<ImagePlus className="h-4 w-4" />} action={data?.engine === "own" ? <Badge tone="mint">Ghost Post engine</Badge> : undefined} />
-          <div className="grid gap-4 p-5">
+          <div className="grid grid-cols-1 gap-4 p-5">
             <div className="grid grid-cols-4 gap-1.5">
               {MODES.map((x) => (
                 <button
@@ -186,9 +186,9 @@ export default function ImageStudio() {
                   </Field>
                 )}
                 {tool === "angle" && (
-                  <div className="grid gap-3 rounded-xl bg-white/[0.03] p-3 text-xs text-white/70">
-                    <label className="grid gap-1">Orbit left / right: {angle.rotate}°<input type="range" min={-90} max={90} step={5} value={angle.rotate} onChange={(e) => setAngle({ ...angle, rotate: Number(e.target.value) })} className="accent-mint-400" /></label>
-                    <label className="grid gap-1">Look up / down: {angle.tilt}°<input type="range" min={-60} max={60} step={5} value={angle.tilt} onChange={(e) => setAngle({ ...angle, tilt: Number(e.target.value) })} className="accent-mint-400" /></label>
+                  <div className="grid grid-cols-1 gap-3 rounded-xl bg-white/[0.03] p-3 text-xs text-white/70">
+                    <label className="grid grid-cols-1 gap-1">Orbit left / right: {angle.rotate}°<input type="range" min={-90} max={90} step={5} value={angle.rotate} onChange={(e) => setAngle({ ...angle, rotate: Number(e.target.value) })} className="accent-mint-400" /></label>
+                    <label className="grid grid-cols-1 gap-1">Look up / down: {angle.tilt}°<input type="range" min={-60} max={60} step={5} value={angle.tilt} onChange={(e) => setAngle({ ...angle, tilt: Number(e.target.value) })} className="accent-mint-400" /></label>
                     <div className="grid grid-cols-3 gap-1.5">
                       {(["wide", "normal", "close"] as const).map((l) => <button key={l} onClick={() => setAngle({ ...angle, lens: l })} className={cn("rounded-lg py-1.5", angle.lens === l ? "bg-mint-400/20 text-mint-100" : "bg-white/5")}>{l === "wide" ? "Wider" : l === "close" ? "Closer" : "Same"}</button>)}
                     </div>

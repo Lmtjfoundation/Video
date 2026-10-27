@@ -81,6 +81,7 @@ async function listFiles(dir = dataDir(), rel = ""): Promise<{ path: string; siz
   for (const e of entries) {
     const r = rel ? `${rel}/${e.name}` : e.name;
     if (!rel && (SKIP.has(e.name) || e.name.startsWith(".migrate") || e.name === "app.env")) continue;
+    if (/\.(tmp|part|incoming)$/.test(e.name)) continue; // half-written files
     if (e.isDirectory()) out.push(...(await listFiles(dir, r)));
     else if (e.isFile()) out.push({ path: r, size: (await fs.stat(path.join(dir, r))).size });
   }
@@ -171,7 +172,8 @@ export async function importFrom(from: string, code: string, self: string, fetch
     let bytes = 0;
     await writeStatus({ state: "copying", copied, total: files.length, bytes });
     for (const f of files) {
-      const dest = safeDataPath(f.path);
+      // The database takes its place when the server restarts (see LocalBackend.load in db.ts).
+      const dest = safeDataPath(f.path === "db.json" ? "db.json.incoming" : f.path);
       await fs.mkdir(path.dirname(dest), { recursive: true });
       const r = await fetcher(q(`file?path=${encodeURIComponent(f.path)}`), { cache: "no-store" });
       if (!r.ok || !r.body) throw new Error(`Couldn't copy ${f.path} (${r.status}).`);

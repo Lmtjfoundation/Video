@@ -78,10 +78,10 @@ export default function ExplainPage() {
   return (
     <div>
       <PageHeader title="Explain" subtitle="Paste any text — an article, a contract clause, a school lesson, a policy — and get a clear explanation you can read, post, or turn into an explainer video." />
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <Card>
           <CardHeader title="Text to explain" subtitle={admin ? "Owner account · no credits used" : `${status ? `${status.me.creditsLeft.toLocaleString()} credits left · ` : ""}this costs ${cost} credit${cost > 1 ? "s" : ""}`} icon={<Lightbulb className="h-4 w-4" />} />
-          <div className="grid gap-4 p-5">
+          <div className="grid grid-cols-1 gap-4 p-5">
             <Field label="Text" hint={`${text.length.toLocaleString()} / ${MAX_CHARS.toLocaleString()} characters`}>
               <Textarea rows={14} maxLength={MAX_CHARS} value={text} onChange={(ev) => setText(ev.target.value)} placeholder="Paste the text here…" />
             </Field>
@@ -106,18 +106,18 @@ export default function ExplainPage() {
           />
           <div className="p-5">
             {e ? (
-              <div className="grid gap-5 text-[14px] leading-relaxed text-white/80">
+              <div className="grid grid-cols-1 gap-5 text-[14px] leading-relaxed text-white/80">
                 {e.summary && <p className="rounded-xl bg-mint-400/[0.07] p-4 text-[15px] text-white ring-1 ring-mint-300/20">{e.summary}</p>}
-                <div className="grid gap-3">{e.explanation.map((p, i) => <p key={i}>{p}</p>)}</div>
+                <div className="grid grid-cols-1 gap-3">{e.explanation.map((p, i) => <p key={i}>{p}</p>)}</div>
                 {e.keyPoints.length > 0 && (
                   <Section title="Key points">
-                    <ul className="grid list-disc gap-1.5 pl-5">{e.keyPoints.map((k, i) => <li key={i}>{k}</li>)}</ul>
+                    <ul className="grid grid-cols-1 list-disc gap-1.5 pl-5">{e.keyPoints.map((k, i) => <li key={i}>{k}</li>)}</ul>
                   </Section>
                 )}
                 {e.example && <Section title="Example"><p>{e.example}</p></Section>}
                 {e.glossary.length > 0 && (
                   <Section title="Terms">
-                    <dl className="grid gap-2">
+                    <dl className="grid grid-cols-1 gap-2">
                       {e.glossary.map((g) => (
                         <div key={g.term}>
                           <dt className="font-medium text-white">{g.term}</dt>
@@ -129,10 +129,10 @@ export default function ExplainPage() {
                 )}
                 {e.caveats.length > 0 && (
                   <Section title="Worth checking">
-                    <ul className="grid list-disc gap-1.5 pl-5 text-gold-300/90">{e.caveats.map((c, i) => <li key={i}>{c}</li>)}</ul>
+                    <ul className="grid grid-cols-1 list-disc gap-1.5 pl-5 text-gold-300/90">{e.caveats.map((c, i) => <li key={i}>{c}</li>)}</ul>
                   </Section>
                 )}
-                <div className="grid gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
+                <div className="grid grid-cols-1 gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
                   <Field label="Save as a post for">
                     <Select value={platform} onChange={(ev) => setPlatform(ev.target.value as Platform)}>
                       {PLATFORMS.map((p) => <option key={p} value={p}>{PLATFORM_SPECS[p].name}</option>)}

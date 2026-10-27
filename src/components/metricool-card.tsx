@@ -89,7 +89,7 @@ export function MetricoolCard({ status, credentials }: { status?: MetricoolStatu
   }
 
   const form = (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-1 gap-3">
       <Field label="Metricool API token" hint="Account settings → API">
         <Input type="password" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" spellCheck={false} placeholder={connected ? "•••••••• (leave blank to keep)" : "Paste your API token"} />
       </Field>
@@ -116,10 +116,10 @@ export function MetricoolCard({ status, credentials }: { status?: MetricoolStatu
   return (
     <Card className="mb-5 overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.07] via-transparent to-mint-400/[0.06]" />
-      <div className="relative grid gap-4 p-5">
+      <div className="relative grid grid-cols-1 gap-4 p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-400 to-mint-400 text-ink-950 shadow-glow">
+            <div className="grid grid-cols-1 h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-400 to-mint-400 text-ink-950 shadow-glow">
               <Zap className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -136,7 +136,7 @@ export function MetricoolCard({ status, credentials }: { status?: MetricoolStatu
 
         {!connected && (
           <>
-            <ol className="grid gap-1.5 text-[13px] leading-relaxed text-white/65">
+            <ol className="grid grid-cols-1 gap-1.5 text-[13px] leading-relaxed text-white/65">
               <li><b className="text-white/90">1.</b> In Metricool, open <b className="text-white/90">Account settings → API</b> and copy your token (Metricool's Advanced or Custom plan).</li>
               <li><b className="text-white/90">2.</b> Open your brand in Metricool and copy the link in the address bar — it has your brand and user IDs.</li>
             </ol>
@@ -146,7 +146,7 @@ export function MetricoolCard({ status, credentials }: { status?: MetricoolStatu
 
         {connected && (
           <>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {MC.map((p) => {
                 const found = status!.found.includes(p);
                 const on = status!.use[p];

@@ -43,10 +43,10 @@ export function TemplatePanel() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <Card>
         <CardHeader title="Video templates" subtitle="Titles, lower thirds, end screens and more, with your words and colors. Free: drawn on Ghost Post's server." icon={<Clapperboard className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {TEMPLATE_DEFS.map((d) => (
               <button key={d.id} onClick={() => pick(d)} className={cn("rounded-xl border px-3 py-2.5 text-left", def.id === d.id ? "border-mint-400 bg-mint-400/10" : "border-white/10 hover:border-white/25")}>
@@ -64,7 +64,7 @@ export function TemplatePanel() {
               )}
             </Field>
           ))}
-          <div className="grid gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
             <Field label="Shape">
               <Select value={aspect} onChange={(e) => setAspect(e.target.value)}>
                 <option value="9:16">9:16</option><option value="16:9">16:9</option><option value="1:1">1:1</option>
@@ -93,7 +93,7 @@ export function TemplatePanel() {
       </Card>
       <Card className="h-fit">
         <CardHeader title="Result" />
-        <div className="grid gap-3 p-4">
+        <div className="grid grid-cols-1 gap-3 p-4">
           {!out && <div className="text-sm text-white/50">Your render plays here and is saved to the Media Library.</div>}
           {out && (
             <>

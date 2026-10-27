@@ -32,7 +32,7 @@ const TABS: { id: Tab; label: string; icon: typeof Music; text: string }[] = [
 
 export default function CreatePage() {
   return (
-    <Suspense fallback={<div className="grid place-items-center py-20"><Spinner /></div>}>
+    <Suspense fallback={<div className="grid grid-cols-1 place-items-center py-20"><Spinner /></div>}>
       <AiStudio />
     </Suspense>
   );
@@ -143,10 +143,10 @@ function GenForm({ kind, info }: { kind: "music" | "sfx" | "footage"; info: Info
   const toggle = (list: string[], set: (v: string[]) => void, t: string) => set(list.includes(t) ? list.filter((x) => x !== t) : [...list, t].slice(0, 3));
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <Card>
         <CardHeader title={`Make ${kind === "music" ? "music" : kind === "sfx" ? "a sound effect" : "footage"}`} subtitle={meta.text} icon={<meta.icon className="h-4 w-4" />} action={<Badge tone="mint">Ghost Post engine</Badge>} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           {kind === "footage" && preset?.needsSubject && (
             <Field label="Subject" hint="Goes into the preset">
               <Input value={subject} placeholder="e.g. a downtown Houston skyline" onChange={(e) => { setSubject(e.target.value); setPrompt(fillSubject(preset, e.target.value)); }} />
@@ -173,7 +173,7 @@ function GenForm({ kind, info }: { kind: "music" | "sfx" | "footage"; info: Info
                 <div className="mb-1.5 text-xs uppercase tracking-wide text-white/40">Mood (up to 3)</div>
                 <div className="flex flex-wrap gap-1.5">{MOODS.map((m) => <button key={m} className={chip(moods.includes(m))} onClick={() => toggle(moods, setMoods, m)}>{m}</button>)}</div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Field label={`Length: ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`}>
                   <input type="range" min={10} max={240} step={5} value={seconds} onChange={(e) => setSeconds(Number(e.target.value))} className="w-full accent-mint-400" />
                 </Field>
@@ -196,7 +196,7 @@ function GenForm({ kind, info }: { kind: "music" | "sfx" | "footage"; info: Info
           )}
 
           {kind === "sfx" && (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label={`Length: ${seconds.toFixed(1)} s`}>
                 <input type="range" min={0.5} max={30} step={0.5} value={seconds} onChange={(e) => setSeconds(Number(e.target.value))} className="w-full accent-mint-400" />
               </Field>
@@ -210,7 +210,7 @@ function GenForm({ kind, info }: { kind: "music" | "sfx" | "footage"; info: Info
           )}
 
           {kind === "footage" && (
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Field label="Shape">
                 <Select value={aspect} onChange={(e) => setAspect(e.target.value)}>
                   <option value="16:9">16:9 landscape</option>
@@ -253,7 +253,7 @@ function GenForm({ kind, info }: { kind: "music" | "sfx" | "footage"; info: Info
 
       <Card className="h-fit xl:sticky xl:top-10">
         <CardHeader title="Presets" subtitle="Start from a proven recipe, then change anything." icon={<Sparkles className="h-4 w-4" />} />
-        <div className="grid gap-2 p-4">
+        <div className="grid grid-cols-1 gap-2 p-4">
           {presetsFor(kind).map((p) => (
             <button key={p.id} onClick={() => usePreset(p)} className={cn("rounded-xl border px-3 py-2.5 text-left transition", preset?.id === p.id ? "border-mint-400 bg-mint-400/10" : "border-white/10 hover:border-white/25")}>
               <div className="text-sm font-medium">{p.title}</div>
@@ -308,14 +308,14 @@ function VoiceForm() {
   const credits = per !== undefined ? per * Math.max(1, Math.ceil(text.length / 1000)) : null;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <Card>
         <CardHeader title="Voiceover" subtitle="Natural narration from your script in 23 languages, in a stock voice or one of My Voices. Saved to your Media Library." icon={<Mic className="h-4 w-4" />} />
-        <div className="grid gap-4 p-5">
+        <div className="grid grid-cols-1 gap-4 p-5">
           <Field label="Script" hint={v ? `${text.length.toLocaleString()} / ${v.maxChars.toLocaleString()} characters` : undefined}>
             <Textarea rows={8} maxLength={v?.maxChars ?? 5000} value={text} onChange={(e) => setText(e.target.value)} placeholder="Every marriage has a settlement. Most people just never see the bill." />
           </Field>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Field label="Language">
               <Select value={language} onChange={(e) => setLanguage(e.target.value)}>
                 {Object.entries(SPEECH_LANGUAGES).map(([k, n]) => <option key={k} value={k}>{n}</option>)}
@@ -347,7 +347,7 @@ function VoiceForm() {
       </Card>
       <Card className="h-fit">
         <CardHeader title="Made just now" />
-        <div className="grid gap-3 p-4">
+        <div className="grid grid-cols-1 gap-3 p-4">
           {!made.length && <div className="text-sm text-white/50">Your voiceovers play here, and stay in the Media Library.</div>}
           {made.map((m) => (
             <div key={m.id}>

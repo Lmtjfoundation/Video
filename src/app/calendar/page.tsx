@@ -147,10 +147,10 @@ export default function CalendarPage() {
       )}
 
       {showTools && settings && (
-        <Card className="mb-5 grid gap-5 p-5 lg:grid-cols-2">
+        <Card className="mb-5 grid grid-cols-1 gap-5 p-5 lg:grid-cols-2">
           <div>
             <p className="mb-3 text-sm font-semibold text-white">Current slots · {settings.postsPerDay}/day</p>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {PLATFORMS.filter((p) => settings.platforms[p]).map((p) => (
                 <div key={p} className="flex items-center gap-3">
                   <PlatformChip platform={p} />
@@ -164,7 +164,7 @@ export default function CalendarPage() {
             </div>
             <p className="mt-3 text-[11px] text-white/40">Defaults are common starting points, not guarantees. Edit them in Settings, or let the AI propose a plan.</p>
           </div>
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <Field label="Audience notes for the AI plan" hint="optional">
               <Textarea value={planNotes} onChange={(e) => setPlanNotes(e.target.value)} placeholder="e.g. mostly US East Coast professionals, active before work and late evening" className="min-h-[70px]" />
             </Field>
@@ -261,7 +261,7 @@ export default function CalendarPage() {
                     </button>
                   ))}
                   {!list.length && !past && (
-                    <div className="grid flex-1 place-items-center rounded-xl border border-dashed border-white/[0.06] text-[11px] text-white/25">Drop here</div>
+                    <div className="grid grid-cols-1 flex-1 place-items-center rounded-xl border border-dashed border-white/[0.06] text-[11px] text-white/25">Drop here</div>
                   )}
                 </div>
               </div>
@@ -279,7 +279,7 @@ export default function CalendarPage() {
       </div>
 
       {selected && settings && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-ink-950/80 p-4 backdrop-blur-sm" onClick={() => setSelected(null)}>
+        <div className="fixed inset-0 z-50 grid grid-cols-1 place-items-center bg-ink-950/80 p-4 backdrop-blur-sm" onClick={() => setSelected(null)}>
           <div className="relative max-h-[90vh] w-full max-w-2xl overflow-auto" onClick={(e) => e.stopPropagation()}>
             <button className="focus-ring absolute right-3 top-3 z-10 rounded-lg p-1.5 text-white/50 hover:text-white" onClick={() => setSelected(null)} aria-label="Close">
               <X className="h-4 w-4" />

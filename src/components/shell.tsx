@@ -45,7 +45,7 @@ const BARE_ROUTES = ["/login", "/signup", "/pricing", "/offline", "/terms", "/pr
 function Logo({ compact }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
+      <div className="relative grid grid-cols-1 h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500 shadow-glow">
         <Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} />
       </div>
       {!compact && (
@@ -72,7 +72,7 @@ function AccountCard() {
   const used = meterTotal - me.creditsLeft;
   const state = settings.killSwitch ? ["bg-red-400", "Kill switch on"] : settings.autopilot ? ["bg-mint-400", "Autopilot live"] : ["bg-gold-400", "Manual mode"];
   return (
-    <div className="grid gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
+    <div className="grid grid-cols-1 gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
       <div className="flex items-center gap-2 text-[12px] text-white/70">
         <span className={cn("h-2 w-2 rounded-full", state[0], settings.autopilot && !settings.killSwitch && "animate-pulseDot")} />
         {state[1]}

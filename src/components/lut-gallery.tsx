@@ -93,7 +93,7 @@ export function LutGallery({ canDownload }: { canDownload: boolean }) {
 
   const shown = GRADES.filter((g) => !group || g.group === group);
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
       <div>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Select className="w-auto" value={src} onChange={(e) => setSrc(e.target.value)}>
@@ -141,7 +141,7 @@ export function LutGallery({ canDownload }: { canDownload: boolean }) {
             <span className="absolute right-2 top-2 rounded bg-black/60 px-2 py-0.5 text-xs">{pick.name}</span>
           </div>
         )}
-        <div className="grid gap-3 p-4">
+        <div className="grid grid-cols-1 gap-3 p-4">
           <input type="range" min={0} max={100} value={split} onChange={(e) => setSplit(Number(e.target.value))} className="w-full accent-mint-400" aria-label="Before and after" />
           <div>
             <div className="font-semibold">{pick.name}</div>

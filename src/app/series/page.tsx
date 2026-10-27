@@ -76,11 +76,11 @@ export default function SeriesStudio() {
   return (
     <>
       <PageHeader title="Series Studio" subtitle="Plan a whole series once, with a story bible, a recurring cast and every episode outlined. Then make each episode with the same characters and continuity." />
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <div className="grid h-fit gap-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[380px_1fr]">
+        <div className="grid grid-cols-1 h-fit gap-6">
           <Card>
             <CardHeader title="New series" subtitle="A sentence is enough, or paste a full story bible." icon={<BookOpen className="h-4 w-4" />} />
-            <div className="grid gap-4 p-5">
+            <div className="grid grid-cols-1 gap-4 p-5">
               <Field label="The story" hint={`${premise.length.toLocaleString()} / 20,000`}>
                 <Textarea value={premise} onChange={(e) => setPremise(e.target.value.slice(0, 20000))} placeholder="e.g. A Houston family drama: Tasha pulled Marcus out of the streets twelve years ago. Now she wants something of her own, and his old partner Dre is using her to drain them…" className="min-h-[160px]" />
               </Field>
@@ -188,10 +188,10 @@ function SeriesView({ s, onChange }: { s: Series; onChange: () => void }) {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <Card>
         <CardHeader title={s.title} subtitle={s.logline} icon={<BookOpen className="h-4 w-4" />} action={<Button size="sm" variant="ghost" onClick={remove}><Trash2 className="h-3.5 w-3.5" /></Button>} />
-        <div className="grid gap-3 p-5">
+        <div className="grid grid-cols-1 gap-3 p-5">
           <Field label="Story bible" hint="every episode follows this">
             <Textarea value={bible} onChange={(e) => setBible(e.target.value.slice(0, 6000))} className="min-h-[160px] text-[13px]" />
           </Field>
@@ -239,7 +239,7 @@ function EpisodeCard({ s, e, making, disabled, onMake, onSaved }: { s: Series; e
         </div>
       </div>
       {edit ? (
-        <div className="mt-3 grid gap-3">
+        <div className="mt-3 grid grid-cols-1 gap-3">
           <Textarea value={outline} onChange={(x) => setOutline(x.target.value.slice(0, 3000))} className="min-h-[140px] text-[13px]" />
           <Field label="Ends on">
             <Input value={hook} onChange={(x) => setHook(x.target.value.slice(0, 400))} />

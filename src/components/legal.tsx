@@ -28,7 +28,7 @@ export function LegalShell({ title, intro, children }: { title: string; intro?: 
     <div className="relative z-10 mx-auto max-w-3xl px-5 py-10">
       <header className="mb-10 flex items-center justify-between gap-4">
         <Link href="/pricing" className="flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500">
+          <span className="grid grid-cols-1 h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500">
             <Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} />
           </span>
           <span className="font-semibold text-white">Ghost Post</span>
