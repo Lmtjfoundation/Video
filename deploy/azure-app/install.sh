@@ -191,7 +191,7 @@ if [ "$WRITER" = 1 ]; then
   # Only the chat endpoint, and only with the key: the writer's other controls stay on this machine.
   WKEY="$(sed -n 's/^OWN_WRITER_KEY=//p' "$ENV_DIR/env")"
   umask 027
-  printf 'writer.%s {\n  @key {\n    header Authorization "Bearer %s"\n    path /v1/chat/completions /v1/models\n  }\n  handle @key {\n    reverse_proxy 127.0.0.1:11434 {\n      transport http {\n        read_timeout 15m\n      }\n    }\n  }\n  handle {\n    respond "Unauthorized" 401\n  }\n}\n' "${DOMAIN#ghostpost.}" "$WKEY" > /etc/caddy/sites/writer.caddy
+  printf 'writer.%s {\n  @key {\n    header Authorization "Bearer %s"\n    path /v1/chat/completions /v1/models\n  }\n  handle @key {\n    reverse_proxy 127.0.0.1:11434 {\n      header_up Host 127.0.0.1:11434\n      transport http {\n        read_timeout 15m\n      }\n    }\n  }\n  handle {\n    respond "Unauthorized" 401\n  }\n}\n' "${DOMAIN#ghostpost.}" "$WKEY" > /etc/caddy/sites/writer.caddy
   umask 022
   chgrp caddy /etc/caddy/sites/writer.caddy
 fi
