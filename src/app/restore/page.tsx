@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowRightLeft, CheckCircle2, CircleAlert } from "lucide-react";
 import { Button, Card, CardHeader, Field, Input } from "@/components/ui";
 
-type Status = { state: "idle" | "copying" | "done" | "failed"; copied: number; total: number; bytes: number; message?: string; from?: string; error?: string };
+type Status = { state: "idle" | "copying" | "done" | "failed"; copied: number; total: number; bytes: number; message?: string; from?: string; error?: string; hasAccounts?: boolean; signedInOwner?: boolean };
 
 const mb = (b: number) => `${(b / 1024 / 1024).toFixed(b > 100 * 1024 * 1024 ? 0 : 1)} MB`;
 
@@ -38,7 +38,7 @@ export default function RestorePage() {
     setBusy(true);
     setError("");
     try {
-      const r = await fetch("/api/migrate/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+      const r = await fetch("/api/migrate/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, replace: !!s?.hasAccounts }) });
       const j = (await r.json().catch(() => ({}))) as { error?: string };
       if (!r.ok) setError(j.error || "The move couldn't start.");
     } finally {
@@ -73,9 +73,21 @@ export default function RestorePage() {
                 <li>Paste the code here within 15 minutes.</li>
               </ol>
               {s?.state === "failed" && s.message && <p className="flex items-start gap-2 text-red-300"><CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> The last try stopped: {s.message}</p>}
+              {s?.hasAccounts && !s.signedInOwner && (
+                <p className="rounded-xl bg-gold-300/10 p-3 text-white/80 ring-1 ring-gold-300/30">
+                  This server already has an account. <a href="/login?next=%2Frestore" className="text-mint-300 underline">Sign in here as its owner</a>, then come back to move. Your old server's data replaces what's here, and a backup is kept.
+                </p>
+              )}
+              {s?.hasAccounts && s.signedInOwner && (
+                <p className="rounded-xl bg-gold-300/10 p-3 text-white/80 ring-1 ring-gold-300/30">
+                  This server already has some data. Moving replaces it with everything from your old server. What's here now is kept in a backup on the server.
+                </p>
+              )}
               <Field label="Move code"><Input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck={false} placeholder="Paste the code from the old server" /></Field>
               {error && <p className="text-red-300">{error}</p>}
-              <Button variant="primary" loading={busy} disabled={code.trim().length < 20 || !!s?.error} onClick={start}>Move everything here</Button>
+              <Button variant="primary" loading={busy} disabled={code.trim().length < 20 || !!s?.error || (!!s?.hasAccounts && !s.signedInOwner)} onClick={start}>
+                {s?.hasAccounts ? "Replace and move everything here" : "Move everything here"}
+              </Button>
             </>
           )}
         </div>

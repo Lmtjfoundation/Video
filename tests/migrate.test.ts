@@ -44,4 +44,15 @@ describe("moving to a new server", () => {
     const { envLine } = await import("@/lib/migrate");
     expect(envLine("A", 'x"y\\z\nw')).toBe('A="x\\"y\\\\z\\nw"');
   });
+
+  it("sets the current data aside before a move replaces it, and never sends those backups on", async () => {
+    const m = await import("@/lib/migrate");
+    const { readdirSync } = await import("node:fs");
+    const kept = await m.backupBeforeMove(new Date("2026-10-28T23:00:00Z"));
+    expect(kept).toEqual(["db.json.before-move-2026-10-28T23-00-00-000Z", "uploads.before-move-2026-10-28T23-00-00-000Z"]);
+    expect(readdirSync(dir)).toEqual(expect.arrayContaining(kept));
+    const { code } = await m.createMigrateCode();
+    const man = await m.exportManifest(code);
+    expect(man.files.some((f) => f.path.includes("before-move"))).toBe(false);
+  });
 });

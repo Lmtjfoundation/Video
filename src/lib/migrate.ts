@@ -81,7 +81,7 @@ async function listFiles(dir = dataDir(), rel = ""): Promise<{ path: string; siz
   for (const e of entries) {
     const r = rel ? `${rel}/${e.name}` : e.name;
     if (!rel && (SKIP.has(e.name) || e.name.startsWith(".migrate") || e.name === "app.env")) continue;
-    if (/\.(tmp|part|incoming)$/.test(e.name)) continue; // half-written files
+    if (/\.(tmp|part|incoming)$/.test(e.name) || e.name.includes(".before-move-")) continue; // half-written files, set-aside backups
     if (e.isDirectory()) out.push(...(await listFiles(dir, r)));
     else if (e.isFile()) out.push({ path: r, size: (await fs.stat(path.join(dir, r))).size });
   }
@@ -140,6 +140,24 @@ export async function movedTo(): Promise<string | null> {
 }
 
 /* ---------------- New server ---------------- */
+
+/**
+ * Before a move replaces a server that already has data: its database and uploads are set aside (renamed, never
+ * deleted), so the owner can get them back. Returns the names used.
+ */
+export async function backupBeforeMove(now = new Date()) {
+  const stamp = now.toISOString().replace(/[:.]/g, "-");
+  const kept: string[] = [];
+  for (const name of ["db.json", "uploads"]) {
+    const from = path.join(dataDir(), name);
+    const to = `${from}.before-move-${stamp}`;
+    if (await fs.stat(from).catch(() => null)) {
+      await fs.cp(from, to, { recursive: true });
+      kept.push(path.basename(to));
+    }
+  }
+  return kept;
+}
 
 export type ImportStatus = { state: "idle" | "copying" | "done" | "failed"; copied: number; total: number; bytes: number; message?: string; at: number };
 const statusFile = () => path.join(dataDir(), ".migrate-status.json");
