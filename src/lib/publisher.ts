@@ -52,6 +52,21 @@ async function sendViaMetricool(mc: MetricoolConn, post: Post, texts: string[], 
   return metricoolPublish(mc, post.platform, post, texts, media, settings.timezone);
 }
 
+/** Whether `platform` is connected through the social connect service for the signed-in user. */
+async function uploadPostFor(platform: Post["platform"]) {
+  const up = await import("./upload-post");
+  if (!up.isUpPlatform(platform) || !(await up.uploadPostReady())) return false;
+  return (await up.connectedAccounts()).some((a) => a.platform === platform);
+}
+
+/** Posts through Upload-Post: the video (or the pictures) as public signed links it fetches itself. */
+async function sendViaUploadPost(post: Post, texts: string[], video: VideoFile | undefined, userId: string | null) {
+  const up = await import("./upload-post");
+  if (!up.isUpPlatform(post.platform)) throw new CopyReadyError("This platform can't post through the social connect service.");
+  const images = video ? [] : [...(userId && post.mediaIds?.length ? await imageUrls(userId, post.mediaIds) : []), ...(post.imageUrl && /^https:\/\//.test(post.imageUrl) ? [post.imageUrl] : [])];
+  return up.publishViaUploadPost(post.platform, post, texts, { video: video ? { url: video.url } : undefined, images: [...new Set(images)] });
+}
+
 /** Pictures and placement for Instagram / Facebook: every attached picture plus the image URL, and Reel / feed / Story. */
 async function publishOptions(post: Post, settings: Settings, userId: string | null): Promise<PublishOptions> {
   const images = userId && post.mediaIds?.length ? await imageUrls(userId, post.mediaIds) : [];
@@ -231,6 +246,8 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
   // An extra account on the network (post.account) always posts with its own sign-in, never through Metricool.
   const mc = can === true && !post.account ? await metricoolFor(post.platform) : null;
   const cred = can === true && !mc ? await withAccount(post.account, () => freshCredential(post.platform)) : null;
+  // Connected through the social connect service (Upload-Post) and not directly: post through it.
+  const up = can === true && !mc && !cred && !post.account ? await uploadPostFor(post.platform) : false;
   if (post.platform === "facebook" && cred && isProfileCred(cred)) {
     // Don't ask the person to post in the middle of the night: wait for quiet hours to end (Post now still works).
     const q = settings.quietHours;
@@ -241,7 +258,7 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
     if (cred.viaInstagram) return shareThroughInstagram(post, settings, userId, manual, video);
     return handOffToProfile(post, userId, manual);
   }
-  if (can !== true || (!cred && !mc)) {
+  if (can !== true || (!cred && !mc && !up)) {
     post.status = "copy_ready";
     post.error = can !== true ? can : post.account ? "The account picked for this post isn't connected anymore — choose another account on the post, or reconnect it on the Platforms tab." : "No account connected — copy and post manually, or connect it on the Platforms tab.";
     await savePost(post);
@@ -260,7 +277,11 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
   await savePost(post);
   try {
     const texts = renderPost(post, settings);
-    const res = mc ? await sendViaMetricool(mc, post, texts, video, userId, settings) : await adapter.publish(post, texts, cred!, video, await publishOptions(post, settings, userId));
+    const res = mc
+      ? await sendViaMetricool(mc, post, texts, video, userId, settings)
+      : up
+        ? await sendViaUploadPost(post, texts, video, userId)
+        : await adapter.publish(post, texts, cred!, video, await publishOptions(post, settings, userId));
     post.status = "published";
     post.publishedAt = nowIso();
     post.externalId = res.externalId;
@@ -271,7 +292,8 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
     if (userId) await usePostAllowance(userId, true);
     await recordAction(post.platform, "post");
     await clearStrikes(post.platform);
-    await log("info", "post", mc ? `Sent to Metricool, which publishes it in about 2 minutes — “${post.hook.slice(0, 80)}”` : `Published ${post.format} — “${post.hook.slice(0, 80)}”`, {
+    const how = mc ? "Sent to Metricool, which publishes it in about 2 minutes" : up ? "Sent through the social connect service, which publishes it in a few minutes" : `Published ${post.format}`;
+    await log("info", "post", `${how} — “${post.hook.slice(0, 80)}”`, {
       platform: post.platform,
       postId: post.id,
       url: res.url,
@@ -292,6 +314,8 @@ export async function publishOne(post: Post, settings: Settings, manual = false)
       post.status = "failed";
       post.error = mc
         ? `Metricool didn't accept the API token — reconnect Metricool on the Platforms tab. (${err.message.slice(0, 160)})`
+        : up
+          ? `Reconnect ${post.platform} on the Platforms tab (one tap). (${err.message.slice(0, 160)})`
         : `Authorization failed — reconnect ${post.platform} on the Platforms tab. (${err.message.slice(0, 160)})`;
       await log("error", "post", post.error, { platform: post.platform, postId: post.id });
     } else {
@@ -343,8 +367,35 @@ export async function autoPublish(post: Post, opts: { requireApproval?: boolean 
 }
 
 /** Cron entry: publish everything that's due. `user` (when given) gets one email for posts handed to their Facebook profile. */
+/**
+ * Posts sent through the social connect service finish on its side a few minutes later: fill in the post's link, or
+ * mark it failed with the network's reason. At most 10 a run, for 2 days after sending.
+ */
+export async function settleServiceSends(now = Date.now()) {
+  const waiting = (await listPosts())
+    .filter((p) => p.status === "published" && p.externalId?.startsWith("upload-post:") && !p.remoteSettled && now - new Date(p.publishedAt ?? 0).getTime() < 2 * 86_400_000)
+    .slice(0, 10);
+  if (!waiting.length) return;
+  const { checkSent } = await import("./upload-post");
+  for (const post of waiting) {
+    const r = await checkSent(post);
+    if (r.state === "pending") continue;
+    post.remoteSettled = true;
+    if (r.state === "done") {
+      if (r.url) post.externalUrl = r.url;
+    } else {
+      post.status = "failed";
+      post.error = `The network refused it: ${(r.error ?? "no reason given").slice(0, 300)}`;
+      await log("error", "post", post.error, { platform: post.platform, postId: post.id });
+    }
+    await savePost(post);
+  }
+}
+
 export async function runPublish(user?: User) {
   const settings = await getSettings();
+  // Only reads results of posts already sent, so it runs even with the kill switch or autopilot off.
+  await settleServiceSends().catch((e) => console.error("[upload-post] settle failed:", (e as Error).message));
   if (settings.killSwitch) return { ran: false, reason: "Kill switch on" };
   if (!settings.autopilot) return { ran: false, reason: "Autopilot off" };
 

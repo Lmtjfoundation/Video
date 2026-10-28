@@ -15,6 +15,8 @@ export interface OperatingCosts {
   storageNetworkMonthly: number;
   /** Domain, email and any other fixed monthly bills. */
   otherMonthly: number;
+  /** The social connect service's plan (Upload-Post: Basic $24, Professional $50, Advanced $147 a month). */
+  connectServiceMonthly: number;
   /** Engine VMs, dollars an hour while they run (they stop themselves when idle). */
   cpuEngineHourly: number;
   gpuEngineHourly: number;
@@ -27,6 +29,8 @@ export const DEFAULT_COSTS: OperatingCosts = {
   // Two P10 disks (app server and GPU engine) and two static IPs.
   storageNetworkMonthly: 2 * 19.71 + 2 * 3.65,
   otherMonthly: 0,
+  // Entered once the owner picks an Upload-Post plan; nothing is billed before that.
+  connectServiceMonthly: 0,
   cpuEngineHourly: 0.0295,
   gpuEngineHourly: 3.2,
   targetMargin: 0.4,
@@ -35,7 +39,7 @@ export const DEFAULT_COSTS: OperatingCosts = {
 /** Stripe's standard card fee: 2.9% + 30¢ a charge. */
 export const stripeFee = (dollars: number) => (dollars > 0 ? dollars * 0.029 + 0.3 : 0);
 
-export const fixedMonthly = (c: OperatingCosts) => c.appServerMonthly + c.storageNetworkMonthly + c.otherMonthly;
+export const fixedMonthly = (c: OperatingCosts) => c.appServerMonthly + c.storageNetworkMonthly + c.otherMonthly + c.connectServiceMonthly;
 
 /** Dollars a plan earns in a month after the card fee (a yearly plan is charged once a year, so its fee is spread). */
 export function netMonthly(p: Plan, interval: "month" | "year") {
@@ -100,6 +104,7 @@ export function cleanCosts(v: Partial<OperatingCosts> | null | undefined): Opera
     appServerMonthly: n(v?.appServerMonthly, DEFAULT_COSTS.appServerMonthly, 100_000),
     storageNetworkMonthly: n(v?.storageNetworkMonthly, DEFAULT_COSTS.storageNetworkMonthly, 100_000),
     otherMonthly: n(v?.otherMonthly, DEFAULT_COSTS.otherMonthly, 100_000),
+    connectServiceMonthly: n(v?.connectServiceMonthly, DEFAULT_COSTS.connectServiceMonthly, 100_000),
     cpuEngineHourly: n(v?.cpuEngineHourly, DEFAULT_COSTS.cpuEngineHourly, 1_000),
     gpuEngineHourly: n(v?.gpuEngineHourly, DEFAULT_COSTS.gpuEngineHourly, 1_000),
     targetMargin: n(v?.targetMargin, DEFAULT_COSTS.targetMargin, 0.95),

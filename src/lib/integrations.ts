@@ -49,6 +49,8 @@ export interface Integrations {
    * Ghost Post's own writer (src/lib/own-writer.ts): an OpenAI-compatible address, its key and model. It writes before
    * Claude and Gemini; with ownWriterOnly, Claude and Gemini are never used.
    */
+  /** Upload-Post API key: the social connect service (src/lib/upload-post.ts), so every network connects with one tap. */
+  uploadPostKey?: string;
   ownWriterUrl?: string;
   ownWriterKey?: string;
   ownWriterModel?: string;
@@ -210,6 +212,7 @@ export async function integrationStatus() {
     replicate: entry("REPLICATE_API_TOKEN", i.replicateKey),
     videoEngine: { ...entry("VIDEO_ENGINE_TOKEN", i.videoEngineToken), url: i.videoEngineUrl || process.env.VIDEO_ENGINE_URL || "" },
     vmWake: { ...entry("VM_WAKE", i.vmWake), vm: (i.vmWake || process.env.VM_WAKE || "").match(/vm=([^;]+)/)?.[1] ?? "" },
+    uploadPost: entry("UPLOAD_POST_API_KEY", i.uploadPostKey),
     ownWriter: {
       ...entry("OWN_WRITER_KEY", i.ownWriterKey),
       url: i.ownWriterUrl || process.env.OWN_WRITER_URL || "",

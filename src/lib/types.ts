@@ -102,6 +102,8 @@ export interface Post {
   externalId?: string;
   externalIds?: string[];
   externalUrl?: string;
+  /** Sent through a posting service (Upload-Post) and its final result is known: no more checking. */
+  remoteSettled?: boolean;
   error?: string;
   createdAt: string;
   updatedAt: string;
@@ -331,8 +333,8 @@ export interface CredentialStatus {
   viaInstagram?: boolean;
   /** Extra accounts on this network besides the main one (Metricool-style), e.g. a second Instagram. */
   accounts?: { id: string; handle?: string; method?: string; updatedAt?: string }[];
-  /** "metricool" when this platform posts through the person's Metricool connection. */
-  via?: "metricool";
+  /** "metricool" or "upload-post" when this platform posts through that service instead of its own sign-in. */
+  via?: "metricool" | "upload-post";
   /** Connected directly in Ghost Post (its own sign-in or token), as opposed to only through Metricool. */
   direct?: boolean;
 }

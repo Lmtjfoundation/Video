@@ -149,23 +149,28 @@ export async function credentialStatuses(): Promise<CredentialStatus[]> {
   const fbPages = await listFacebookPages();
   const mc = await getMetricool();
   const keys = Object.fromEntries(await Promise.all(PLATFORMS.map(async (p) => [p, await appKeyStatus(p)] as const)));
+  // The social connect service (Upload-Post): its networks connect with one tap, no developer app needed.
+  const up = await import("./upload-post");
+  const upReady = await up.uploadPostReady();
+  const upAccounts = upReady && !currentAccount() ? await up.connectedAccounts() : [];
   return PLATFORMS.map((p) => {
     const r = rows.find((x) => x.id === p);
     // A Facebook profile connection has no token: Facebook doesn't let apps post to profiles, so those posts are handed to the person.
     const profile = p === "facebook" && r?.mode === "profile";
     const direct = !!r && (r.fields.includes("accessToken") || profile);
     const viaMc = !!mc && isMcPlatform(p) && !!mc.use[p];
+    const viaUp = !direct && !viaMc ? upAccounts.find((x) => x.platform === p) : undefined;
     return {
       platform: p,
-      connected: direct || viaMc,
+      connected: direct || viaMc || !!viaUp,
       direct,
-      via: viaMc ? ("metricool" as const) : undefined,
+      via: viaMc ? ("metricool" as const) : viaUp ? ("upload-post" as const) : undefined,
       fields: r?.fields ?? [],
       updatedAt: r?.updatedAt,
-      handle: r?.handle,
+      handle: r?.handle ?? viaUp?.handle,
       expiresAt: r?.expiresAt,
       method: r?.method,
-      oauthReady: keys[p].configured,
+      oauthReady: keys[p].configured || (upReady && up.isUpPlatform(p)),
       keySource: keys[p].configured ? keys[p].source : undefined,
       keyPreview: keys[p].configured ? keys[p].idPreview : undefined,
       choices: p === "facebook" && fbPages.length ? fbPages.map(({ id, name }) => ({ id, name })) : undefined,

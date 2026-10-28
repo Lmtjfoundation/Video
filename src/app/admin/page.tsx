@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bot, Power, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, Users, X } from "lucide-react";
+import { Bot, Power, Share2, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, Users, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api, copyToClipboard } from "@/lib/client";
 import { PLANS, type PlanId } from "@/lib/plans";
@@ -53,7 +53,7 @@ interface Stats {
   profit: { revenue: number; fees: number; aiPaid: number; aiComp: number; engines: number; fixed: number; costs: number; profit: number; margin: number | null; breakEven: Record<string, number | null> };
   planEconomics: { id: PlanId; name: string; monthly: number; annual: number; typical: number; full: number; fullYearly: number; breakEven: number | null }[];
 }
-type Costs = { appServerMonthly: number; storageNetworkMonthly: number; otherMonthly: number; cpuEngineHourly: number; gpuEngineHourly: number; targetMargin: number };
+type Costs = { appServerMonthly: number; storageNetworkMonthly: number; otherMonthly: number; connectServiceMonthly: number; cpuEngineHourly: number; gpuEngineHourly: number; targetMargin: number };
 interface AppSettingsPayload {
   settings: { allowSignups: boolean; requireApprovalForNewUsers: boolean; supportEmail: string; legalName: string; legalJurisdiction: string };
   env: {
@@ -81,6 +81,7 @@ interface IntegrationStatus {
   vmWake?: KeyState & { vm: string };
   videoEngineGpu?: KeyState & { url: string };
   ownWriter?: KeyState & { url: string; model: string; only: boolean };
+  uploadPost?: KeyState;
   vmWakeGpu?: KeyState & { vm: string };
   pixabay: KeyState;
   pexels: KeyState;
@@ -177,6 +178,7 @@ const COST_FIELDS: [keyof Costs, string, string][] = [
   ["appServerMonthly", "App server, $ a month", "Azure D4ads v7 always on: $166.44"],
   ["storageNetworkMonthly", "Disks and IP addresses, $ a month", "Billed even while a machine is off"],
   ["otherMonthly", "Other fixed bills, $ a month", "Domain, email, anything else"],
+  ["connectServiceMonthly", "Social connect service, $ a month", "Upload-Post: Basic $24, Professional $50"],
   ["gpuEngineHourly", "GPU engine, $ an hour while on", "NV36ads A10 v5: $3.20"],
   ["cpuEngineHourly", "Tools engine, $ an hour while on", "Ghost (Spot D2nlds v6): $0.0295"],
 ];
@@ -610,7 +612,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter") {
+  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -656,7 +658,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter") {
+  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -795,6 +797,24 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             <Button size="sm" loading={busy === "test:replicate"} disabled={!st.replicate.set} onClick={() => check("replicate")}>Test</Button>
             {st.replicate.set && st.replicate.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:replicateKey"} onClick={() => remove("replicateKey", "Replicate")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Share2 className="h-4 w-4" />}
+          title="Social connect service (Upload-Post) — one tap for every network"
+          desc="With this key, every user connects Instagram, Facebook, TikTok, YouTube, LinkedIn and X with one tap: they sign in on the network's own page and come straight back. No developer apps, testers or app reviews for you. Posts go out through Upload-Post. Plans: Basic $24/month (5 customers), Professional $50/month (25 customers). Automatic comment replies still need a network connected directly."
+          link={{ href: "https://app.upload-post.com", label: "Get a key" }}
+          state={st.uploadPost ?? { set: false }}
+          result={results.uploadPost}
+        >
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="Upload-Post API key" value={vals.uploadPostKey ?? ""} onChange={set("uploadPostKey")} />
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Connect service"} onClick={() => save(["uploadPostKey"], "Connect service", "uploadPost")}>Save &amp; test</Button>
+            <Button size="sm" loading={busy === "test:uploadPost"} disabled={!st.uploadPost?.set} onClick={() => check("uploadPost")}>Test</Button>
+            {st.uploadPost?.set && st.uploadPost.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:uploadPostKey"} onClick={() => remove("uploadPostKey", "Connect service")}><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
           </Actions>
         </Service>

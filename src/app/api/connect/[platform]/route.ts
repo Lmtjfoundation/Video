@@ -6,6 +6,7 @@ import { MAX_EXTRA_ACCOUNTS, MULTI_ACCOUNT, newAccountId } from "@/lib/account-s
 import { credentialStatuses } from "@/lib/repo";
 import { log } from "@/lib/repo";
 import type { Platform } from "@/lib/types";
+import type { UpPlatform } from "@/lib/upload-post";
 import { PLATFORMS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,14 @@ export async function GET(req: Request, ctx: { params: Promise<{ platform: strin
   const user = await userFromRequest(req);
   if (!user) return NextResponse.redirect(`${appOrigin(req)}/login?next=${encodeURIComponent("/platforms")}`);
   return asUser(user.id, () => run(req, ctx));
+}
+
+/** The signed-in person's name, shown in the connect service's dashboard. */
+async function currentUserName() {
+  const { getUser } = await import("@/lib/auth");
+  const { currentUserId } = await import("@/lib/db");
+  const id = currentUserId();
+  return id ? ((await getUser(id))?.name || (await getUser(id))?.email || null) : null;
 }
 
 async function run(req: Request, { params }: { params: Promise<{ platform: string }> }) {
@@ -35,7 +44,14 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
     account = newAccountId();
   }
   try {
-    const res = NextResponse.redirect(await startAuth(platform as Platform, origin, account));
+    // The social connect service, when set up: the network's own sign-in through Upload-Post, no developer app needed.
+    // (Extra accounts on one network still use Ghost Post's own sign-in: a service profile holds one per network.)
+    const up = await import("@/lib/upload-post");
+    const viaService = !account && up.isUpPlatform(platform) && (await up.uploadPostReady());
+    const target = viaService
+      ? await up.startConnect(platform as UpPlatform, `${origin}/api/connect/${platform}/callback?via=upload-post`, (await currentUserName()) ?? undefined)
+      : await startAuth(platform as Platform, origin, account);
+    const res = NextResponse.redirect(target);
     // ?return=/connect: come back to the "Connect your accounts" screen after the network's sign-in, not to Platforms.
     const ret = new URL(req.url).searchParams.get("return") ?? "";
     if (/^\/(connect|platforms)(\?[\w=&%./-]*)?$/.test(ret)) res.cookies.set(RETURN_COOKIE, ret, { httpOnly: true, sameSite: "lax", secure: origin.startsWith("https://"), path: "/", maxAge: 900 });

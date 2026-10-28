@@ -34,6 +34,20 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
   const p = platform;
   const label = OAUTH[p].label;
 
+  // Back from the network's sign-in through the social connect service.
+  if (url.searchParams.get("via") === "upload-post") {
+    const up = await import("@/lib/upload-post");
+    const r = up.connectOutcome(url.searchParams);
+    if (!r.ok) {
+      await log("warn", "system", `${label} connect (service): ${r.message}`, { platform: p });
+      return back({ error: `${label}: ${r.message}` });
+    }
+    up.forgetAccounts();
+    const acct = (await up.connectedAccounts()).find((a) => a.platform === p);
+    await log("info", "system", `Connected ${label}${acct?.handle ? ` (${acct.handle})` : ""} through the social connect service`, { platform: p });
+    return back({ connected: p });
+  }
+
   const denied = url.searchParams.get("error");
   if (denied) {
     const why = url.searchParams.get("error_description") || url.searchParams.get("error_reason") || denied;

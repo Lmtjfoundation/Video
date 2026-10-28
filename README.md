@@ -233,6 +233,15 @@ The app runs on its own always-on VM; the engines run on VMs that start when use
 4. **Costs:** Admin → Overview → Profit & operating costs shows this month's profit after card fees, AI, engine hours and
    servers. Put your real bills there.
 
+## One-tap social connect (Upload-Post)
+
+Paste an Upload-Post API key in **Admin → App settings → Integrations → Social connect service** and every user can
+connect Instagram, Facebook, TikTok, YouTube, LinkedIn and X with one tap (after sign-in, or Platforms → Quick
+connect). Upload-Post's apps are already approved by each network, so you need no developer apps, testers or reviews.
+Each Ghost Post user is one Upload-Post profile holding one account per network (Basic $24/month for 5 people,
+Professional $50/month for 25). Posts go out through it; automatic comment replies still need a direct connection.
+Put the plan's price under Admin → Profit & operating costs.
+
 ## Go live on Railway (one always-on server)
 
 Railway runs the app as an always-on server, so the built-in scheduler posts on time without extra cron services.

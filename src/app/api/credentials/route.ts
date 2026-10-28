@@ -56,6 +56,9 @@ export const DELETE = authed(async (req: Request) => {
   if (!PLATFORMS.includes(platform)) return fail("Unknown platform");
   const account = q.get("account");
   if (account && !isAccountId(account)) return fail("Unknown account");
+  // Connected through the social connect service: unlink it there too (safe when it wasn't).
+  const up = await import("@/lib/upload-post");
+  if (!account && up.isUpPlatform(platform) && (await up.uploadPostReady())) await up.disconnect(platform).catch(() => {});
   await withAccount(account ?? undefined, () => deleteCredential(platform));
   // Disconnecting the main account: the next extra account becomes the main one, so none are hidden.
   const next = !account ? (await credentialStatuses()).find((s) => s.platform === platform)?.accounts?.[0] : undefined;

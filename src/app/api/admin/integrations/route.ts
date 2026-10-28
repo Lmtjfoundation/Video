@@ -6,6 +6,7 @@ import { emailLayout, emailReady, sendEmail, validFrom } from "@/lib/email";
 import { testReplicate } from "@/lib/replicate-video";
 import { testOwnEngine } from "@/lib/own-video";
 import { testOwnWriter } from "@/lib/own-writer";
+import { testUploadPost } from "@/lib/upload-post";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   videoEngineUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the engine's web address, e.g. https://ghostpost-1a2b3c.eastus.cloudapp.azure.com (Azure) or https://abc123-8000.proxy.runpod.net (RunPod)." },
   videoEngineToken: { re: /^[A-Za-z0-9_.~-]{12,}$/, msg: "Paste the ENGINE_TOKEN you started the engine with (12+ letters, numbers, - or _)." },
   vmWake: { re: /^(?=.*tenant=)(?=.*client=)(?=.*secret=)(?=.*subscription=)(?=.*group=)(?=.*vm=)[^\s]{40,1000}$/, msg: "Paste the whole wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" },
+  uploadPostKey: { re: /^[A-Za-z0-9_.\-]{16,400}$/, msg: "Paste the API key from Upload-Post (app.upload-post.com → API keys)." },
   ownWriterUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the writer's address, e.g. https://writer.20-127-104-87.sslip.io/v1 (it ends in /v1)." },
   ownWriterKey: { re: /^[A-Za-z0-9_.~-]{12,200}$/, msg: "Paste the writer's key (OWN_WRITER_KEY on the server)." },
   ownWriterModel: { re: /^[A-Za-z0-9_.:/-]{2,120}$/, msg: "A model name looks like qwen3:4b-instruct-2507-q4_K_M." },
@@ -81,6 +83,7 @@ export const POST = authed(async (req, user) => {
   }
   if (b.action === "test" && b.which === "replicate") return ok(await testReplicate());
   if (b.action === "test" && b.which === "ownWriter") return ok(await testOwnWriter());
+  if (b.action === "test" && b.which === "uploadPost") return ok(await testUploadPost());
   if (b.action === "test" && b.which === "videoEngine") return ok(await testOwnEngine("main"));
   if (b.action === "test" && b.which === "videoEngineGpu") return ok(await testOwnEngine("gpu"));
   if (b.action === "test") {
