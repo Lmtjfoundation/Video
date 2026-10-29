@@ -30,6 +30,9 @@ describe("engine capabilities and wake on use", () => {
     expect(parseWake(LINE.replace(";vm=Ghost", ""))).toBeNull();
     expect(parseWake(LINE.replace(`tenant=${T}`, "tenant=nope"))).toBeNull();
     expect(parseWake("")).toBeNull();
+    // The app VM's managed identity: no secret in the line.
+    expect(parseWake(`identity=1;subscription=${T};group=GHOSTPOST;vm=Ghost`)).toEqual({ tenant: "", client: "", secret: "", identity: true, subscription: T, group: "GHOSTPOST", vm: "Ghost" });
+    expect(parseWake(`identity=1;subscription=${T};group=GHOSTPOST`)).toBeNull();
   });
 
   it("lets a machine without a GPU do only its tools", async () => {
@@ -106,6 +109,32 @@ describe("engine capabilities and wake on use", () => {
     const { testOwnEngine } = await import("@/lib/own-video");
     expect((await testOwnEngine()).ok).toBe(true);
     expect(starts).toBe(1);
+  });
+
+  it("wakes the VM with the app server's managed identity (no secret)", async () => {
+    process.env.VM_WAKE = `identity=1;subscription=${T};group=GHOSTPOST;vm=Ghost`;
+    let up = false;
+    const seen: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (u: string, init?: RequestInit) => {
+      const url = String(u);
+      if (url.startsWith("http://169.254.169.254/metadata/identity/oauth2/token")) {
+        seen.push(`imds:${new Headers(init?.headers).get("Metadata")}`);
+        return Response.json({ access_token: "mi" });
+      }
+      if (url.startsWith("https://login.microsoftonline.com/")) seen.push("login");
+      if (url.startsWith("https://management.azure.com/")) {
+        seen.push(`start:${new Headers(init?.headers).get("Authorization")}`);
+        up = true;
+        return new Response(null, { status: 202 });
+      }
+      if (!up) return new Response("upstream connect error", { status: 503, headers: { "content-type": "text/plain" } });
+      if (url.endsWith("/health")) return Response.json({ ok: true });
+      if (url.endsWith("/v1/info")) return Response.json({ profile: "tools", capabilities: ["isolate"], ready: true, device: "cpu", vram_gb: 0, queue: 0, model: "-" });
+      return new Response("{}", { status: 404, headers: { "content-type": "application/json" } });
+    }));
+    const { testOwnEngine } = await import("@/lib/own-video");
+    expect((await testOwnEngine()).ok).toBe(true);
+    expect(seen).toEqual(["imds:true", "start:Bearer mi"]);
   });
 
   it("keeps the engine's own 503 as its answer (no wake)", async () => {
