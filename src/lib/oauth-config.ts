@@ -104,3 +104,14 @@ export const OAUTH: Record<OAuthPlatform, OAuthProvider> = {
     permissions: ["Read your display name", "Send videos to your TikTok drafts"],
   },
 };
+
+/**
+ * What to tell someone the network sent back with ?error=… instead of a sign-in code. Pressing Cancel is theirs to
+ * redo; anything else is usually the app's setup (a tester who wasn't added, or Meta App Review not done yet).
+ */
+export function connectErrorMessage(label: string, q: URLSearchParams): string {
+  if (/denied|cancel/i.test(`${q.get("error")} ${q.get("error_reason")}`)) return `${label} linking was cancelled. Tap Connect to try again.`;
+  const why = (q.get("error_description") || q.get("error_reason") || q.get("error") || "").slice(0, 160);
+  const meta = label === "Instagram" || label === "Facebook" ? " Until the app passes Meta App Review, only accounts added as testers can connect." : "";
+  return `${label} didn't allow this sign-in${why ? ` (${why})` : ""}.${meta} The app owner can also turn on the one-tap connect service in Admin → Integrations.`;
+}

@@ -3,7 +3,7 @@ import { userFromRequest } from "@/lib/auth";
 import { asUser } from "@/lib/db";
 import { appOrigin, finishAuth, pendingAccount } from "@/lib/oauth";
 import { withAccount } from "@/lib/account-slot";
-import { OAUTH, isOAuthPlatform } from "@/lib/oauth-config";
+import { OAUTH, connectErrorMessage, isOAuthPlatform } from "@/lib/oauth-config";
 import { credentialStatuses, log, saveCredential } from "@/lib/repo";
 import { listFacebookPages } from "@/lib/facebook-pages";
 import type { Platform } from "@/lib/types";
@@ -51,8 +51,8 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
   const denied = url.searchParams.get("error");
   if (denied) {
     const why = url.searchParams.get("error_description") || url.searchParams.get("error_reason") || denied;
-    await log("warn", "system", `${label} linking cancelled: ${why}`, { platform: p });
-    return back({ error: `${label} linking was cancelled (${why}).` });
+    await log("warn", "system", `${label} sign-in came back with an error: ${why}`, { platform: p });
+    return back({ error: connectErrorMessage(label, url.searchParams) });
   }
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");

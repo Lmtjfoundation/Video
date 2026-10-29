@@ -391,7 +391,9 @@ function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; o
 function AppKeysLine({ platform, source, preview, origin, onChanged }: { platform: Platform; source?: "env" | "app"; preview?: string; origin: string; onChanged: () => void }) {
   const toast = useApp((x) => x.toast);
   const [confirm, setConfirm] = useState(false);
-  const [show, setShow] = useState(false);
+  // Meta refuses any sign-in whose return address isn't in the app's list, so keep it in view (and after a move).
+  const meta = platform === "instagram" || platform === "facebook";
+  const [show, setShow] = useState(meta);
   return (
     <div className="grid grid-cols-1 gap-1.5 text-[12px] text-white/50">
       <p>
@@ -423,6 +425,7 @@ function AppKeysLine({ platform, source, preview, origin, onChanged }: { platfor
           </>
         )}
       </p>
+      {show && meta && <p>If {platform === "instagram" ? "Instagram" : "Facebook"} shows “Invalid redirect URI” or an error page, paste this exact address into your Meta app's OAuth redirect URIs and save. Only accounts added as testers can connect until Meta App Review.</p>}
       {show && <CopyBox value={`${origin}/api/connect/${platform}/callback`} />}
     </div>
   );
