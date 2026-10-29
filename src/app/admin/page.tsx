@@ -23,6 +23,7 @@ interface AdminUser {
   billing?: { status?: string };
   createdAt: string;
   lastLoginAt?: string;
+  signupSource?: string;
   counts: { total: number; scheduled: number; review: number };
   isOwner?: boolean;
   isCoOwner?: boolean;
@@ -415,7 +416,7 @@ function UsersTab({ onChange }: { onChange: () => void }) {
                   <td className="px-5 py-3">
                     <p className="font-medium text-white">{u.name} {u.isOwner ? <Badge tone="gold">owner</Badge> : u.isCoOwner ? <Badge tone="gold">co-owner</Badge> : u.role === "admin" && <Badge tone="gold">admin</Badge>} {u.staff && u.role !== "admin" && <Badge tone="mint">employee · unlimited</Badge>}</p>
                     <p className="text-xs text-white/45">{u.email}</p>
-                    <p className="text-xs text-white/35">Joined {new Date(u.createdAt).toLocaleDateString()}{u.lastLoginAt ? ` · last seen ${new Date(u.lastLoginAt).toLocaleDateString()}` : ""}</p>
+                    <p className="text-xs text-white/35">Joined {new Date(u.createdAt).toLocaleDateString()}{u.signupSource ? ` from ${u.signupSource}` : ""}{u.lastLoginAt ? ` · last seen ${new Date(u.lastLoginAt).toLocaleDateString()}` : ""}</p>
                   </td>
                   <td className="px-3 py-3">
                     <Select value={u.plan} onChange={(e) => patch(u.id, { plan: e.target.value }, `Plan changed to ${e.target.value}`)} className="w-36" aria-label="Plan">

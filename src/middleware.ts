@@ -8,6 +8,7 @@ const PUBLIC = [
   "/login",
   "/signup",
   "/pricing",
+  "/welcome",
   "/terms",
   "/privacy",
   "/data-deletion",
@@ -61,13 +62,20 @@ export async function middleware(req: NextRequest) {
     const to = await movedTo(req);
     if (to) return NextResponse.redirect(`${to}${pathname}${search}`, 308);
   }
+  if (pathname === "/welcome") {
+    // Remember which ad or post the visitor came from (?src=tiktok) for 30 days; sign-up saves it on the account.
+    const src = req.nextUrl.searchParams.get("src")?.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 32);
+    const res = NextResponse.next();
+    if (src) res.cookies.set("gp_src", src, { path: "/", maxAge: 30 * 86400, sameSite: "lax", secure: req.nextUrl.protocol === "https:" });
+    return res;
+  }
   if (PUBLIC.some((p) => pathname === p || pathname.startsWith(p))) return NextResponse.next();
   if (req.cookies.get("np_session")?.value) return NextResponse.next();
   if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Please sign in." }, { status: 401 });
   const url = req.nextUrl.clone();
   if (pathname === "/") {
-    // Signed-out visitors land on the public pricing page (the marketing home).
-    url.pathname = "/pricing";
+    // Signed-out visitors land on the public showcase (the marketing home).
+    url.pathname = "/welcome";
     url.search = "";
     return NextResponse.redirect(url);
   }

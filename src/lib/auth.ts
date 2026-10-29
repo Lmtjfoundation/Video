@@ -59,6 +59,8 @@ export interface User {
   };
   /** Free AI used today during a trial (credits' worth), so the daily cap can be enforced. */
   trialFree?: { day: string; credits: number };
+  /** Where the person came from before signing up (the ?src= of the link they followed, e.g. "tiktok"). */
+  signupSource?: string;
   createdAt: string;
   lastLoginAt?: string;
 }
@@ -141,7 +143,10 @@ export async function ownerNeeded() {
 
 const adminEmails = () => (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
 
-export async function createUser(input: { email: string; password: string; name?: string; setupCode?: string }) {
+/** A ?src= value as it may be stored: short, lowercase letters, digits, dashes and underscores. */
+export const cleanSource = (s: string | null | undefined) => (s ?? "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 32) || undefined;
+
+export async function createUser(input: { email: string; password: string; name?: string; setupCode?: string; source?: string }) {
   const email = input.email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AuthError("Enter a valid email address.", 400);
   const bad = validatePassword(input.password);
@@ -166,6 +171,7 @@ export async function createUser(input: { email: string; password: string; name?
     requireApproval: settings.requireApprovalForNewUsers && !isFirst,
     usage: { period: period(), credits: 0, posts: 0 },
     vault: emptyVault(),
+    signupSource: cleanSource(input.source),
     createdAt: nowIso(),
   };
   await gdb().upsertMany("users", [user, { id: emailKey(email), kind: "email", userId: user.id } as EmailIndex]);
