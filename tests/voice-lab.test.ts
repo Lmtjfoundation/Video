@@ -269,4 +269,56 @@ describe("Voice Lab", () => {
       expect(during).toBeGreaterThan(before * 3 + 1);
     });
   });
+  it("swaps the video's AI voice for a recording and keeps the music under it", { timeout: 120_000 }, async () => {
+    const { asUser } = await import("@/lib/db");
+    const { storeFile } = await import("@/lib/media");
+    const { voiceToVideo, voiceToVideoCredits } = await import("@/lib/voice-lab");
+    const { CREDIT_COST } = await import("@/lib/plans");
+    const user = "usr_lab_swap";
+    await asUser(user, async () => {
+      // The video's sound: a 200 Hz "AI voice". Its background (what the isolator returns): a 1,000 Hz "music" bed.
+      const vid = path.join(dir, "voiced.mp4");
+      ff("-f", "lavfi", "-i", "testsrc=s=320x568:r=30:d=4", "-f", "lavfi", "-i", "sine=f=200:d=4", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", vid);
+      const video = await storeFile(user, { name: "voiced.mp4", type: "video/mp4", bytes: readFileSync(vid) });
+      const take = await storeFile(user, { name: "take.wav", type: "audio/wav", bytes: tone(3, 600, 48000) });
+      const asked: string[] = [];
+      const o = { videoId: video.id, voice: { mediaId: take.id }, mix: "swap" as const, captions: false, lipsync: false, offset: 0.5 };
+      const out = await voiceToVideo(user, o, {
+        isolate: async (r) => {
+          asked.push(r.stem);
+          return tone(4, 1000, 44100);
+        },
+      });
+      expect(asked).toEqual(["background"]);
+      const f = fileOf(user, out);
+      expect(Number(probe(f, "format=duration"))).toBeCloseTo(4, 0);
+      const band = (hz: number) => {
+        let txt = "";
+        try {
+          txt = execFileSync("sh", ["-c", `ffmpeg -hide_banner -ss 1 -t 2 -i '${f}' -vn -af bandpass=f=${hz}:width_type=q:w=8,volumedetect -f null - 2>&1`]).toString();
+        } catch (e) {
+          txt = String((e as { stdout?: Buffer }).stdout ?? "");
+        }
+        return Number(txt.match(/mean_volume: (-?[\d.]+) dB/)?.[1] ?? -99);
+      };
+      // The new voice and the music are there; the old voice is gone.
+      expect(band(600)).toBeGreaterThan(-40);
+      expect(band(1000)).toBeGreaterThan(-40);
+      expect(band(600) - band(200)).toBeGreaterThan(20);
+
+      // Separation is charged like the voice isolator: per started minute of video.
+      expect(voiceToVideoCredits(o, 3, 4)).toBe(CREDIT_COST.isolateMinute);
+      expect(voiceToVideoCredits(o, 3, 125)).toBe(3 * CREDIT_COST.isolateMinute);
+      expect(voiceToVideoCredits({ ...o, mix: "replace" }, 3, 125)).toBe(0);
+
+      // A silent video has no old voice to take out: the isolator isn't asked.
+      const silent = path.join(dir, "silent-swap.mp4");
+      ff("-f", "lavfi", "-i", "testsrc=s=320x180:r=24:d=2", "-pix_fmt", "yuv420p", silent);
+      const sv = await storeFile(user, { name: "silent-swap.mp4", type: "video/mp4", bytes: readFileSync(silent) });
+      await voiceToVideo(user, { ...o, videoId: sv.id }, { isolate: async () => { throw new Error("not expected"); } });
+
+      // When separation fails, the job says so plainly instead of leaving two voices.
+      await expect(voiceToVideo(user, o, { isolate: async () => { throw new Error("engine asleep"); } })).rejects.toThrow(/Couldn't take the old voice out right now/);
+    });
+  });
 });

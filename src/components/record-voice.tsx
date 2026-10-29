@@ -27,7 +27,7 @@ async function uploadMedia(file: File) {
  * Record Voice: the video plays while you talk, so your voice lands exactly where you said it. Keep the best take,
  * then Ghost Post puts it in the video (cleaned up, with captions, over or instead of the original sound).
  */
-export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | undefined; lipsyncSecond?: number }) {
+export function RecordVoiceTab({ engine, isolate, lipsyncSecond, isolateMinute }: { engine: boolean | undefined; isolate?: boolean; lipsyncSecond?: number; isolateMinute?: number }) {
   const { toast, refresh } = useApp();
   const { items, reload } = useMedia();
   const [videoId, setVideoId] = useState("");
@@ -54,7 +54,11 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
   const [playing, setPlaying] = useState("");
   const player = useRef<HTMLAudioElement | null>(null);
 
-  const [mix, setMix] = useState<"duck" | "replace">("duck");
+  const [mix, setMix] = useState<"swap" | "duck" | "replace">("swap");
+  // Without the tools engine the old voice can't be taken out: start on the next best choice.
+  useEffect(() => {
+    if (isolate === false) setMix((m) => (m === "swap" ? "duck" : m));
+  }, [isolate]);
   const [cleanup, setCleanup] = useState(true);
   const [captions, setCaptions] = useState(true);
   const [lipsync, setLipsync] = useState(false);
@@ -192,7 +196,8 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
     const v = video.current;
     if (!v) return;
     v.currentTime = t.offset;
-    v.muted = mix === "replace";
+    // The old voice is only taken out on the server, so the preview of a swap plays the take alone.
+    v.muted = mix !== "duck";
     v.volume = 0.2;
     const a = new Audio(t.url);
     player.current = a;
@@ -243,6 +248,8 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
   }
 
   const lipCost = lipsync && lipsyncSecond && take ? lipsyncSecond * Math.max(1, Math.ceil(take.secs)) : 0;
+  const swapCost = mix === "swap" && length ? (isolateMinute ?? 1) * Math.max(1, Math.ceil(length / 60)) : 0;
+  const cost = lipCost + swapCost;
 
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
@@ -342,8 +349,12 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
           <CardHeader title="Put it in the video" />
           <div className="grid grid-cols-1 gap-4 p-4">
             <div className="grid grid-cols-1 gap-2">
-              {([["duck", "Keep the video's sound", "Lowered automatically under your voice."], ["replace", "Replace the sound", "Only your voice."]] as const).map(([k, t, d]) => (
-                <button key={k} onClick={() => setMix(k)} className={cn("rounded-xl border p-3 text-left", mix === k ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03]")}>
+              {([
+                ["swap", "Replace the AI voice", "The old voice comes out; music and sound effects stay under yours."],
+                ["duck", "Keep the video's sound", "Everything stays, lowered automatically under your voice."],
+                ["replace", "Replace all sound", "Only your voice."],
+              ] as const).map(([k, t, d]) => (
+                <button key={k} onClick={() => setMix(k)} disabled={k === "swap" && isolate === false} className={cn("rounded-xl border p-3 text-left", mix === k ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03]", "disabled:cursor-not-allowed disabled:opacity-40")}>
                   <div className="text-sm font-medium">{t}</div>
                   <div className="mt-1 text-xs text-white/55">{d}</div>
                 </button>
@@ -354,9 +365,10 @@ export function RecordVoiceTab({ engine, lipsyncSecond }: { engine: boolean | un
               <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={captions} onChange={setCaptions} label="Burned-in captions (free)" /> Burned-in captions (free)</label>
               <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={lipsync && engine === true} disabled={engine !== true} onChange={(v) => setLipsync(v && engine === true)} label="Lip sync the face" /> Lip sync the face</label>
             </div>
+            {isolate === false && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">Replacing only the AI voice needs Ghost Post&apos;s tools engine, which isn&apos;t connected. Choose another option, or the admin connects it in Admin → Integrations.</div>}
             {engine === false && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">Lip sync needs Ghost Post&apos;s engine with a GPU, which isn&apos;t connected yet. Everything else here works now.</div>}
             <Button variant="primary" size="lg" loading={busy} disabled={!take || !videoId || recording} onClick={finish}>
-              Put my voice in the video · {lipCost ? `about ${lipCost} credits` : "free"}
+              Put my voice in the video · {cost ? `about ${cost} credit${cost === 1 ? "" : "s"}` : "free"}
             </Button>
             <p className="text-xs text-white/45">Your voice starts exactly where you recorded it. If it runs past the end, the picture loops to the end of your voice.</p>
           </div>

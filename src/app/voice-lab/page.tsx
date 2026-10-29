@@ -619,7 +619,7 @@ function VoiceLab() {
       </div>
       {tab === "record" && (
         <div className="grid grid-cols-1 gap-6">
-          <RecordVoiceTab engine={info?.engine} lipsyncSecond={info?.credits.lipsyncSecond} />
+          <RecordVoiceTab engine={info?.engine} isolate={info?.isolate} lipsyncSecond={info?.credits.lipsyncSecond} isolateMinute={info?.credits.isolateMinute} />
           <Recent prefixes={["voiced-"]} kind="video" title="Latest voiced videos" />
         </div>
       )}

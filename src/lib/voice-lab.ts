@@ -295,8 +295,11 @@ export interface VoiceToVideoOptions {
   videoId: string;
   /** A recording from the Media Library, or a script read in a voice. */
   voice: { mediaId: string } | { text: string; choice: VoiceChoice };
-  /** "replace": only the new voice; "duck": the video's own sound continues, lowered whenever the voice speaks. */
-  mix: "replace" | "duck";
+  /**
+   * "swap": the video's old voice is taken out (Demucs) and the new one goes in its place; music and effects stay.
+   * "replace": only the new voice; "duck": the video's own sound continues, lowered whenever the voice speaks.
+   */
+  mix: "swap" | "replace" | "duck";
   captions: boolean;
   lipsync: boolean;
   /** Seconds into the video where the voice starts (a recording made while the video played from there). */
@@ -319,7 +322,7 @@ const captionStyle = (portrait: boolean) =>
  * it under the voice, with optional burned-in captions (timed by Whisper) and lip sync. If the voice runs longer
  * than the video, the picture loops to the end of the voice.
  */
-export async function voiceToVideo(userId: string, o: VoiceToVideoOptions, deps: { hear?: (file: string) => Promise<TimedText[]>; speak?: typeof voiceWav } = {}): Promise<MediaItem> {
+export async function voiceToVideo(userId: string, o: VoiceToVideoOptions, deps: { hear?: (file: string) => Promise<TimedText[]>; speak?: typeof voiceWav; isolate?: typeof ownIsolate } = {}): Promise<MediaItem> {
   const v = await media(o.videoId, ["video"], "a video");
   return tmp(async (dir) => {
     let src = await toFile(v, dir, "src");
@@ -346,6 +349,20 @@ export async function voiceToVideo(userId: string, o: VoiceToVideoOptions, deps:
       await fs.writeFile(synced, await ownLipsync({ video: await fs.readFile(src), audio: await fs.readFile(voice) }));
       src = synced;
     }
+    // Swap: everything in the video's sound except its voice becomes the bed under the new voice.
+    let bed = hadSound ? path.join(dir, `src.${v.storagePath.split(".").pop()}`) : "";
+    if (o.mix === "swap" && hadSound) {
+      const wav = path.join(dir, "orig.wav");
+      await ff(["-i", bed, "-vn", "-ac", "2", "-ar", "44100", wav]);
+      let rest: Buffer;
+      try {
+        rest = await (deps.isolate ?? ownIsolate)({ source: await fs.readFile(wav), stem: "background" });
+      } catch (e) {
+        throw new Error(`Couldn't take the old voice out right now (${(e as Error).message.slice(0, 160)}). Try again in a minute, or choose Replace all sound.`);
+      }
+      bed = path.join(dir, "bed.wav");
+      await fs.writeFile(bed, rest);
+    }
     const total = o.lipsync ? await duration(src) : Math.max(vSecs, aSecs + 0.4);
     const [w, h] = (await probe(src, "stream=width,height", "v:0")).split(",").map(Number);
     const filters: string[] = [];
@@ -359,13 +376,14 @@ export async function voiceToVideo(userId: string, o: VoiceToVideoOptions, deps:
     }
     filters.push(`${vf},format=yuv420p[v]`);
     // The original sound only when it should stay (duck) and the picture wasn't replaced by lip sync's own track.
-    if (o.mix === "duck" && hadSound) {
-      filters.push(`[2:a]aresample=${SR},apad,asplit=2[vo][sc]`, `[1:a]aresample=${SR},volume=0.9[bg0]`, `[bg0][sc]sidechaincompress=threshold=0.015:ratio=10:attack=15:release=450:makeup=1[bg]`, `[bg][vo]amix=inputs=2:duration=longest:normalize=0,loudnorm=I=-14:TP=-1.5,${CEILING}[a]`);
+    if ((o.mix === "duck" || o.mix === "swap") && hadSound) {
+      // Swap keeps the music close to full level: there's no other voice left in it to talk over.
+      filters.push(`[2:a]aresample=${SR},apad,asplit=2[vo][sc]`, `[1:a]aresample=${SR},volume=${o.mix === "swap" ? 1 : 0.9}[bg0]`, `[bg0][sc]sidechaincompress=threshold=0.015:ratio=10:attack=15:release=450:makeup=1[bg]`, `[bg][vo]amix=inputs=2:duration=longest:normalize=0,loudnorm=I=-14:TP=-1.5,${CEILING}[a]`);
     } else filters.push(`[2:a]aresample=${SR},apad,loudnorm=I=-14:TP=-1.5,${CEILING}[a]`);
     const out = path.join(dir, "out.mp4");
     await ff([
       "-stream_loop", "-1", "-i", src,
-      ...(hadSound ? ["-stream_loop", "-1", "-i", path.join(dir, `src.${v.storagePath.split(".").pop()}`)] : ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=mono"]),
+      ...(hadSound ? ["-stream_loop", "-1", "-i", bed] : ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=mono"]),
       "-i", voice,
       "-filter_complex", filters.join(";"),
       "-map", "[v]", "-map", "[a]", "-t", total.toFixed(3),
@@ -375,8 +393,12 @@ export async function voiceToVideo(userId: string, o: VoiceToVideoOptions, deps:
   });
 }
 
-/** Credits for voice to video: the voice (when it's typed), plus lip sync by the second. Captions and mixing are free. */
-export function voiceToVideoCredits(o: VoiceToVideoOptions, voiceSeconds: number) {
+/**
+ * Credits for voice to video: the voice (when it's typed), lip sync by the second, and for a swap, taking the old
+ * voice out of the video's sound at the voice isolator's price per started minute. Captions and mixing are free.
+ */
+export function voiceToVideoCredits(o: VoiceToVideoOptions, voiceSeconds: number, videoSeconds = 0) {
   const words = "text" in o.voice ? voiceCredits(stripTags(o.voice.text).length, o.voice.choice) : 0;
-  return words + (o.lipsync ? CREDIT_COST.lipsyncSecond * Math.max(1, Math.ceil(voiceSeconds)) : 0);
+  const swap = o.mix === "swap" ? CREDIT_COST.isolateMinute * Math.max(1, Math.ceil(videoSeconds / 60)) : 0;
+  return words + swap + (o.lipsync ? CREDIT_COST.lipsyncSecond * Math.max(1, Math.ceil(voiceSeconds)) : 0);
 }

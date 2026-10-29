@@ -158,10 +158,11 @@ export const POST = authed(async (req, user) => {
       }
       if (secs > 10 * 60) return fail("Voice to video takes up to 10 minutes of voice.");
       const offset = Math.min(600, Math.max(0, Number(b.offset) || 0));
-      const o: VoiceToVideoOptions = { videoId: String(b.videoId ?? ""), voice, mix: b.mix === "duck" ? "duck" : "replace", captions: b.captions === true, lipsync: b.lipsync === true, offset, cleanup: b.cleanup === true };
+      const o: VoiceToVideoOptions = { videoId: String(b.videoId ?? ""), voice, mix: b.mix === "duck" ? "duck" : b.mix === "swap" ? "swap" : "replace", captions: b.captions === true, lipsync: b.lipsync === true, offset, cleanup: b.cleanup === true };
       if (!o.videoId) return fail("Choose the video.");
       if (o.lipsync) needsEngine();
-      credits = voiceToVideoCredits(o, secs);
+      if (o.mix === "swap" && !(await ownEngineReady("isolate"))) return fail("Taking the old voice out needs Ghost Post's tools engine, which isn't connected. Choose Replace all sound, or the admin connects it in Admin → App settings → Integrations.", 503);
+      credits = voiceToVideoCredits(o, secs, o.mix === "swap" ? await asked(mediaSeconds(o.videoId)) : 0);
       title = "Voice to video";
       run = async () => (await voiceToVideo(user.id, o)).name;
       break;
