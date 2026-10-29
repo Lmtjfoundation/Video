@@ -70,7 +70,7 @@ export interface Integrations {
   stripeProducts?: Record<string, string>;
   /** planId → Stripe coupon id for the trial plans' discounted first paid month (created by "Connect Stripe"). */
   stripeCoupons?: Record<string, string>;
-  /** Resend (https://resend.com) API key for password-reset emails. Railway blocks SMTP on Hobby, so email goes over HTTPS. */
+  /** Resend (https://resend.com) API key for password-reset emails. Email goes over HTTPS. */
   resendKey?: string;
   /** Sender, e.g. "Ghost Post <support@yourdomain.com>" (the domain must be verified in Resend). */
   emailFrom?: string;
@@ -168,7 +168,7 @@ export const pexelsKey = () => pick("pexelsKey", "PEXELS_API_KEY");
 export const pexelsHeaders = (key: string) => ({
   Authorization: key,
   Accept: "application/json",
-  "User-Agent": `GhostPost/1.0 (+${(process.env.APP_URL || "https://ghost-post-autopilot.up.railway.app").replace(/\/$/, "")})`,
+  "User-Agent": `GhostPost/1.0 (+${(process.env.APP_URL || "https://ghostpost.eastus.cloudapp.azure.com").replace(/\/$/, "")})`,
 });
 export const stripeSecretKey = () => pick("stripeSecretKey", "STRIPE_SECRET_KEY");
 export const stripeWebhookSecret = () => pick("stripeWebhookSecret", "STRIPE_WEBHOOK_SECRET");

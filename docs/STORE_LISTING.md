@@ -10,8 +10,8 @@ Character counts are checked by `node docs/check-listing.mjs`.
 | App name | Ghost Post |
 | Category | Apple: Productivity (secondary: Business). Google Play: Productivity |
 | Support URL / email | Your support page and the address set in Admin → App settings |
-| Privacy policy URL | `https://ghost-post-autopilot.up.railway.app/privacy` |
-| Terms URL | `https://ghost-post-autopilot.up.railway.app/terms` |
+| Privacy policy URL | `https://ghostpost.eastus.cloudapp.azure.com/privacy` |
+| Terms URL | `https://ghostpost.eastus.cloudapp.azure.com/terms` |
 | Account deletion | In the app: Settings → Account → Delete account. Web page: `/data-deletion` |
 | Bundle / package ID | `net.lmtj.ghostpost` (from `mobile/capacitor.config.ts`) |
 

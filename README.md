@@ -196,7 +196,7 @@ Then flip **Autopilot posting** (and, if you want it, **Auto-engagement**) on in
    - Voiceover: ElevenLabs text-to-speech per scene when `ELEVENLABS_API_KEY` is set; otherwise captions-only.
    - Visuals per scene: your attached images/clips (Ken Burns motion), else Pixabay stock footage matched to the scene (`PIXABAY_API_KEY`, Pexels as a second source), else animated gradients.
    - Captions: on-screen headline + word-group captions burned in.
-   - Needs ffmpeg on the server — on Railway set `RAILPACK_DEPLOY_APT_PACKAGES=ffmpeg`.
+   - Needs ffmpeg on the server (the Azure install script installs it).
 3. **Post now / schedule** uploads the MP4 automatically:
    | Platform | How | Notes |
    |---|---|---|
@@ -242,22 +242,19 @@ Each Ghost Post user is one Upload-Post profile holding one account per network 
 Professional $50/month for 25). Posts go out through it; automatic comment replies still need a direct connection.
 Put the plan's price under Admin → Profit & operating costs.
 
-## Go live on Railway (one always-on server)
+## Go live on Azure (one always-on server)
 
-Railway runs the app as an always-on server, so the built-in scheduler posts on time without extra cron services.
+Ghost Post runs on one always-on Azure Linux VM, so the built-in scheduler posts on time without extra cron services.
+Live: https://ghostpost.eastus.cloudapp.azure.com
 
-1. Create an account at railway.com and start a **new project → Deploy from GitHub repo** (push this folder to a private GitHub repo first) or use the Railway CLI: `railway up` from this folder.
-2. Add a **Volume** to the service, mounted at `/data`. This keeps your database and uploads when the app redeploys.
-3. In the service's **Variables**, add:
-   - `SETUP_CODE` — a secret phrase; the first sign-up must enter it to become the owner
-   - `APP_URL` — your Railway URL, e.g. `https://ghost-post-autopilot.up.railway.app` (Settings → Networking → Generate Domain; you can rename the subdomain there)
-   - `ENCRYPTION_KEY` — run `npm run gen:key` (or any 32+ random characters)
-   - `CRON_SECRET` — any long random string
-   - `INTERNAL_SCHEDULER` = `1`
-   - `DATA_DIR` = `/data`
-   - Optional: `ANTHROPIC_API_KEY` and the other service keys (or paste them later in Admin → App settings → Integrations), Supabase (instead of the volume), platform app keys (or enter those in the app's Setup Wizard).
-4. Deploy. Open the URL, sign up with the setup code, add your Claude key and connect Stripe in **Admin → App settings**, then go to **the Platforms tab** and use the Setup Wizard for each platform.
-5. Each platform's redirect URL is shown in the wizard: `APP_URL/api/connect/<platform>/callback`.
+1. Create an Ubuntu VM (D4ads_v7 or similar), open ports 80 and 443, and give its public IP a DNS name label.
+2. On the VM run `deploy/azure-app/install.sh` (as root) with `DOMAIN=<your name>.<region>.cloudapp.azure.com`. It installs
+   Node, ffmpeg, Caddy (automatic HTTPS), the own writer (Ollama), the app as a systemd service, and a timer that deploys
+   each new commit on this branch within about 2 minutes.
+3. Settings live in `/etc/ghostpost/env` (`APP_URL`, `ENCRYPTION_KEY`, `CRON_SECRET`, `SETUP_CODE`, `DATA_DIR`, `INTERNAL_SCHEDULER=1`).
+   Service keys go in Admin → App settings → Integrations.
+4. Open the URL, sign up with the setup code, connect Stripe in **Admin → App settings**, then connect accounts on **/connect**.
+5. Each platform's redirect URL is shown on its card: `APP_URL/api/connect/<platform>/callback`.
 
 ## Daily batch from Claude (content inbox)
 

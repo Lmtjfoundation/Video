@@ -3,7 +3,7 @@
 # with Caddy and a free Let's Encrypt certificate. Safe to run again: it updates to the latest code.
 #
 #   curl -fsSL https://raw.githubusercontent.com/Lmtjfoundation/Video/nexus-pulse-autopilot/deploy/azure-app/install.sh | sudo bash
-#   ... | sudo bash -s -- --migrate-from https://ghost-post-autopilot.up.railway.app   # then open /restore
+#   ... | sudo bash -s -- --migrate-from https://OLD-SERVER   # then open /restore
 #   ... | sudo bash -s -- --domain app.example.com                                      # your own DNS name
 #   ... | sudo bash -s -- --no-writer                       # skip Ghost Post's own writer (an open AI model on this CPU)
 #

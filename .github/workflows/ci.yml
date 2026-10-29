@@ -23,5 +23,5 @@ jobs:
       - name: Production build
         run: npm run build
         env:
-          # Build-time placeholder only; real secrets live in Railway.
+          # Build-time placeholder only; real secrets live on the server.
           ENCRYPTION_KEY: ci-build-placeholder-not-a-secret-0123456789

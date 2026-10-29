@@ -2,7 +2,7 @@ import "server-only";
 import { emailFrom, resendKey } from "./integrations";
 
 /**
- * Transactional email over Resend's HTTPS API (Railway's Hobby plan blocks outbound SMTP, so HTTPS is the reliable route).
+ * Transactional email over Resend's HTTPS API (HTTPS works on any host, unlike SMTP, which many block).
  * The admin adds the Resend API key and a From address in Admin → App settings → Integrations.
  */
 export async function emailReady() {

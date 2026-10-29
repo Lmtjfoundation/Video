@@ -5,8 +5,8 @@
 - Manual smoke test on a staging copy (see step 2): sign up, write a post, schedule it, connect the webhook to a free catch URL (for example a Make or Zapier "catch webhook"), press **Send test message**, then schedule a post and confirm it arrives.
 
 ## 2. Deploy
-- Production runs on Railway: https://ghost-post-autopilot.up.railway.app. Pushing to the branch Railway watches redeploys it.
-- To test safely first, create a second Railway service from the same repo (a "staging" environment) with its own `ENCRYPTION_KEY`, `APP_URL` and Stripe **test** keys. Never point staging at your production database.
+- Production runs on Azure: https://ghostpost.eastus.cloudapp.azure.com. Pushing to the `nexus-pulse-autopilot` branch redeploys it within about 2 minutes.
+- To test safely first, run a second copy (a "staging" VM) with its own `ENCRYPTION_KEY`, `APP_URL` and Stripe **test** keys. Never point staging at your production database.
 - Required production variables are listed in `.env.example`: `ANTHROPIC_API_KEY`, `ENCRYPTION_KEY`, `APP_URL`, `CRON_SECRET`, and Supabase keys if you use Supabase.
 - Optional: `ANTHROPIC_PREMIUM_MODEL` (defaults to `claude-opus-5-5`) is the strongest model used for long scripts on Pro and Unlimited.
 
@@ -22,7 +22,7 @@ Each platform needs a developer app registered by you (the owner); customers the
 
 ## 4. App Store (Apple) — needs a Mac with Xcode
 1. Enroll in the Apple Developer Program (annual fee).
-2. `cd mobile && npm install && export APP_URL=https://ghost-post-autopilot.up.railway.app && npx cap add ios && npm run assets && npx cap sync && npm run ios`.
+2. `cd mobile && npm install && export APP_URL=https://ghostpost.eastus.cloudapp.azure.com && npx cap add ios && npm run assets && npx cap sync && npm run ios`.
 3. In Xcode: choose your team, set version and build number, Product → Archive → Distribute App → App Store Connect.
 4. In App Store Connect: paste text from `docs/STORE_LISTING.md`, upload `brand/app-store-icon-1024.png` and real screenshots, fill App Privacy, add the demo account in App Review notes, then submit for review.
 5. Expect review questions about "minimum functionality" (Guideline 4.2) and subscriptions (3.1.1). The notes in the listing explain both.

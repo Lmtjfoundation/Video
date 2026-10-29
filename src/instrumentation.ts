@@ -1,5 +1,5 @@
 /**
- * Built-in scheduler for always-on servers (Railway, Render, a VPS, Docker).
+ * Built-in scheduler for always-on servers (the Azure server, a VPS, Docker).
  * Set INTERNAL_SCHEDULER=1 and the server calls its own cron endpoints:
  * publishing every 5 minutes, engagement every 15, Trend Autopilot every 30. Leave it off on Vercel (vercel.json crons do this there).
  */

@@ -39,7 +39,7 @@ from each clip's last frame) is made with TI2V-5B, loaded the first time it is n
 The Film Engine chains clips into beats of up to 30 seconds and adds the dialogue voices and score. Frame shapes:
 9:16, 16:9, 1:1, 21:9, 4:3, 3:4.
 
-It needs an **NVIDIA GPU**. Ghost Post's own server (Railway) has none, so the engine runs on a GPU server you rent by
+It needs an **NVIDIA GPU**. Ghost Post's own server (the Azure app VM) has none, so the engine runs on a GPU server you rent by
 the hour and Ghost Post calls it over HTTPS.
 
 **What to rent for `best`:** one 80 GB GPU (H100 or A100 80 GB), **128 GB or more of system memory** (the idle expert

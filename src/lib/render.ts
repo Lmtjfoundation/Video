@@ -603,7 +603,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
   const plan = post.video;
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "ghost-post-render-"));
   try {
-    if (!(await ffmpegAvailable())) throw new Error("Video rendering needs ffmpeg on the server. On Railway set RAILPACK_DEPLOY_APT_PACKAGES=ffmpeg and redeploy.");
+    if (!(await ffmpegAvailable())) throw new Error("Video rendering needs ffmpeg on the server. Install it (sudo apt-get install -y ffmpeg) and restart.");
     const long = plan.length === "long";
     const [W, H] = long ? [1920, 1080] : [1080, 1920];
     await setRender(post, { status: "rendering", progress: 2, message: "Preparing scenes…" });
