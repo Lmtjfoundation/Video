@@ -100,6 +100,21 @@ export async function ownEngineAwake(cap: EngineCapability): Promise<boolean> {
   return Date.now() - (lastAnswered.get(e.url) ?? 0) < 10 * 60_000;
 }
 
+/**
+ * Whether `cap` should go to Ghost Post's own engine first, waking it if it's asleep, with outside services (Gemini,
+ * Replicate, ElevenLabs) only as the backup. On whenever an engine that can do it is connected, unless the admin
+ * turned it off (Admin → Integrations) or ENGINE_FIRST=off.
+ */
+export async function engineFirst(cap: EngineCapability): Promise<boolean> {
+  if (process.env.ENGINE_FIRST === "off") return false;
+  const { getIntegrations } = await import("./integrations");
+  if ((await getIntegrations()).engineFirst === false) return false;
+  // Only an engine that said it can (no benefit of the doubt here: that would wake a machine for nothing).
+  const list = await engines();
+  const caps = await Promise.all(list.map((e) => engineCapabilities(e)));
+  return caps.some((c) => !!c?.includes(cap));
+}
+
 /** The engine for `cap`, or a plain reason why there is none. */
 async function need(cap: EngineCapability): Promise<Engine> {
   const e = await engineFor(cap);

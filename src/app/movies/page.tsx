@@ -16,7 +16,7 @@ import { lengthAllowed, MAX_VEO_SCENES, MOVIE_LENGTHS, MOVIE_SHAPE, movieEstimat
 import { Badge, Button, Card, CardHeader, Empty, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
 
 type CharacterWithUrl = Character & { imageUrl: string };
-type Library = { characters: CharacterWithUrl[]; looks: string[]; lookGroups?: { label: string; looks: string[] }[]; ready: boolean; replicate?: boolean };
+type Library = { characters: CharacterWithUrl[]; looks: string[]; lookGroups?: { label: string; looks: string[] }[]; ready: boolean; replicate?: boolean; ownClips?: boolean };
 
 /** The art styles, grouped (Realistic people, Graphics, Animated), plus any extra looks in use. */
 function LookOptions({ lib, extra = [] }: { lib: Library | null; extra?: string[] }) {
@@ -257,7 +257,11 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
   const [length, setLength] = useState<MovieLength>("s60");
   const [veo, setVeo] = useState(3);
   const [engine, setEngine] = useState<AnimationEngine>("veo");
-  const engineName = engine === "seedance" ? "Seedance 2.5" : engine === "wan" ? "Wan 2.2" : "Gemini Omni Flash";
+  // Ghost Post's own engine is the default once it's connected.
+  useEffect(() => {
+    if (lib?.ownClips) setEngine((e) => (e === "veo" ? "own" : e));
+  }, [lib?.ownClips]);
+  const engineName = engine === "seedance" ? "Seedance 2.5" : engine === "wan" ? "Wan 2.2" : engine === "own" ? "Ghost Post engine" : "Gemini Omni Flash";
   const [renderNow, setRenderNow] = useState(true);
   const [voiceover, setVoiceover] = useState(true);
   const settings = useApp((s) => s.status?.settings);
@@ -401,8 +405,9 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
             </p>
           ) : (
           <>
-          <Field label="Animate with" hint={!lib?.replicate ? "Seedance 2.5 and Wan 2.2 switch on when the admin adds a Replicate token" : engine === "wan" ? "Open-weight model: the lowest cost, about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice the Gemini price" : "Gemini Omni Flash, Google's video model: strong motion, lighting and sound"}>
+          <Field label="Animate with" hint={engine === "own" ? "Ghost Post's own video model: no outside service, it starts itself when needed (the first clip can take a few extra minutes)" : !lib?.replicate ? "Seedance 2.5 and Wan 2.2 switch on when the admin adds a Replicate token" : engine === "wan" ? "Open-weight model: the lowest cost, about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice the Gemini price" : "Gemini Omni Flash, Google's video model: strong motion, lighting and sound"}>
             <Select value={engine} onChange={(e) => setEngine(e.target.value as AnimationEngine)}>
+              {lib?.ownClips && <option value="own">Ghost Post engine · {CREDIT_COST.ownSecond} credits a second</option>}
               <option value="veo">Google Veo 3.1 · {CREDIT_COST.veoSecond} credits a second</option>
               <option value="seedance" disabled={!lib?.replicate}>ByteDance Seedance 2.5 · {CREDIT_COST.seedanceSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
               <option value="wan" disabled={!lib?.replicate}>Wan 2.2, open model · {CREDIT_COST.wanSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>

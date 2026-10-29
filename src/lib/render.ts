@@ -18,6 +18,7 @@ import { nowIso } from "./utils";
 import { characterRef, getCharacters, isRealisticLook, REALISM_DIRECTION } from "./characters";
 import { geminiClip, MediaGenError, type RefImage } from "./gemini-media";
 import { seedanceClip, seedanceFilm, wanClip } from "./replicate-video";
+import { engineFirst, ownClip } from "./own-video";
 import { CREDIT_COST } from "./plans";
 import { aiVisualCredits, animationSecondCredits, renderableScenes, veoSeconds } from "./video-spec";
 
@@ -139,6 +140,16 @@ export async function narrateAs(v: NonNullable<VideoPlan["narrator"]>, text: str
 }
 
 export async function narrate(text: string, base: string, note?: string): Promise<string> {
+  // Ghost Post's own voice engine first when it's connected (outside voices are the backup).
+  if (await engineFirst("speech")) {
+    try {
+      const { speak } = await import("./voice-studio");
+      await fs.writeFile(`${base}.wav`, await speak(text, "en"));
+      return `${base}.wav`;
+    } catch (e) {
+      console.warn(`[render] Ghost Post's voice engine failed, using the next voice: ${(e as Error).message.slice(0, 200)}`);
+    }
+  }
   if (await elevenlabsKey()) {
     try {
       await tts(text, `${base}.mp3`);
@@ -522,7 +533,7 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
 
   const veo = jobs.map((job, i) => ({ job, i, original: indexes[i] })).filter(({ original }) => ai.veoScenes.includes(original));
   let animated = 0;
-  const engine = ai.engine === "seedance" ? "Seedance" : ai.engine === "wan" ? "Wan" : "Veo";
+  const engine = ai.engine === "seedance" ? "Seedance" : ai.engine === "wan" ? "Wan" : ai.engine === "own" ? "Ghost Post's engine" : "Veo";
   let animBlocked: string | undefined;
   await mapLimit(veo, 2, async ({ job, i }) => {
     const seconds = veoSeconds(job.scene);
@@ -530,7 +541,7 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
     try {
       if (!still) throw new MediaGenError("No picture to animate.");
       if (animBlocked) throw new MediaGenError(animBlocked, "config");
-      await setRender(post, { message: `Animating scene ${i + 1} with ${engine} (about 1–3 minutes a clip)…` });
+      await setRender(post, { message: engine === "Veo" || engine === "Seedance" || engine === "Wan" ? `Animating scene ${i + 1} with ${engine} (about 1–3 minutes a clip)…` : `Animating scene ${i + 1} on Ghost Post's engine (it starts itself if it's asleep, about 3–5 minutes)…` });
       const prompt = `${job.scene.motion || "Subtle, natural movement with a slow cinematic camera move."} ${job.scene.visual}`.slice(0, 1500) + ` Art style: ${ai.look}. Keep the characters exactly as they appear in the starting frame.${isRealisticLook(ai.look) ? " Real people moving naturally: realistic faces, blinking, breathing and natural body weight; no morphing." : ""} No text or captions.`;
       const clip = { prompt, start: still, aspect: portrait ? ("9:16" as const) : ("16:9" as const), seconds };
       // Seedance also gets each character's portrait, so faces, bodies and outfits hold through the motion.
@@ -548,7 +559,9 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
             ? await seedanceClip(clip)
             : engine === "Wan"
               ? await wanClip(clip)
-              : await geminiClip(clip);
+              : engine === "Veo"
+                ? await geminiClip(clip)
+                : await ownClip({ prompt, start: { bytes: Buffer.from(still.base64, "base64"), mime: still.mimeType }, aspect: clip.aspect, seconds });
       const file = path.join(dir, `veo${i}.mp4`);
       await fs.writeFile(file, bytes);
       job.visual = { kind: "video", file, hold: true };

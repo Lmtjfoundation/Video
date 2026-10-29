@@ -81,6 +81,7 @@ interface IntegrationStatus {
   videoEngine: KeyState & { url: string };
   vmWake?: KeyState & { vm: string };
   videoEngineGpu?: KeyState & { url: string };
+  engineFirst?: boolean;
   ownWriter?: KeyState & { url: string; model: string; only: boolean; mode?: "first" | "backup" | "only" };
   uploadPost?: KeyState;
   vmWakeGpu?: KeyState & { vm: string };
@@ -896,7 +897,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Sparkles className="h-4 w-4" />}
           title="GPU engine — pictures, clips, voices and lip sync"
-          desc="A second engine on a GPU machine (for example an Azure NV36ads A10 v5, billed only while it runs). Ghost Post sends it everything the engine above can't do, starts it when needed with its own wake line, and it stops itself after 20 idle minutes. Writing and pictures use it only while it's already on (otherwise Claude and Gemini are cheaper than starting a GPU)."
+          desc="A second engine on a GPU machine (for example an Azure NV36ads A10 v5, billed only while it runs). Ghost Post sends it everything the engine above can't do, starts it when needed with its own wake line, and it stops itself after 20 idle minutes."
           link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/engine/README.md", label: "Setup guide" }}
           state={st.videoEngineGpu ?? { set: false }}
           result={results.videoEngineGpu}
@@ -904,6 +905,15 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           <Input autoComplete="off" spellCheck={false} placeholder={st.videoEngineGpu?.url || "GPU engine address, e.g. https://20-1-2-3.sslip.io"} value={vals.videoEngineGpuUrl ?? ""} onChange={set("videoEngineGpuUrl")} />
           <Input type="password" autoComplete="off" spellCheck={false} placeholder="ENGINE_TOKEN" value={vals.videoEngineGpuToken ?? ""} onChange={set("videoEngineGpuToken")} />
           <Input type="password" autoComplete="off" spellCheck={false} placeholder={st.vmWakeGpu?.set ? `Wake line set for “${st.vmWakeGpu.vm}”` : "Wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…"} value={vals.vmWakeGpu ?? ""} onChange={set("vmWakeGpu")} />
+          <label className="flex items-center gap-3 text-sm text-white/80">
+            <Switch
+              checked={st.engineFirst !== false}
+              disabled={busy === "engineFirst"}
+              onChange={(v) => run("engineFirst", () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { engineFirst: v } }), (next) => { setSt(next); toast(v ? "Pictures, clips and voices are made on Ghost Post's engine first." : "Outside services are used first again; the engine only while it's on.", "success"); })}
+              label="Make everything on Ghost Post's engine first"
+            />
+            Make everything on Ghost Post&apos;s engine first (outside services only as backup)
+          </label>
           <Actions>
             <Button size="sm" variant="primary" loading={busy === "save:GPU engine"} onClick={() => save(["videoEngineGpuUrl", "videoEngineGpuToken", "vmWakeGpu"].filter((k) => vals[k]), "GPU engine", "videoEngineGpu")}>Save &amp; test</Button>
             <Button size="sm" loading={busy === "test:videoEngineGpu"} disabled={!st.videoEngineGpu?.set} onClick={() => check("videoEngineGpu")}>Test</Button>

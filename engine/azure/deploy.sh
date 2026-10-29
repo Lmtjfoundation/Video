@@ -12,6 +12,8 @@
 #   SHUTDOWN   daily automatic stop, UTC hhmm (default 0700: 1 AM in Dallas in winter, 2 AM in summer); "off" to skip
 #   IDLE_STOP  minutes without a request before the VM deallocates itself (default 20); "off" to keep it on
 #              For an A10: SIZE=Standard_NV36ads_A10_v5 QUALITY=fast (24 GB: the fast video model, the others offload)
+#   PRIORITY   Regular (default) or Spot: Azure's spare capacity, much cheaper by the hour; Azure may take the VM back
+#              when it needs the capacity (it is then stopped, not deleted, and the app wakes it again or falls back)
 set -euo pipefail
 
 LOCATION="${LOCATION:-eastus}"
@@ -20,6 +22,8 @@ QUALITY="${QUALITY:-best}"
 GROUP="${GROUP:-ghost-post-engine}"
 SHUTDOWN="${SHUTDOWN:-0700}"
 IDLE_STOP="${IDLE_STOP:-20}"
+PRIORITY="${PRIORITY:-Regular}"
+case "$PRIORITY" in Regular|Spot) ;; *) echo "PRIORITY must be Regular or Spot" >&2; exit 1 ;; esac
 VM="ghost-post-engine"
 BRANCH="nexus-pulse-autopilot"
 RAW="https://raw.githubusercontent.com/Lmtjfoundation/Video/${BRANCH}/engine/azure"
@@ -35,10 +39,12 @@ say "Subscription: $(az account show --query name -o tsv)"
 family=$(az vm list-skus --location "$LOCATION" --size "$SIZE" --resource-type virtualMachines --query "[0].family" -o tsv 2>/dev/null || true)
 [ -n "$family" ] || fail "$SIZE isn't offered in $LOCATION. Try LOCATION=eastus2, westus3 or southcentralus."
 need=$(az vm list-skus --location "$LOCATION" --size "$SIZE" --resource-type virtualMachines --query "[0].capabilities[?name=='vCPUs'].value | [0]" -o tsv)
-read -r used limit < <(az vm list-usage --location "$LOCATION" --query "[?name.value=='$family'] | [0].[currentValue, limit]" -o tsv)
+# Spot VMs count against one shared Spot quota ("lowPriorityCores") instead of the GPU family's.
+quota="$family"; [ "$PRIORITY" = Spot ] && quota="lowPriorityCores"
+read -r used limit < <(az vm list-usage --location "$LOCATION" --query "[?name.value=='$quota'] | [0].[currentValue, limit]" -o tsv)
 if [ "${limit:-0}" -lt "$(( ${used:-0} + need ))" ]; then
-  fail "Your subscription's quota for $family in $LOCATION is ${limit:-0} vCPUs (${used:-0} in use); this VM needs $need.
-Request more: portal.azure.com → Quotas → Compute → search \"$family\" → set the new limit to $need → Submit.
+  fail "Your subscription's quota for $quota in $LOCATION is ${limit:-0} vCPUs (${used:-0} in use); this VM needs $need.
+Request more: portal.azure.com → Quotas → Compute → search \"$quota\" → set the new limit to $need → Submit.
 Say it is for a nonprofit's AI video generation. Approval can take from minutes to a few days. Then run this again."
 fi
 
@@ -51,7 +57,9 @@ curl -fsSL "$RAW/cloud-init.yaml" | sed -e "s|__TOKEN__|$token|g" -e "s|__DOMAIN
 say "Creating resource group $GROUP in $LOCATION…"
 az group create --name "$GROUP" --location "$LOCATION" -o none
 
-say "Creating the GPU virtual machine ($SIZE)… this takes a few minutes."
+spot=()
+[ "$PRIORITY" = Spot ] && spot=(--priority Spot --eviction-policy Deallocate --max-price -1)
+say "Creating the GPU virtual machine ($SIZE, $PRIORITY)… this takes a few minutes."
 az vm create \
   --resource-group "$GROUP" --name "$VM" --location "$LOCATION" --size "$SIZE" \
   --image Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:latest \
@@ -59,6 +67,7 @@ az vm create \
   --os-disk-size-gb 512 --storage-sku Premium_LRS \
   --public-ip-sku Standard --public-ip-address-dns-name "$label" \
   --admin-username ghostpost --generate-ssh-keys \
+  "${spot[@]}" \
   --custom-data "$init" -o none
 rm -f "$init"
 

@@ -53,6 +53,8 @@ export const PUT = authed(async (req) => {
   // Off unless switched on: only then are Claude and Gemini never used.
   if ("ownWriterOnly" in b) (patch as Record<string, unknown>).ownWriterOnly = b.ownWriterOnly === true ? true : "";
   // When the own writer writes: after Claude and Gemini, before them, or alone. It replaces the older switch.
+  // On unless switched off: pictures, clips and voices go to Ghost Post's own engine first.
+  if ("engineFirst" in b) (patch as Record<string, unknown>).engineFirst = b.engineFirst === false ? false : "";
   if ("ownWriterMode" in b) {
     if (!["first", "backup", "only"].includes(String(b.ownWriterMode))) return fail("Choose when the own writer writes.");
     patch.ownWriterMode = b.ownWriterMode as "first" | "backup" | "only";

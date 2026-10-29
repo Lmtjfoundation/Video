@@ -1,6 +1,6 @@
 import "server-only";
 import { geminiImage, mediaKey, MediaGenError, type Aspect, type RefImage } from "./gemini-media";
-import { ownEngineAwake, ownEngineReady, ownImage } from "./own-video";
+import { engineFirst, ownEngineAwake, ownEngineReady, ownImage } from "./own-video";
 import { fluxImage, replicateReady } from "./replicate-video";
 
 /**
@@ -12,9 +12,15 @@ import { fluxImage, replicateReady } from "./replicate-video";
  */
 export async function makeImage(o: { prompt: string; refs?: RefImage[]; aspect: Aspect; size?: "1K" | "2K" }): Promise<{ bytes: Buffer; mimeType: string }> {
   const cap = o.refs?.length ? "edit-pictures" : "pictures";
-  if ((await ownEngineAwake(cap)) || (!(await mediaKey()) && (await ownEngineReady(cap)))) {
-    const bytes = await ownImage({ prompt: o.prompt, refs: (o.refs ?? []).slice(0, 3).map((r) => ({ bytes: Buffer.from(r.base64, "base64"), mime: r.mimeType })), aspect: o.aspect });
-    return { bytes, mimeType: "image/png" };
+  const backup = !!(await mediaKey()) || (await replicateReady());
+  if ((await ownEngineAwake(cap)) || (await engineFirst(cap)) || (!backup && (await ownEngineReady(cap)))) {
+    try {
+      const bytes = await ownImage({ prompt: o.prompt, refs: (o.refs ?? []).slice(0, 3).map((r) => ({ bytes: Buffer.from(r.base64, "base64"), mime: r.mimeType })), aspect: o.aspect });
+      return { bytes, mimeType: "image/png" };
+    } catch (e) {
+      if (!backup || (e instanceof MediaGenError && e.kind === "blocked")) throw e;
+      console.warn(`[pictures] Ghost Post's engine couldn't make this picture (${(e as Error).message.slice(0, 160)}); using the backup.`);
+    }
   }
   if (!(await mediaKey())) {
     if (await replicateReady()) return fluxImage(o);

@@ -52,7 +52,7 @@ export const veoSeconds = (scene: Pick<VideoScene, "narration">): 4 | 6 | 8 => {
 
 /** Credits per second of an animated scene, by engine. */
 export const animationSecondCredits = (engine?: AnimationEngine) =>
-  engine === "seedance" ? CREDIT_COST.seedanceSecond : engine === "wan" ? CREDIT_COST.wanSecond : CREDIT_COST.veoSecond;
+  engine === "seedance" ? CREDIT_COST.seedanceSecond : engine === "wan" ? CREDIT_COST.wanSecond : engine === "own" ? CREDIT_COST.ownSecond : CREDIT_COST.veoSecond;
 
 /** Credits for the AI pictures and Veo clips of a plan with `ai` visuals (0 for stock-footage videos). */
 export function aiVisualCredits(plan: Pick<VideoPlan, "scenes" | "ai" | "visuals">) {

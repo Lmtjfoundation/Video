@@ -57,6 +57,8 @@ export interface Integrations {
   ownWriterModel?: string;
   ownWriterOnly?: boolean;
   ownWriterMode?: "first" | "backup" | "only" | "";
+  /** Make pictures, clips and voices on Ghost Post's own engine first (waking it), outside services only as backup. On unless false. */
+  engineFirst?: boolean | "";
   /** Pixabay (https://pixabay.com/api/docs/) — free stock video, the main footage source. */
   pixabayKey?: string;
   /** Pexels — optional second footage source. */
@@ -223,6 +225,7 @@ export async function integrationStatus() {
       mode: await (await import("./own-writer")).ownWriterMode(i),
     },
     videoEngineGpu: { ...entry("VIDEO_ENGINE_GPU_TOKEN", i.videoEngineGpuToken), url: i.videoEngineGpuUrl || process.env.VIDEO_ENGINE_GPU_URL || "" },
+    engineFirst: i.engineFirst !== false && process.env.ENGINE_FIRST !== "off",
     vmWakeGpu: { ...entry("VM_WAKE_GPU", i.vmWakeGpu), vm: (i.vmWakeGpu || process.env.VM_WAKE_GPU || "").match(/vm=([^;]+)/)?.[1] ?? "" },
     pixabay: entry("PIXABAY_API_KEY", i.pixabayKey),
     pexels: entry("PEXELS_API_KEY", i.pexelsKey),

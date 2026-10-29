@@ -391,7 +391,7 @@ export interface AiVisuals {
   /** Which model animates those scenes: Veo (Google), Seedance 2.5 (ByteDance) or Wan 2.2 (open weights). Missing = Veo. */
   engine?: AnimationEngine;
 }
-export const ANIMATION_ENGINES = ["veo", "seedance", "wan"] as const;
+export const ANIMATION_ENGINES = ["veo", "seedance", "wan", "own"] as const;
 export type AnimationEngine = (typeof ANIMATION_ENGINES)[number];
 
 /** A reusable character for movies and explainers, made from a photo or a description. */

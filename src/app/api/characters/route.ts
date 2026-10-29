@@ -8,6 +8,7 @@ import { log } from "@/lib/repo";
 import { replicateReady } from "@/lib/replicate-video";
 
 import { picturesReady } from "@/lib/pictures";
+import { engineFirst } from "@/lib/own-video";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
@@ -21,6 +22,7 @@ export const GET = authed(async (_req, user) => {
     lookGroups: CHARACTER_LOOK_GROUPS,
     ready: !!(await picturesReady()),
     replicate: await replicateReady(),
+    ownClips: await engineFirst("clips"),
   });
 });
 
