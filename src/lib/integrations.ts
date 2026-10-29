@@ -46,8 +46,9 @@ export interface Integrations {
   videoEngineGpuToken?: string;
   vmWakeGpu?: string;
   /**
-   * Ghost Post's own writer (src/lib/own-writer.ts): an OpenAI-compatible address, its key and model. It writes before
-   * Claude and Gemini; with ownWriterOnly, Claude and Gemini are never used.
+   * Ghost Post's own writer (src/lib/own-writer.ts): an OpenAI-compatible address, its key and model. ownWriterMode says
+   * when it writes: "backup" (after Claude and Gemini), "first" (before them) or "only" (they're never used).
+   * ownWriterOnly is the older switch for "only".
    */
   /** Upload-Post API key: the social connect service (src/lib/upload-post.ts), so every network connects with one tap. */
   uploadPostKey?: string;
@@ -55,6 +56,7 @@ export interface Integrations {
   ownWriterKey?: string;
   ownWriterModel?: string;
   ownWriterOnly?: boolean;
+  ownWriterMode?: "first" | "backup" | "only" | "";
   /** Pixabay (https://pixabay.com/api/docs/) — free stock video, the main footage source. */
   pixabayKey?: string;
   /** Pexels — optional second footage source. */
@@ -218,6 +220,7 @@ export async function integrationStatus() {
       url: i.ownWriterUrl || process.env.OWN_WRITER_URL || "",
       model: i.ownWriterModel || process.env.OWN_WRITER_MODEL || "",
       only: i.ownWriterOnly === true || ["1", "true"].includes(process.env.OWN_WRITER_ONLY ?? ""),
+      mode: await (await import("./own-writer")).ownWriterMode(i),
     },
     videoEngineGpu: { ...entry("VIDEO_ENGINE_GPU_TOKEN", i.videoEngineGpuToken), url: i.videoEngineGpuUrl || process.env.VIDEO_ENGINE_GPU_URL || "" },
     vmWakeGpu: { ...entry("VM_WAKE_GPU", i.vmWakeGpu), vm: (i.vmWakeGpu || process.env.VM_WAKE_GPU || "").match(/vm=([^;]+)/)?.[1] ?? "" },

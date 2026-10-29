@@ -14,6 +14,8 @@ import { sleep } from "./utils";
 const API = "https://api.replicate.com/v1";
 const MODEL = "bytedance/seedance-2.5";
 const WAN_MODEL = "wan-video/wan-2.2-i2v-fast";
+/** FLUX.2 [pro] (Black Forest Labs): pictures when Gemini can't make them; up to 8 reference pictures keep a cast the same. */
+const FLUX_MODEL = "black-forest-labs/flux-2-pro";
 
 export const replicateReady = async () => !!(await replicateKey());
 
@@ -124,11 +126,26 @@ async function run<R extends Record<string, unknown>>(
     p = (await call(`/predictions/${p.id}`, key)) as Prediction;
   }
   const url = Array.isArray(p.output) ? String(p.output[0] ?? "") : String(p.output ?? "");
-  if (!/^https:\/\//.test(url)) throw new MediaGenError(`${name} finished without a video link.`);
+  if (!/^https:\/\//.test(url)) throw new MediaGenError(`${name} finished without a file link.`);
   const res = await fetch(url);
-  if (!res.ok) throw new MediaGenError(`Couldn't download the ${name} clip (HTTP ${res.status}).`);
+  if (!res.ok) throw new MediaGenError(`Couldn't download the ${name} result (HTTP ${res.status}).`);
   return Buffer.from(await res.arrayBuffer());
 }
+
+/**
+ * One picture with FLUX.2 [pro] on Replicate, about 2 megapixels, in the scene's shape. Reference pictures (a cast's
+ * portraits) go in as input_images so faces and outfits match them. Returns a PNG.
+ */
+export const fluxImage = async (o: { prompt: string; refs?: RefImage[]; aspect: "9:16" | "16:9" | "1:1" }) => ({
+  bytes: await run(
+    "Flux",
+    FLUX_MODEL,
+    4 * 60_000,
+    async (key) => ({ input_images: await Promise.all((o.refs ?? []).slice(0, 8).map((r, i) => uploadToReplicate(key, Buffer.from(r.base64, "base64"), r.mimeType, `ref${i + 1}.${r.mimeType.split("/")[1] ?? "png"}`))) }),
+    (_, refs) => ({ prompt: o.prompt.slice(0, 4000), aspect_ratio: o.aspect, resolution: "2 MP", output_format: "png", safety_tolerance: 2, ...(refs.input_images.length ? { input_images: refs.input_images } : {}) }),
+  ),
+  mimeType: "image/png",
+});
 
 /** Admin → Integrations → Test: checks the token without making a video. */
 export async function testReplicate(): Promise<{ ok: boolean; message: string }> {

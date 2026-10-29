@@ -80,7 +80,7 @@ interface IntegrationStatus {
   videoEngine: KeyState & { url: string };
   vmWake?: KeyState & { vm: string };
   videoEngineGpu?: KeyState & { url: string };
-  ownWriter?: KeyState & { url: string; model: string; only: boolean };
+  ownWriter?: KeyState & { url: string; model: string; only: boolean; mode?: "first" | "backup" | "only" };
   uploadPost?: KeyState;
   vmWakeGpu?: KeyState & { vm: string };
   pixabay: KeyState;
@@ -822,7 +822,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Bot className="h-4 w-4" />}
           title="Ghost Post's own writer — no Claude or Gemini credits"
-          desc="An open AI model (Qwen3-4B) running on your own Azure server, which writes posts, scripts, plans and replies before Claude or Gemini are asked. It costs nothing per use: it loads when someone writes and unloads after 30 quiet minutes. It's slower than Claude (a post takes about 30–90 seconds) and can't read pictures or search the web."
+          desc="An open AI model (Qwen3-4B) running on your own Azure server that can write posts, scripts, plans and replies. It costs nothing per use: it loads when someone writes and unloads after 30 quiet minutes. It's slower than Claude (a post takes about 30–90 seconds) and can't read pictures or search the web."
           link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/README.md#go-live-on-an-azure-vm-what-ghost-post-runs-on", label: "Setup guide" }}
           state={st.ownWriter ?? { set: false }}
           result={results.ownWriter}
@@ -830,15 +830,25 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           {st.ownWriter?.url && <p className="text-xs text-white/55">Writing with {st.ownWriter.model || "the default model"} at {st.ownWriter.url}.</p>}
           <Input autoComplete="off" spellCheck={false} placeholder={st.ownWriter?.url || "Writer address, e.g. https://writer.20-127-104-87.sslip.io/v1"} value={vals.ownWriterUrl ?? ""} onChange={set("ownWriterUrl")} />
           <Input type="password" autoComplete="off" spellCheck={false} placeholder="Writer key (OWN_WRITER_KEY)" value={vals.ownWriterKey ?? ""} onChange={set("ownWriterKey")} />
-          <label className="flex items-center gap-3 text-sm text-white/80">
-            <Switch
-              checked={!!st.ownWriter?.only}
-              disabled={!st.ownWriter?.url || busy === "only"}
-              onChange={(v) => run("only", () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { ownWriterOnly: v } }), (next) => { setSt(next); toast(v ? "Only the own writer is used now." : "Claude and Gemini can step in again.", "success"); })}
-              label="Only use the own writer (never Claude or Gemini)"
-            />
-            Only use the own writer (never Claude or Gemini)
-          </label>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="When the own writer writes">
+            {([
+              ["backup", "Claude first (best)", "Claude writes; the own writer covers if Claude and Gemini can't answer."],
+              ["first", "Own writer first", "Saves AI credits; Claude steps in when it fails. Writing is plainer."],
+              ["only", "Own writer only", "Never uses Claude or Gemini. Cheapest, lowest quality."],
+            ] as const).map(([m, t, d]) => (
+              <button
+                key={m}
+                role="radio"
+                aria-checked={(st.ownWriter?.mode ?? "backup") === m}
+                disabled={!st.ownWriter?.url || busy === "mode"}
+                onClick={() => run("mode", () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { ownWriterMode: m } }), (next) => { setSt(next); toast(`${t}: saved.`, "success"); })}
+                className={cn("rounded-xl border p-3 text-left disabled:opacity-40", (st.ownWriter?.mode ?? "backup") === m ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03]")}
+              >
+                <div className="text-sm font-medium">{t}</div>
+                <div className="mt-1 text-xs text-white/55">{d}</div>
+              </button>
+            ))}
+          </div>
           <Actions>
             <Button size="sm" variant="primary" loading={busy === "save:Own writer"} onClick={() => save(["ownWriterUrl", "ownWriterKey"], "Own writer", "ownWriter")}>Save &amp; test</Button>
             <Button size="sm" loading={busy === "test:ownWriter"} disabled={!st.ownWriter?.url} onClick={() => check("ownWriter")}>Test</Button>

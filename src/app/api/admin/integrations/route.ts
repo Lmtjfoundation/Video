@@ -52,6 +52,12 @@ export const PUT = authed(async (req) => {
   }
   // Off unless switched on: only then are Claude and Gemini never used.
   if ("ownWriterOnly" in b) (patch as Record<string, unknown>).ownWriterOnly = b.ownWriterOnly === true ? true : "";
+  // When the own writer writes: after Claude and Gemini, before them, or alone. It replaces the older switch.
+  if ("ownWriterMode" in b) {
+    if (!["first", "backup", "only"].includes(String(b.ownWriterMode))) return fail("Choose when the own writer writes.");
+    patch.ownWriterMode = b.ownWriterMode as "first" | "backup" | "only";
+    (patch as Record<string, unknown>).ownWriterOnly = "";
+  }
   if ("emailFrom" in b) {
     const from = typeof b.emailFrom === "string" ? b.emailFrom.trim() : "";
     if (from && !validFrom(from)) return fail('Use an address like "Ghost Post <support@yourdomain.com>" or support@yourdomain.com.');

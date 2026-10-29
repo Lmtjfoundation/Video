@@ -287,10 +287,26 @@ export async function claude(opts: CallOpts): Promise<string> {
     }
   }
 
-  // Next, Ghost Post's own writer (an open model on the owner's server), so no outside AI credits are used. It can't
-  // read pictures or search the web, so those requests go on to Claude or Gemini, unless the owner allows only the
-  // own writer (then web searches are written without the search).
+  // Ghost Post's own writer (an open model on the owner's server) uses no outside AI credits but writes less well. As
+  // the backup (the default when Claude or Gemini is set up) it covers only when they can't answer; set to write first,
+  // it goes before them. It can't read pictures or search the web, so those requests go on to Claude or Gemini, unless
+  // the owner allows only the own writer (then web searches are written without the search).
   const writer = await ownWriter();
+  if (writer?.mode === "backup") {
+    try {
+      return await claudeOrGemini(opts);
+    } catch (e) {
+      if (opts.images?.length) throw e;
+      try {
+        const text = await writeWithOwnWriter(writer, { system: opts.system, user: opts.user, maxTokens: opts.maxTokens ?? 2500, temperature: opts.temperature ?? 0.85, json: opts.json });
+        console.warn(`[llm] Claude/Gemini couldn't answer (${(e as Error).message.slice(0, 160)}); the own writer covered.`);
+        return text;
+      } catch (w) {
+        console.warn(`[llm] own writer (backup): ${(w as Error).message.slice(0, 200)}`);
+        throw e;
+      }
+    }
+  }
   if (writer) {
     const canRead = !opts.images?.length;
     if (canRead && (!opts.webSearch?.domains.length || writer.only)) {
@@ -309,6 +325,11 @@ export async function claude(opts: CallOpts): Promise<string> {
     }
   }
 
+  return claudeOrGemini(opts);
+}
+
+/** Claude, then Gemini (or the other way round, per the owner's settings), with retries and the dashboard notice. */
+async function claudeOrGemini(opts: CallOpts): Promise<string> {
   const gemini = await ownerGemini();
   const claudeConfigured = !!(await anthropicKey());
   const order: Engine[] = engineOrder({

@@ -33,14 +33,47 @@ beforeEach(async () => {
   process.env.OWN_WRITER_URL = WRITER;
   process.env.OWN_WRITER_KEY = "writer-key-12345";
   process.env.ANTHROPIC_API_KEY = "sk-ant-test-key-1234567890abcdef";
+  // Most tests here are about the writer writing first; the default order is covered on its own below.
+  process.env.OWN_WRITER_MODE = "first";
   (await import("@/lib/llm")).resetClaudeDown();
 });
 afterEach(() => {
   vi.unstubAllGlobals();
-  for (const k of ["OWN_WRITER_URL", "OWN_WRITER_KEY", "OWN_WRITER_ONLY", "ANTHROPIC_API_KEY"]) delete process.env[k];
+  for (const k of ["OWN_WRITER_URL", "OWN_WRITER_KEY", "OWN_WRITER_ONLY", "OWN_WRITER_MODE", "ANTHROPIC_API_KEY"]) delete process.env[k];
 });
 
 describe("Ghost Post's own writer", () => {
+  it("by default lets Claude write first when its key is set, and covers only when Claude can't answer", async () => {
+    delete process.env.OWN_WRITER_MODE;
+    const { claude, resetClaudeDown } = await import("@/lib/llm");
+    const { ownWriterMode } = await import("@/lib/own-writer");
+    expect(await ownWriterMode()).toBe("backup");
+    const seen: Seen[] = [];
+    stubNet("from the own writer", seen);
+    expect(await claude({ system: "s", user: "write a post" })).toBe("from claude");
+    expect(seen.some((x) => x.url.startsWith(WRITER))).toBe(false);
+
+    // Claude out of credits: the own writer covers instead of the post failing.
+    resetClaudeDown();
+    const seen2: Seen[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (u: string, init?: RequestInit) => {
+      const url = String(u);
+      seen2.push({ url, body: {} });
+      if (url.startsWith("https://api.anthropic.com/")) return Response.json({ type: "error", error: { type: "invalid_request_error", message: "Your credit balance is too low" } }, { status: 400 });
+      if (url.startsWith(WRITER)) return Response.json({ choices: [{ message: { content: "covered" } }] });
+      return new Response("{}", { status: 404 });
+    }));
+    expect(await claude({ system: "s", user: "write a post" })).toBe("covered");
+    expect(seen2[0].url.startsWith("https://api.anthropic.com/")).toBe(true);
+    expect(seen2.at(-1)!.url).toBe(`${WRITER}/chat/completions`);
+
+    // The older "only" switch still means only; an explicit choice wins over it.
+    process.env.OWN_WRITER_ONLY = "1";
+    expect(await ownWriterMode()).toBe("only");
+    process.env.OWN_WRITER_MODE = "backup";
+    expect(await ownWriterMode()).toBe("backup");
+  });
+
   it("writes first, so Claude isn't used (and isn't paid)", async () => {
     const seen: Seen[] = [];
     stubNet("<think>hmm</think>A post from the own writer.", seen);
@@ -63,7 +96,8 @@ describe("Ghost Post's own writer", () => {
     stubNet(new TypeError("fetch failed"), seen);
     const { claude } = await import("@/lib/llm");
     expect(await claude({ system: "s", user: "x" })).toBe("from claude");
-    process.env.OWN_WRITER_ONLY = "1";
+    process.env.OWN_WRITER_ONLY = "1"; // the older switch, with no newer choice made
+    delete process.env.OWN_WRITER_MODE;
     seen = [];
     stubNet(503, seen);
     await expect(claude({ system: "s", user: "x" })).rejects.toThrow(/try again/);
@@ -77,7 +111,8 @@ describe("Ghost Post's own writer", () => {
     const images = [{ mediaType: "image/png" as const, base64: "iVBORw0KGgo=" }];
     expect(await claude({ system: "s", user: "describe", images })).toBe("from claude");
     expect(seen.some((s) => s.url.startsWith(WRITER))).toBe(false);
-    process.env.OWN_WRITER_ONLY = "1";
+    process.env.OWN_WRITER_ONLY = "1"; // the older switch, with no newer choice made
+    delete process.env.OWN_WRITER_MODE;
     await expect(claude({ system: "s", user: "describe", images })).rejects.toThrow(/read pictures/);
   });
 

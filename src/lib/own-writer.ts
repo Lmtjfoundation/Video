@@ -7,19 +7,38 @@ import { getIntegrations, pick } from "./integrations";
  * and Gemini, so writing needs no outside AI credits. The same setting can point at Azure OpenAI's /openai/v1 endpoint
  * or any other OpenAI-compatible service later.
  */
+export type OwnWriterMode = "first" | "backup" | "only";
+
 export interface OwnWriter {
   url: string;
   key: string;
   model: string;
-  /** Never fall back to Claude or Gemini. */
+  /** When it writes: after Claude and Gemini (backup), before them (first), or alone (only). */
+  mode: OwnWriterMode;
+  /** Never fall back to Claude or Gemini (mode "only"). */
   only: boolean;
+}
+
+const MODES: OwnWriterMode[] = ["first", "backup", "only"];
+
+/**
+ * The admin's choice (Admin → Integrations → Own writer), else OWN_WRITER_MODE, else the older "only" switch. With
+ * none set, Claude or Gemini write first when either key is there (better writing), the own writer covers when they fail.
+ */
+export async function ownWriterMode(i?: Awaited<ReturnType<typeof getIntegrations>>): Promise<OwnWriterMode> {
+  const s = i ?? (await getIntegrations());
+  const chosen = [s.ownWriterMode, process.env.OWN_WRITER_MODE?.trim().toLowerCase()].find((m): m is OwnWriterMode => MODES.includes(m as OwnWriterMode));
+  if (chosen) return chosen;
+  if (s.ownWriterOnly === true || ["1", "true"].includes(process.env.OWN_WRITER_ONLY ?? "")) return "only";
+  const [anthropic, gemini] = await Promise.all([pick("anthropicKey", "ANTHROPIC_API_KEY"), pick("geminiKey", "GEMINI_API_KEY")]);
+  return anthropic || gemini ? "backup" : "first";
 }
 
 export async function ownWriter(): Promise<OwnWriter | null> {
   const [url, key, model, i] = await Promise.all([pick("ownWriterUrl", "OWN_WRITER_URL"), pick("ownWriterKey", "OWN_WRITER_KEY"), pick("ownWriterModel", "OWN_WRITER_MODEL"), getIntegrations()]);
   if (!url) return null;
-  const only = i.ownWriterOnly === true || ["1", "true"].includes(process.env.OWN_WRITER_ONLY ?? "");
-  return { url: url.replace(/\/+$/, ""), key, model: model || "qwen3:4b-instruct-2507-q4_K_M", only };
+  const mode = await ownWriterMode(i);
+  return { url: url.replace(/\/+$/, ""), key, model: model || "qwen3:4b-instruct-2507-q4_K_M", mode, only: mode === "only" };
 }
 
 export class OwnWriterError extends Error {}
