@@ -236,9 +236,9 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   repurposePerPlatform: "Repurpose to one platform",
   liveCheck: "Live fact-check of a news piece (added to the post or video)",
   aiImage: "AI picture for one movie or explainer scene",
-  veoSecond: "Each second of a scene animated by Gemini Omni Flash (or Veo), 4–8 seconds per scene",
-  seedanceSecond: "Each second of a Seedance 2.5-animated scene (4–8 seconds per scene)",
-  wanSecond: "Each second of a Wan 2.2-animated scene (4–8 seconds per scene)",
+  veoSecond: "Each second of a Ghost Post Cinematic scene, 4–8 seconds per scene",
+  seedanceSecond: "Each second of a Ghost Post Cinematic Pro scene (4–8 seconds per scene)",
+  wanSecond: "Each second of a Ghost Post Lite scene (4–8 seconds per scene)",
   character: "Create a character from a photo or description",
   explain: "Explain a text in plain language (2 credits over 8,000 characters)",
   aiMusic: "AI Music: one track up to 4 minutes, with the license",
@@ -281,9 +281,9 @@ export interface CreditPack {
   label: string;
 }
 export const CREDIT_PACKS: CreditPack[] = [
-  { id: "small", credits: 300, price: 12, label: "About 40 seconds of Gemini video, or 300 posts" },
-  { id: "medium", credits: 1_000, price: 35, label: "About 2 minutes of Gemini video" },
-  { id: "large", credits: 3_000, price: 100, legacyPrices: [90], label: "About 7 minutes of Gemini video" },
+  { id: "small", credits: 300, price: 12, label: "About 40 seconds of Cinematic video, or 300 posts" },
+  { id: "medium", credits: 1_000, price: 35, label: "About 2 minutes of Cinematic video" },
+  { id: "large", credits: 3_000, price: 100, legacyPrices: [90], label: "About 7 minutes of Cinematic video" },
 ];
 export const packById = (id: string | undefined) => CREDIT_PACKS.find((p) => p.id === id);
 

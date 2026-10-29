@@ -10,39 +10,41 @@ Each link carries `?src=` so **Admin → Users** shows where every new account c
 ---
 
 ## TikTok
-This whole video was made by AI: the pictures, the voice, the captions, the music. 🎬
-Ghost Post turns a niche into faceless videos and posts them for you on schedule.
-Start free, no card needed. Link in bio.
-#facelessvideo #aivideo #contentcreator #truecrime #sidehustle
+Your whole AI studio in one app. 🎬
+Pictures, videos, voices, music, sound effects, and it posts for you.
+This video was made inside Ghost Post. Start free, link in bio.
+#aivideo #aistudio #contentcreator #facelessvideo #creatortools
 
 **Bio link:** https://ghostpost.eastus.cloudapp.azure.com/welcome?src=tiktok
 
 ## Instagram (Reels)
-Every scene in this Reel was made inside Ghost Post. 🤯
-→ AI writes the story
-→ paints the scenes (same character, same face, every scene)
-→ voices it, captions it, adds music
-→ posts it to TikTok, Instagram, YouTube and Facebook on schedule
+One app. Your whole studio. 🤯
+→ Image Studio: pictures from a sentence
+→ Story to Video: scripts become narrated videos
+→ Characters: the same face in every scene
+→ Voice Lab: lifelike voices, your own voice, dubbing
+→ Music and sound effects, made for each video
+→ Autopilot: posts to every network on schedule
 Start free, link in bio.
-#facelesscontent #aivideo #reels #contentcreation #creatoreconomy
+#aistudio #aivideo #reels #contentcreation #creatoreconomy
 
 **Bio link:** https://ghostpost.eastus.cloudapp.azure.com/welcome?src=instagram
 
 ## Facebook
-This video was made by AI from start to finish, and so can yours.
-Ghost Post writes, makes and posts faceless videos for your page every day. Pick a niche and it does the rest.
+Make pictures, videos, voices and music in one app, then let it post for you.
+Ghost Post is a complete AI studio for creators and small brands. This video was made inside it.
 Start free (no card needed): https://ghostpost.eastus.cloudapp.azure.com/welcome?src=facebook
 
 ## YouTube Shorts
-**Title:** This entire video was made by AI #shorts
-**Description:** Pictures, voice, captions and music, all made in Ghost Post, which also posts it for you on schedule. Start free: https://ghostpost.eastus.cloudapp.azure.com/welcome?src=youtube
+**Title:** My whole AI studio is one app #shorts
+**Description:** Pictures, video, voices, music, sound effects and auto-posting, all in Ghost Post. This Short was made inside it. Start free: https://ghostpost.eastus.cloudapp.azure.com/welcome?src=youtube
 
 ## X
-This whole video was made by AI in Ghost Post: story, scenes, voice, captions, music. Then it posted itself.
-Start free → https://ghostpost.eastus.cloudapp.azure.com/welcome?src=x
+Ghost Post: pictures, video, voices, music and sound effects in one studio, and it posts for you.
+This video was made inside it. Start free → https://ghostpost.eastus.cloudapp.azure.com/welcome?src=x
 
 ## LinkedIn
-We built Ghost Post so a one-person brand can publish like a studio. It writes a script, makes every scene with consistent characters, voices and captions it, and schedules it across TikTok, Instagram, YouTube and Facebook.
+We built Ghost Post so one person can run a full creative studio. It makes pictures, story videos with consistent characters, voices, music and sound effects. Then it writes the captions and schedules everything across TikTok, Instagram, YouTube and Facebook.
 The ad above was made entirely inside the app.
 Try it free: https://ghostpost.eastus.cloudapp.azure.com/welcome?src=linkedin
 

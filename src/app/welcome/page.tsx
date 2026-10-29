@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Activity, CalendarClock, Clapperboard, Film, Mic, Music2, Sparkles, UserRound, Wand2 } from "lucide-react";
+import { Activity, CalendarClock, Clapperboard, Film, Image as ImageIcon, Mic, Music2, Sparkles, UserRound, Wand2, Workflow } from "lucide-react";
 import { PricingTable } from "@/components/pricing";
 import { LegalFooter } from "@/components/legal-footer";
 import { AdPlayer } from "@/components/ad-player";
@@ -8,8 +8,8 @@ import { plansPayload } from "@/lib/plans-public";
 
 export const dynamic = "force-dynamic";
 
-const TITLE = "Ghost Post: faceless videos that post themselves";
-const DESCRIPTION = "AI writes the story, paints the scenes, voices it, captions it and posts it to TikTok, Instagram, YouTube and Facebook on schedule. Start free, no card needed.";
+const TITLE = "Ghost Post: your whole AI studio in one app";
+const DESCRIPTION = "Pictures, videos, voices, music and sound effects made by Ghost Post's own AI, then posted to TikTok, Instagram, YouTube and Facebook for you. Start free, no card needed.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const base = (process.env.APP_URL || "https://ghostpost.eastus.cloudapp.azure.com").replace(/\/$/, "");
@@ -35,18 +35,21 @@ const GALLERY = [
 ];
 
 const STEPS = [
-  { n: "1", title: "Pick a niche", text: "True crime, history, money, motivation, anything. Niche Lab shows what earns." },
-  { n: "2", title: "AI makes the video", text: "It writes the script, paints the scenes, adds the voice, music and captions." },
-  { n: "3", title: "It posts on schedule", text: "Connect your accounts once. Posts go out at the best times, every day." },
+  { n: "1", title: "Create", text: "Describe a picture, a story or a song. Ghost Post makes it: scenes, motion, voice, music and captions." },
+  { n: "2", title: "Polish", text: "Change any scene, keep your characters the same, swap in your own voice, pick the music." },
+  { n: "3", title: "Post", text: "Connect your accounts once. Ghost Post writes the captions and posts at the best times, every day." },
 ];
 
-const TOOLS = [
-  { icon: Clapperboard, title: "Story to Video", text: "Turn a topic or a script into a narrated, captioned short." },
-  { icon: UserRound, title: "Characters", text: "Keep the same face and outfit in every scene and episode." },
-  { icon: Film, title: "Movie Studio", text: "Longer stories in chapters, with series and episodes." },
-  { icon: Mic, title: "Voice Lab", text: "AI voices, or record your own to replace the AI voice." },
-  { icon: Music2, title: "Music & sound effects", text: "Background music and effects made for each video." },
-  { icon: CalendarClock, title: "Autopilot posting", text: "TikTok, Instagram, YouTube, Facebook, X, LinkedIn and more." },
+/** The studio, tool by tool: each with a screen from the real app (public/promo/studio, taken from a demo account). */
+const STUDIO = [
+  { icon: ImageIcon, title: "Image Studio", shot: "/promo/studio/images.jpg", text: "Make pictures from a sentence, edit them by describing the change, upscale them, cut out the background, and place your characters into any scene." },
+  { icon: Clapperboard, title: "Story to Video", shot: "/promo/studio/story-video.jpg", text: "An idea, a script, a recording or a web page becomes a narrated video with pictures, music and captions, in 23 languages." },
+  { icon: UserRound, title: "Characters", shot: "/promo/studio/characters.jpg", text: "Make a character once from a photo or a description. The same face, hair and outfit in every scene, episode and film." },
+  { icon: Mic, title: "Voice Lab", shot: "/promo/studio/voice-lab.jpg", text: "Lifelike voices with emotion, voices designed from a description, your own cloned voice, dubbing, transcripts, a voice isolator, and your recording in place of the AI voice." },
+  { icon: Music2, title: "Music & sound effects", shot: "/promo/studio/create.jpg", text: "Songs and instrumentals in any style, sound effects, footage and a library with a license that covers commercial use." },
+  { icon: Film, title: "Movie Studio & Film Engine", shot: "/promo/studio/movies.jpg", text: "Short films and series with animated scenes, a cast that stays consistent, dialogue, a score and an edit room." },
+  { icon: Workflow, title: "Director, Flows & Video Tools", shot: "/promo/studio/director.jpg", text: "Chat with a director that plans your video, chain tools into one-click flows, and use smart shots, music videos and lip-sync avatars." },
+  { icon: CalendarClock, title: "Autopilot posting", shot: "/promo/studio/calendar.jpg", text: "A calendar that fills itself: captions written for each network, posted to TikTok, Instagram, YouTube, Facebook, X and LinkedIn." },
 ];
 
 export default async function WelcomePage() {
@@ -68,8 +71,8 @@ export default async function WelcomePage() {
       <section className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="min-w-0">
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-mint-400/30 bg-mint-400/10 px-3 py-1 text-xs font-medium text-mint-300"><Sparkles className="h-3.5 w-3.5" /> The ad on this page was made with Ghost Post</p>
-          <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">Faceless videos that post themselves.</h1>
-          <p className="mt-4 max-w-xl text-lg text-white/65">Ghost Post writes the story, paints every scene, voices it, adds music and captions, then posts it to TikTok, Instagram, YouTube and Facebook on schedule. You pick the niche.</p>
+          <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">Your whole AI studio in one app.</h1>
+          <p className="mt-4 max-w-xl text-lg text-white/65">Pictures, videos, voices, music and sound effects, made by Ghost Post&apos;s own AI. Then it writes the captions and posts to TikTok, Instagram, YouTube and Facebook for you.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/signup" className="rounded-xl bg-mint-400 px-6 py-3.5 text-base font-semibold text-ink-950 shadow-glow hover:bg-mint-300">Start free</Link>
             <a href="#plans" className="rounded-xl border border-white/15 px-6 py-3.5 text-base font-medium text-white hover:bg-white/5">See plans</a>
@@ -97,8 +100,8 @@ export default async function WelcomePage() {
           ))}
           <figure className="relative flex min-w-0 flex-col justify-center rounded-2xl border border-mint-400/30 bg-mint-400/10 p-5">
             <Wand2 className="h-6 w-6 text-mint-300" />
-            <p className="mt-3 text-lg font-semibold text-white">Your niche next</p>
-            <p className="mt-1 text-sm text-white/60">Make your first video free in a few minutes.</p>
+            <p className="mt-3 text-lg font-semibold text-white">Your idea next</p>
+            <p className="mt-1 text-sm text-white/60">Make your first picture or video free in a few minutes.</p>
             <Link href="/signup" className="mt-4 inline-block rounded-lg bg-mint-400 px-4 py-2 text-center text-sm font-semibold text-ink-950">Start free</Link>
           </figure>
         </div>
@@ -118,14 +121,18 @@ export default async function WelcomePage() {
       </section>
 
       <section className="mt-20">
-        <h2 className="text-2xl font-semibold text-white">What you can make</h2>
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {TOOLS.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="glass min-w-0 p-5">
-              <Icon className="h-5 w-5 text-mint-300" />
-              <p className="mt-3 font-semibold text-white">{title}</p>
-              <p className="mt-1 text-sm text-white/60">{text}</p>
-            </div>
+        <h2 className="text-2xl font-semibold text-white">Everything in one studio</h2>
+        <p className="mt-2 text-white/55">One app, one login, one bill. Every tool works with the others, and everything you make lands in your library.</p>
+        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+          {STUDIO.map(({ icon: Icon, title, shot, text }) => (
+            <article key={title} className="glass min-w-0 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={shot} alt={`${title} in Ghost Post`} loading="lazy" className="aspect-[16/10] w-full border-b border-white/10 object-cover object-top" />
+              <div className="p-5">
+                <p className="flex items-center gap-2 font-semibold text-white"><Icon className="h-5 w-5 text-mint-300" /> {title}</p>
+                <p className="mt-2 text-sm text-white/60">{text}</p>
+              </div>
+            </article>
           ))}
         </div>
       </section>
@@ -138,8 +145,8 @@ export default async function WelcomePage() {
       </section>
 
       <section className="mt-20 rounded-3xl border border-mint-400/25 bg-gradient-to-br from-mint-400/15 to-transparent p-8 text-center sm:p-12">
-        <h2 className="text-3xl font-semibold text-white">Your first video is free.</h2>
-        <p className="mx-auto mt-3 max-w-lg text-white/65">Pick a niche, and Ghost Post makes the video and posts it for you.</p>
+        <h2 className="text-3xl font-semibold text-white">Your studio is ready.</h2>
+        <p className="mx-auto mt-3 max-w-lg text-white/65">Make your first picture, voice, song or video free, and let Ghost Post post it for you.</p>
         <Link href="/signup" className="mt-6 inline-block rounded-xl bg-mint-400 px-8 py-4 text-lg font-semibold text-ink-950 shadow-glow hover:bg-mint-300">Start free</Link>
       </section>
 

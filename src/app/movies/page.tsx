@@ -63,14 +63,14 @@ export default function MovieStudio() {
     <div>
       <PageHeader
         title="Movie Studio"
-        subtitle="Turn photos into characters, then make short films and explainer videos with AI pictures, Gemini-animated scenes, voiceover and captions."
+        subtitle="Turn photos into characters, then make short films and explainer videos with AI pictures, animated scenes, voiceover and captions."
         actions={<Link href="/explain"><Button variant="secondary"><Lightbulb className="h-4 w-4" /> Explain a text</Button></Link>}
       />
       {lib && !lib.ready && (
         <div className="mb-5 rounded-xl bg-gold-400/[0.08] p-4 text-sm text-gold-300 ring-1 ring-gold-300/25">
           {admin
             ? "Add a Gemini API key in Admin → App settings → Integrations to switch this on. Pictures and video clips are billed by Google on that key's project, so turn billing on there."
-            : "Movie Studio isn't switched on yet. The app's owner needs to connect Google Gemini."}
+            : "Movie Studio isn't switched on yet. The app's owner needs to switch on AI pictures."}
         </div>
       )}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
@@ -261,7 +261,7 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
   useEffect(() => {
     if (lib?.ownClips) setEngine((e) => (e === "veo" ? "own" : e));
   }, [lib?.ownClips]);
-  const engineName = engine === "seedance" ? "Seedance 2.5" : engine === "wan" ? "Wan 2.2" : engine === "own" ? "Ghost Post engine" : "Gemini Omni Flash";
+  const engineName = engine === "seedance" ? "Ghost Post Cinematic Pro" : engine === "wan" ? "Ghost Post Lite" : engine === "own" ? "Ghost Post engine" : "Ghost Post Cinematic";
   const [renderNow, setRenderNow] = useState(true);
   const [voiceover, setVoiceover] = useState(true);
   const settings = useApp((s) => s.status?.settings);
@@ -405,12 +405,12 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
             </p>
           ) : (
           <>
-          <Field label="Animate with" hint={engine === "own" ? "Ghost Post's own video model: no outside service, it starts itself when needed (the first clip can take a few extra minutes)" : !lib?.replicate ? "Seedance 2.5 and Wan 2.2 switch on when the admin adds a Replicate token" : engine === "wan" ? "Open-weight model: the lowest cost, about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice the Gemini price" : "Gemini Omni Flash, Google's video model: strong motion, lighting and sound"}>
+          <Field label="Animate with" hint={engine === "own" ? "Ghost Post's own video model: it starts itself when needed (the first clip can take a few extra minutes)" : !lib?.replicate ? "Cinematic Pro and Lite switch on when the admin connects them (Admin → Integrations → Replicate)" : engine === "wan" ? "The lowest cost: about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice the Cinematic price" : "Strong motion, lighting and sound"}>
             <Select value={engine} onChange={(e) => setEngine(e.target.value as AnimationEngine)}>
               {lib?.ownClips && <option value="own">Ghost Post engine · {CREDIT_COST.ownSecond} credits a second</option>}
-              <option value="veo">Google Veo 3.1 · {CREDIT_COST.veoSecond} credits a second</option>
-              <option value="seedance" disabled={!lib?.replicate}>ByteDance Seedance 2.5 · {CREDIT_COST.seedanceSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
-              <option value="wan" disabled={!lib?.replicate}>Wan 2.2, open model · {CREDIT_COST.wanSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
+              <option value="veo">Ghost Post Cinematic · {CREDIT_COST.veoSecond} credits a second</option>
+              <option value="seedance" disabled={!lib?.replicate}>Ghost Post Cinematic Pro · {CREDIT_COST.seedanceSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
+              <option value="wan" disabled={!lib?.replicate}>Ghost Post Lite · {CREDIT_COST.wanSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
             </Select>
           </Field>
           <Field label={`Animated scenes: ${veo}`} hint={veo ? "Real motion for the key moments; other scenes get a slow camera move." : "Pictures with slow camera moves only (cheapest)."}>
