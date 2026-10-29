@@ -47,8 +47,20 @@ type Ctx = { params: Promise<Record<string, string>> };
  * Signed-in route: resolves the user from the session cookie and runs the handler with
  * all per-user data scoped to them. `admin: true` restricts it to admins.
  */
+/**
+ * After this server was moved (Admin → Move to a new server), its API answers with where Ghost Post lives now, so an
+ * old open tab or an old link can't keep using the stale copy. Null while it hasn't moved.
+ */
+export async function movedAnswer(): Promise<Response | null> {
+  const to = await (await import("./migrate")).movedTo().catch(() => null);
+  if (!to) return null;
+  return NextResponse.json({ error: `Ghost Post moved to ${to}. Open it there and sign in with the same email and password.`, movedTo: to }, { status: 410 });
+}
+
 export function authed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Response>, opts: { admin?: boolean } = {}) {
   return async (req: Request, ctx: Ctx) => {
+    const moved = await movedAnswer();
+    if (moved) return moved;
     let user: User | null = null;
     try {
       user = await userFromRequest(req);
@@ -68,6 +80,8 @@ export function authed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Respo
  */
 export function apiKeyed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Response>) {
   return async (req: Request, ctx: Ctx) => {
+    const moved = await movedAnswer();
+    if (moved) return moved;
     let user: User | null = null;
     try {
       const { overLimit, touchKey, userForKey } = await import("./api-keys");

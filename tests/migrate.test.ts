@@ -55,4 +55,18 @@ describe("moving to a new server", () => {
     const man = await m.exportManifest(code);
     expect(man.files.some((f) => f.path.includes("before-move"))).toBe(false);
   });
+
+  it("once moved, the API and sign-in answer with the new address instead of serving the stale copy", async () => {
+    const m = await import("@/lib/migrate");
+    const to = (await m.movedTo())!; // marked moved in the first test
+    expect(to).toMatch(/^https:\/\/ghostpost\./);
+    const { authed, movedAnswer } = await import("@/lib/http-api");
+    const r = (await movedAnswer())!;
+    expect(r.status).toBe(410);
+    expect((await r.json()).movedTo).toBe(to);
+    const route = authed(async () => new Response("stale"));
+    const res = await route(new Request("https://old.example/api/status"), { params: Promise.resolve({}) } as never);
+    expect(res.status).toBe(410);
+    expect((await res.json()).error).toMatch(/moved to https:\/\/ghostpost/);
+  });
 });

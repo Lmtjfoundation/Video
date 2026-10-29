@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Shell } from "@/components/shell";
+import { MovedRedirect } from "@/components/moved-redirect";
 
 export const metadata: Metadata = {
   title: "Ghost Post Autopilot",
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <body>
+        <MovedRedirect />
         <Shell>{children}</Shell>
       </body>
     </html>

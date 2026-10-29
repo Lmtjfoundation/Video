@@ -38,7 +38,10 @@ async function movedTo(req: NextRequest) {
   if (process.env.MOVED_TO) return process.env.MOVED_TO.replace(/\/$/, "");
   if (Date.now() - moved.at > 30_000 && !moved.pending) {
     // The middleware can't read the database itself, so it asks the app (through the server's own address).
-    moved.pending = fetch(`${req.nextUrl.origin}/api/migrate/moved`, { cache: "no-store", signal: AbortSignal.timeout(3000) })
+    // Asked of the app itself: on its own port when the runtime gives it, else through the public address. Pages and
+    // the API also forward by themselves (components/moved-redirect.tsx, http-api.ts), so this is only the fast path.
+    const self = process.env.PORT ? `http://127.0.0.1:${process.env.PORT}` : req.nextUrl.origin;
+    moved.pending = fetch(`${self}/api/migrate/moved`, { cache: "no-store", signal: AbortSignal.timeout(3000) })
       .then((r) => (r.ok ? r.json() : { to: moved.to }))
       .then((j: { to?: string | null }) => {
         moved = { to: j.to ?? null, at: Date.now() };
