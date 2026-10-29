@@ -197,3 +197,21 @@
 2026-10-28 | tiktok | Windsurf's 72 hours (July 11–14, 2025): OpenAI's $3B deal collapses, Google pays $2.4B to license and hire the CEO, Cognition buys the rest (bank)
 2026-10-28 | youtube | The Vasa (Aug 10, 1628): a 64-gun warship that failed a stability test, sailed anyway and sank on its maiden voyage; raised in 1961 (bank)
 2026-10-28 | instagram | Hoover's 1992 free flights promotion: spend £100, get two return flights worth about £600; 300,000 applications vs 50,000 expected (bank)
+2026-10-29 | x | Manhattan's 60 guilders (1626) and the '$24' that came from an 1855 conversion (O'Callaghan)
+2026-10-29 | x | Ada Lovelace's Note G (1843): the first published program, its bug, and 'Lady Lovelace's Objection' (Turing, 1950)
+2026-10-29 | linkedin | The 1982 Tylenol recall: 31 million bottles, a $100M hit, market share 37% to 7% and back to about 30% within a year
+2026-10-29 | linkedin | Clever Hans (1904–1907): 89% right when the questioner knew, 6% when not, and the 'Clever Hans' shortcuts in AI (Lapuschkin et al., 2019)
+2026-10-29 | facebook | Richard Feynman's letter to Arline (Oct 17, 1946), written 16 months after she died, and its P.S.
+2026-10-29 | instagram | Long Island Iced Tea became Long Blockchain (Dec 21, 2017): up as much as 380%, delisted, SEC revocation (2021) and insider-trading charges
+2026-10-29 | tiktok | The Dresden Green Vault heist (Nov 25, 2019): an axe, a blackout, €113.8M of royal jewels, 31 pieces recovered (Dec 2022) and convictions (May 2023)
+2026-10-29 | instagram | Willy's Chocolate Experience (Glasgow, Feb 24, 2024): AI-made ads, £35 tickets, two jelly beans and police at the warehouse
+2026-10-29 | youtube | Apple Intelligence's false news summaries: the BBC complaint (Dec 2024), the Littler and Nadal errors (Jan 2025) and Apple's pause (Jan 16, 2025)
+2026-10-29 | facebook | The Carrington Event (Sept 1–2, 1859): the first recorded solar flare, auroras near the equator and telegraphs running on aurora current
+2026-10-29 | x | Theodore Johnson of UPS: never earned more than $14,000 a year, about $70 million by 1991 (NYT) (bank)
+2026-10-29 | x | Dick Fosbury's backwards jump: Olympic gold at 2.24m (Mexico City, Oct 20, 1968) and the Flop taking over the high jump (bank)
+2026-10-29 | linkedin | DeepMind's AI cut Google data-centre cooling energy by 40% (July 20, 2016): sensor data, one metric and hard limits (bank)
+2026-10-29 | facebook | Darwin's 1838 'Marry / Not Marry' list: 'better than a dog anyhow', 'Marry — Marry — Marry Q.E.D.' and Emma Wedgwood (1839) (bank)
+2026-10-29 | instagram | Semmelweis and handwashing (Vienna, 1847): maternal deaths from 18.3% in April to 1.2% in July (bank)
+2026-10-29 | tiktok | The Banco Central heist in Fortaleza (Aug 2005): a fake landscaping firm, a 78-metre tunnel, about 3.5 tons of cash and most of it never recovered (bank)
+2026-10-29 | youtube | The Ghibli-style image wave: GPT-4o image generation (March 25, 2025), 'our GPUs are melting' and one million new ChatGPT users in an hour (March 31, 2025) (bank)
+2026-10-29 | instagram | The Great Moon Hoax (New York Sun, Aug 25, 1835): bipedal beavers, 'Vespertilio-homo' bat-people and a fake Herschel telescope (bank)
