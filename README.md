@@ -1,6 +1,10 @@
 # Video
 Ai vids
 
+## 📣 Trailer and subscribe page
+
+An animated trailer with an original soundtrack, MP4 exports for YouTube and Shorts/Reels/TikTok, and a subscribe landing page. See [`promo/README.md`](promo/README.md).
+
 ## 🎮 Grand Theft: Southern Heat
 
 A GTA V-style open-world browser game set in **Dallas**, **New Orleans** and **Atlanta**. See [`game/README.md`](game/README.md).

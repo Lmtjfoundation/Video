@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Trailer render</title>
+<style>
+  @font-face { font-family: "Anton"; src: url(../fonts/Anton-Regular.ttf); }
+  @font-face { font-family: "Inter"; src: url(../fonts/Inter-Regular.otf); font-weight: 400 500; }
+  @font-face { font-family: "Inter"; src: url(../fonts/Inter-SemiBold.otf); font-weight: 600 800; }
+  body { margin: 0; background: #000; }
+</style></head>
+<body><canvas id="c"></canvas>
+<script type="module">
+// Headless render target used by tools/export.mjs.
+import { drawFrame, loadShots, TRAILER_LENGTH } from '../js/trailer.js';
+import { renderWav, DURATION } from '../js/music.js';
+const q = new URLSearchParams(location.search);
+const W = +q.get('w') || 1920, H = +q.get('h') || 1080;
+const c = document.getElementById('c'); c.width = W; c.height = H;
+const ctx = c.getContext('2d');
+await Promise.all([document.fonts.load('80px Anton'), document.fonts.load('600 20px Inter'), document.fonts.load('500 20px Inter')]);
+const images = await loadShots('../shots/');
+window.LENGTH = TRAILER_LENGTH;
+window.renderFrame = (t) => { drawFrame(ctx, t, W, H, images, { handle: q.get('handle') || '' }); return c.toDataURL('image/jpeg', 0.93); };
+window.renderAudio = async () => { const b = await renderWav(48000); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
+window.ready = true;
+</script></body></html>
