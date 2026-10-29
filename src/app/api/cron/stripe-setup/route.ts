@@ -1,6 +1,6 @@
 import { cronAuthorized, fail, handle, ok } from "@/lib/http-api";
 import { getIntegrations, stripeSecretKey } from "@/lib/integrations";
-import { setupStripeBilling, stripePricesStale } from "@/lib/billing";
+import { setupStripeBilling, stripePricesStale, stripeWebhookMoved } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -25,6 +25,11 @@ export const GET = handle(async (req: Request) => {
     if (!appUrl.startsWith("https://")) return ok({ skipped: "APP_URL must be https" });
     const r = await setupStripeBilling(key, appUrl);
     console.log(`[stripe] connected automatically in ${r.mode} mode: ${r.prices} prices, webhook ${r.webhook}`);
+    return ok(r);
+  }
+  if (appUrl.startsWith("https://") && (await stripeWebhookMoved(appUrl))) {
+    const r = await setupStripeBilling(key, appUrl);
+    console.log(`[stripe] app address changed: webhook now ${r.webhook}`);
     return ok(r);
   }
   if (!(await stripePricesStale())) return ok({ skipped: "prices up to date" });

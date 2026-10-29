@@ -191,6 +191,15 @@ const planAmount = (p: { monthly: number; annual: number }, interval: Interval) 
  * True when the prices or first-month coupons saved by "Connect Stripe" no longer match plans.ts (the prices were
  * changed), so checkout would still charge the old amounts. Prices managed through environment variables are left alone.
  */
+/** True when Stripe sends events to another address than `appUrl` (the app moved), or the saved webhook is gone. */
+export async function stripeWebhookMoved(appUrl: string): Promise<boolean> {
+  const key = await stripeSecretKey();
+  const saved = await getIntegrations();
+  if (!key || !saved.stripeWebhookId) return false;
+  const hook = await stripeWith<{ url?: string; status?: string }>(key, `/webhook_endpoints/${encodeURIComponent(saved.stripeWebhookId)}`, {}, "GET").catch(() => null);
+  return !hook?.url || hook.url !== `${appUrl.replace(/\/+$/, "")}/api/stripe/webhook`;
+}
+
 export async function stripePricesStale(): Promise<boolean> {
   const key = await stripeSecretKey();
   const saved = await getIntegrations();
@@ -301,7 +310,8 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
     hook = { id: stored.stripeWebhookId, url, secret: stored.stripeWebhookSecret };
   } else {
     const hooks = await call<StripeList<SHook>>("/webhook_endpoints?limit=100", undefined, "GET");
-    for (const h of hooks.data.filter((x) => x.url === url)) await call(`/webhook_endpoints/${h.id}`, {}, "DELETE");
+    // Ours at this address, and the one saved for an old address (the app moved): Stripe can't follow a redirect.
+    for (const h of hooks.data.filter((x) => x.url === url || x.id === stored.stripeWebhookId)) await call(`/webhook_endpoints/${h.id}`, {}, "DELETE");
     hook = await call<SHook>("/webhook_endpoints", {
       url,
       enabled_events: ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"],

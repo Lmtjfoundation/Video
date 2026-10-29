@@ -17,7 +17,7 @@ import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types"
 import { nowIso } from "./utils";
 import { characterRef, getCharacters, isRealisticLook, REALISM_DIRECTION } from "./characters";
 import { geminiClip, MediaGenError, type RefImage } from "./gemini-media";
-import { seedanceClip, wanClip } from "./replicate-video";
+import { seedanceClip, seedanceFilm, wanClip } from "./replicate-video";
 import { CREDIT_COST } from "./plans";
 import { aiVisualCredits, animationSecondCredits, renderableScenes, veoSeconds } from "./video-spec";
 
@@ -533,7 +533,22 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
       await setRender(post, { message: `Animating scene ${i + 1} with ${engine} (about 1–3 minutes a clip)…` });
       const prompt = `${job.scene.motion || "Subtle, natural movement with a slow cinematic camera move."} ${job.scene.visual}`.slice(0, 1500) + ` Art style: ${ai.look}. Keep the characters exactly as they appear in the starting frame.${isRealisticLook(ai.look) ? " Real people moving naturally: realistic faces, blinking, breathing and natural body weight; no morphing." : ""} No text or captions.`;
       const clip = { prompt, start: still, aspect: portrait ? ("9:16" as const) : ("16:9" as const), seconds };
-      const bytes = engine === "Seedance" ? await seedanceClip(clip) : engine === "Wan" ? await wanClip(clip) : await geminiClip(clip);
+      // Seedance also gets each character's portrait, so faces, bodies and outfits hold through the motion.
+      const castRefs = cast.filter((c) => (job.scene.cast ?? []).some((n) => n.toLowerCase() === c.name.toLowerCase()) && refs.has(c.name.toLowerCase()));
+      const bytes =
+        engine === "Seedance" && castRefs.length
+          ? await seedanceFilm({
+              prompt: `[Image1] is the opening frame: start exactly on it. ${castRefs.map((c, n) => `[Image${n + 2}] is ${c.name}`).join("; ")}: keep each one's face, hair, body shape and outfit identical to their picture in every frame. ${prompt}`,
+              images: [still, ...castRefs.map((c) => refs.get(c.name.toLowerCase())!)].map((r, n) => ({ bytes: Buffer.from(r.base64, "base64"), mime: r.mimeType, name: `ref${n + 1}.${extFor(r.mimeType)}` })),
+              seconds,
+              aspect: clip.aspect,
+              audio: false,
+            })
+          : engine === "Seedance"
+            ? await seedanceClip(clip)
+            : engine === "Wan"
+              ? await wanClip(clip)
+              : await geminiClip(clip);
       const file = path.join(dir, `veo${i}.mp4`);
       await fs.writeFile(file, bytes);
       job.visual = { kind: "video", file, hold: true };
