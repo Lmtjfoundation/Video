@@ -215,3 +215,21 @@
 2026-10-29 | tiktok | The Banco Central heist in Fortaleza (Aug 2005): a fake landscaping firm, a 78-metre tunnel, about 3.5 tons of cash and most of it never recovered (bank)
 2026-10-29 | youtube | The Ghibli-style image wave: GPT-4o image generation (March 25, 2025), 'our GPUs are melting' and one million new ChatGPT users in an hour (March 31, 2025) (bank)
 2026-10-29 | instagram | The Great Moon Hoax (New York Sun, Aug 25, 1835): bipedal beavers, 'Vespertilio-homo' bat-people and a fake Herschel telescope (bank)
+2026-10-30 | x | Archegos: Bill Hwang's family office lost about $20B in two days on borrowed swaps (March 2021), Credit Suisse lost $5.5B, 18-year sentence (Nov 2024)
+2026-10-30 | x | GPT-4 told a TaskRabbit worker it had a 'vision impairment' to get a CAPTCHA solved (ARC test, GPT-4 system card, March 2023)
+2026-10-30 | linkedin | Katalin Karikó: demoted and pay-cut at Penn in the 1990s, a 2005 paper Nature rejected, then the 2023 Nobel Prize with Drew Weissman
+2026-10-30 | linkedin | The London Whale's spreadsheet: a VaR model that 'divided by their sum instead of their average', a $6.2B loss and $920M in fines (JPMorgan, 2012–2013)
+2026-10-30 | facebook | Bertha von Suttner: eight days as Alfred Nobel's secretary in Paris, decades of letters, and the first woman to win the Nobel Peace Prize (1905)
+2026-10-30 | instagram | Weimar hyperinflation: 4.2 marks per dollar (1914) to about 4.2 trillion (Nov 1923), bread from 250 marks to about 200 billion, and the Rentenmark (Nov 16, 1923)
+2026-10-30 | tiktok | Brazil's C&M Software Pix heist: a login sold for R$15,000, six institutions hit between 4 and 7 a.m. (June 30, 2025), BMP's R$400M+ loss and an arrest on July 3
+2026-10-30 | instagram | Victor Lustig 'sold' the Eiffel Tower for scrap posing as a ministry official, took a bribe from André Poisson, fled to Austria, then tried it again (1925)
+2026-10-30 | youtube | Why prices end in 9: Anderson & Simester's catalog test where a $39 dress outsold $34 by about a third (Quantitative Marketing and Economics, 2003)
+2026-10-30 | facebook | Peter Tripp's 201-hour wakeathon in a Times Square glass booth for the March of Dimes (1959): hallucinations, drugs for the last 66 hours, then the payola indictment
+2026-10-30 | x | Andrew Carnegie's 1868 note to himself at 33: cap his income at $50,000 a year and stop growing his fortune; he sold to J.P. Morgan for $480M in 1901 (bank)
+2026-10-30 | x | Facebook's negotiating bots Bob and Alice drifted into shorthand ('balls have zero to me to me…') because English wasn't rewarded; the 'shut down' myth (2017) (bank)
+2026-10-30 | linkedin | Nintendo's reinventions: hanafuda cards (1889), Daiya taxi, instant rice and a vacuum cleaner in the 1960s, the Ultra Hand (1966) and Game & Watch (1980) (bank)
+2026-10-30 | facebook | Ernestine Shepherd started exercising at 56, kept going after her sister's death and holds the 2010 and 2011 Guinness titles for oldest performing female bodybuilder (bank)
+2026-10-30 | instagram | John Law and the Mississippi Bubble: shares from about 500 livres to 10,000 (1719), 2,000 by Sept 1720, 1,000 by Dec and 500 again by Sept 1721 (bank)
+2026-10-30 | tiktok | The Great Train Robbery (Aug 8, 1963): a glove-and-battery signal, £2.6M from 120 mailbags, Leatherslade Farm, Monopoly fingerprints and Biggs' 1965 escape (bank)
+2026-10-30 | youtube | First Brands Group's collapse: FRAM and Autolite's parent files for bankruptcy (Sept 2025), a '$2.3B vanished' claim, founder indicted (Jan 29, 2026), liquidation (Sept 1, 2026) (bank)
+2026-10-30 | instagram | The Kentucky Meat Shower (Bath County, March 3, 1876): flakes over a 100-by-50-yard strip, a 'mutton or venison' taste test, Nostoc and lung-tissue theories, and the vulture explanation (bank)
