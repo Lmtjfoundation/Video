@@ -6,7 +6,7 @@ with the link and a QR code. 1080x1920, plus square and widescreen cuts.
 
   python3 scripts/make-studio-ad.py <voice dir> <music.mp3> <sfx dir> <out dir> [link]
 
-The voice dir holds a1.wav-a9.wav (one line per beat); the sfx dir whoosh/impact/click.mp3. Uses scripts/make-ad.py's
+The voice dir holds a1.wav-a9.wav (one line per beat); the sfx dir hit, swish, tick, rise and shimmer.wav (levelled). Uses scripts/make-ad.py's
 helpers, so the two ads share one look.
 """
 import importlib.util
@@ -210,8 +210,16 @@ def main():
         starts.append(round(starts[-1] + d_, 2))
 
     # Sound: music ducked under the voice, a whoosh on every cut, a hit at the start and on the end card.
-    sfx_list = [("impact", 0.0, 0.8)] + [("whoosh", s - 0.3, 0.6) for s in starts[1:]] + [("click", starts[-2] + 0.8, 0.6), ("impact", starts[-1], 0.9)]
-    ins = ["-i", music] + sum([["-i", f] for f in vo], []) + sum([["-i", os.path.join(sfx, f"{n}.mp3")] for n, _, _ in sfx_list], [])
+    # Sound design, kept under the voice: a soft low hit to open, a quiet air swish into each tool, a glassy tick as
+    # each "Made in Ghost Post" result lands, then a swell into the end card and the hit with a light shimmer on the logo.
+    with_result = [i for i, b in enumerate(beats) if b[5]]
+    sfx_list = (
+        [("hit", 0.0, 0.3), ("shimmer", 0.9, 0.22)]
+        + [("swish", s - 0.25, 0.32) for s in starts[1:-1]]
+        + [("tick", starts[i + 1] + 0.35, 0.45) for i in with_result]
+        + [("rise", max(0, starts[-1] - 2.0), 0.4), ("hit", starts[-1], 0.38), ("shimmer", starts[-1] + 0.15, 0.3)]
+    )
+    ins = ["-i", music] + sum([["-i", f] for f in vo], []) + sum([["-i", os.path.join(sfx, f"{n}.wav")] for n, _, _ in sfx_list], [])
     f = [f"[0:a]atrim=0:{total},afade=t=in:d=0.4,afade=t=out:st={total - 1.6}:d=1.6,volume=0.5[mus]"]
     for i in range(len(vo)):
         f.append(f"[{i + 1}:a]aresample=48000,adelay={int((starts[i] + 0.15) * 1000)}:all=1,volume=1.2[v{i}]")
