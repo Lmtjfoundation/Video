@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: TITLE,
     description: DESCRIPTION,
     alternates: { canonical: `${base}/welcome` },
-    openGraph: { type: "website", url: `${base}/welcome`, title: TITLE, description: DESCRIPTION, siteName: "Ghost Post", images: [{ url: image, width: 1200, height: 630 }], videos: [{ url: `${base}/promo/ad-2026-web.mp4`, type: "video/mp4", width: 720, height: 1280 }] },
+    openGraph: { type: "website", url: `${base}/welcome`, title: TITLE, description: DESCRIPTION, siteName: "Ghost Post", images: [{ url: image, width: 1200, height: 630 }], videos: [{ url: `${base}/promo/studio-ad-web.mp4`, type: "video/mp4", width: 720, height: 1280 }] },
     twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, images: [image] },
   };
 }
@@ -80,7 +80,7 @@ export default async function WelcomePage() {
           <p className="mt-3 text-sm text-white/45">No card needed. Free plan: 30 AI credits and 30 posts a month.</p>
         </div>
         <div className="mx-auto w-full max-w-[340px]">
-          <AdPlayer src="/promo/ad-2026-web.mp4" webm="/promo/ad-2026-web.webm" poster="/promo/ad-2026.jpg" />
+          <AdPlayer src="/promo/studio-ad-web.mp4" webm="/promo/studio-ad-web.webm" poster="/promo/studio-ad.jpg" />
         </div>
       </section>
 

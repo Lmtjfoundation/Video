@@ -3,9 +3,9 @@
 Each link carries `?src=` so **Admin → Users** shows where every new account came from ("Joined … from tiktok").
 
 **Videos:**
-- **Vertical (TikTok, Reels, Shorts, Stories):** https://ghostpost.eastus.cloudapp.azure.com/promo/ad-2026.mp4
-- **Square (Instagram/Facebook feed):** https://ghostpost.eastus.cloudapp.azure.com/promo/ad-2026-square.mp4
-- **Widescreen (YouTube, X, LinkedIn):** https://ghostpost.eastus.cloudapp.azure.com/promo/ad-2026-wide.mp4
+- **Vertical (TikTok, Reels, Shorts, Stories):** https://ghostpost.eastus.cloudapp.azure.com/promo/studio-ad.mp4
+- **Square (Instagram/Facebook feed):** https://ghostpost.eastus.cloudapp.azure.com/promo/studio-ad-square.mp4
+- **Widescreen (YouTube, X, LinkedIn):** https://ghostpost.eastus.cloudapp.azure.com/promo/studio-ad-wide.mp4
 
 ---
 
