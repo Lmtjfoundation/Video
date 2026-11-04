@@ -1,4 +1,5 @@
 import "server-only";
+import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
@@ -48,6 +49,22 @@ export async function motionEngineReady(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** A loudnorm filter set from a measuring pass, so the result lands on -14 LUFS. */
+async function loudnessFilter(file: string) {
+  const target = "I=-14:TP=-1.5:LRA=11";
+  const m = await new Promise<string>((resolve) => {
+    const p = spawn("ffmpeg", ["-hide_banner", "-nostats", "-i", file, "-af", `loudnorm=${target}:print_format=json`, "-f", "null", "-"]);
+    let err = "";
+    p.stderr.on("data", (d) => (err += d));
+    p.on("close", () => resolve(err));
+    p.on("error", () => resolve(""));
+  });
+  const j = m.match(/\{[^{}]*"input_i"[^{}]*\}/)?.[0];
+  if (!j) return `loudnorm=${target}`;
+  const v = JSON.parse(j) as Record<string, string>;
+  return `loudnorm=${target}:measured_I=${v.input_i}:measured_TP=${v.input_tp}:measured_LRA=${v.input_lra}:measured_thresh=${v.input_thresh}:offset=${v.target_offset}:linear=true`;
 }
 
 /** Make the movie: pictures, voices, the motion render, the sound mix. Returns the saved video. */
@@ -129,11 +146,14 @@ export async function renderMovie(userId: string, input: RenderInput, say: (m: s
       at += seconds[i];
     }
     if (voiced.length) {
-      parts.push(`${voiced.join("")}amix=inputs=${voiced.length}:normalize=0[voice]`, `[bed][voice]sidechaincompress=threshold=0.05:ratio=6:attack=20:release=400[ducked]`, `[ducked][voice]amix=inputs=2:normalize=0[mix]`);
+      parts.push(`${voiced.join("")}amix=inputs=${voiced.length}:normalize=0,asplit=2[vkey][voice]`, `[bed]aresample=48000[bed48]`, `[vkey]apad[vkeyp]`, `[bed48][vkeyp]sidechaincompress=threshold=0.05:ratio=6:attack=20:release=400[ducked]`, `[ducked][voice]amix=inputs=2:normalize=0:duration=first[mix]`);
     } else parts.push("[bed]anull[mix]");
-    parts.push(`[mix]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[out]`);
+    const raw = path.join(dir, "mix.wav");
+    parts.push("[mix]acompressor=threshold=0.08:ratio=3:attack=5:release=150:makeup=2,alimiter=limit=0.8:level=false[master]");
+    await runCmd("ffmpeg", [...args, "-filter_complex", parts.join(";"), "-map", "[master]", "-ar", "48000", "-t", total.toFixed(2), raw], 10 * 60_000);
+    // Two-pass loudness: measure, then set it to -14 LUFS exactly (one pass undershoots on short films).
     const audio = path.join(dir, "mix.m4a");
-    await runCmd("ffmpeg", [...args, "-filter_complex", parts.join(";"), "-map", "[out]", "-c:a", "aac", "-b:a", "192k", "-t", total.toFixed(2), audio], 10 * 60_000);
+    await runCmd("ffmpeg", ["-y", "-i", raw, "-af", await loudnessFilter(raw), "-ar", "48000", "-c:a", "aac", "-b:a", "192k", audio], 10 * 60_000);
     const out = path.join(dir, "movie.mp4");
     await runCmd("ffmpeg", ["-y", "-i", silent, "-i", audio, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "copy", "-shortest", "-movflags", "+faststart", out], 10 * 60_000);
 
