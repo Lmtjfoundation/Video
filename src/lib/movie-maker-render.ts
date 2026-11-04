@@ -11,6 +11,8 @@ import { mediaDuration, narrate, runCmd } from "./render";
 import { kvGet, kvSet } from "./repo";
 import type { MediaItem } from "./types";
 import { nowIso, uid } from "./utils";
+import { wasInterrupted, type JobFn } from "./jobs";
+import { refundCredits } from "./auth";
 import { filmSpec, picturePrompt, spokenText, type Grade, type MoviePlan } from "./movie-maker";
 
 export interface MovieRecord {
@@ -67,9 +69,32 @@ async function loudnessFilter(file: string) {
   return `loudnorm=${target}:measured_I=${v.input_i}:measured_TP=${v.input_tp}:measured_LRA=${v.input_lra}:measured_thresh=${v.input_thresh}:offset=${v.target_offset}:linear=true`;
 }
 
-/** Make the movie: pictures, voices, the motion render, the sound mix. Returns the saved video. */
-export async function renderMovie(userId: string, input: RenderInput, say: (m: string) => void): Promise<MovieRecord> {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gp-movie-"));
+/** Where a job keeps its finished steps, so a run cut off by a restart carries on without paying twice. */
+export const movieWorkDir = (jobId: string) => path.join(process.env.DATA_DIR || path.join(process.cwd(), ".data"), "movie-jobs", jobId.replace(/[^\w-]/g, ""));
+
+const exists = (f: string) => fs.access(f).then(() => true, () => false);
+/** Write via a temporary name, so a file cut off half-way is never mistaken for a finished one. */
+async function writeDone(file: string, bytes: Buffer | string) {
+  await fs.writeFile(`${file}.part`, bytes);
+  await fs.rename(`${file}.part`, file);
+}
+
+/** Remove saved work of movie jobs older than two days (finished ones remove their own). */
+export async function sweepMovieWork(maxAgeMs = 2 * 86400_000) {
+  const root = path.dirname(movieWorkDir("x"));
+  for (const d of await fs.readdir(root).catch(() => [] as string[])) {
+    const st = await fs.stat(path.join(root, d)).catch(() => null);
+    if (st && Date.now() - st.mtimeMs > maxAgeMs) await fs.rm(path.join(root, d), { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+/**
+ * Make the movie: pictures, voices, the motion render, the sound mix. Returns the saved video. With `workDir`, each
+ * finished step is kept there and reused when the job is picked up again after a restart.
+ */
+export async function renderMovie(userId: string, input: RenderInput, say: (m: string) => void, workDir?: string): Promise<MovieRecord> {
+  const dir = workDir ?? (await fs.mkdtemp(path.join(os.tmpdir(), "gp-movie-")));
+  await fs.mkdir(dir, { recursive: true });
   try {
     const { plan } = input;
     const cast = await getCharacters(input.characterIds);
@@ -81,13 +106,11 @@ export async function renderMovie(userId: string, input: RenderInput, say: (m: s
     for (const [i, s] of plan.scenes.entries()) {
       say(`Picture ${i + 1} of ${plan.scenes.length}…`);
       const file = path.join(dir, `s${i}.png`);
-      const m = s.mediaId ? await db().get<MediaItem>("media", s.mediaId) : null;
-      if (m && m.kind === "image") await fs.writeFile(file, await readFile(m));
-      else {
-        const img = await makeImage({ prompt: picturePrompt(s, look), refs, aspect: "9:16" });
-        await fs.writeFile(file, img.bytes);
-      }
       images.push(file);
+      if (await exists(file)) continue;
+      const m = s.mediaId ? await db().get<MediaItem>("media", s.mediaId) : null;
+      if (m && m.kind === "image") await writeDone(file, await readFile(m));
+      else await writeDone(file, (await makeImage({ prompt: picturePrompt(s, look), refs, aspect: "9:16" })).bytes);
     }
 
     // 2. Voices: each scene lasts at least as long as its line.
@@ -100,8 +123,13 @@ export async function renderMovie(userId: string, input: RenderInput, say: (m: s
           lines.push(null);
           continue;
         }
-        say(`Voice ${i + 1} of ${plan.scenes.length}…`);
-        const file = await narrate(text, path.join(dir, `v${i}`));
+        const mark = path.join(dir, `v${i}.json`);
+        let file = (await exists(mark)) ? (JSON.parse(await fs.readFile(mark, "utf8")) as { file: string }).file : "";
+        if (!file || !(await exists(file))) {
+          say(`Voice ${i + 1} of ${plan.scenes.length}…`);
+          file = await narrate(text, path.join(dir, `v${i}`));
+          await writeDone(mark, JSON.stringify({ file }));
+        }
         lines.push(file);
         seconds[i] = Math.max(seconds[i], Math.min(20, (await mediaDuration(file)) + 0.45));
       }
@@ -112,9 +140,16 @@ export async function renderMovie(userId: string, input: RenderInput, say: (m: s
     const spec = filmSpec({ scenes: plan.scenes.map((s, i) => ({ ...s, image: images[i], seconds: seconds[i] })), grade: input.grade, title, endCard: input.endCard.trim(), fiction: input.fiction });
     const total = spec.scenes.reduce((n, s) => n + Number(s.dur), 0);
     await fs.writeFile(path.join(dir, "film.json"), JSON.stringify(spec));
-    say(`Animating ${plan.scenes.length} scenes (about ${Math.ceil((total * 30 * 0.5) / 60)} min)…`);
+    say(`Animating ${plan.scenes.length} scenes (about ${Math.ceil((total * 30 * 0.3) / 60)} min). You can close the app.`);
     const silent = path.join(dir, "silent.mp4");
-    await runCmd(python(), [engineScript(), path.join(dir, "film.json"), silent], Math.max(20 * 60_000, total * 30 * 2000));
+    const specJson = JSON.stringify(spec);
+    const renderedFor = path.join(dir, "silent.spec.json");
+    // The finished animation is reused only if it was made from this exact film.
+    if (!(await exists(silent)) || !(await exists(renderedFor)) || (await fs.readFile(renderedFor, "utf8")) !== specJson) {
+      await runCmd(python(), [engineScript(), path.join(dir, "film.json"), `${silent}.part.mp4`], Math.max(20 * 60_000, total * 30 * 2000));
+      await fs.rename(`${silent}.part.mp4`, silent);
+      await writeDone(renderedFor, specJson);
+    }
 
     // 4. Sound: voices at their scene's start, over the score (or a drone bed), loudness to -14 LUFS.
     say("Mixing the sound…");
@@ -161,8 +196,24 @@ export async function renderMovie(userId: string, input: RenderInput, say: (m: s
     const item = await storeFile(userId, { name: `${title || "Movie"}.mp4`, type: "video/mp4", bytes: await fs.readFile(out) }, { uncapped: true });
     const rec: MovieRecord = { id: uid("mov"), title: title || "Movie", scenes: plan.scenes.length, seconds: Math.round(total), mediaId: item.id, createdAt: nowIso() };
     await kvSet(ROW, [rec, ...(await listMovies())].slice(0, 50));
-    return rec;
-  } finally {
     await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+    return rec;
+  } catch (e) {
+    // Stopped by a server shutdown: keep the finished steps for the resumed run.
+    if (!(workDir && wasInterrupted(e))) await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+    throw e;
   }
+}
+
+/** The Movie Maker job: renders, refunds on a real failure (not on a shutdown, which resumes), and keeps its work. */
+export function movieJob(userId: string, input: RenderInput & { credits: number }): JobFn {
+  return async (say, ctx) => {
+    try {
+      const rec = await renderMovie(userId, input, say, movieWorkDir(ctx.jobId));
+      return { href: "/movie-maker", message: `Movie ready: ${rec.title} (${Math.floor(rec.seconds / 60)}:${String(rec.seconds % 60).padStart(2, "0")})` };
+    } catch (e) {
+      if (!wasInterrupted(e) && input.credits) await refundCredits(userId, input.credits);
+      throw e;
+    }
+  };
 }

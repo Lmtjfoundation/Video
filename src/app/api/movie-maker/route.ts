@@ -1,5 +1,5 @@
 import { authed, body, fail, ok } from "@/lib/http-api";
-import { spendCredits, refundCredits } from "@/lib/auth";
+import { spendCredits } from "@/lib/auth";
 import { listCharacters } from "@/lib/characters";
 import { startJob } from "@/lib/jobs";
 import { signedUrl } from "@/lib/media";
@@ -18,7 +18,7 @@ import {
   type MoviePlan,
   type MovieScene,
 } from "@/lib/movie-maker";
-import { listMovies, motionEngineReady, renderMovie } from "@/lib/movie-maker-render";
+import { listMovies, motionEngineReady, movieJob, type RenderInput } from "@/lib/movie-maker-render";
 import { picturesReady } from "@/lib/pictures";
 import { CREDIT_COST } from "@/lib/plans";
 import { ffmpegAvailable } from "@/lib/render";
@@ -63,27 +63,17 @@ export const POST = authed(async (req, user) => {
   const voice = b.voice !== false;
   const credits = movieCredits(plan, CREDIT_COST, voice);
   await spendCredits(user.id, credits);
-  const job = await startJob(user.id, { kind: "movie", title: `Movie: ${plan.title || "Untitled"}` }, async (say) => {
-    try {
-      const rec = await renderMovie(
-        user.id,
-        {
-          plan,
-          grade,
-          characterIds: Array.isArray(b.characterIds) ? b.characterIds.map(String).slice(0, 3) : [],
-          voice,
-          musicMediaId: b.musicMediaId ? String(b.musicMediaId) : undefined,
-          endCard: String(b.endCard ?? "").slice(0, 60),
-          fiction: b.fiction === true,
-        },
-        say,
-      );
-      return { href: "/movie-maker", message: `Movie ready: ${rec.title} (${rec.seconds}s)` };
-    } catch (e) {
-      await refundCredits(user.id, credits);
-      throw e;
-    }
-  });
+  const input: RenderInput = {
+    plan,
+    grade,
+    characterIds: Array.isArray(b.characterIds) ? b.characterIds.map(String).slice(0, 3) : [],
+    voice,
+    musicMediaId: b.musicMediaId ? String(b.musicMediaId) : undefined,
+    endCard: String(b.endCard ?? "").slice(0, 60),
+    fiction: b.fiction === true,
+  };
+  // Resumable: if the server restarts mid-render, it carries on from the last finished step (src/lib/resumers.ts).
+  const job = await startJob(user.id, { kind: "movie", title: `Movie: ${plan.title || "Untitled"}`, resume: { kind: "movie-maker", input: { ...input, credits } } }, movieJob(user.id, { ...input, credits }));
   return ok({ job, credits });
 });
 

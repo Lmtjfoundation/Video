@@ -54,6 +54,7 @@ export const DEFAULT_SETTINGS: Settings = {
   matureX: false,
   xSensitiveConfirmed: false,
   faceless: true,
+  notifyEmail: true,
   genres: ["trending", "black_america", "money", "tech_ai"],
   trendAutopilot: { enabled: false, mode: "schedule", videos: true, videoLength: "s90", autoRender: false },
   handoffEmail: true,

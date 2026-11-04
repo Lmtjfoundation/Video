@@ -24,7 +24,19 @@ export interface Job {
   href?: string;
   createdAt: string;
   updatedAt: string;
+  /** Set for jobs that can carry on after a server restart: which resumer runs it, and its saved input. */
+  resume?: { kind: string; userId: string; input: unknown };
 }
+
+/** What a job runs: `say` reports progress; `ctx.jobId` names its saved work (so a resumed run can reuse it). */
+export type JobFn = (say: (message: string) => void, ctx: { jobId: string; resumed: boolean }) => Promise<{ post?: Post; href?: string; message?: string }>;
+const resumers = new Map<string, (userId: string, input: unknown) => JobFn>();
+/** Register how to carry on a kind of resumable job after a restart (see src/lib/resumers.ts). */
+export function registerResumer(kind: string, make: (userId: string, input: unknown) => JobFn) {
+  resumers.set(kind, make);
+}
+/** How long an interrupted resumable job waits to be picked up before it's treated as failed. */
+const RESUME_GRACE_MS = 10 * 60_000;
 
 const ROW = "jobs";
 const STARTING: Partial<Record<JobKind, string>> = {
@@ -81,12 +93,17 @@ function release() {
 /**
  * Starts `fn` in the background as the signed-in person and returns the job straight away. `fn` returns the post it
  * made (and where to open it); if it throws, the job fails with the error's message (credits are put back by
- * `withCredits` inside it, as usual).
+ * `withCredits` inside it, as usual). With `resume`, the job is picked up again after a server restart.
  */
-export async function startJob(userId: string, o: { kind: JobKind; title: string }, fn: (say: (message: string) => void) => Promise<{ post?: Post; href?: string; message?: string }>): Promise<Job> {
+export async function startJob(userId: string, o: { kind: JobKind; title: string; resume?: { kind: string; input: unknown } }, fn: JobFn): Promise<Job> {
   const t = nowIso();
-  const job: Job = { id: uid("job"), kind: o.kind, title: o.title.slice(0, 120), status: "queued", message: "Waiting to start…", createdAt: t, updatedAt: t };
+  const job: Job = { id: uid("job"), kind: o.kind, title: o.title.slice(0, 120), status: "queued", message: "Waiting to start…", createdAt: t, updatedAt: t, ...(o.resume ? { resume: { ...o.resume, userId } } : {}) };
   await put(job);
+  run(userId, job, fn, false);
+  return { ...job, status: "queued", message: "Waiting to start…" };
+}
+
+function run(userId: string, job: Job, fn: JobFn, resumed: boolean) {
   live.add(job.id);
   void (async () => {
     await slot();
@@ -94,16 +111,19 @@ export async function startJob(userId: string, o: { kind: JobKind; title: string
       await asUser(userId, async () => {
         let saving: Promise<unknown> = Promise.resolve();
         job.status = "running";
-        job.message = STARTING[o.kind] ?? "Writing…";
+        job.message = resumed ? "Picking up where it left off…" : (STARTING[job.kind] ?? "Writing…");
         await put(job);
         try {
           // Long jobs say which step they're on ("Shot 2 of 5…"); the tray shows the latest. Saves run one after
           // another, and all finish before the final save, so a late one can never overwrite "done".
-          const r = await fn((message) => {
-            job.message = message.slice(0, 200);
-            const snapshot = { ...job, updatedAt: nowIso() };
-            saving = saving.then(() => put(snapshot)).catch(() => {});
-          });
+          const r = await fn(
+            (message) => {
+              job.message = message.slice(0, 200);
+              const snapshot = { ...job, updatedAt: nowIso() };
+              saving = saving.then(() => put(snapshot)).catch(() => {});
+            },
+            { jobId: job.id, resumed },
+          );
           await saving;
           job.status = "done";
           job.postId = r.post?.id;
@@ -112,10 +132,22 @@ export async function startJob(userId: string, o: { kind: JobKind; title: string
           job.message = r.message ?? "Ready";
         } catch (e) {
           await saving;
+          // Stopped by a shutdown: leave it "running" so the next start picks it up (resumable jobs only).
+          if (job.resume && wasInterrupted(e)) {
+            console.warn(`[jobs] ${job.id} was stopped by a shutdown; it resumes on the next start.`);
+            return;
+          }
           job.status = "failed";
           job.message = (e as Error).message.slice(0, 300) || "Something went wrong. Please try again.";
         }
+        delete job.resume;
         await put(job);
+        // A video post that still has to render is announced when its render finishes (src/lib/render.ts).
+        const rendering = job.status === "done" && job.postId && (await db().get<Post>("posts", job.postId))?.render?.status;
+        if (!(rendering === "queued" || rendering === "rendering")) {
+          const { notifyFinished } = await import("./push");
+          await notifyFinished(userId, { kind: job.kind, title: job.title, status: job.status as "done" | "failed", message: job.message, href: job.href });
+        }
       });
     } catch (e) {
       console.error(`[jobs] ${job.id} couldn't be saved: ${(e as Error).message}`);
@@ -124,7 +156,30 @@ export async function startJob(userId: string, o: { kind: JobKind; title: string
       release();
     }
   })();
-  return { ...job, status: "queued", message: "Waiting to start…" };
+}
+
+/** True when a job's step was stopped by the server shutting down (not a real failure: it resumes on restart). */
+export function wasInterrupted(e: unknown) {
+  return /killed by SIG(TERM|INT|HUP)/.test((e as Error)?.message ?? "");
+}
+
+/** Jobs and renders this server is working on (the deploy waits for 0 before restarting). */
+export const liveJobCount = () => live.size;
+
+/**
+ * After a restart: carry on every interrupted job that can be resumed. Returns how many were picked up. Jobs that
+ * can't be resumed are marked failed by `jobViews`, as before.
+ */
+export async function resumeInterrupted(): Promise<number> {
+  let n = 0;
+  for (const j of await listJobs()) {
+    if ((j.status !== "queued" && j.status !== "running") || live.has(j.id) || !j.resume) continue;
+    const make = resumers.get(j.resume.kind);
+    if (!make) continue;
+    run(j.resume.userId, { ...j }, make(j.resume.userId, j.resume.input), true);
+    n++;
+  }
+  return n;
 }
 
 /** A job as the tray shows it: a finished job whose video is rendering reads as rendering, with its progress. */
@@ -138,9 +193,11 @@ export async function jobViews(): Promise<JobView[]> {
   const out: JobView[] = [];
   for (const j of list) {
     // Marked queued/running but no longer on this server: a restart or redeploy stopped it.
-    if ((j.status === "queued" || j.status === "running") && !live.has(j.id) && Date.now() - Date.parse(j.updatedAt) > 30_000) {
+    const grace = j.resume ? RESUME_GRACE_MS : 30_000;
+    if ((j.status === "queued" || j.status === "running") && !live.has(j.id) && Date.now() - Date.parse(j.updatedAt) > grace) {
       j.status = "failed";
       j.message = "The server restarted while this was being made. Please start it again.";
+      delete j.resume;
       changed = true;
     }
     const view: JobView = { ...j, progress: j.status === "done" ? 100 : j.status === "running" ? 30 : 0 };

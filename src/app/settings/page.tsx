@@ -8,6 +8,7 @@ import type { Offer, Pillar, Platform, Settings } from "@/lib/types";
 import { PILLARS, PLATFORMS, REPLY_MODES } from "@/lib/types";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import { MODE_LABEL, PILLAR_LABEL, cn, uid } from "@/lib/utils";
+import { enablePush } from "@/lib/jobs-client";
 import { Button, Card, CardHeader, Field, Input, PageHeader, PlatformChip, Select, Switch, Textarea } from "@/components/ui";
 
 const TABS = [
@@ -120,6 +121,25 @@ export default function SettingsPage() {
                   </Select>
                 </Field>
               ))}
+            </div>
+          </Card>
+          <Card className="lg:col-span-2">
+            <CardHeader title="When something is ready" subtitle="Movies, videos and other long jobs run on Ghost Post's server. You can close the app or lock your phone while they run." />
+            <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2">
+              <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
+                <div>
+                  <p className="text-sm text-white">Notify this device</p>
+                  <p className="text-xs text-white/45">Lock-screen and desktop notifications. On iPhone, add Ghost Post to the Home Screen first.</p>
+                </div>
+                <Button size="sm" onClick={async () => toast((await enablePush()) ? "This device will be notified when things are ready." : "Notifications aren't available here. Allow them in the browser settings, or use email.", "success")}>Turn on</Button>
+              </div>
+              <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
+                <div>
+                  <p className="text-sm text-white">Email me</p>
+                  <p className="text-xs text-white/45">When a movie or video render finishes.</p>
+                </div>
+                <Switch checked={s.notifyEmail} onChange={(v) => set("notifyEmail", v)} label="Email me when ready" />
+              </div>
             </div>
           </Card>
           <Card>

@@ -70,7 +70,7 @@ export default function MovieMaker() {
     try {
       await api("/api/movie-maker", { body: { action: "render", plan, grade, characterIds: cast, voice, musicMediaId: music || undefined, endCard, fiction } });
       jobStarted();
-      toast("Making your movie. Follow it in the tray; it appears below when it's ready.", "success");
+      toast("Making your movie on Ghost Post's server. You can close the app; you'll get a notification when it's ready.", "success");
       refresh();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -173,7 +173,7 @@ export default function MovieMaker() {
               <Field label="End card"><Input value={endCard} onChange={(e) => setEndCard(e.target.value)} maxLength={60} /></Field>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={fiction} onChange={(e) => setFiction(e.target.checked)} /> Label as fiction</label>
               <Button variant="primary" onClick={render} disabled={busy || !plan?.scenes.length || !data?.ready.engine}><Film className="h-4 w-4" /> Make movie{credits ? ` (${credits} credits)` : ""}</Button>
-              <p className="text-xs text-white/45">Pictures and voices use credits; the motion render itself is free. A 3-minute movie takes about 45 minutes to render.</p>
+              <p className="text-xs text-white/45">Pictures and voices use credits; the motion render itself is free. A 3-minute movie takes about 25 minutes on Ghost Post&apos;s server. You can close the app or lock your phone; you&apos;ll get a notification when it&apos;s ready.</p>
             </div>
           </Card>
 

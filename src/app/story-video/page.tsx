@@ -82,7 +82,7 @@ export default function StoryVideo() {
         body: { action: "start", template, source: { kind, text, url, mediaId, fileName }, language, secondLanguage: t?.bilingual ? second : undefined, narrator, characterIds: cast, look: look || undefined, platform, length: len, instant },
       });
       jobStarted();
-      toast(instant ? "Writing and rendering your story. Follow it in the tray; it appears below when it's ready." : "Writing the storyboard. The tray opens it in the Director when it's ready.", "success");
+      toast(instant ? "Writing and rendering your story on Ghost Post's server. You can close the app; you'll get a notification when it's ready." : "Writing the storyboard. The tray opens it in the Director when it's ready.", "success");
       refresh();
     } catch (e) {
       toast((e as Error).message, "error");

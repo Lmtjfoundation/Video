@@ -35,6 +35,8 @@ export async function register() {
   console.log(`[scheduler] built-in scheduler on: publishing every ${minutes} min`);
   // At start: finish Stripe setup when only STRIPE_SECRET_KEY was provided, or refresh Stripe prices that no longer match the plans.
   setTimeout(() => hit("/api/cron/stripe-setup"), 20_000);
+  // Carry on any long job (a movie render) that a restart cut off.
+  setTimeout(() => hit("/api/cron/resume"), 15_000);
   setTimeout(loop, 30_000); // let the server finish starting
   setInterval(loop, minutes * 60_000);
 }

@@ -1,5 +1,5 @@
 /* Ghost Post service worker: offline shell + static asset caching. API calls always go to the network. */
-const CACHE = "np-shell-v1";
+const CACHE = "np-shell-v2";
 const SHELL = ["/offline", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -34,4 +34,26 @@ self.addEventListener("fetch", (e) => {
   if (req.mode === "navigate") {
     e.respondWith(fetch(req).catch(() => caches.match("/offline")));
   }
+});
+
+/* "It's ready" notifications from the server, shown even when Ghost Post is closed. */
+self.addEventListener("push", (e) => {
+  let msg = { title: "Ghost Post", body: "Something finished.", url: "/" };
+  try {
+    msg = { ...msg, ...e.data.json() };
+  } catch {
+    /* plain text or empty */
+  }
+  e.waitUntil(self.registration.showNotification(msg.title, { body: msg.body, icon: "/icons/icon-192.png", badge: "/icons/icon-192.png", data: { url: msg.url }, tag: msg.url }));
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || "/", self.location.origin).href;
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) if (c.url.startsWith(self.location.origin) && "focus" in c) return c.navigate(url).then((w) => (w || c).focus());
+      return self.clients.openWindow(url);
+    }),
+  );
 });

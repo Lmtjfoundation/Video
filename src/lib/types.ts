@@ -210,6 +210,8 @@ export interface Settings {
   xSensitiveConfirmed: boolean;
   /** Videos are faceless (voiceover + visuals, nobody on camera). On by default. */
   faceless: boolean;
+  /** Email me when a long job (a movie, a video render) finishes. */
+  notifyEmail: boolean;
   /** Content genres this account focuses on (src/lib/genres.ts). */
   genres: string[];
   trendAutopilot: TrendAutopilotSettings;

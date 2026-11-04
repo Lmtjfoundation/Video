@@ -130,6 +130,15 @@ sudo -u ghostpost git clone -q --depth 1 -b "$BRANCH" "$REPO_URL" "$DIR"
 cd "$DIR"
 sudo -u ghostpost env HOME="$ROOT" npm ci --no-audit --no-fund --loglevel=error
 sudo -u ghostpost env HOME="$ROOT" NODE_OPTIONS=--max-old-space-size=4096 npx next build >/dev/null
+# Don't cut off a movie or video that's rendering: wait (up to 2 hours) until the server has nothing running.
+setting() { grep -h "^$1=" /etc/ghostpost/env /var/lib/ghostpost/app.env 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' || true; }
+CRON_SECRET="$(setting CRON_SECRET)"; PORT="$(setting PORT)"
+for _ in $(seq 1 240); do
+  busy="$(curl -fsS -m 10 -H "Authorization: Bearer ${CRON_SECRET:-}" "http://127.0.0.1:${PORT:-3000}/api/cron/busy" 2>/dev/null | sed -n 's/.*"busy":\([0-9]*\).*/\1/p' || true)"
+  [ -z "$busy" ] || [ "$busy" = 0 ] && break
+  echo "Waiting for $busy running job(s) to finish before switching to $SHA…"
+  sleep 30
+done
 ln -sfn "$DIR" "$ROOT/current.new" && mv -T "$ROOT/current.new" "$ROOT/current"
 systemctl restart ghostpost
 echo "Deployed $SHA"
@@ -152,7 +161,7 @@ ExecStart=/usr/bin/npm start
 Restart=always
 RestartSec=3
 MemoryMax=10G
-TimeoutStopSec=30
+TimeoutStopSec=120
 
 [Install]
 WantedBy=multi-user.target

@@ -53,6 +53,19 @@ let queue: Promise<unknown> = Promise.resolve();
 /** Posts this server process is rendering or has waiting in its queue. */
 const inFlight = new Set<string>();
 
+/** Videos this server is rendering or has queued (the deploy waits for 0 before restarting). */
+export const rendersInFlight = () => inFlight.size;
+
+/** Tell the person a render finished (push, and email when they want it); never fails the render. */
+async function announce(userId: string, post: Post, status: "done" | "failed", message: string) {
+  try {
+    const { notifyFinished } = await import("./push");
+    await notifyFinished(userId, { kind: "render", title: post.hook.slice(0, 80) || "Your video", status, message: status === "done" ? `Video ready: ${post.hook.slice(0, 80)}` : message, href: `/post/${post.id}` });
+  } catch (e) {
+    console.warn(`[render] couldn't announce: ${(e as Error).message.slice(0, 160)}`);
+  }
+}
+
 /** Renders one video at a time so a burst of requests can't starve the web server of CPU. */
 export function enqueueRender(userId: string, postId: string, credits = 0) {
   inFlight.add(postId);
@@ -747,6 +760,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     await savePost(fresh);
     if (unused && credits) await refundCredits(userId, Math.min(unused, credits));
     await log("info", "generate", `Video rendered (${item.durationSec}s) — “${post.hook.slice(0, 60)}”`, { platform: post.platform, postId });
+    await announce(userId, fresh, "done", "");
     // "Post automatically": publish now that the video exists. Runs alongside the render queue (Instagram can take
     // minutes to process a Reel), so the next video starts rendering straight away.
     if (fresh.autoPost && fresh.status === "draft") {
@@ -761,6 +775,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     await savePost(fresh);
     if (credits) await refundCredits(userId, credits);
     await log("error", "generate", `Video render failed: ${msg}${credits ? " (credits refunded)" : ""}`, { platform: post.platform, postId });
+    await announce(userId, fresh, "failed", `${msg}${credits ? " (credits refunded)" : ""}`);
   } finally {
     await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
   }
