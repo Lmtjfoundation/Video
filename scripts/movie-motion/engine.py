@@ -40,9 +40,19 @@ def depth_of(path, cache):
     if os.path.exists(cache):
         return cv2.imread(cache, cv2.IMREAD_GRAYSCALE).astype(np.float32) / 255.0
     if _depth_pipe is None:
-        from transformers import pipeline
+        try:
+            if os.environ.get("MOVIE_DEPTH") == "0":
+                raise ImportError("depth switched off")
+            from transformers import pipeline
 
-        _depth_pipe = pipeline("depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf", device="cpu")
+            _depth_pipe = pipeline("depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf", device="cpu")
+        except Exception as e:  # no depth model on this server: a soft "near at the bottom, far at the top" guess
+            print(f"depth model unavailable ({e}); using a gradient", flush=True)
+            _depth_pipe = False
+    if _depth_pipe is False:
+        h, w = cv2.imread(path, cv2.IMREAD_GRAYSCALE).shape
+        yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+        return np.clip(0.25 + 0.6 * yy / h - 0.25 * np.abs(xx / w - 0.5), 0, 1)
     d = np.asarray(_depth_pipe(Image.open(path).convert("RGB"))["depth"], dtype=np.float32)
     d = (d - d.min()) / max(1e-6, d.max() - d.min())
     cv2.imwrite(cache, (d * 255).astype(np.uint8))

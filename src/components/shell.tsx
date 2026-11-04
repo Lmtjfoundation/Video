@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { href: "/writers", label: "Writers' Room", short: "Writers", icon: Feather },
   { href: "/movies", label: "Movie Studio", short: "Movies", icon: Film },
   { href: "/film-engine", label: "Film Engine", short: "Film", icon: Clapperboard },
+  { href: "/movie-maker", label: "Movie Maker", short: "Maker", icon: Clapperboard },
   { href: "/director", label: "Director", short: "Director", icon: MessagesSquare },
   { href: "/series", label: "Series Studio", short: "Series", icon: ListVideo },
   { href: "/images", label: "Image Studio", short: "Images", icon: Palette },
