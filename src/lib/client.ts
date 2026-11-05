@@ -44,6 +44,8 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
 export const EXPLAIN_HANDOFF = "ghostpost:explain-to-video";
 /** "Open in Movie Studio" in the Writers' Room hands the film's story and cast over the same way. */
 export const FILM_HANDOFF = "ghostpost:film-to-movie";
+/** "Make in Movie Maker" on a series episode hands its scene plan to Movie Maker the same way. */
+export const MOVIE_MAKER_HANDOFF = "ghostpost:plan-to-movie-maker";
 
 export async function copyToClipboard(text: string) {
   try {

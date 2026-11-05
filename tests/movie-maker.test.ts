@@ -118,3 +118,13 @@ describe("Movie Maker defaults and spec", () => {
     expect(picturePrompt(parsePlan(PLAN).scenes[0], "amber brine")).toMatch(/No text/);
   });
 });
+
+describe("long episodes", () => {
+  it("keeps up to 60 scenes and doesn't read a salt-and-pepper beard as falling salt", () => {
+    const text = Array.from({ length: 55 }, (_, i) => `${i + 1}. [${Math.floor((i * 5) / 60)}:${String((i * 5) % 60).padStart(2, "0")}–${Math.floor(((i + 1) * 5) / 60)}:${String(((i + 1) * 5) % 60).padStart(2, "0")}] Line ${i + 1}.\n   Visual: Marcus (salt-and-pepper beard) mopping.\n   Edit: Slow push-in  ·  SFX: hum`).join("\n");
+    const p = parsePlan(text);
+    expect(p.scenes).toHaveLength(55);
+    expect(p.scenes[0].effects).not.toContain("salt");
+    expect(effectsFor({ visual: "falling white salt crystals", edit: "", sfx: "", narration: "" })).toContain("salt");
+  });
+});

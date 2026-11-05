@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Clapperboard, Film, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { api } from "@/lib/client";
+import { api, MOVIE_MAKER_HANDOFF } from "@/lib/client";
 import { jobStarted } from "@/lib/jobs-client";
 import { cn } from "@/lib/utils";
 import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
@@ -47,6 +47,25 @@ export default function MovieMaker() {
     window.addEventListener("ghostpost:job-done", load);
     return () => window.removeEventListener("ghostpost:job-done", load);
   }, [load]);
+
+  // An episode handed over from the Writers' Room: paste its plan and make the scenes straight away.
+  useEffect(() => {
+    const raw = sessionStorage.getItem(MOVIE_MAKER_HANDOFF);
+    if (!raw) return;
+    sessionStorage.removeItem(MOVIE_MAKER_HANDOFF);
+    try {
+      const h = JSON.parse(raw) as { text: string; title?: string };
+      setText(h.text);
+      api<{ plan: MoviePlan }>("/api/movie-maker", { body: { action: "parse", text: h.text } })
+        .then((r) => {
+          setPlan({ ...r.plan, title: h.title || r.plan.title });
+          toast(`${r.plan.scenes.length} scenes ready from the Writers' Room.`, "success");
+        })
+        .catch((e) => toast((e as Error).message, "error"));
+    } catch {
+      /* ignore a broken hand-off */
+    }
+  }, [toast]);
 
   const credits = useMemo(() => (plan && data ? movieCredits(plan, data.cost, voice) : 0), [plan, data, voice]);
   const seconds = plan ? plan.scenes.reduce((n, s) => n + s.seconds, 0) : 0;

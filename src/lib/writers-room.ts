@@ -92,6 +92,8 @@ export interface FilmProject {
   scenes: FilmScene[];
   /** Season arc for a series: one logline per episode. */
   episodes?: string[];
+  /** A Movie Maker scene plan for each episode (same order as `episodes`), ready to render. */
+  episodePlans?: string[];
   /** Screenplay pages by scene number. */
   pages: Record<string, string>;
   review?: FilmReview;
@@ -306,4 +308,40 @@ Synopsis: ${p.synopsis}
 Characters: ${p.characterSpotlights.map((c) => `${c.name}: ${c.caption}`).join(" | ")}
 Behind the story: ${p.behindTheStory}
 It's fiction. Hashtags to draw on: ${p.hashtags.join(", ")}`;
+}
+
+/** A finished project written outside the room (imported by the owner): checked and saved for the current person. */
+export async function importFilm(raw: unknown): Promise<FilmProject> {
+  const r = (raw ?? {}) as Partial<FilmProject>;
+  const t = nowIso();
+  if (!clean(r.title, 200)) throw new Error("The project needs a title.");
+  const f: FilmProject = {
+    id: uid("film"),
+    title: clean(r.title, 200),
+    titles: list<string>(r.titles, 10).map((x) => clean(x, 200)).filter(Boolean),
+    logline: clean(r.logline, 600),
+    genre: clean(r.genre, 40) || "Drama",
+    format: FILM_FORMATS.includes(r.format as FilmFormat) ? (r.format as FilmFormat) : "series",
+    tone: clean(r.tone, 300),
+    premise: clean(r.premise, 4000),
+    influences: r.influences ? clean(r.influences, 300) : undefined,
+    theme: clean(r.theme, 600),
+    dramaticQuestion: clean(r.dramaticQuestion, 400),
+    world: { setting: clean(r.world?.setting, 800), era: clean(r.world?.era, 200), rules: clean(r.world?.rules, 800), look: clean(r.world?.look, 800), sound: clean(r.world?.sound, 800) },
+    characters: list<FilmCharacter>(r.characters, 20).map((c) => ({
+      name: clean(c.name, 80), role: clean(c.role, 120), look: clean(c.look, 800), backstory: clean(c.backstory, 1200), wound: clean(c.wound, 400), want: clean(c.want, 300),
+      need: clean(c.need, 300), flaw: clean(c.flaw, 300), arc: clean(c.arc, 600), voice: clean(c.voice, 400), relationships: clean(c.relationships, 600),
+    })).filter((c) => c.name),
+    structure: list<{ name: string; summary: string }>(r.structure, 20).map((b) => ({ name: clean(b.name, 120), summary: clean(b.summary, 1200) })),
+    scenes: list<FilmScene>(r.scenes, 120).map((s, i) => ({ number: Number(s.number) || i + 1, heading: clean(s.heading, 200), summary: clean(s.summary, 1200), purpose: clean(s.purpose, 400), conflict: clean(s.conflict, 400), turn: clean(s.turn, 400) })),
+    episodes: list<string>(r.episodes, 20).map((e) => clean(e, 600)).filter(Boolean),
+    episodePlans: list<string>(r.episodePlans, 20).map((e) => clean(e, 60_000)),
+    pages: Object.fromEntries(Object.entries(r.pages ?? {}).slice(0, 120).map(([k, v]) => [String(Number(k) || k), clean(v, 20_000)])),
+    promo: r.promo ? { ...r.promo, madeAt: t } : undefined,
+    notes: list<string>(r.notes, 20).map((x) => clean(x, 2000)),
+    createdAt: t,
+    updatedAt: t,
+  };
+  if (!f.scenes.length || !f.characters.length) throw new Error("The project needs characters and scenes.");
+  return saveFilm(f);
 }

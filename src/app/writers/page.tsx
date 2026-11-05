@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Award, BookOpen, Clapperboard, Copy, Feather, Globe2, Megaphone, PenLine, Sparkles, Trash2, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { api, copyToClipboard } from "@/lib/client";
+import { api, copyToClipboard, MOVIE_MAKER_HANDOFF } from "@/lib/client";
 import { CREDIT_COST } from "@/lib/plans";
 import { PLATFORM_SPECS } from "@/lib/platforms/specs";
 import type { Platform } from "@/lib/types";
@@ -256,7 +256,22 @@ function StoryTab({ film }: { film: FilmProject }) {
       </div>
       {!!film.episodes?.length && (
         <Block label="Season arc">
-          <ol className="list-decimal space-y-1 pl-5">{film.episodes.map((e, i) => <li key={i}>{e}</li>)}</ol>
+          <ol className="list-decimal space-y-2 pl-5">
+            {film.episodes.map((e, i) => (
+              <li key={i}>
+                {e}
+                {film.episodePlans?.[i] && (
+                  <Link
+                    href="/movie-maker"
+                    onClick={() => sessionStorage.setItem(MOVIE_MAKER_HANDOFF, JSON.stringify({ text: film.episodePlans![i], title: `${film.title}: Episode ${i + 1}` }))}
+                    className="ml-2 inline-flex items-center gap-1 rounded-lg bg-mint-400/15 px-2 py-0.5 text-[12px] font-semibold text-mint-200 hover:bg-mint-400/25"
+                  >
+                    <Clapperboard className="h-3 w-3" /> Make in Movie Maker
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ol>
         </Block>
       )}
     </div>

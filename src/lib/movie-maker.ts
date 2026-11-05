@@ -82,7 +82,7 @@ export interface MoviePlan {
   scenes: MovieScene[];
 }
 
-export const MAX_SCENES = 40;
+export const MAX_SCENES = 60;
 const clip = (s: string, n: number) => s.replace(/\s+/g, " ").trim().slice(0, n);
 
 /** The camera move an "Edit:" line asks for (first match wins, so "crash zoom" beats "zoom"). */
@@ -112,7 +112,7 @@ export function effectsFor(s: { visual: string; edit: string; sfx: string; narra
     [/shatter|smash|crack(ed|ing)? glass|glass break/, "shatter"],
     [/ghost|spirit|phantom|vaporous|mist(?! of)/, "ghost"],
     [/frost|freez|\bice\b|icy/, "frost"],
-    [/salt/, "salt"],
+    [/\bsalt\b(?!-and)/, "salt"],
     [/bubbl|foam|boil/, "bubbles"],
     [/hiss|steam|vapou?r/, "steam"],
     [/flicker|sputter/, "flicker"],
