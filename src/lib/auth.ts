@@ -242,6 +242,15 @@ export async function createPasswordReset(emailIn: string): Promise<{ token: str
   return { token, user };
 }
 
+/** Owner recovery (server access only): clear the sign-in lock and make a reset token for an account. */
+export async function recoverAccount(emailIn: string) {
+  const email = emailIn.trim().toLowerCase();
+  const user = await findUserByEmail(email);
+  if (!user) return null;
+  await gdb().remove("kv", `login_${sha(email)}`);
+  return { user, token: await issueResetToken(user.id) };
+}
+
 /** A one-hour, single-use reset token for a user (also used by Admin → Users → reset link). */
 export async function issueResetToken(userId: string) {
   const token = randomBytes(32).toString("base64url");

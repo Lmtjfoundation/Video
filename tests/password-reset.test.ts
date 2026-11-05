@@ -41,3 +41,17 @@ describe("forgot password", () => {
     await expect(resetPassword(token, "Another-pass-555!")).rejects.toThrow(/expired or was already used/);
   });
 });
+
+describe("owner recovery", () => {
+  it("clears the sign-in lock and gives a working reset link", async () => {
+    const { createUser, login, recoverAccount, resetPassword } = await import("@/lib/auth");
+    await createUser({ email: "locked@example.com", password: "Right-pass-1234!", name: "Locked" }).catch(() => null);
+    for (let i = 0; i < 5; i++) await login("locked@example.com", "wrong-pass-0000").catch(() => {});
+    await expect(login("locked@example.com", "Right-pass-1234!")).rejects.toThrow(/Too many attempts/);
+    const r = await recoverAccount("Locked@Example.com");
+    expect(r?.user.email).toBe("locked@example.com");
+    await resetPassword(r!.token, "Fresh-pass-2468!");
+    await expect(login("locked@example.com", "Fresh-pass-2468!")).resolves.toBeTruthy();
+    expect(await recoverAccount("nobody@example.com")).toBeNull();
+  });
+});
