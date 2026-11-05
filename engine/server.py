@@ -83,16 +83,23 @@ FIVE_B = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
 T2I = os.environ.get("ENGINE_IMAGE_MODEL", "Qwen/Qwen-Image")
 WRITER = os.environ.get("ENGINE_TEXT_MODEL", "Qwen/Qwen3-8B")
 WRITING = os.environ.get("ENGINE_TEXT", "on") != "off"
-# "full" (a GPU: every model) or "tools" (a machine without a GPU: only the light picture and sound tools, on the CPU).
+# "full" (a GPU: every model), "tools" (a machine without a GPU: only the light picture and sound tools, on the CPU)
+# or "pictures" (a bigger CPU machine: pictures from a description with SDXL-Lightning, plus upscaling and cut-outs).
 PROFILE = os.environ.get("ENGINE_PROFILE", "full")
-if PROFILE not in ("full", "tools"):
-    raise SystemExit(f"ENGINE_PROFILE must be full or tools, not {PROFILE!r}")
-CAPABILITIES = (
-    ["upscale", "remove-bg", "isolate"]
-    if PROFILE == "tools"
-    else ["pictures", "edit-pictures", "clips", "video-edits", "writing", "upscale", "remove-bg", "music", "sfx", "speech", "voice-change", "isolate", "lipsync", "voice-design"]
+if PROFILE not in ("full", "tools", "pictures"):
+    raise SystemExit(f"ENGINE_PROFILE must be full, tools or pictures, not {PROFILE!r}")
+CAPABILITIES = {
+    "tools": ["upscale", "remove-bg", "isolate"],
+    "pictures": ["pictures", "upscale", "remove-bg"],
+}.get(PROFILE, ["pictures", "edit-pictures", "clips", "video-edits", "writing", "upscale", "remove-bg", "music", "sfx", "speech", "voice-change", "isolate", "lipsync", "voice-design"])
+NO_GPU = (
+    "This engine runs without a GPU (ENGINE_PROFILE=pictures): it makes pictures from a description, and upscales and cuts out pictures."
+    if PROFILE == "pictures"
+    else "This engine runs without a GPU (ENGINE_PROFILE=tools): it does upscaling, background removal and voice isolation only."
 )
-NO_GPU = "This engine runs without a GPU (ENGINE_PROFILE=tools): it does upscaling, background removal and voice isolation only."
+# Pictures on a CPU: SDXL base with ByteDance's SDXL-Lightning 4-step UNet (both CreativeML OpenRAIL++-M).
+SDXL_BASE = os.environ.get("ENGINE_SDXL_BASE", "stabilityai/stable-diffusion-xl-base-1.0")
+SDXL_LIGHTNING = ("ByteDance/SDXL-Lightning", "sdxl_lightning_4step_unet.safetensors")
 EDIT = os.environ.get("ENGINE_EDIT_MODEL", "Qwen/Qwen-Image-Edit-2511")
 AUDIO_URL = os.environ.get("AUDIO_URL", "http://127.0.0.1:8001").rstrip("/")
 SPEECH_URL = os.environ.get("SPEECH_URL", "http://127.0.0.1:8002").rstrip("/")
@@ -100,6 +107,8 @@ LIPSYNC_URL = os.environ.get("LIPSYNC_URL", "http://127.0.0.1:8003").rstrip("/")
 VOICEDESIGN_URL = os.environ.get("VOICEDESIGN_URL", "http://127.0.0.1:8004").rstrip("/")
 # Qwen-Image's native sizes per frame shape (from its model card).
 IMAGE_SIZES = {"1:1": (1328, 1328), "16:9": (1664, 928), "9:16": (928, 1664), "4:3": (1472, 1104), "3:4": (1104, 1472), "21:9": (1792, 768)}
+if PROFILE == "pictures":  # SDXL's trained sizes (about one megapixel)
+    IMAGE_SIZES = {"1:1": (1024, 1024), "16:9": (1344, 768), "9:16": (768, 1344), "4:3": (1152, 896), "3:4": (896, 1152), "21:9": (1536, 640)}
 A14B = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
 VACE = os.environ.get("ENGINE_VACE_MODEL", "Wan-AI/Wan2.1-VACE-14B-diffusers")
 DEPTH = "depth-anything/Depth-Anything-V2-Small-hf"  # Apache 2.0: the structure VACE follows when restyling
@@ -405,6 +414,8 @@ class Engine:
             img.save(path)
             job.progress = 1.0
             return path
+        if PROFILE == "pictures":
+            return self.picture_cpu(job, width, height, path)
         if refs:
             if self.edit is None:
                 from diffusers import QwenImageEditPlusPipeline
@@ -440,6 +451,38 @@ class Engine:
             args["image"] = refs
         with torch.inference_mode():
             pipe(**args).images[0].save(path)
+        return path
+
+    def picture_cpu(self, job: Job, width: int, height: int, path: str) -> str:
+        """A picture from a description on the CPU: SDXL with the SDXL-Lightning 4-step UNet (no guidance needed)."""
+        r = job.req
+        if self.t2i is None:
+            from diffusers import EulerDiscreteScheduler, StableDiffusionXLPipeline, UNet2DConditionModel
+            from huggingface_hub import hf_hub_download
+            from safetensors.torch import load_file
+
+            log.info("First picture: loading %s with %s", SDXL_BASE, SDXL_LIGHTNING[1])
+            unet = UNet2DConditionModel.from_config(UNet2DConditionModel.load_config(SDXL_BASE, subfolder="unet"))
+            unet.load_state_dict(load_file(hf_hub_download(*SDXL_LIGHTNING), device="cpu"))
+            pipe = StableDiffusionXLPipeline.from_pretrained(SDXL_BASE, unet=unet.to(torch.float32), torch_dtype=torch.float32, variant="fp16")
+            pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
+            self.t2i = pipe
+        steps = 4
+
+        def on_step(_pipe, i, _t, kwargs):
+            job.progress = min(0.95, (i + 1) / (steps + 1))
+            return kwargs
+
+        with torch.inference_mode():
+            self.t2i(
+                prompt=r.prompt,
+                width=width,
+                height=height,
+                num_inference_steps=steps,
+                guidance_scale=0,
+                generator=torch.Generator(device="cpu").manual_seed(r.seed if r.seed is not None else secrets.randbelow(2**31)),
+                callback_on_step_end=on_step,
+            ).images[0].save(path)
         return path
 
     def picture_tool(self, job: Job) -> str:
@@ -695,8 +738,8 @@ engine = Engine()
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     os.makedirs(OUT_DIR, exist_ok=True)
-    if PROFILE == "tools":
-        engine.ready = True  # no big models to load: the tools load their small ones on first use
+    if PROFILE != "full":
+        engine.ready = True  # no video model to load: the tools (and SDXL) load on first use
         torch.set_num_threads(max(1, os.cpu_count() or 1))
     else:
         threading.Thread(target=engine.load, daemon=True).start()
@@ -744,7 +787,7 @@ def info() -> dict:
 
 @app.post("/v1/videos", dependencies=[Depends(authorised)])
 def create(req: VideoRequest) -> dict:
-    if PROFILE == "tools":
+    if PROFILE != "full":
         raise HTTPException(503, NO_GPU)
     if engine.load_error:
         raise HTTPException(503, f"The model couldn't load: {engine.load_error}")
@@ -778,6 +821,8 @@ def create_image(req: ImageRequest) -> dict:
         raise HTTPException(400, f"aspect must be one of {', '.join(IMAGE_SIZES)}")
     if PROFILE == "tools" and req.op == "generate":
         raise HTTPException(503, NO_GPU)
+    if PROFILE == "pictures" and req.op == "generate" and req.images:
+        raise HTTPException(503, "This engine makes pictures from a description only; editing with reference pictures needs the GPU engine.")
     if req.op == "generate" and not req.prompt.strip():
         raise HTTPException(400, "Describe the picture.")
     if req.op != "generate" and len(req.images) != 1:
@@ -803,7 +848,7 @@ def image_file(job_id: str) -> FileResponse:
 
 @app.post("/v1/video-edits", dependencies=[Depends(authorised)])
 def create_edit(req: EditRequest) -> dict:
-    if PROFILE == "tools":
+    if PROFILE != "full":
         raise HTTPException(503, NO_GPU)
     if engine.load_error:
         raise HTTPException(503, f"The model couldn't load: {engine.load_error}")
@@ -832,7 +877,7 @@ def edit_file(job_id: str) -> FileResponse:
 
 @app.post("/v1/chat", dependencies=[Depends(authorised)])
 def chat(req: ChatRequest) -> dict:
-    if PROFILE == "tools":
+    if PROFILE != "full":
         raise HTTPException(503, NO_GPU)
     if not WRITING:
         raise HTTPException(503, "Writing is switched off on this engine (ENGINE_TEXT=off).")

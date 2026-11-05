@@ -225,7 +225,8 @@ export async function ownImage(o: { prompt: string; refs?: { bytes: Buffer; mime
       aspect: o.aspect,
     }),
   });
-  const deadline = Date.now() + (o.timeoutMs ?? 10 * 60_000);
+  // 15 minutes: a picture machine that was asleep has to start and load its model first.
+  const deadline = Date.now() + (o.timeoutMs ?? 15 * 60_000);
   for (;;) {
     const s = await call<{ status: string; error?: string | null }>(e, `/v1/images/${job.id}`);
     if (s.status === "succeeded") return call<Buffer>(e, `/v1/images/${job.id}/file`, {}, true);

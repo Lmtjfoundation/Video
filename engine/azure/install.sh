@@ -8,6 +8,8 @@
 #   ... | sudo bash -s -- my.domain.example  # use your own DNS name instead of <ip>.sslip.io
 #   ... | sudo bash -s -- --cpu              # a VM without a GPU: only the light tools (upscale, background removal,
 #                                            # voice isolation) on the CPU (ENGINE_PROFILE=tools)
+#   ... | sudo bash -s -- --pictures         # a CPU VM with 32 GB: pictures from a description (SDXL-Lightning), plus
+#                                            # upscaling and cut-outs (ENGINE_PROFILE=pictures)
 #
 # Safe to run again: finished steps are skipped, and the services restart on the latest code.
 set -euo pipefail
@@ -19,18 +21,21 @@ ENV_FILE=/etc/ghost-post-engine.env
 MIN_FREE_GB=250 # the video, picture, writing, speech and lip-sync models together
 CHECK=0
 CPU=0
+PICS=0
 DOMAIN=""
 for a in "$@"; do
   case "$a" in
     --check) CHECK=1 ;;
     --force-disk) MIN_FREE_GB=0 ;;
     --cpu) CPU=1 ;;
+    --pictures) CPU=1; PICS=1 ;;
     -*) echo "Unknown option: $a" >&2; exit 2 ;;
     *) DOMAIN="$a" ;;
   esac
 done
 
 [ "$CPU" = 1 ] && MIN_FREE_GB=15
+[ "$PICS" = 1 ] && MIN_FREE_GB=25
 say() { printf '\n\033[1;32m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[1;33m!!  %s\033[0m\n' "$*"; }
 die() { printf '\033[1;31mXX  %s\033[0m\n' "$*" >&2; exit 1; }
@@ -107,27 +112,40 @@ if [ "$CPU" = 1 ]; then
   /opt/ghost-post/venv/bin/pip install -q torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu
   grep -v '^onnxruntime-gpu' "$REPO/engine/requirements.txt" > /tmp/ghost-post-req-cpu.txt
   /opt/ghost-post/venv/bin/pip install -q -r /tmp/ghost-post-req-cpu.txt onnxruntime==1.22.0
-  [ -x "$REPO/engine/.speech-venv/bin/python" ] || uv venv -q --seed --python 3.12 "$REPO/engine/.speech-venv"
-  "$REPO/engine/.speech-venv/bin/pip" install -q torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
-  "$REPO/engine/.speech-venv/bin/pip" install -q demucs==4.0.1 fastapi==0.142.2 uvicorn==0.54.0 numpy soundfile
+  if [ "$PICS" = 0 ]; then
+    [ -x "$REPO/engine/.speech-venv/bin/python" ] || uv venv -q --seed --python 3.12 "$REPO/engine/.speech-venv"
+    "$REPO/engine/.speech-venv/bin/pip" install -q torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+    "$REPO/engine/.speech-venv/bin/pip" install -q demucs==4.0.1 fastapi==0.142.2 uvicorn==0.54.0 numpy soundfile
+  fi
   mkdir -p /opt/ghost-post/hf
   # Swap: a memory spike then slows the machine down instead of freezing it (a 4 GB VM has none by default).
   if ! swapon --show | grep -q /swapfile; then
-    [ -f /swapfile ] || { fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null; }
+    [ -f /swapfile ] || { fallocate -l "$([ "$PICS" = 1 ] && echo 16G || echo 4G)" /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null; }
     swapon /swapfile
     grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
   fi
   cat > "$ENV_FILE" <<ENV
 ENGINE_TOKEN=$TOKEN
-ENGINE_PROFILE=tools
+ENGINE_PROFILE=$([ "$PICS" = 1 ] && echo pictures || echo tools)
 SPEECH_MODES=isolate
 HF_HOME=/opt/ghost-post/hf
 PORT=8000
 ENV
   chmod 600 "$ENV_FILE"
-  for unit in engine speech; do
+  UNITS="engine speech"
+  if [ "$PICS" = 1 ]; then
+    UNITS=engine
+    say "Downloading the picture model once (SDXL base + SDXL-Lightning, about 7 GB)"
+    HF_HOME=/opt/ghost-post/hf /opt/ghost-post/venv/bin/python - <<'PY'
+from huggingface_hub import hf_hub_download, snapshot_download
+snapshot_download("stabilityai/stable-diffusion-xl-base-1.0", allow_patterns=["model_index.json", "scheduler/*", "tokenizer/*", "tokenizer_2/*", "unet/config.json", "text_encoder/*.fp16.safetensors", "text_encoder/config.json", "text_encoder_2/*.fp16.safetensors", "text_encoder_2/config.json", "vae/*.fp16.safetensors", "vae/config.json"])
+hf_hub_download("ByteDance/SDXL-Lightning", "sdxl_lightning_4step_unet.safetensors")
+print("picture model ready")
+PY
+  fi
+  for unit in $UNITS; do
     # Each service is capped (it restarts if it overruns), so one big job can't take the whole machine down.
-    if [ "$unit" = engine ]; then exe="/opt/ghost-post/venv/bin/python server.py"; mem=60%; else exe="$REPO/engine/.speech-venv/bin/python speech_server.py"; mem=50%; fi
+    if [ "$unit" = engine ]; then exe="/opt/ghost-post/venv/bin/python server.py"; mem=$([ "$PICS" = 1 ] && echo 90% || echo 60%); else exe="$REPO/engine/.speech-venv/bin/python speech_server.py"; mem=50%; fi
     cat > "/etc/systemd/system/ghost-post-$unit.service" <<UNIT
 [Unit]
 Description=Ghost Post $unit (light tools, no GPU)
@@ -155,8 +173,7 @@ UNIT
   printf 'import sites/*.caddy\n' > /etc/caddy/Caddyfile
   systemctl restart caddy
   systemctl daemon-reload
-  systemctl enable --now ghost-post-engine ghost-post-speech
-  systemctl restart ghost-post-engine ghost-post-speech
+  for unit in $UNITS; do systemctl enable --now "ghost-post-$unit"; systemctl restart "ghost-post-$unit"; done
 else
 # ---- Files and steps from cloud-init.yaml ----------------------------------------------------------------------
 say "Services (from cloud-init.yaml)"

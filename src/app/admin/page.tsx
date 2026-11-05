@@ -915,7 +915,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
 
         <Service
           icon={<Sparkles className="h-4 w-4" />}
-          title="GPU engine — pictures, clips, voices and lip sync"
+          title="Second engine (GPU, or the CPU picture machine) — pictures, clips, voices and lip sync"
           desc="A second engine on a GPU machine (for example an Azure NV36ads A10 v5, billed only while it runs). Ghost Post sends it everything the engine above can't do, starts it when needed with its own wake line, and it stops itself after 20 idle minutes."
           link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/engine/README.md", label: "Setup guide" }}
           state={st.videoEngineGpu ?? { set: false }}

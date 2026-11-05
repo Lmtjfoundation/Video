@@ -158,6 +158,31 @@ def test_video_edits(tmp_path):
             assert frames == "9", (task, frames)
 
 
+def test_pictures_profile_on_cpu(monkeypatch):
+    """ENGINE_PROFILE=pictures: pictures from a description (SDXL sizes), upscale and cut-outs; edits and video need a GPU."""
+    import importlib
+
+    monkeypatch.setenv("ENGINE_PROFILE", "pictures")
+    pics = importlib.reload(server)
+    try:
+        with TestClient(pics.app) as client:
+            info = client.get("/v1/info", headers=AUTH).json()
+            assert info["profile"] == "pictures" and info["ready"] is True
+            assert info["capabilities"] == ["pictures", "upscale", "remove-bg"]
+            assert pics.IMAGE_SIZES["9:16"] == (768, 1344)
+            assert pics.engine.i2v is None
+            job = client.post("/v1/images", headers=AUTH, json={"prompt": "a janitor in a school hallway", "aspect": "9:16"}).json()
+            assert wait(client, job["id"])["status"] == "succeeded"
+            r = client.post("/v1/images", headers=AUTH, json={"prompt": "same man", "images": [picture()]})
+            assert r.status_code == 503 and "reference pictures" in r.json()["detail"]
+            for path, body in [("/v1/videos", {"prompt": "x"}), ("/v1/chat", {"user": "hi"})]:
+                r = client.post(path, headers=AUTH, json=body)
+                assert r.status_code == 503 and "without a GPU" in r.json()["detail"], (path, r.text)
+    finally:
+        monkeypatch.delenv("ENGINE_PROFILE")
+        importlib.reload(server)
+
+
 def test_tools_profile_without_gpu(monkeypatch):
     """ENGINE_PROFILE=tools: no big model loads; upscale and cut-outs work; everything else says it needs a GPU."""
     import importlib
