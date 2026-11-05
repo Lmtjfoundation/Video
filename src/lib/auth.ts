@@ -237,12 +237,16 @@ export async function createPasswordReset(emailIn: string): Promise<{ token: str
   if (!user || user.status !== "active") return null;
   const gate = await gdb().get<{ id: string; value: { at: number } }>("kv", `forgot_${sha(email)}`);
   if (gate && Date.now() - gate.value.at < RESEND_GAP_MS) return null;
-  const token = randomBytes(32).toString("base64url");
-  await gdb().upsertMany("kv", [
-    { id: `reset_${sha(token)}`, value: { userId: user.id, expiresAt: Date.now() + RESET_TTL_MS } },
-    { id: `forgot_${sha(email)}`, value: { at: Date.now() } },
-  ]);
+  const token = await issueResetToken(user.id);
+  await gdb().upsert("kv", { id: `forgot_${sha(email)}`, value: { at: Date.now() } });
   return { token, user };
+}
+
+/** A one-hour, single-use reset token for a user (also used by Admin → Users → reset link). */
+export async function issueResetToken(userId: string) {
+  const token = randomBytes(32).toString("base64url");
+  await gdb().upsert("kv", { id: `reset_${sha(token)}`, value: { userId, expiresAt: Date.now() + RESET_TTL_MS } });
+  return token;
 }
 
 /** Sets a new password from a reset token, signs out every other device and returns a fresh session. */

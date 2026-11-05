@@ -1,12 +1,18 @@
 import "server-only";
-import { emailFrom, resendKey } from "./integrations";
+import { emailFrom, resendKey, smtpSettings } from "./integrations";
 
 /**
- * Transactional email over Resend's HTTPS API (HTTPS works on any host, unlike SMTP, which many block).
- * The admin adds the Resend API key and a From address in Admin → App settings → Integrations.
+ * Transactional email (password resets, "your movie is ready"). Two ways, set in Admin → App settings → Integrations:
+ * Resend's HTTPS API, or any mail account over SMTP (Gmail with an app password, Outlook, Zoho, SendGrid…).
+ * Resend is used when both are set.
  */
 export async function emailReady() {
-  return !!(await resendKey()) && !!(await emailFrom());
+  return !!(await resendKey()) ? !!(await emailFrom()) : !!(await smtpSettings());
+}
+
+/** The sender: the From address, or for SMTP the account itself. */
+async function sender() {
+  return (await emailFrom()) || (await smtpSettings())?.user || "";
 }
 
 /** Accepts "you@domain.com" or "Name <you@domain.com>". */
@@ -18,8 +24,22 @@ export function validFrom(v: string) {
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 export async function sendEmail(msg: { to: string; subject: string; text: string; html: string }) {
-  const [key, from] = await Promise.all([resendKey(), emailFrom()]);
-  if (!key || !from) throw new Error("Email isn't set up yet. Add a Resend API key and From address in Admin → App settings → Integrations.");
+  const [key, from, smtp] = await Promise.all([resendKey(), sender(), smtpSettings()]);
+  if (!key && smtp) {
+    const nodemailer = (await import("nodemailer")).default;
+    const t = nodemailer.createTransport({ host: smtp.host, port: smtp.port, secure: smtp.port === 465, auth: { user: smtp.user, pass: smtp.pass }, connectionTimeout: 15_000, greetingTimeout: 15_000, socketTimeout: 30_000 });
+    try {
+      const info = await t.sendMail({ from, to: msg.to, subject: msg.subject, text: msg.text, html: msg.html });
+      return { id: info.messageId ?? "" };
+    } catch (e) {
+      const m = (e as Error).message;
+      const hint = /535|auth|Username and Password|credentials/i.test(m)
+        ? " The mail account rejected the login. For Gmail, turn on 2-Step Verification and use an app password (myaccount.google.com/apppasswords), not your normal password."
+        : "";
+      throw new Error(`Email couldn't be sent: ${m.slice(0, 200)}.${hint}`);
+    }
+  }
+  if (!key || !from) throw new Error("Email isn't set up yet. Add a mail account (or a Resend key) in Admin → App settings → Integrations.");
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },

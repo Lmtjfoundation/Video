@@ -78,6 +78,11 @@ export interface Integrations {
   resendKey?: string;
   /** Sender, e.g. "Ghost Post <support@yourdomain.com>" (the domain must be verified in Resend). */
   emailFrom?: string;
+  /** Any mail account instead of Resend (Gmail with an app password, Outlook, Zoho, SendGrid…): host, port, login. */
+  smtpHost?: string;
+  smtpPort?: string;
+  smtpUser?: string;
+  smtpPass?: string;
   updatedAt?: string;
 }
 
@@ -179,6 +184,10 @@ export const stripeWebhookSecret = () => pick("stripeWebhookSecret", "STRIPE_WEB
 export const stripePortalConfig = () => pick("stripePortalConfig", "STRIPE_PORTAL_CONFIGURATION");
 export const resendKey = () => pick("resendKey", "RESEND_API_KEY");
 export const emailFrom = () => pick("emailFrom", "EMAIL_FROM");
+export async function smtpSettings() {
+  const [host, port, user, pass] = await Promise.all([pick("smtpHost", "SMTP_HOST"), pick("smtpPort", "SMTP_PORT"), pick("smtpUser", "SMTP_USER"), pick("smtpPass", "SMTP_PASS")]);
+  return host && user && pass ? { host, port: Number(port) || 587, user, pass } : null;
+}
 
 export async function stripePriceId(plan: string, interval: "month" | "year") {
   const env = process.env[`STRIPE_PRICE_${plan.toUpperCase()}_${interval === "year" ? "ANNUAL" : "MONTHLY"}`];
@@ -229,7 +238,11 @@ export async function integrationStatus() {
     vmWakeGpu: { ...entry("VM_WAKE_GPU", i.vmWakeGpu), vm: (i.vmWakeGpu || process.env.VM_WAKE_GPU || "").match(/vm=([^;]+)/)?.[1] ?? "" },
     pixabay: entry("PIXABAY_API_KEY", i.pixabayKey),
     pexels: entry("PEXELS_API_KEY", i.pexelsKey),
-    email: { ...entry("RESEND_API_KEY", i.resendKey), from: i.emailFrom || process.env.EMAIL_FROM || "" },
+    email: {
+      ...entry("RESEND_API_KEY", i.resendKey),
+      from: i.emailFrom || process.env.EMAIL_FROM || "",
+      smtp: { ...entry("SMTP_PASS", i.smtpPass), host: i.smtpHost || process.env.SMTP_HOST || "", port: i.smtpPort || process.env.SMTP_PORT || "", user: i.smtpUser || process.env.SMTP_USER || "" },
+    },
     stripe: {
       ...entry("STRIPE_SECRET_KEY", i.stripeSecretKey),
       mode: sk ? (sk.includes("_live_") ? "live" : "test") : null,

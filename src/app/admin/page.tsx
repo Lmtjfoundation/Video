@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bot, Power, Share2, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, Users, X } from "lucide-react";
+import { Bot, Power, Share2, Check, CircleDollarSign, CreditCard, ExternalLink, Film, KeyRound, Link2, Mail, Mic, Pencil, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, Users, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api, copyToClipboard } from "@/lib/client";
 import { PLANS, type PlanId } from "@/lib/plans";
@@ -87,7 +87,7 @@ interface IntegrationStatus {
   vmWakeGpu?: KeyState & { vm: string };
   pixabay: KeyState;
   pexels: KeyState;
-  email: KeyState & { from: string };
+  email: KeyState & { from: string; smtp: KeyState & { host: string; port: string; user: string } };
   stripe: KeyState & { mode: "live" | "test" | null; prices: number; pricesNeeded: number; webhook: boolean; portal: boolean };
   updatedAt: string | null;
 }
@@ -383,6 +383,7 @@ function UsersTab({ onChange }: { onChange: () => void }) {
   const [q, setQ] = useState("");
   const [resetFor, setResetFor] = useState<string | null>(null);
   const [pw, setPw] = useState("");
+  const [linkFor, setLinkFor] = useState<{ id: string; link: string } | null>(null);
 
   const load = useCallback(() => api<AdminUser[]>("/api/admin/users").then(setUsers).catch((e) => toast((e as Error).message, "error")), [toast]);
   useEffect(() => {
@@ -395,6 +396,17 @@ function UsersTab({ onChange }: { onChange: () => void }) {
       toast(msg, "success");
       load();
       onChange();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  }
+
+  async function resetLink(id: string) {
+    try {
+      const r = await api<{ link: string; email: string }>("/api/admin/users", { body: { action: "reset-link", id } });
+      setLinkFor({ id, link: r.link });
+      const copied = await copyToClipboard(r.link).then(() => true, () => false);
+      toast(copied ? `Reset link for ${r.email} copied. Send it to them; it works once, for 1 hour.` : `Reset link for ${r.email} is below. It works once, for 1 hour.`, "success");
     } catch (e) {
       toast((e as Error).message, "error");
     }
@@ -437,6 +449,7 @@ function UsersTab({ onChange }: { onChange: () => void }) {
                     <div className="flex flex-wrap justify-end gap-1.5">
                       <Button size="sm" variant="ghost" onClick={() => patch(u.id, { resetUsage: true }, "Usage reset")} title="Reset this month's usage"><RotateCcw className="h-3.5 w-3.5" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => { setResetFor(u.id); setPw(""); }} title="Set a new password"><KeyRound className="h-3.5 w-3.5" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => resetLink(u.id)} title="Copy a password reset link to send them"><Link2 className="h-3.5 w-3.5" /></Button>
                       {u.id !== me && !u.isOwner && (
                         <>
                           {u.role !== "admin" && (u.staff
@@ -448,6 +461,12 @@ function UsersTab({ onChange }: { onChange: () => void }) {
                         </>
                       )}
                     </div>
+                    {linkFor?.id === u.id && (
+                      <div className="mt-2 flex gap-1.5">
+                        <Input readOnly value={linkFor.link} className="h-8 text-xs" onFocus={(e) => e.currentTarget.select()} aria-label="Password reset link" />
+                        <Button size="sm" onClick={() => setLinkFor(null)}>Done</Button>
+                      </div>
+                    )}
                     {resetFor === u.id && (
                       <div className="mt-2 flex gap-1.5">
                         <Input type="text" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="New password (10+ chars)" className="h-8" autoComplete="off" />
@@ -976,26 +995,38 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
 
         <Service
           icon={<Mail className="h-4 w-4" />}
-          title="Email — password resets"
-          desc="Sends “Forgot password?” links through Resend (free tier: 3,000 emails a month). Needs a domain you verify in Resend."
-          link={{ href: "https://resend.com/api-keys", label: "Get a key" }}
-          state={st.email}
+          title="Email — password resets and “ready” messages"
+          desc="Sends “Forgot password?” links and “your movie is ready” emails. Easiest: your own mail account (Gmail with an app password, Outlook, Zoho). Or a Resend key."
+          link={{ href: "https://myaccount.google.com/apppasswords", label: "Gmail app password" }}
+          state={{ ...st.email, set: st.email.set || st.email.smtp.set }}
           result={results.email}
         >
+          {(st.email.source === "server" || st.email.smtp.source === "server") && <ServerNote />}
+          <p className="text-xs text-white/50">Mail account{st.email.smtp.set ? `: ${st.email.smtp.user} via ${st.email.smtp.host}` : ""}</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_90px]">
+            <Input autoComplete="off" spellCheck={false} placeholder={st.email.smtp.host || "Mail server, e.g. smtp.gmail.com"} value={vals.smtpHost ?? ""} onChange={set("smtpHost")} aria-label="Mail server" />
+            <Input autoComplete="off" inputMode="numeric" placeholder={st.email.smtp.port || "587"} value={vals.smtpPort ?? ""} onChange={set("smtpPort")} aria-label="Port" />
+          </div>
+          <Input autoComplete="off" spellCheck={false} placeholder={st.email.smtp.user || "Login, e.g. you@gmail.com"} value={vals.smtpUser ?? ""} onChange={set("smtpUser")} aria-label="Mail login" />
+          <Input type="password" autoComplete="new-password" spellCheck={false} placeholder={st.email.smtp.set ? "Password saved (type to replace)" : "Password (Gmail: a 16-letter app password)"} value={vals.smtpPass ?? ""} onChange={set("smtpPass")} aria-label="Mail password" />
+          <p className="pt-1 text-xs text-white/50">Or Resend</p>
           {st.email.source === "server" && <ServerNote />}
-          <Input type="password" autoComplete="off" spellCheck={false} placeholder="re_…" value={vals.resendKey ?? ""} onChange={set("resendKey")} />
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="re_…" value={vals.resendKey ?? ""} onChange={set("resendKey")} aria-label="Resend API key" />
           <Input
             autoComplete="off"
             spellCheck={false}
-            placeholder={st.email.from ? `From: ${st.email.from}` : "From, e.g. Ghost Post <support@yourdomain.com>"}
+            placeholder={st.email.from ? `From: ${st.email.from}` : "From (optional for a mail account), e.g. Ghost Post <you@gmail.com>"}
             value={vals.emailFrom ?? ""}
             onChange={set("emailFrom")}
           />
           <Actions>
-            <Button size="sm" variant="primary" loading={busy === "save:Email"} onClick={() => save(["resendKey", "emailFrom"], "Email", "email")}>Save &amp; send test</Button>
-            <Button size="sm" loading={busy === "test:email"} disabled={!st.email.set || !st.email.from} onClick={() => check("email")}>Send test</Button>
+            <Button size="sm" variant="primary" loading={busy === "save:Email"} onClick={() => save(["smtpHost", "smtpPort", "smtpUser", "smtpPass", "resendKey", "emailFrom"], "Email", "email")}>Save &amp; send test</Button>
+            <Button size="sm" loading={busy === "test:email"} disabled={!(st.email.smtp.set || (st.email.set && st.email.from))} onClick={() => check("email")}>Send test</Button>
+            {st.email.smtp.set && st.email.smtp.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:smtpPass"} onClick={() => remove("smtpPass", "Mail account")} title="Remove the mail account"><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
             {st.email.set && st.email.source === "app" && (
-              <Button size="sm" variant="ghost" loading={busy === "rm:resendKey"} onClick={() => remove("resendKey", "Resend")}><Trash2 className="h-3.5 w-3.5" /></Button>
+              <Button size="sm" variant="ghost" loading={busy === "rm:resendKey"} onClick={() => remove("resendKey", "Resend")} title="Remove Resend"><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
           </Actions>
         </Service>

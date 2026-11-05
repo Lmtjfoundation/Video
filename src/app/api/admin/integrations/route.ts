@@ -34,6 +34,10 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   pixabayKey: { re: /^[A-Za-z0-9-]{20,}$/, msg: "That doesn't look like a Pixabay API key. Sign in at pixabay.com/api/docs and copy the value in the \"key\" row (numbers, a dash, then letters and numbers)." },
   pexelsKey: { re: /^[A-Za-z0-9]{20,}$/, msg: "That doesn't look like a Pexels API key (pexels.com/api)." },
   resendKey: { re: /^re_[A-Za-z0-9_]{10,}$/, msg: "A Resend API key starts with re_ (resend.com → API Keys)." },
+  smtpHost: { re: /^[a-z0-9.-]+\.[a-z]{2,}$/i, msg: "The mail server name looks like smtp.gmail.com, smtp.office365.com or smtp.zoho.com." },
+  smtpPort: { re: /^(25|465|587|2525)$/, msg: "The port is usually 587 (or 465)." },
+  smtpUser: { re: /^[^\s]{3,200}$/, msg: "The login is usually your full email address." },
+  smtpPass: { re: /^.{4,200}$/, msg: "Paste the mail account's password (for Gmail, an app password)." },
 };
 
 /** Save or remove keys. Send "" to remove one. */
@@ -45,7 +49,8 @@ export const PUT = authed(async (req) => {
     // Forgive common paste extras: surrounding quotes, a leading label like "Authorization:" or "Bearer".
     const v = typeof b[field] === "string" ? (b[field] as string).trim().replace(/^["'`]+|["'`]+$/g, "").replace(/^(authorization\s*:\s*|bearer\s+)/i, "").trim() : "";
     if (v && !rule.re.test(v)) return fail(rule.msg);
-    patch[field as keyof Integrations] = v;
+    // Gmail shows app passwords in groups of four ("abcd efgh ijkl mnop"); the spaces aren't part of it.
+    patch[field as keyof Integrations] = field === "smtpPass" && /^([a-z]{4} ){3}[a-z]{4}$/.test(v) ? v.replace(/ /g, "") : v;
   }
   for (const flag of ["geminiForTrials", "geminiBackup"] as const) {
     if (flag in b) (patch as Record<string, unknown>)[flag] = b[flag] === false ? false : "";
@@ -74,7 +79,7 @@ export const PUT = authed(async (req) => {
 export const POST = authed(async (req, user) => {
   const b = await body<{ action?: string; which?: string; secretKey?: string }>(req);
   if (b.action === "test" && b.which === "email") {
-    if (!(await emailReady())) return ok({ ok: false, message: "Add both the Resend API key and the From address first." });
+    if (!(await emailReady())) return ok({ ok: false, message: "Add a mail account (server, login and password), or a Resend API key and From address, first." });
     try {
       await sendEmail({
         to: user.email,
