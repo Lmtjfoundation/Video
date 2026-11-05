@@ -134,3 +134,28 @@ describe("ready notifications", () => {
     vi.doUnmock("@/lib/auth");
   });
 });
+
+describe("service worker notifications", () => {
+  it("shows a pushed message and opens its page when tapped", async () => {
+    const { readFileSync } = await import("node:fs");
+    const vm = await import("node:vm");
+    const listeners: Record<string, (e: unknown) => void> = {};
+    const shown: unknown[] = [];
+    const opened: string[] = [];
+    const self = {
+      location: { origin: "https://ghostpost.example" },
+      addEventListener: (t: string, fn: (e: unknown) => void) => (listeners[t] = fn),
+      registration: { showNotification: async (title: string, opts: unknown) => shown.push([title, opts]) },
+      clients: { matchAll: async () => [], openWindow: async (u: string) => opened.push(u), claim: async () => {} },
+      skipWaiting: () => {},
+    };
+    vm.runInNewContext(readFileSync("public/sw.js", "utf8"), { self, caches: {}, fetch: () => {}, URL });
+    let wait: Promise<unknown> = Promise.resolve();
+    listeners.push({ data: { json: () => ({ title: "Ready in Ghost Post", body: "Movie ready: Glass Tongue (3:02)", url: "/movie-maker" }) }, waitUntil: (p: Promise<unknown>) => (wait = p) });
+    await wait;
+    expect(shown).toEqual([["Ready in Ghost Post", expect.objectContaining({ body: "Movie ready: Glass Tongue (3:02)", data: { url: "/movie-maker" } })]]);
+    listeners.notificationclick({ notification: { close: () => {}, data: { url: "/movie-maker" } }, waitUntil: (p: Promise<unknown>) => (wait = p) });
+    await wait;
+    expect(opened).toEqual(["https://ghostpost.example/movie-maker"]);
+  });
+});
