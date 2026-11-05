@@ -262,6 +262,19 @@ class Job:
     created: float = field(default_factory=time.time)
 
 
+def cpu_picture_dtype() -> "torch.dtype":
+    """bfloat16 on CPUs with native bfloat16 math (AMD Zen 4, Intel Sapphire Rapids: about twice as fast), else float32.
+    ENGINE_CPU_DTYPE=float32|bfloat16 overrides."""
+    want = os.environ.get("ENGINE_CPU_DTYPE", "auto")
+    if want in ("float32", "bfloat16"):
+        return getattr(torch, want)
+    try:
+        flags = open("/proc/cpuinfo").read()
+    except OSError:
+        flags = ""
+    return torch.bfloat16 if ("avx512_bf16" in flags or "amx_bf16" in flags) else torch.float32
+
+
 class Engine:
     def __init__(self) -> None:
         self.i2v = None  # first frame -> video (best: A14B; fast: TI2V-5B)
@@ -464,7 +477,9 @@ class Engine:
             log.info("First picture: loading %s with %s", SDXL_BASE, SDXL_LIGHTNING[1])
             unet = UNet2DConditionModel.from_config(UNet2DConditionModel.load_config(SDXL_BASE, subfolder="unet"))
             unet.load_state_dict(load_file(hf_hub_download(*SDXL_LIGHTNING), device="cpu"))
-            pipe = StableDiffusionXLPipeline.from_pretrained(SDXL_BASE, unet=unet.to(torch.float32), torch_dtype=torch.float32, variant="fp16")
+            dtype = cpu_picture_dtype()
+            log.info("Pictures in %s on %d CPU threads", dtype, torch.get_num_threads())
+            pipe = StableDiffusionXLPipeline.from_pretrained(SDXL_BASE, unet=unet.to(dtype), torch_dtype=dtype, variant="fp16")
             pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
             self.t2i = pipe
         steps = 4
