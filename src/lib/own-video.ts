@@ -370,6 +370,7 @@ export async function testOwnEngine(kind: EngineKind = "main"): Promise<{ ok: bo
     const i = await call<{ ready: boolean; error?: string | null; model: string; device: string; vram_gb: number; queue: number; profile?: string }>(e, "/v1/info");
     resetEngineCapabilities();
     if (i.profile === "tools") return { ok: true, message: "Connected to a machine without a GPU: upscaling, background removal and voice isolation work. Pictures, clips and voices need a GPU engine." };
+    if (i.profile === "pictures") return { ok: true, message: `Connected to the picture machine (${i.device}): pictures from a description (about 2 minutes each), upscaling and background removal. Picture edits, clips and voices need a GPU engine.` };
     if (i.error) return { ok: false, message: `The engine is running but its model failed to load: ${i.error}` };
     return {
       ok: true,

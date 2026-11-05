@@ -29,7 +29,18 @@ export async function makeImage(o: { prompt: string; refs?: RefImage[]; aspect: 
   try {
     return await geminiImage(o);
   } catch (e) {
-    if (!(e instanceof MediaGenError && e.kind === "config") || !(await replicateReady())) throw e;
+    if (!(e instanceof MediaGenError && e.kind === "config")) throw e;
+    // Gemini can't (no billing, a key problem): Ghost Post's own engine, waking it if it sleeps, then Flux.
+    if (await ownEngineReady(cap)) {
+      try {
+        console.warn(`[pictures] Gemini can't make pictures (${e.message.slice(0, 160)}); using Ghost Post's engine.`);
+        const bytes = await ownImage({ prompt: o.prompt, refs: (o.refs ?? []).slice(0, 3).map((r) => ({ bytes: Buffer.from(r.base64, "base64"), mime: r.mimeType })), aspect: o.aspect });
+        return { bytes, mimeType: "image/png" };
+      } catch (own) {
+        if (!(await replicateReady())) throw own;
+      }
+    }
+    if (!(await replicateReady())) throw e;
     console.warn(`[pictures] Gemini can't make pictures (${e.message.slice(0, 160)}); using Flux on Replicate.`);
     return fluxImage(o);
   }
