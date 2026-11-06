@@ -1,4 +1,5 @@
 import "server-only";
+import { assCaptions, estimateWordTimes, subtitlesFilter } from "./captions-ass";
 import { makeImage } from "./pictures";
 import { spawn } from "child_process";
 import { createHash } from "crypto";
@@ -324,7 +325,7 @@ export interface SceneJob {
   dur: number;
   audio?: string;
   /** `hold`: a clip shorter than the scene freezes on its last frame instead of looping (Veo clips). */
-  visual: { kind: "image" | "video"; file: string; hold?: boolean } | { kind: "gradient"; colors: [string, string] } | { kind: "motion"; portrait?: string; name?: string };
+  visual: { kind: "image" | "video"; file: string; hold?: boolean; /** Already moved and graded by the motion engine. */ graded?: boolean } | { kind: "gradient"; colors: [string, string] } | { kind: "motion"; portrait?: string; name?: string };
 }
 
 /**
@@ -361,6 +362,7 @@ export async function renderSegment(job: SceneJob, i: number, dir: string, W: nu
   }
 
   let v: string;
+  const graded = vis.kind === "video" && !!vis.graded;
   const cinema = film && (vis.kind === "image" || vis.kind === "video");
   if (job.visual.kind === "image" && cinema) {
     // A camera move per shot, eased, on a 2× frame so the motion stays smooth.
@@ -399,14 +401,17 @@ export async function renderSegment(job: SceneJob, i: number, dir: string, W: nu
   } else {
     v = `[0:v]format=yuv420p`;
   }
-  if (cinema) {
+  if (graded) {
+    v += `,setsar=1`; // the motion engine already graded it and added grain and a vignette
+    for (const [y, a] of [[0.66, 0.08], [0.74, 0.12], [0.82, 0.16]]) v += `,drawbox=x=0:y=ih*${y}:w=iw:h=ih*${(1 - y).toFixed(2)}:color=black@${a}:t=fill`;
+  } else if (cinema) {
     // Film finish: teal shadows, warm highlights, a vignette, moving grain, and a soft fade at the bottom for subtitles.
     v += `,eq=contrast=1.06:brightness=-0.02:saturation=0.95,colorbalance=rs=-0.04:bs=0.05:rh=0.05:bh=-0.04,vignette=angle=PI/4.2,noise=alls=4:allf=t,setsar=1`;
     for (const [y, a] of [[0.72, 0.12], [0.78, 0.16], [0.84, 0.2]]) v += `,drawbox=x=0:y=ih*${y}:w=iw:h=ih*${(1 - y).toFixed(2)}:color=black@${a}:t=fill`;
   } else {
     v += `,eq=brightness=-0.04:saturation=1.08,setsar=1`;
-    // Readability band behind captions + on-screen text.
-    v += `,drawbox=x=0:y=ih*0.60:w=iw:h=ih*0.28:color=black@0.28:t=fill`;
+    // A soft shade at the bottom so the captions read on any picture.
+    for (const [y, a] of [[0.62, 0.1], [0.7, 0.14], [0.78, 0.18]]) v += `,drawbox=x=0:y=ih*${y}:w=iw:h=ih*${(1 - y).toFixed(2)}:color=black@${a}:t=fill`;
   }
   const portrait = H > W;
   const writes: Promise<void>[] = [];
@@ -422,13 +427,13 @@ export async function renderSegment(job: SceneJob, i: number, dir: string, W: nu
     const y = job.visual.kind === "motion" ? `h*0.11+${Math.round(H * 0.03)}*pow(max(0,1-t/0.5),2)` : "h*0.11";
     v += `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.085 : 0.05))}:fontcolor=white:borderw=${portrait ? 7 : 5}:bordercolor=black:line_spacing=8:text_align=C:x=(w-text_w)/2:y='${y}':alpha='min(1,t/0.25)'`;
   }
-  captionGroups(job.scene.narration, job.dur).forEach((c, k) => {
-    const f = path.join(dir, `cap${i}_${k}.txt`);
-    writes.push(fs.writeFile(f, wrap(c.text, portrait ? 22 : 42)));
-    v += cinema
-      ? `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.05 : 0.032))}:fontcolor=white:borderw=3:bordercolor=black@0.8:line_spacing=8:text_align=C:x=(w-text_w)/2:y=h*0.80:enable='between(t,${c.start.toFixed(3)},${c.end.toFixed(3)})'`
-      : `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.06 : 0.036))}:fontcolor=0xFFE14D:borderw=${portrait ? 6 : 4}:bordercolor=black:line_spacing=10:text_align=C:x=(w-text_w)/2:y=h*0.66:enable='between(t,${c.start.toFixed(3)},${c.end.toFixed(3)})'`;
-  });
+  // Captions: word by word, the spoken word highlighted (ASS subtitles burned in with libass).
+  if (job.scene.narration.trim()) {
+    const spoken = job.audio ? Math.max(0.6, job.dur - 0.3) : job.dur - 0.1;
+    const ass = path.join(dir, `cap${i}.ass`);
+    writes.push(fs.writeFile(ass, assCaptions(estimateWordTimes(job.scene.narration, 0.05, spoken), { W, H, film: cinema })));
+    v += `,${subtitlesFilter(ass, path.dirname(FONT))}`;
+  }
   await Promise.all(writes);
   v += cinema
     ? `,fade=t=in:st=0:d=0.3,fade=t=out:st=${Math.max(0, job.dur - 0.25).toFixed(3)}:d=0.25,format=yuv420p[v]`
@@ -438,9 +443,9 @@ export async function renderSegment(job: SceneJob, i: number, dir: string, W: nu
     "-filter_complex", `${v};[1:a]aresample=44100,apad,atrim=0:${job.dur.toFixed(3)}[a]`,
     "-map", "[v]", "-map", "[a]",
     "-frames:v", String(F),
-    "-c:v", "libx264", "-preset", process.env.RENDER_PRESET || "veryfast", "-crf", "20", "-r", String(FPS), "-pix_fmt", "yuv420p", "-threads", THREADS,
-    // Grain barely compresses: cap film shots at a rate that still beats what the platforms stream.
-    ...(cinema ? ["-maxrate", "8M", "-bufsize", "16M"] : []),
+    "-c:v", "libx264", "-preset", process.env.RENDER_PRESET || "veryfast", "-crf", "21",
+    // Grain barely compresses: cap the rate at one that still beats what the platforms stream.
+    "-maxrate", W * H > 1_500_000 ? "9M" : "5M", "-bufsize", W * H > 1_500_000 ? "18M" : "10M", "-r", String(FPS), "-pix_fmt", "yuv420p", "-threads", THREADS,
     "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-ac", "2",
     out,
   );
@@ -540,7 +545,7 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
       return null;
     } finally {
       done++;
-      await setRender(post, { progress: Math.round(15 + (25 * done) / jobs.length), message: `Painting scene ${done} of ${jobs.length} with Gemini…` });
+      await setRender(post, { progress: Math.round(15 + (25 * done) / jobs.length), message: `Painting scene ${done} of ${jobs.length}…` });
     }
   });
 
@@ -661,7 +666,14 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     const planned = renderableScenes(plan);
     const scenes = planned.map((p) => p.scene);
     if (!scenes.length) throw new Error("This plan has no scenes to render.");
-    const ai = plan.ai && !mediaFiles.length && !motionOnly ? plan.ai : null;
+    // Pictures for every scene: the plan's own art direction, or, when Ghost Post's picture machine is connected,
+    // cinematic AI pictures by default (its pictures cost only machine time, so no credits are charged for them).
+    const ai =
+      plan.ai && !mediaFiles.length && !motionOnly
+        ? plan.ai
+        : !plan.ai && !mediaFiles.length && !motionOnly && !recording && (await engineFirst("pictures"))
+          ? { characterIds: [], look: plan.style === "fiction" ? "cinematic film still, dramatic lighting, 35mm film grain" : "photoreal cinematic still, natural light, shallow depth of field", veoScenes: [] }
+          : null;
     for (const [i, scene] of scenes.entries()) {
       let audio: string | undefined;
       let dur = Math.max(1.8, scene.narration.split(/\s+/).filter(Boolean).length / 2.6);
@@ -711,7 +723,20 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     // Attached media (or choosing motion graphics) replaces the AI pictures, so their credits go back.
     let unused = plan.ai && !ai ? aiVisualCredits({ ...plan, visuals: "auto" }) : 0;
     let aiBlocked: string | undefined;
-    if (ai && !isGraphicsLook(ai.look)) ({ unused, blocked: aiBlocked } = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long));
+    if (ai && !isGraphicsLook(ai.look)) {
+      const painted = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long);
+      aiBlocked = painted.blocked;
+      if (plan.ai) unused = painted.unused; // default pictures were never charged, so nothing to give back
+    }
+
+    // Motion: picture scenes become 2–3 moving shots each (depth camera, effects, grade, transitions).
+    const { animateScenes } = await import("./motion-scenes");
+    const animated = await animateScenes({
+      dir, W, H, style: plan.style,
+      scenes: jobs.map((j) => (j.visual.kind === "image" ? { scene: j.scene, image: j.visual.file, dur: j.dur } : null)),
+      say: (m) => void setRender(post, { message: m }),
+    });
+    for (const [k, file] of animated) jobs[k].visual = { kind: "video", file, hold: true, graded: true };
 
     const segs: string[] = [];
     for (const [i, job] of jobs.entries()) {
@@ -738,7 +763,19 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       const pictures = path.join(dir, "pictures.mp4");
       await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", pictures]);
       await runCmd("ffmpeg", ["-hide_banner", "-y", "-i", pictures, "-i", recording, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", "-shortest", "-movflags", "+faststart", out]);
-    } else await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out]);
+    } else {
+      await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out]);
+      // Sound: music bed under the voice, a whoosh on each scene change, mastered to -14 LUFS.
+      await setRender(post, { message: "Mixing music and sound…" });
+      const cuts: number[] = [];
+      jobs.reduce((t, j) => (cuts.push(t), t + j.dur), 0);
+      try {
+        const { finishSound } = await import("./mix");
+        await finishSound({ video: out, dir, cuts, musicNote: plan.music, style: plan.style, music: plan.music !== "none" });
+      } catch (e) {
+        console.warn(`[render] the sound mix failed, keeping the voice only: ${(e as Error).message.slice(0, 300)}`);
+      }
+    }
     const bytes = await fs.readFile(out);
     const slug = (post.hook || "video").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "video";
     const item = await storeFile(userId, { name: `${slug}.mp4`, type: "video/mp4", bytes }, { uncapped: true });

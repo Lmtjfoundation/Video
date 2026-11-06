@@ -1,5 +1,6 @@
 import "server-only";
-import { claudeJson } from "./llm";
+import { claude, claudeJson } from "./llm";
+import { hookProblems } from "./hook-check";
 import { NICHES, QUALITY_BAR } from "./niches";
 import { PLATFORM_SPECS } from "./platforms/specs";
 import { finalizePost, genrePrompt, pickPillars, reachAndMoney, searchFor, tagPosts, type GenreContext } from "./generate";
@@ -86,6 +87,27 @@ Reply with ONLY JSON:
   });
   const list = (res.videos ?? []).filter((v) => Array.isArray(v?.scenes) && v.scenes!.length).slice(0, o.count);
   if (!list.length) throw new Error("The video plan came back empty. Try again.");
+  // The first 2 seconds decide whether anyone watches: a hook that's long, slow or opens with filler is rewritten.
+  for (const v of list) {
+    const first = v.scenes![0];
+    const problems = hookProblems(String(first.narration ?? ""));
+    if (!problems.length) continue;
+    try {
+      const better = await claude({
+        system: "You rewrite the opening line of short videos so viewers can't scroll past. One spoken line, 6 to 12 words, no greeting, no 'in this video', no 'did you know'. Lead with the most surprising concrete detail, a bold claim, a number, or a moment mid-action. Keep every fact true to the script. Reply with the line only.",
+        user: `Problems: ${problems.join("; ")}\nCurrent opening: ${first.narration}\nThe rest of the script: ${v.scenes!.slice(1, 6).map((s) => s.narration).join(" ").slice(0, 1200)}`,
+        maxTokens: 80,
+        temperature: 0.8,
+      });
+      const line = better.replace(/^["'\s]+|["'\s]+$/g, "").split("\n")[0];
+      if (line && !hookProblems(line).length) {
+        first.narration = line;
+        v.hook = line;
+      }
+    } catch {
+      /* keep the writer's line */
+    }
+  }
   return tagPosts(list.map((v) => videoPost(v, o, settings)), o);
 }
 

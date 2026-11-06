@@ -95,6 +95,8 @@ def camera(move, u, rng_walk):
         z, par = 1.0 + 0.42 * ease_out(min(1.0, u / 0.22)) + 0.04 * u, 0.04
     elif move == "handheld":
         z, par = 1.1 + 0.03 * e, 0.035
+    elif move == "punch":  # a tight punch-in on the subject (the second shot of a scene)
+        z, par = 1.3 + 0.05 * e, 0.03
     elif move == "static":
         z, par = 1.06 + 0.015 * e, 0.02
     hx, hy = rng_walk
@@ -225,14 +227,22 @@ def crack_layer(w, h, cx, cy, seed):
     return cv2.GaussianBlur(layer, (3, 3), 0)
 
 
-def render(film, out):
-    W, H, FPS = film.get("w", 1080), film.get("h", 1920), film.get("fps", 30)
-    gname = film.get("grade", "cadmium_purple")
-    enc = subprocess.Popen(
+def encoder(path, W, H, FPS, fast=False):
+    return subprocess.Popen(
         ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-         "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out],
+         "-c:v", "libx264", "-preset", "veryfast" if fast else "medium", "-crf", "17", "-pix_fmt", "yuv420p", "-movflags", "+faststart", path],
         stdin=subprocess.PIPE,
     )
+
+
+def render(film, out):
+    """Render the film to `out`. With "split": true, `out` is a file prefix and each scene group ("group", default the
+    scene's index) goes to its own file, <out><group:03d>.mp4: a video maker can then put its own captions on each."""
+    W, H, FPS = film.get("w", 1080), film.get("h", 1920), film.get("fps", 30)
+    gname = film.get("grade", "cadmium_purple")
+    split = bool(film.get("split"))
+    group = None
+    enc = None if split else encoder(out, W, H, FPS)
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
     vign = 1 - 0.55 * (((xx - W / 2) / (W * 0.75)) ** 2 + ((yy - H / 2) / (H * 0.68)) ** 2)
     vign = np.clip(vign, 0.35, 1)[..., None].astype(np.float32)
@@ -248,6 +258,12 @@ def render(film, out):
     frame_no = 0
     for si, sc in enumerate(film["scenes"]):
         fx = set(sc.get("effects", []))
+        if split and sc.get("group", si) != group:
+            if enc is not None:
+                enc.stdin.close()
+                enc.wait()
+            group = sc.get("group", si)
+            enc = encoder(f"{out}{int(group):03d}.mp4", W, H, FPS, fast=True)
         n = max(1, round(sc["dur"] * FPS))
         Sw, Sh = int(W * SS), int(H * SS)
         if sc.get("image"):
@@ -346,7 +362,7 @@ def render(film, out):
             if "leak_in" in fx and t < 0.6:
                 leak = np.clip(1 - xx / (W * 0.9), 0, 1) * (1 - t / 0.6)
                 f = f + leak[..., None] * np.array([0.55, 0.25, 0.05], np.float32)
-            if t < 0.12 and si > 0 and not ({"whip_in", "flash_in"} & fx):
+            if t < 0.12 and si > 0 and not ({"whip_in", "flash_in", "cut"} & fx):
                 f = f * (t / 0.12)
             # Bars: cinema bars, opening on big moments
             bars = 0.0
@@ -379,8 +395,9 @@ def render(film, out):
             enc.stdin.write((np.clip(f, 0, 1) * 255).astype(np.uint8).tobytes())
             frame_no += 1
         print(f"scene {si + 1}/{len(film['scenes'])} done ({n} frames)", flush=True)
-    enc.stdin.close()
-    enc.wait()
+    if enc is not None:
+        enc.stdin.close()
+        enc.wait()
 
 
 if __name__ == "__main__":

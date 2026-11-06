@@ -1,5 +1,4 @@
 import "server-only";
-import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
@@ -7,6 +6,7 @@ import { getCharacters, characterRef } from "./characters";
 import { db } from "./db";
 import { readFile, storeFile } from "./media";
 import { makeImage } from "./pictures";
+import { loudnessFilter, MASTER_CHAIN } from "./mix";
 import { mediaDuration, narrate, runCmd } from "./render";
 import { kvGet, kvSet } from "./repo";
 import type { MediaItem } from "./types";
@@ -51,22 +51,6 @@ export async function motionEngineReady(): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-/** A loudnorm filter set from a measuring pass, so the result lands on -14 LUFS. */
-async function loudnessFilter(file: string) {
-  const target = "I=-14:TP=-1.5:LRA=11";
-  const m = await new Promise<string>((resolve) => {
-    const p = spawn("ffmpeg", ["-hide_banner", "-nostats", "-i", file, "-af", `loudnorm=${target}:print_format=json`, "-f", "null", "-"]);
-    let err = "";
-    p.stderr.on("data", (d) => (err += d));
-    p.on("close", () => resolve(err));
-    p.on("error", () => resolve(""));
-  });
-  const j = m.match(/\{[^{}]*"input_i"[^{}]*\}/)?.[0];
-  if (!j) return `loudnorm=${target}`;
-  const v = JSON.parse(j) as Record<string, string>;
-  return `loudnorm=${target}:measured_I=${v.input_i}:measured_TP=${v.input_tp}:measured_LRA=${v.input_lra}:measured_thresh=${v.input_thresh}:offset=${v.target_offset}:linear=true`;
 }
 
 /** Where a job keeps its finished steps, so a run cut off by a restart carries on without paying twice. */
@@ -184,7 +168,7 @@ export async function renderMovie(userId: string, input: RenderInput, say: (m: s
       parts.push(`${voiced.join("")}amix=inputs=${voiced.length}:normalize=0,asplit=2[vkey][voice]`, `[bed]aresample=48000[bed48]`, `[vkey]apad[vkeyp]`, `[bed48][vkeyp]sidechaincompress=threshold=0.05:ratio=6:attack=20:release=400[ducked]`, `[ducked][voice]amix=inputs=2:normalize=0:duration=first[mix]`);
     } else parts.push("[bed]anull[mix]");
     const raw = path.join(dir, "mix.wav");
-    parts.push("[mix]acompressor=threshold=0.08:ratio=3:attack=5:release=150:makeup=2,alimiter=limit=0.8:level=false[master]");
+    parts.push(`[mix]${MASTER_CHAIN}[master]`);
     await runCmd("ffmpeg", [...args, "-filter_complex", parts.join(";"), "-map", "[master]", "-ar", "48000", "-t", total.toFixed(2), raw], 10 * 60_000);
     // Two-pass loudness: measure, then set it to -14 LUFS exactly (one pass undershoots on short films).
     const audio = path.join(dir, "mix.m4a");
