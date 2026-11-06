@@ -264,7 +264,7 @@ class Job:
 
 
 def sdxl_prompts(text: str) -> tuple[str, str]:
-    """SDXL reads only about 75 words per text encoder, so the scene comes first and the style goes to the second one.
+    """SDXL reads only about 75 words per text encoder, so the scene comes first in both; the style follows in the second.
     Ghost Post's prompts say "...art style: <look>." then "Shot: <scene>"; other prompts pass through as they are."""
     shot = re.search(r"^\s*Shot:\s*(.+)$", text, re.M)
     look = re.search(r"art style:\s*([^\n]+?)\.?\s*$", text, re.M)
@@ -272,7 +272,8 @@ def sdxl_prompts(text: str) -> tuple[str, str]:
         return text, "cinematic film still, rich lighting, high detail, no text"
     scene = re.sub(r"^(stock|ai image|ai video|image|video)\s*:\s*", "", shot.group(1).strip(), flags=re.I)
     style = (look.group(1).strip() + ", " if look else "") + "cinematic film still, rich lighting, high detail, no text, no watermark"
-    return scene, style
+    # Both encoders get the scene first (the second one steers composition strongly); the style rides after it.
+    return scene, f"{scene}. {style}"
 
 
 def cpu_picture_dtype() -> "torch.dtype":
