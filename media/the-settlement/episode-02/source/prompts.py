@@ -1,0 +1,25 @@
+"""Motion prompts for LTX-Video image-to-video, one per Canva still (img/<name>.png)."""
+STYLE = " Cinematic, photorealistic, moody lighting, shallow depth of field, film grain, natural human motion."
+SHOTS = {
+    "closet": "A man stands in a dark closet at night holding a glowing flip phone. He slowly raises his eyes from the screen, breathing hard, his face hardening. Slow push in. Rain shadows move on the wall.",
+    "phone_d": "Extreme close-up of a flip phone screen glowing blue in a man's hand in the dark. His thumb trembles over the keys. Very slow push in toward the screen.",
+    "gate": "A man in a dark jacket walks slowly toward the camera along an empty road outside a prison fence at dawn, carrying a plastic bag. He looks around; nobody is there. The camera tracks backward with him. Mist drifts.",
+    "bus": "A man sits by a bus window at dusk, city lights sliding across his face as the bus moves. He blinks slowly and stares out at the skyline. Lights stream past in the glass.",
+    "visit": "Two young men talk on phones through the glass of a jail visiting room. The man in orange presses his palm to the glass; the other man nods, eyes wet, speaking. Slow push in. Fluorescent light flickers.",
+    "cell": "A man sits on a prison bunk at night reading a letter in moonlight. He lowers the letter slowly and stares at the wall. Bar shadows across his face. Slow push in.",
+    "funeral": "In the rain at a cemetery, a man in an orange jumpsuit and handcuffs bows his head at a grave while a guard holds his arm. Umbrellas sway, rain falls. Slow camera drift to the side.",
+    "dre_face": "Extreme close-up of a man in the dark, half his face lit amber. His jaw tightens, his eyes narrow, a tear catches the light. Very slow push in.",
+    "truck": "A white work truck parked on a hot city street. In the blurred foreground a man turns his head to stare at the truck. Heat haze shimmers. Slow rack focus toward the truck door.",
+    "house": "At night a lone man stands still in the dark street, watching a warm lit house. Inside the window a couple moves and laughs. A slight breeze moves the trees. Very slow push in toward the house.",
+    "driveway": "Seen through a car windshield, a woman walks down her driveway in the morning carrying a folder of bills and keys. A man's hand tightens slowly on the steering wheel in the foreground.",
+    "skyline": "Rain pours over a city freeway at night; red tail lights slide through the wet reflections and the skyline glows. Slow aerial push forward.",
+    "bank": "A woman sits alone at a bank desk filling out deposit slips. She stops writing and stares into the distance, tired, then sighs. Soft window light. Slow push in.",
+    "bank_dre": "In a bank lobby, a man in a crisp shirt leans toward a woman and smiles warmly as he speaks. She turns to look at him, wary, then a small reluctant smile. Slow push in.",
+    "dre_listen": "A man in a cafe rests his chin on his hand and listens with a soft, charming smile. He nods slowly. Warm bokeh lights flicker behind him. Slow push in.",
+    "tasha_close": "Close-up of a woman with gold hoop earrings. Her guard drops; her eyes glisten and she slowly smiles, surprised and moved. Soft window light. Very slow push in.",
+    "cafe": "Top-down view of a cafe table with a sketchbook of dress drawings. A man's hand slowly slides a black flip phone across the table toward a woman's hand. Steam rises from the coffee.",
+    "tasha_car": "A woman sits in her parked car at dusk, staring down at a flip phone in her hands. She turns it over slowly, hesitates, then closes her hand around it. Rain drops run down the glass.",
+    "marcus_call": "A man in a dark closet holds a phone to his ear, waiting. His eyes widen, he swallows, his breathing quickens. Blue phone light on his face. Very slow push in.",
+    "dre_answers": "In a dark car at night a man holds a phone to his ear in silence. A slow, cold smile spreads across his face. Red tail lights glow through the rain on the windshield. Slow push in.",
+    "front_door": "Down a dark hallway, the front door swings open and car headlights flood in behind the silhouette of a woman stepping inside. Rain falls behind her. Slow push in down the hallway.",
+}
