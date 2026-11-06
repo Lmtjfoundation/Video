@@ -129,14 +129,17 @@ export async function callGemini(g: Pick<OwnerGemini, "key" | "model">, opts: Ca
     return await callGeminiModel(g, opts);
   } catch (e) {
     const modelGone = e instanceof LLMError && /doesn't recognize the model/.test(e.ownerMessage ?? "");
-    if (!modelGone) throw e;
+    // A model that's overloaded ("high demand", 503) usually has a sibling with room: try those before giving up.
+    const overloaded = e instanceof LLMError && e.kind === "busy" && /high demand|overloaded|UNAVAILABLE|503/i.test(e.ownerMessage ?? "");
+    if (!modelGone && !overloaded) throw e;
     for (const model of GEMINI_FALLBACK_MODELS.filter((m) => m !== g.model)) {
       try {
         const text = await callGeminiModel({ key: g.key, model }, opts);
-        console.warn(`[llm] Gemini model "${g.model}" isn't available; used "${model}" instead. Update it in Admin → App settings → Integrations → Gemini.`);
+        console.warn(overloaded ? `[llm] Gemini "${g.model}" is overloaded right now; "${model}" wrote this instead.` : `[llm] Gemini model "${g.model}" isn't available; used "${model}" instead. Update it in Admin → App settings → Integrations → Gemini.`);
         return text;
       } catch (e2) {
-        if (!(e2 instanceof LLMError && /doesn't recognize the model/.test(e2.ownerMessage ?? ""))) throw e2;
+        const skip = e2 instanceof LLMError && (/doesn't recognize the model/.test(e2.ownerMessage ?? "") || (overloaded && e2.kind === "busy"));
+        if (!skip) throw e2;
       }
     }
     throw e;

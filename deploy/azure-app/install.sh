@@ -111,6 +111,10 @@ CONF
 fi
 
 say "Deploy script and service"
+# Automatic security updates must not restart the app in the middle of a render (needrestart would).
+mkdir -p /etc/needrestart/conf.d
+echo '$nrconf{override_rc}{qr(^ghostpost)} = 0;' > /etc/needrestart/conf.d/ghostpost.conf
+
 install -m 755 /dev/stdin /usr/local/bin/ghostpost-deploy <<'DEPLOY'
 #!/usr/bin/env bash
 # Builds the latest commit of the branch in its own folder, switches to it, restarts, keeps the last 3 releases.

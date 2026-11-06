@@ -39,3 +39,26 @@ describe("the CPU picture machine", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("a picture machine that restarts mid-job", () => {
+  it("asks again once when the engine forgot the job", async () => {
+    process.env.VIDEO_ENGINE_GPU_URL = ENGINE;
+    process.env.VIDEO_ENGINE_GPU_TOKEN = "engine-token-123456";
+    let posts = 0;
+    vi.stubGlobal("fetch", vi.fn(async (u: string, init?: RequestInit) => {
+      const url = String(u);
+      if (url === `${ENGINE}/health`) return Response.json({ ok: true });
+      if (url === `${ENGINE}/v1/info`) return Response.json({ profile: "pictures", capabilities: ["pictures", "upscale", "remove-bg"], device: "cpu", ready: true });
+      if (url === `${ENGINE}/v1/images` && init?.method === "POST") return Response.json({ id: `j${++posts}`, status: "queued" });
+      if (url === `${ENGINE}/v1/images/j1`) return Response.json({ detail: "No such job (finished clips are kept for 3 hours)." }, { status: 404 });
+      if (url === `${ENGINE}/v1/images/j2`) return Response.json({ id: "j2", status: "succeeded" });
+      if (url === `${ENGINE}/v1/images/j2/file`) return new Response(new Uint8Array(PNG));
+      return new Response("{}", { status: 404 });
+    }));
+    const { ownImage } = await import("@/lib/own-video");
+    const bytes = await ownImage({ prompt: "a vault", aspect: "9:16" });
+    expect(bytes.equals(PNG)).toBe(true);
+    expect(posts).toBe(2);
+    vi.unstubAllGlobals();
+  });
+});

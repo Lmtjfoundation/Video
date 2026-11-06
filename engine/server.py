@@ -53,6 +53,7 @@ import io
 import logging
 import math
 import os
+import re
 import queue
 import secrets
 import tempfile
@@ -260,6 +261,18 @@ class Job:
     error: str | None = None
     file: str | None = None
     created: float = field(default_factory=time.time)
+
+
+def sdxl_prompts(text: str) -> tuple[str, str]:
+    """SDXL reads only about 75 words per text encoder, so the scene comes first and the style goes to the second one.
+    Ghost Post's prompts say "...art style: <look>." then "Shot: <scene>"; other prompts pass through as they are."""
+    shot = re.search(r"^\s*Shot:\s*(.+)$", text, re.M)
+    look = re.search(r"art style:\s*([^\n]+?)\.?\s*$", text, re.M)
+    if not shot:
+        return text, "cinematic film still, rich lighting, high detail, no text"
+    scene = re.sub(r"^(stock|ai image|ai video|image|video)\s*:\s*", "", shot.group(1).strip(), flags=re.I)
+    style = (look.group(1).strip() + ", " if look else "") + "cinematic film still, rich lighting, high detail, no text, no watermark"
+    return scene, style
 
 
 def cpu_picture_dtype() -> "torch.dtype":
@@ -488,9 +501,11 @@ class Engine:
             job.progress = min(0.95, (i + 1) / (steps + 1))
             return kwargs
 
+        prompt, style = sdxl_prompts(r.prompt)
         with torch.inference_mode():
             self.t2i(
-                prompt=r.prompt,
+                prompt=prompt,
+                prompt_2=style,
                 width=width,
                 height=height,
                 num_inference_steps=steps,

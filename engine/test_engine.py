@@ -205,3 +205,11 @@ def test_tools_profile_without_gpu(monkeypatch):
     finally:
         monkeypatch.delenv("ENGINE_PROFILE")
         importlib.reload(server)
+
+
+def test_sdxl_prompts_put_the_scene_first():
+    text = "A single vertical 9:16 film frame in this art style: photoreal cinematic still, natural light.\nShot: Stock: a vault door with ten locks, flashlight beam\nRealism: skin pores, faces...\nNo text."
+    prompt, style = server.sdxl_prompts(text)
+    assert prompt == "a vault door with ten locks, flashlight beam"
+    assert style.startswith("photoreal cinematic still, natural light, cinematic film still")
+    assert server.sdxl_prompts("a red apple")[0] == "a red apple"

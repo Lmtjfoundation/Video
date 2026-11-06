@@ -215,6 +215,17 @@ export async function ownClip(o: OwnClipRequest): Promise<Buffer> {
  * places (Qwen-Image-Edit): up to three cast portraits or photos. Returns the PNG.
  */
 export async function ownImage(o: { prompt: string; refs?: { bytes: Buffer; mime: string }[]; aspect: string; timeoutMs?: number }): Promise<Buffer> {
+  try {
+    return await ownImageOnce(o);
+  } catch (e) {
+    // The engine restarted mid-job (an update, a reboot) and forgot it: ask once more instead of giving up.
+    if (!/No such job/i.test((e as Error).message)) throw e;
+    console.warn("[own-video] the engine lost a picture job (it restarted); asking again");
+    return ownImageOnce(o);
+  }
+}
+
+async function ownImageOnce(o: { prompt: string; refs?: { bytes: Buffer; mime: string }[]; aspect: string; timeoutMs?: number }): Promise<Buffer> {
   const e = await need(o.refs?.length ? "edit-pictures" : "pictures");
   const job = await call<{ id: string }>(e, "/v1/images", {
     method: "POST",

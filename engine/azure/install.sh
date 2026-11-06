@@ -41,6 +41,9 @@ warn() { printf '\033[1;33m!!  %s\033[0m\n' "$*"; }
 die() { printf '\033[1;31mXX  %s\033[0m\n' "$*" >&2; exit 1; }
 
 [ "$(id -u)" = 0 ] || die "Run it with sudo."
+# Automatic security updates must not restart the engine in the middle of a picture or clip (needrestart would).
+mkdir -p /etc/needrestart/conf.d
+echo '$nrconf{override_rc}{qr(^ghost-post)} = 0;' > /etc/needrestart/conf.d/ghost-post.conf
 . /etc/os-release
 [ "${ID:-}" = ubuntu ] || warn "This was written for Ubuntu; you have ${PRETTY_NAME:-an unknown system}."
 
