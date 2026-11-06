@@ -278,7 +278,7 @@ export function RecordVoiceTab({ engine, isolate, lipsyncSecond, isolateMinute }
                 onEnded={() => (recording ? stop() : setPlaying(""))}
               />
             ) : (
-              <div className="grid grid-cols-1 aspect-video place-items-center p-6 text-center text-sm text-white/45">Choose or upload a video to record over.</div>
+              <div className="grid grid-cols-1 aspect-video place-items-center p-6 text-center text-sm text-white/50">Choose or upload a video to record over.</div>
             )}
             {count > 0 && <div className="absolute inset-0 grid grid-cols-1 place-items-center bg-black/55 text-7xl font-bold text-white" aria-live="assertive">{count}</div>}
             {recording && (
@@ -313,7 +313,7 @@ export function RecordVoiceTab({ engine, isolate, lipsyncSecond, isolateMinute }
             </div>
             <div className="grid grid-cols-1 gap-1">
               <div className="h-2.5 overflow-hidden rounded-full bg-white/10"><div ref={meter} className="h-full w-0 rounded-full transition-[width] duration-75" /></div>
-              <div className="flex items-center gap-1.5 text-[11px] text-white/45"><Headphones className="h-3.5 w-3.5" /> {micOn ? "Speak at your normal level: the bar should reach the yellow on loud words, never the red." : "Turn on the microphone to see your level."}</div>
+              <div className="flex items-center gap-1.5 text-[11px] text-white/50"><Headphones className="h-3.5 w-3.5" /> {micOn ? "Speak at your normal level: the bar should reach the yellow on loud words, never the red." : "Turn on the microphone to see your level."}</div>
             </div>
             {recording ? (
               <Button variant="danger" size="lg" onClick={stop}><Square className="h-4 w-4" /> Stop recording</Button>
@@ -328,7 +328,7 @@ export function RecordVoiceTab({ engine, isolate, lipsyncSecond, isolateMinute }
         <Card>
           <CardHeader title="Takes" subtitle={takes.length ? `Choose the one to use. Up to ${MAX_TAKES}.` : "Your recordings appear here."} />
           <div className="grid grid-cols-1 gap-2 p-4">
-            {!takes.length && <div className="text-sm text-white/45">No takes yet. Press Record, wait for 3-2-1, then talk.</div>}
+            {!takes.length && <div className="text-sm text-white/50">No takes yet. Press Record, wait for 3-2-1, then talk.</div>}
             {takes.map((t, i) => (
               <div key={t.id} className={cn("flex items-center gap-2 rounded-xl border p-2.5", chosen === t.id ? "border-mint-400 bg-mint-400/10" : "border-white/10 bg-white/[0.03]")}>
                 <button onClick={() => setChosen(t.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left" aria-pressed={chosen === t.id}>
@@ -370,7 +370,7 @@ export function RecordVoiceTab({ engine, isolate, lipsyncSecond, isolateMinute }
             <Button variant="primary" size="lg" loading={busy} disabled={!take || !videoId || recording} onClick={finish}>
               Put my voice in the video · {cost ? `about ${cost} credit${cost === 1 ? "" : "s"}` : "free"}
             </Button>
-            <p className="text-xs text-white/45">Your voice starts exactly where you recorded it. If it runs past the end, the picture loops to the end of your voice.</p>
+            <p className="text-xs text-white/50">Your voice starts exactly where you recorded it. If it runs past the end, the picture loops to the end of your voice.</p>
           </div>
         </Card>
       </div>

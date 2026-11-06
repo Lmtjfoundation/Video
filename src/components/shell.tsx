@@ -95,7 +95,7 @@ function AccountCard() {
       )}
       <div className="flex items-center justify-between gap-2">
         <span className="min-w-0 truncate text-[12px] text-white/50" title={me.user.email}>{me.user.email}</span>
-        <button onClick={logout} className="focus-ring rounded-lg p-1.5 text-white/40 hover:bg-white/[0.06] hover:text-white" aria-label="Sign out" title="Sign out">
+        <button onClick={logout} className="focus-ring rounded-lg p-1.5 text-white/50 hover:bg-white/[0.06] hover:text-white" aria-label="Sign out" title="Sign out">
           <LogOut className="h-4 w-4" />
         </button>
       </div>
@@ -143,7 +143,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") navigator.serviceWorker.register("/sw.js").catch(() => {});
   }, []);
 
-  if (bare) return <>{children}<Toaster /></>;
+  if (bare) return <><main id="main">{children}</main><Toaster /></>;
 
   const isAdmin = status?.me.user.role === "admin";
   const items = NAV.filter((n) => !n.admin || isAdmin);
@@ -163,7 +163,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           )}
         >
           {active(href) && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-mint-400 shadow-glow" />}
-          <Icon className={cn("h-[18px] w-[18px]", active(href) ? "text-mint-300" : "text-white/40 group-hover:text-white/70")} />
+          <Icon className={cn("h-[18px] w-[18px]", active(href) ? "text-mint-300" : "text-white/50 group-hover:text-white/70")} />
           {label}
           {badgeFor(badge) > 0 && <span className="ml-auto rounded-full bg-gold-400 px-1.5 text-[11px] font-semibold text-ink-950">{badgeFor(badge)}</span>}
         </Link>
@@ -173,6 +173,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative z-10 flex min-h-screen">
+      <a href="#main" className="sr-only z-50 rounded-lg bg-mint-400 px-4 py-2 font-semibold text-ink-950 focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Skip to content</a>
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col gap-5 overflow-y-auto border-r border-white/[0.06] bg-ink-950/60 px-4 py-6 backdrop-blur-xl lg:flex">
         <div className="px-2">
           <Logo />
@@ -203,7 +204,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       )}
 
       <JobsTray />
-      <main className="min-w-0 flex-1 px-4 pb-28 pt-[calc(env(safe-area-inset-top)+84px)] sm:px-6 lg:px-10 lg:pb-16 lg:pt-10">
+      <main id="main" tabIndex={-1} className="min-w-0 flex-1 outline-none px-4 pb-28 pt-[calc(env(safe-area-inset-top)+84px)] sm:px-6 lg:px-10 lg:pb-16 lg:pt-10">
         <div className="mx-auto max-w-[1280px]">{children}</div>
       </main>
 

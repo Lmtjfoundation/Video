@@ -253,7 +253,7 @@ export default function Studio() {
                   </button>
                 ))}
               </div>
-              <p className="mt-1.5 text-[11px] text-white/40">{kind === "video" ? VIDEO_TARGET[platform] : PLATFORM_SPECS[platform].publish}</p>
+              <p className="mt-1.5 text-[11px] text-white/50">{kind === "video" ? VIDEO_TARGET[platform] : PLATFORM_SPECS[platform].publish}</p>
             </div>
             {fromAudio ? (
               <AudioPanel
@@ -373,7 +373,7 @@ export default function Studio() {
                 )}
               </>
             ) : (
-              <button className="focus-ring -mt-1 w-fit text-left text-xs text-white/45 hover:text-white" onClick={() => setFromText(true)}>+ Build it from my own text instead</button>
+              <button className="focus-ring -mt-1 w-fit text-left text-xs text-white/50 hover:text-white" onClick={() => setFromText(true)}>+ Build it from my own text instead</button>
             )}
             {!fromText && (
             <Field label={kind === "video" ? "Topic or story" : "Topic or angle"} hint={kind === "video" ? "optional — blank picks the strongest documented story" : "optional"}>
@@ -382,7 +382,7 @@ export default function Studio() {
             )}
             {media.length > 0 && (
               <div>
-                <span className="mb-1.5 block text-[13px] font-medium text-white/80">Attach media <span className="font-normal text-white/40">· {platform === "instagram" ? "first image is used for the post" : "optional"}</span></span>
+                <span className="mb-1.5 block text-[13px] font-medium text-white/80">Attach media <span className="font-normal text-white/50">· {platform === "instagram" ? "first image is used for the post" : "optional"}</span></span>
                 <div className="flex flex-wrap gap-2">
                   {media.slice(0, 15).map((m) => (
                     <button
@@ -479,12 +479,12 @@ export default function Studio() {
                     filter === f.key ? "bg-white/10 text-white" : "text-white/50 hover:text-white",
                   )}
                 >
-                  {f.label} <span className="text-white/35">{n}</span>
+                  {f.label} <span className="text-white/50">{n}</span>
                 </button>
               );
             })}
             <div className="ml-auto">
-              <Select value={sort} onChange={(e) => setSort(e.target.value as "new" | "money")} className="w-40">
+              <Select aria-label="Sort posts" value={sort} onChange={(e) => setSort(e.target.value as "new" | "money")} className="w-40">
                 <option value="new">Newest first</option>
                 <option value="money">Highest money score</option>
               </Select>
@@ -591,7 +591,7 @@ function AudioPanel(p: {
   return (
     <>
       <div>
-        <span className="mb-1.5 block text-[13px] font-medium text-white/80">Your recording <span className="font-normal text-white/40">· MP3, WAV or M4A, up to 10 minutes</span></span>
+        <span className="mb-1.5 block text-[13px] font-medium text-white/80">Your recording <span className="font-normal text-white/50">· MP3, WAV or M4A, up to 10 minutes</span></span>
         <label className={cn("focus-ring flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3 py-3 text-sm text-white/70 hover:text-white", p.uploading && "pointer-events-none opacity-60")}>
           <Upload className="h-4 w-4" /> {p.uploading ? "Uploading…" : "Upload a recording"}
           <input
@@ -648,7 +648,7 @@ function AudioPanel(p: {
           <Switch checked={p.renderNow} onChange={p.setRenderNow} label="Render now" />
         </div>
       </div>
-      <p className="-mt-1 text-[11px] leading-snug text-white/40">
+      <p className="-mt-1 text-[11px] leading-snug text-white/50">
         Transcribing is free. Planning the pictures costs the same as a video plan of that length ({CREDIT_COST.videoShort}–{CREDIT_COST.videoLong} credits), and rendering {CREDIT_COST.renderShort}–{CREDIT_COST.renderLong} more.
       </p>
     </>

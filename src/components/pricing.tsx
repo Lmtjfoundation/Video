@@ -101,7 +101,7 @@ export function PricingTable({
               </div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-4xl font-semibold tabular-nums text-white">${price}</span>
-                <span className="text-sm text-white/45">/ month{cycle === "year" && p.monthly ? ", billed yearly" : ""}</span>
+                <span className="text-sm text-white/50">/ month{cycle === "year" && p.monthly ? ", billed yearly" : ""}</span>
               </div>
               {offersTrial(p) && (
                 <div className="-mt-2 grid grid-cols-1 gap-1 rounded-xl bg-mint-400/[0.07] p-3 text-[13px] ring-1 ring-mint-400/20">
@@ -113,7 +113,7 @@ export function PricingTable({
                         ? <>Then ${p.monthly}/month.</>
                         : <>Then ${p.annual * 12} for the year.</>}
                   </span>
-                  <span className="text-[11.5px] text-white/45">Free AI writing every day of the trial. Card required; cancel before day {p.trial!.days} and you pay nothing.</span>
+                  <span className="text-[11.5px] text-white/50">Free AI writing every day of the trial. Card required; cancel before day {p.trial!.days} and you pay nothing.</span>
                 </div>
               )}
               <ul className="grid grid-cols-1 flex-1 gap-2 text-sm text-white/75">
@@ -142,9 +142,9 @@ export function PricingTable({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="What credits buy" subtitle="Credits pay for AI-written content. Posting, scheduling, analytics and safety checks never use credits." />
-          <div className="overflow-x-auto">
+          <div role="region" aria-label="Plan comparison table" tabIndex={0} className="focus-ring overflow-x-auto">
             <table className="w-full min-w-[420px] text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-wider text-white/40"><tr><th className="px-5 py-2.5">Action</th><th className="px-5 py-2.5">Credits</th><th className="px-5 py-2.5">Pro covers / month</th></tr></thead>
+              <thead className="text-[11px] uppercase tracking-wider text-white/50"><tr><th className="px-5 py-2.5">Action</th><th className="px-5 py-2.5">Credits</th><th className="px-5 py-2.5">Pro covers / month</th></tr></thead>
               <tbody className="divide-y divide-white/[0.05]">
                 {data.credits.map((c) => (
                   <tr key={c.action}><td className="px-5 py-2.5 text-white/80">{c.label}</td><td className="px-5 py-2.5 tabular-nums">{c.credits}</td><td className="px-5 py-2.5 tabular-nums text-white/50">{Math.floor((data.plans.find((p) => p.id === "pro")?.credits ?? 1000) / c.credits).toLocaleString()}</td></tr>
@@ -165,7 +165,7 @@ export function PricingTable({
                   <span className="text-right tabular-nums text-white/80">${pr}</span>
                 </div>
               ))}
-            <p className="mt-2 text-xs text-white/40">Ghost Post combines niche research, story scripts, video and film making, scheduling for six platforms and reply automation in one plan.</p>
+            <p className="mt-2 text-xs text-white/50">Ghost Post combines niche research, story scripts, video and film making, scheduling for six platforms and reply automation in one plan.</p>
           </div>
         </Card>
       </div>

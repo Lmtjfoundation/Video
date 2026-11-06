@@ -77,7 +77,7 @@ export default async function WelcomePage() {
             <Link href="/signup" className="rounded-xl bg-mint-400 px-6 py-3.5 text-base font-semibold text-ink-950 shadow-glow hover:bg-mint-300">Start free</Link>
             <a href="#plans" className="rounded-xl border border-white/15 px-6 py-3.5 text-base font-medium text-white hover:bg-white/5">See plans</a>
           </div>
-          <p className="mt-3 text-sm text-white/45">No card needed. Free plan: 30 AI credits and 30 posts a month.</p>
+          <p className="mt-3 text-sm text-white/50">No card needed. Free plan: 30 AI credits and 30 posts a month.</p>
         </div>
         <div className="mx-auto w-full max-w-[340px]">
           <AdPlayer src="/promo/studio-ad-web.mp4" webm="/promo/studio-ad-web.webm" poster="/promo/studio-ad.jpg" />
@@ -141,7 +141,7 @@ export default async function WelcomePage() {
         <h2 className="text-2xl font-semibold text-white">Plans</h2>
         <p className="mb-8 mt-2 text-white/55">Start free. Upgrade when it&apos;s paying for itself.</p>
         <PricingTable signedIn={false} initial={initial} />
-        <p className="mt-6 text-xs text-white/40">Prices in USD. Paid plans renew automatically each month or year until cancelled; cancel any time from Plans &amp; Billing and keep your plan until the end of the period.</p>
+        <p className="mt-6 text-xs text-white/50">Prices in USD. Paid plans renew automatically each month or year until cancelled; cancel any time from Plans &amp; Billing and keep your plan until the end of the period.</p>
       </section>
 
       <section className="mt-20 rounded-3xl border border-mint-400/25 bg-gradient-to-br from-mint-400/15 to-transparent p-8 text-center sm:p-12">

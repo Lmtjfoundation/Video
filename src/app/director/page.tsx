@@ -213,8 +213,9 @@ export default function Director() {
                 }}
                 placeholder={open ? "e.g. Make scene 3 darker and add Dre watching from the car" : "e.g. Marcus finds a second phone in Tasha's closet. Rainy night, tense, ends on the letter D."}
                 className="min-h-[52px] flex-1"
+                aria-label="Message to the Director"
               />
-              <Button variant="primary" loading={busy} disabled={busy || !message.trim()} onClick={send} title={open ? `${data?.credits.change ?? 1} credit per change` : undefined}>
+              <Button variant="primary" loading={busy} disabled={busy || !message.trim()} onClick={send} aria-label="Send to the Director" title={open ? `${data?.credits.change ?? 1} credit per change` : undefined}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>
@@ -289,7 +290,7 @@ function Timeline({ open, pictures, onSaved, onRender }: { open: Open; pictures:
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={x.picture} alt="" className="h-full w-full object-cover" />
               ) : (
-                <span className="px-1 text-center text-[10px] text-white/40">{x.visual.slice(0, 60)}</span>
+                <span className="px-1 text-center text-[10px] text-white/50">{x.visual.slice(0, 60)}</span>
               )}
             </div>
             <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 text-[10px] font-semibold text-white">{i + 1}</span>
@@ -341,7 +342,7 @@ function Timeline({ open, pictures, onSaved, onRender }: { open: Open; pictures:
       {v.url && v.render?.status === "done" && (
         <div className="mt-4">
           <video src={v.url} controls playsInline className="mx-auto max-h-[70vh] rounded-xl" />
-          <p className="mt-2 text-center text-xs text-white/45">{v.render.message}</p>
+          <p className="mt-2 text-center text-xs text-white/50">{v.render.message}</p>
         </div>
       )}
     </Card>

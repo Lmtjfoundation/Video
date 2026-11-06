@@ -69,7 +69,7 @@ export function CardHeader({ title, subtitle, action, icon }: { title: React.Rea
 }
 
 const fieldBase =
-  "focus-ring w-full rounded-xl border border-white/10 bg-ink-900/80 px-3.5 text-sm text-white placeholder:text-white/30 transition-colors hover:border-white/20";
+  "focus-ring w-full rounded-xl border border-white/10 bg-ink-900/80 px-3.5 text-sm text-white placeholder:text-white/50 transition-colors hover:border-white/20 focus:border-mint-400/70";
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...p }, ref) {
   return <input ref={ref} className={cn(fieldBase, "h-10", className)} {...p} />;
@@ -99,7 +99,7 @@ export function Label({ children, hint }: { children: React.ReactNode; hint?: Re
   return (
     <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2">
       <span className="text-[13px] font-medium text-white/80">{children}</span>
-      {hint && <span className="text-[11px] text-white/40">{hint}</span>}
+      {hint && <span className="text-[11px] text-white/50">{hint}</span>}
     </div>
   );
 }
@@ -208,10 +208,10 @@ export function Stat({ label, value, sub, icon, accent }: { label: string; value
       <div className={cn("pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br to-transparent blur-2xl", glow)} />
       <div className="flex items-center justify-between">
         <span className="label">{label}</span>
-        {icon && <span className="text-white/40">{icon}</span>}
+        {icon && <span className="text-white/50">{icon}</span>}
       </div>
       <div className="mt-3 text-[28px] font-semibold leading-none tracking-tight text-white tabular-nums">{value}</div>
-      {sub && <div className="mt-2 text-xs text-white/45">{sub}</div>}
+      {sub && <div className="mt-2 text-xs text-white/50">{sub}</div>}
     </Card>
   );
 }
@@ -219,9 +219,9 @@ export function Stat({ label, value, sub, icon, accent }: { label: string; value
 export function Empty({ icon, title, body, action }: { icon?: React.ReactNode; title: string; body?: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-      {icon && <div className="mb-4 rounded-2xl bg-white/[0.04] p-4 text-white/40 ring-1 ring-white/10">{icon}</div>}
+      {icon && <div className="mb-4 rounded-2xl bg-white/[0.04] p-4 text-white/50 ring-1 ring-white/10">{icon}</div>}
       <p className="font-medium text-white/85">{title}</p>
-      {body && <p className="mt-1 max-w-sm text-sm text-white/45">{body}</p>}
+      {body && <p className="mt-1 max-w-sm text-sm text-white/50">{body}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );

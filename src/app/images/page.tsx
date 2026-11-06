@@ -110,7 +110,7 @@ export default function ImageStudio() {
 
             {mode === "scene" && (
               <div>
-                <span className="mb-1.5 block text-[13px] font-medium text-white/80">Characters <span className="font-normal text-white/40">· up to 3</span></span>
+                <span className="mb-1.5 block text-[13px] font-medium text-white/80">Characters <span className="font-normal text-white/50">· up to 3</span></span>
                 {data?.characters.length ? (
                   <div className="flex flex-wrap gap-2">
                     {data.characters.map((c) => (
@@ -147,7 +147,7 @@ export default function ImageStudio() {
             {mode !== "create" && (
               <div>
                 <span className="mb-1.5 block text-[13px] font-medium text-white/80">
-                  {mode === "edit" || mode === "tools" ? "Picture to change" : "Setting"} <span className="font-normal text-white/40">{mode === "scene" ? "· optional, a place from your pictures" : ""}</span>
+                  {mode === "edit" || mode === "tools" ? "Picture to change" : "Setting"} <span className="font-normal text-white/50">{mode === "scene" ? "· optional, a place from your pictures" : ""}</span>
                 </span>
                 {data?.pictures.length ? (
                   <div className="grid max-h-48 grid-cols-6 gap-1.5 overflow-y-auto">
@@ -237,7 +237,7 @@ export default function ImageStudio() {
             <Button variant="primary" size="lg" loading={busy} disabled={busy || (mode !== "tools" && !prompt.trim()) || !ready || !engineOk} onClick={make}>
               <ImagePlus className="h-4 w-4" /> {busy ? "Working on it…" : `${mode === "tools" ? t.name : "Make it"} · ${cost} credit${cost === 1 ? "" : "s"}`}
             </Button>
-            <p className="-mt-1 text-[11px] text-white/40">The first picture after the engine starts loads the picture model, which takes a few minutes. After that each picture takes under a minute.</p>
+            <p className="-mt-1 text-[11px] text-white/50">The first picture after the engine starts loads the picture model, which takes a few minutes. After that each picture takes under a minute.</p>
           </div>
         </Card>
 

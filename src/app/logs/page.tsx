@@ -60,16 +60,16 @@ export default function LogsPage() {
 
       <Card className="mb-4 grid grid-cols-1 gap-3 p-4 sm:grid-cols-[1fr_180px_160px]">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search messages and details…" className="pl-9" />
         </div>
-        <Select value={kind} onChange={(e) => setKind(e.target.value)}>
+        <Select aria-label="Kind of activity" value={kind} onChange={(e) => setKind(e.target.value)}>
           <option value="">All types</option>
           {KINDS.map((k) => (
             <option key={k} value={k}>{k}</option>
           ))}
         </Select>
-        <Select value={level} onChange={(e) => setLevel(e.target.value)}>
+        <Select aria-label="Level" value={level} onChange={(e) => setLevel(e.target.value)}>
           <option value="">All levels</option>
           <option value="info">info</option>
           <option value="warn">warn</option>
@@ -79,9 +79,9 @@ export default function LogsPage() {
 
       <Card className="overflow-hidden">
         {logs.length ? (
-          <div className="overflow-x-auto">
+          <div role="region" aria-label="Activity table" tabIndex={0} className="focus-ring overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-[13px]">
-              <thead className="border-b border-white/[0.06] text-[11px] uppercase tracking-wider text-white/40">
+              <thead className="border-b border-white/[0.06] text-[11px] uppercase tracking-wider text-white/50">
                 <tr>
                   <th className="w-8 px-4 py-3" />
                   <th className="px-2 py-3 font-medium">Time</th>
@@ -95,7 +95,7 @@ export default function LogsPage() {
                   <Fragment key={l.id}>
                     <tr className={cn("cursor-pointer hover:bg-white/[0.02]", open === l.id && "bg-white/[0.03]")} onClick={() => setOpen(open === l.id ? null : l.id)}>
                       <td className="px-4 py-3">
-                        <ChevronRight className={cn("h-3.5 w-3.5 text-white/30 transition-transform", open === l.id && "rotate-90")} />
+                        <ChevronRight className={cn("h-3.5 w-3.5 text-white/50 transition-transform", open === l.id && "rotate-90")} />
                       </td>
                       <td className="whitespace-nowrap px-2 py-3 tabular-nums text-white/50">{fmt(l.at)}</td>
                       <td className="px-2 py-3">
@@ -104,7 +104,7 @@ export default function LogsPage() {
                           {l.kind}
                         </span>
                       </td>
-                      <td className="px-2 py-3">{l.platform ? <PlatformChip platform={l.platform} /> : <span className="text-white/25">—</span>}</td>
+                      <td className="px-2 py-3">{l.platform ? <PlatformChip platform={l.platform} /> : <span className="text-white/50">—</span>}</td>
                       <td className="px-2 py-3 pr-4 text-white/85">{l.message}</td>
                     </tr>
                     {open === l.id && (

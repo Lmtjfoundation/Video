@@ -156,7 +156,7 @@ export function MetricoolCard({ status, credentials }: { status?: MetricoolStatu
                     <PlatformChip platform={p} />
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-medium text-white">{PLATFORM_SPECS[p].name}</p>
-                      <p className="truncate text-[11.5px] text-white/45">
+                      <p className="truncate text-[11.5px] text-white/50">
                         {on ? "Posts through Metricool" : found ? (direct ? "In Metricool · posting directly" : "In Metricool · off") : "Not found in Metricool"}
                       </p>
                     </div>
@@ -177,7 +177,7 @@ export function MetricoolCard({ status, credentials }: { status?: MetricoolStatu
                 <Button size="sm" variant="danger" className="ml-auto" onClick={disconnect}>{confirmOff ? "Confirm disconnect" : "Disconnect"}</Button>
               </div>
             )}
-            <p className="text-[11.5px] leading-relaxed text-white/40">
+            <p className="text-[11.5px] leading-relaxed text-white/50">
               Platforms you connected directly below keep posting directly unless you switch them to Metricool here. Instagram needs a photo or video on every post. Replies to comments only work for accounts connected directly.
             </p>
           </>

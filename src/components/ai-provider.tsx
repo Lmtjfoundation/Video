@@ -131,10 +131,10 @@ export function AiProviderTab() {
                   placeholder={sameProvider ? `•••••••• stored (${own!.keyPreview}), leave blank to keep` : info.keyPrefix ? `${info.keyPrefix}…` : "Paste your API key"}
                 />
               </Field>
-              <Field label="Model" hint={<span className="text-white/45">{info.modelHint}</span>}>
+              <Field label="Model" hint={<span className="text-white/50">{info.modelHint}</span>}>
                 <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder={info.defaultModel} />
               </Field>
-              <p className="text-[12px] text-white/45">
+              <p className="text-[12px] text-white/50">
                 Usage is billed by {info.name.split(" (")[0]} to your account with them. A ChatGPT Plus or Gemini app subscription doesn't include API usage; the key comes from their developer site.
               </p>
             </div>

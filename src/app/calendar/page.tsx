@@ -136,7 +136,7 @@ export default function CalendarPage() {
         <Card className="mb-5 p-4">
           <div className="mb-2 flex items-center justify-between text-sm">
             <span className="text-white/80">
-              Writing day {fill.day + 1} of {fill.total}… <span className="text-white/45">({fill.created} scheduled so far)</span>
+              Writing day {fill.day + 1} of {fill.total}… <span className="text-white/50">({fill.created} scheduled so far)</span>
             </span>
             <Sparkles className="h-4 w-4 animate-pulse text-gold-300" />
           </div>
@@ -162,7 +162,7 @@ export default function CalendarPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-[11px] text-white/40">Defaults are common starting points, not guarantees. Edit them in Settings, or let the AI propose a plan.</p>
+            <p className="mt-3 text-[11px] text-white/50">Defaults are common starting points, not guarantees. Edit them in Settings, or let the AI propose a plan.</p>
           </div>
           <div className="grid grid-cols-1 gap-3">
             <Field label="Audience notes for the AI plan" hint="optional">
@@ -196,7 +196,7 @@ export default function CalendarPage() {
         </span>
       </div>
 
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+      <div role="region" aria-label="Week calendar" tabIndex={0} className="focus-ring -mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         <div className="grid min-w-[980px] grid-cols-7 gap-3">
           {days.map((d) => {
             const list = byDay.get(d) ?? [];
@@ -227,7 +227,7 @@ export default function CalendarPage() {
               >
                 <div className="mb-2 flex items-center justify-between px-1.5 pt-1">
                   <span className={cn("text-[13px] font-semibold", d === today ? "text-mint-300" : "text-white/80")}>{label}</span>
-                  <span className="text-[11px] text-white/35">{list.length}</span>
+                  <span className="text-[11px] text-white/50">{list.length}</span>
                 </div>
                 <div className="flex flex-1 flex-col gap-2">
                   {list.map((p) => (
@@ -254,14 +254,14 @@ export default function CalendarPage() {
                         <PlatformChip platform={p.platform} className="h-5 text-[10px]" />
                         <span className="text-[11px] tabular-nums text-white/55">{fmtTime(p.scheduledAt, tz)}</span>
                         <span className={cn("ml-auto text-[11px] font-semibold tabular-nums", p.moneyScore >= 75 ? "text-mint-300" : p.moneyScore >= 50 ? "text-gold-300" : "text-red-300")}>{p.moneyScore}</span>
-                        {MOVABLE.includes(p.status) && <GripVertical className="h-3 w-3 text-white/20 group-hover:text-white/50" />}
+                        {MOVABLE.includes(p.status) && <GripVertical aria-hidden className="h-3 w-3 text-white/20 group-hover:text-white/50" />}
                       </div>
                       <p className="line-clamp-3 text-[12.5px] leading-snug text-white/85">{p.hook}</p>
-                      {p.status !== "scheduled" && <p className="mt-1.5 text-[10px] uppercase tracking-wider text-white/40">{p.status.replace("_", " ")}</p>}
+                      {p.status !== "scheduled" && <p className="mt-1.5 text-[10px] uppercase tracking-wider text-white/50">{p.status.replace("_", " ")}</p>}
                     </button>
                   ))}
                   {!list.length && !past && (
-                    <div className="grid grid-cols-1 flex-1 place-items-center rounded-xl border border-dashed border-white/[0.06] text-[11px] text-white/25">Drop here</div>
+                    <div className="grid grid-cols-1 flex-1 place-items-center rounded-xl border border-dashed border-white/[0.06] text-[11px] text-white/50">Drop here</div>
                   )}
                 </div>
               </div>
@@ -270,7 +270,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-white/40">
+      <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-white/50">
         {PLATFORMS.map((p) => (
           <span key={p} className="flex items-center gap-1.5">
             <PlatformChip platform={p} className="h-5 text-[10px]" /> {PLATFORM_SPECS[p].name}
@@ -303,7 +303,7 @@ export default function CalendarPage() {
       )}
 
       {!posts.length && !fill && (
-        <p className="mt-6 flex items-center justify-center gap-2 text-sm text-white/40">
+        <p className="mt-6 flex items-center justify-center gap-2 text-sm text-white/50">
           <CalendarDays className="h-4 w-4" /> Empty calendar — “Fill my week” writes and schedules {settings?.postsPerDay ?? 3} posts/day for each enabled platform.
         </p>
       )}

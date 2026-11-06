@@ -107,7 +107,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06] sm:col-span-3">
                 <div>
                   <p className="text-sm text-white">Post new content automatically</p>
-                  <p className="text-xs text-white/45">The kill switch, safety filter, rate limits and quiet hours still apply. Mature posts are always posted by hand.</p>
+                  <p className="text-xs text-white/50">The kill switch, safety filter, rate limits and quiet hours still apply. Mature posts are always posted by hand.</p>
                 </div>
                 <Switch checked={s.autoPost.enabled} onChange={(v) => set("autoPost", { ...s.autoPost, enabled: v })} label="Post automatically" />
               </div>
@@ -129,14 +129,14 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
                 <div>
                   <p className="text-sm text-white">Notify this device</p>
-                  <p className="text-xs text-white/45">Lock-screen and desktop notifications. On iPhone, add Ghost Post to the Home Screen first.</p>
+                  <p className="text-xs text-white/50">Lock-screen and desktop notifications. On iPhone, add Ghost Post to the Home Screen first.</p>
                 </div>
                 <Button size="sm" onClick={async () => toast((await enablePush()) ? "This device will be notified when things are ready." : "Notifications aren't available here. Allow them in the browser settings, or use email.", "success")}>Turn on</Button>
               </div>
               <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
                 <div>
                   <p className="text-sm text-white">Email me</p>
-                  <p className="text-xs text-white/45">When a movie or video render finishes.</p>
+                  <p className="text-xs text-white/50">When a movie or video render finishes.</p>
                 </div>
                 <Switch checked={s.notifyEmail} onChange={(v) => set("notifyEmail", v)} label="Email me when ready" />
               </div>
@@ -163,12 +163,12 @@ export default function SettingsPage() {
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
                 <div>
                   <p className="text-sm text-white">Quiet hours</p>
-                  <p className="text-xs text-white/45">No posts or replies in this window</p>
+                  <p className="text-xs text-white/50">No posts or replies in this window</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input type="time" value={s.quietHours.start} onChange={(e) => set("quietHours", { ...s.quietHours, start: e.target.value })} className="w-[8.5rem]" />
-                  <span className="text-white/40">–</span>
-                  <Input type="time" value={s.quietHours.end} onChange={(e) => set("quietHours", { ...s.quietHours, end: e.target.value })} className="w-[8.5rem]" />
+                  <Input type="time" aria-label="Quiet hours start" value={s.quietHours.start} onChange={(e) => set("quietHours", { ...s.quietHours, start: e.target.value })} className="w-[8.5rem]" />
+                  <span className="text-white/50">–</span>
+                  <Input type="time" aria-label="Quiet hours end" value={s.quietHours.end} onChange={(e) => set("quietHours", { ...s.quietHours, end: e.target.value })} className="w-[8.5rem]" />
                   <Switch checked={s.quietHours.enabled} onChange={(v) => set("quietHours", { ...s.quietHours, enabled: v })} label="Quiet hours" />
                 </div>
               </div>
@@ -187,7 +187,7 @@ export default function SettingsPage() {
                   />
                 </div>
               ))}
-              <p className="text-[11px] text-white/40">Starting points from public engagement studies — replace with your own analytics after a few weeks.</p>
+              <p className="text-[11px] text-white/50">Starting points from public engagement studies — replace with your own analytics after a few weeks.</p>
             </div>
           </Card>
           <Card className="lg:col-span-2">
@@ -218,7 +218,7 @@ export default function SettingsPage() {
             <CardHeader title="Rate limits per platform" subtitle="Conservative app defaults. Platforms don't publish exact anti-spam thresholds — staying well under them is the safest approach." />
             <div className="overflow-x-auto p-5">
               <table className="w-full min-w-[620px] text-sm">
-                <thead className="text-left text-[11px] uppercase tracking-wider text-white/40">
+                <thead className="text-left text-[11px] uppercase tracking-wider text-white/50">
                   <tr>
                     <th className="pb-3">Platform</th>
                     <th className="pb-3">Posts / day</th>
@@ -283,7 +283,7 @@ export default function SettingsPage() {
                     <Input type="number" step="0.01" value={s.audience[p].reachRate} onChange={(e) => set("audience", { ...s.audience, [p]: { ...s.audience[p], reachRate: Number(e.target.value) } })} placeholder="reach rate 0–1" />
                   </div>
                 ))}
-                <p className="text-[11px] text-white/40">Columns: followers · share of followers who typically see a post (0–1).</p>
+                <p className="text-[11px] text-white/50">Columns: followers · share of followers who typically see a post (0–1).</p>
               </div>
             </div>
           </Card>
@@ -306,7 +306,7 @@ export default function SettingsPage() {
                   onRemove={() => set("offers", s.offers.filter((_, j) => j !== i))}
                 />
               ))}
-              {!s.offers.length && <p className="py-6 text-center text-sm text-white/40">No offers yet. Add products you genuinely recommend (tools, books, courses).</p>}
+              {!s.offers.length && <p className="py-6 text-center text-sm text-white/50">No offers yet. Add products you genuinely recommend (tools, books, courses).</p>}
               <Field label="Disclosure appended to every promoted post" hint="FTC requires clear disclosure">
                 <Input value={s.disclosure} onChange={(e) => set("disclosure", e.target.value)} />
               </Field>

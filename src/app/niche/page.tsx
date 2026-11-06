@@ -136,7 +136,7 @@ export default function NicheLab() {
                   <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
                     <div className="grid grid-cols-1 gap-2 text-white/75">
                       <p><span className="font-medium text-white">Why it earns.</span> {n.whyItEarns}</p>
-                      {n.rpmBasis && <p className="text-white/45">{n.rpmBasis}</p>}
+                      {n.rpmBasis && <p className="text-white/50">{n.rpmBasis}</p>}
                       <p><span className="font-medium text-white">Format.</span> {n.facelessFormat}</p>
                       <p><span className="font-medium text-white">Audience.</span> {n.audience}</p>
                     </div>
@@ -184,9 +184,9 @@ export default function NicheLab() {
             </Select>
           }
         />
-        <div className="overflow-x-auto">
+        <div role="region" aria-label="Niche table" tabIndex={0} className="focus-ring overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="text-[11px] uppercase tracking-wider text-white/40">
+            <thead className="text-[11px] uppercase tracking-wider text-white/50">
               <tr><th className="px-5 py-3">Niche</th><th className="px-3 py-3">Median RPM</th><th className="px-3 py-3">Middle half</th><th className="px-3 py-3">Faceless fit</th><th className="px-3 py-3">Story formats</th><th className="px-5 py-3" /></tr>
             </thead>
             <tbody className="divide-y divide-white/[0.05]">
@@ -194,7 +194,7 @@ export default function NicheLab() {
                 <tr key={n.id} className={n.dir ? "[&>td]:border-dashed" : ""}>
                   <td className="px-5 py-3 align-top">
                     <p className="font-medium text-white">{n.name}</p>
-                    {n.dir && <p className="text-xs text-white/40">Directional · {n.dir}</p>}
+                    {n.dir && <p className="text-xs text-white/50">Directional · {n.dir}</p>}
                     {n.note && <p className="mt-0.5 max-w-xs text-xs text-gold-300/90">{n.note}</p>}
                   </td>
                   <td className="px-3 py-3 align-top">
@@ -210,7 +210,7 @@ export default function NicheLab() {
             </tbody>
           </table>
         </div>
-        <p className="px-5 py-4 text-xs text-white/45">Shorts pay far less than long-form: measured Shorts RPMs in the same study range from $0.02 to $1.48. TikTok's Creator Rewards benchmark is about ${TT_US_RPM} per 1,000 qualified US views, and only videos over one minute earn.</p>
+        <p className="px-5 py-4 text-xs text-white/50">Shorts pay far less than long-form: measured Shorts RPMs in the same study range from $0.02 to $1.48. TikTok's Creator Rewards benchmark is about ${TT_US_RPM} per 1,000 qualified US views, and only videos over one minute earn.</p>
       </Card>
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -232,7 +232,7 @@ export default function NicheLab() {
               <CalcTile label="TikTok (US, >1 min)" value={usd((views / 1000) * TT_US_RPM * calc.tt)} sub={`${calc.tt}× niche multiplier`} />
               <CalcTile label="Per year (YouTube)" value={usd((views / 1000) * calc.rpm * 12)} sub="at median RPM" />
             </div>
-            <p className="text-xs text-white/40">Real RPM depends on audience country, season, video length and how many views are monetized.</p>
+            <p className="text-xs text-white/50">Real RPM depends on audience country, season, video length and how many views are monetized.</p>
           </div>
         </Card>
 
@@ -244,7 +244,7 @@ export default function NicheLab() {
             <li key={u}><a href={u} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sky-300 hover:underline">{t} <ExternalLink className="h-3 w-3" /></a></li>
           ))}
         </ul>
-        <p className="mt-3 text-xs text-white/45">No outside tool can see another channel's RPM; it appears only in that creator's YouTube Studio. That's why this table uses a study of channels' own Studio data rather than advertiser-price estimates.</p>
+        <p className="mt-3 text-xs text-white/50">No outside tool can see another channel's RPM; it appears only in that creator's YouTube Studio. That's why this table uses a study of channels' own Studio data rather than advertiser-price estimates.</p>
       </Card>
         </>
       )}
@@ -257,7 +257,7 @@ function CalcTile({ label, value, sub, accent }: { label: string; value: string;
     <div className="rounded-xl bg-ink-900/80 p-3 ring-1 ring-white/[0.06]">
       <p className="label">{label}</p>
       <p className={cn("mt-2 text-xl font-semibold tabular-nums", accent ? "text-gold-300" : "text-white")}>{value}</p>
-      <p className="mt-1 text-xs text-white/45">{sub}</p>
+      <p className="mt-1 text-xs text-white/50">{sub}</p>
     </div>
   );
 }

@@ -165,7 +165,7 @@ export function VoicesPanel() {
             This is my own voice, or I have the speaker&apos;s written permission to make an AI copy of it. I won&apos;t use it to deceive anyone.
           </label>
           <Button variant="primary" onClick={save} loading={saving} disabled={!mediaId || !name.trim() || !by.trim() || !agreed}>Make the voice</Button>
-          <p className="text-xs text-white/40">Speech made from a voice carries an inaudible watermark, so it can be identified as AI.</p>
+          <p className="text-xs text-white/50">Speech made from a voice carries an inaudible watermark, so it can be identified as AI.</p>
         </div>
       </Card>
       <div className="grid grid-cols-1 h-fit gap-6">
@@ -279,7 +279,7 @@ export function AvatarPanel() {
         <CardHeader title="Avatar" subtitle="A picture of a person, brought to life and speaking your words with synced lips." icon={<UserRound className="h-4 w-4" />} />
         <div className="grid grid-cols-1 gap-4 p-5">
           <div>
-            <div className="mb-1.5 text-xs uppercase tracking-wide text-white/40">Picture (face clearly visible)</div>
+            <div className="mb-1.5 text-xs uppercase tracking-wide text-white/50">Picture (face clearly visible)</div>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {!pics.length && <div className="text-sm text-white/50">Add a picture to the Media Library or make one in Image Studio.</div>}
               {pics.slice(0, 30).map((p) => (

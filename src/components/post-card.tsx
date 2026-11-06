@@ -81,12 +81,12 @@ export function PostCard({
             {post.source === "claude-batch" && <Badge tone="sky">Daily batch</Badge>}
             {post.mature && <Badge tone="red">18+</Badge>}
             {post.mediaIds?.length ? <Badge tone="sky">{post.mediaIds.length} media</Badge> : null}
-            {post.scheduledAt && <span className="ml-1 text-xs text-white/45">{fmtDateTime(post.scheduledAt, tz)}</span>}
+            {post.scheduledAt && <span className="ml-1 text-xs text-white/50">{fmtDateTime(post.scheduledAt, tz)}</span>}
           </div>
           <button className="w-full text-left" onClick={() => setOpen((v) => !v)}>
             <p className="text-[15px] font-semibold leading-snug text-white">{post.hook}</p>
           </button>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/45">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/50">
             <span className="tabular-nums text-mint-300/90">
               est. {usd(post.revenue.low)}–{usd(post.revenue.high)}
             </span>
@@ -94,7 +94,7 @@ export function PostCard({
           </div>
         </div>
         {compact && (
-          <button onClick={() => setOpen((v) => !v)} className="focus-ring rounded-lg p-1.5 text-white/40 hover:text-white" aria-label="Expand">
+          <button onClick={() => setOpen((v) => !v)} className="focus-ring rounded-lg p-1.5 text-white/50 hover:text-white" aria-label="Expand">
             <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
           </button>
         )}
@@ -173,13 +173,13 @@ export function PostCard({
                   <a href={src.url} target="_blank" rel="noreferrer" className="underline decoration-white/20 hover:text-white">{src.name}</a>
                 </span>
               ))}
-              <span className="text-white/35"> — check the facts before it posts.</span>
+              <span className="text-white/50"> — check the facts before it posts.</span>
             </p>
           )}
           {!compact && post.scoreNotes.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {post.scoreNotes.map((n) => (
-                <span key={n} className="rounded-md bg-white/[0.03] px-2 py-0.5 text-[11px] text-white/45 ring-1 ring-white/[0.06]">{n}</span>
+                <span key={n} className="rounded-md bg-white/[0.03] px-2 py-0.5 text-[11px] text-white/50 ring-1 ring-white/[0.06]">{n}</span>
               ))}
             </div>
           )}
@@ -199,7 +199,7 @@ export function PostCard({
               >
                 Confirm
               </Button>
-              <span className="text-[11px] text-white/40">{tz}</span>
+              <span className="text-[11px] text-white/50">{tz}</span>
             </div>
           )}
 
@@ -327,7 +327,7 @@ function VideoPlanView({ plan, caption }: { plan: VideoPlan; caption: string }) 
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge tone="violet">{VIDEO_LENGTHS[plan.length]?.label ?? "Video"}</Badge>
         <Badge>{VIDEO_STYLES[plan.style]}</Badge>
-        <span className="text-xs text-white/45">{plan.scenes.length} scenes · {words} words · ≈{Math.round(words / 2.6)} s at a natural pace</span>
+        <span className="text-xs text-white/50">{plan.scenes.length} scenes · {words} words · ≈{Math.round(words / 2.6)} s at a natural pace</span>
       </div>
       <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
         <div>
@@ -339,18 +339,18 @@ function VideoPlanView({ plan, caption }: { plan: VideoPlan; caption: string }) 
           <p className="mt-1 text-white/55">{plan.thumbnail?.prompt}</p>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-xl ring-1 ring-white/[0.06]">
+      <div role="region" aria-label="Table" tabIndex={0} className="focus-ring overflow-x-auto rounded-xl ring-1 ring-white/[0.06]">
         <table className="w-full min-w-[640px] text-left text-[13px]">
-          <thead className="text-[11px] uppercase tracking-wider text-white/40">
+          <thead className="text-[11px] uppercase tracking-wider text-white/50">
             <tr><th className="px-3 py-2">Time</th><th className="px-3 py-2">Narration</th><th className="px-3 py-2">On screen</th><th className="px-3 py-2">Visual & edit</th></tr>
           </thead>
           <tbody className="divide-y divide-white/[0.05]">
             {plan.scenes.map((s, i) => (
               <tr key={i} className="align-top">
-                <td className="whitespace-nowrap px-3 py-2 font-mono text-white/45">{s.time}</td>
+                <td className="whitespace-nowrap px-3 py-2 font-mono text-white/50">{s.time}</td>
                 <td className="px-3 py-2 text-white/85">{s.narration}</td>
                 <td className="px-3 py-2 font-semibold text-white">{s.onScreen}</td>
-                <td className="px-3 py-2 text-white/70">{s.visual}<p className="text-white/40">{s.motion}{s.sfx ? ` · 🔊 ${s.sfx}` : ""}</p></td>
+                <td className="px-3 py-2 text-white/70">{s.visual}<p className="text-white/50">{s.motion}{s.sfx ? ` · 🔊 ${s.sfx}` : ""}</p></td>
               </tr>
             ))}
           </tbody>

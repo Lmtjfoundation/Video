@@ -81,13 +81,13 @@ export default function FlowsPage() {
             {!data?.flows.length && <div className="px-2 text-sm text-white/50">None saved yet. Start from a ready-made one:</div>}
             {data?.flows.map((f) => (
               <button key={f.id} onClick={() => setEdit(f)} className={cn("rounded-lg px-3 py-2 text-left text-sm", edit?.id === f.id ? "bg-white/10" : "hover:bg-white/5")}>
-                {f.name} <span className="text-xs text-white/40">· {f.steps.length} steps</span>
+                {f.name} <span className="text-xs text-white/50">· {f.steps.length} steps</span>
               </button>
             ))}
-            <div className="mt-2 px-2 text-xs uppercase tracking-wide text-white/40">Ready-made</div>
+            <div className="mt-2 px-2 text-xs uppercase tracking-wide text-white/50">Ready-made</div>
             {data?.templates.map((t) => (
               <button key={t.name} onClick={() => setEdit({ ...t, id: undefined })} className={cn("rounded-lg px-3 py-2 text-left text-sm", !edit?.id && edit?.name === t.name ? "bg-white/10" : "hover:bg-white/5")}>
-                {t.name} <span className="text-xs text-white/40">· {t.credits} credits</span>
+                {t.name} <span className="text-xs text-white/50">· {t.credits} credits</span>
               </button>
             ))}
           </div>
@@ -108,7 +108,7 @@ export default function FlowsPage() {
               <Card key={i} className="p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <Badge tone="mint">{i + 1}</Badge>
-                  <Select className="w-auto" value={s.type} onChange={(e) => setStep(i, { type: e.target.value as FlowStepType })}>
+                  <Select aria-label="Step type" className="w-auto" value={s.type} onChange={(e) => setStep(i, { type: e.target.value as FlowStepType })}>
                     {FLOW_STEP_TYPES.map((t) => <option key={t} value={t}>{STEP_LABEL[t].title}</option>)}
                   </Select>
                   <span className="hidden text-xs text-white/50 md:inline">{STEP_LABEL[s.type].hint}</span>
@@ -124,7 +124,7 @@ export default function FlowsPage() {
                       placeholder={s.type === "voiceover" ? "{idea} (the words to read)" : s.type === "prompt" ? "{idea}" : "Blank uses {text}, or {idea}"} />
                     <div className="flex flex-wrap gap-2 md:w-56 md:flex-col">
                       {(s.type === "image" || s.type === "footage") && (
-                        <Select value={s.aspect ?? ""} onChange={(e) => setStep(i, { aspect: (e.target.value || undefined) as FlowStep["aspect"] })}>
+                        <Select aria-label="Shape" value={s.aspect ?? ""} onChange={(e) => setStep(i, { aspect: (e.target.value || undefined) as FlowStep["aspect"] })}>
                           <option value="">Same shape as before</option><option value="9:16">9:16</option><option value="16:9">16:9</option><option value="1:1">1:1</option>
                         </Select>
                       )}
@@ -132,16 +132,16 @@ export default function FlowsPage() {
                         <Input type="number" min={1} max={s.type === "footage" ? 5 : s.type === "sfx" ? 30 : 240} value={s.seconds ?? ""} placeholder="Seconds" onChange={(e) => setStep(i, { seconds: Number(e.target.value) || undefined })} />
                       )}
                       {s.type === "prompt" && (
-                        <Select value={s.kind ?? "footage"} onChange={(e) => setStep(i, { kind: e.target.value as FlowStep["kind"] })}>
+                        <Select aria-label="Clip kind" value={s.kind ?? "footage"} onChange={(e) => setStep(i, { kind: e.target.value as FlowStep["kind"] })}>
                           <option value="footage">For footage</option><option value="image">For a picture</option><option value="music">For music</option><option value="sfx">For a sound</option>
                         </Select>
                       )}
                       {s.type === "voiceover" && (
                         <>
-                          <Select value={s.language ?? "en"} onChange={(e) => setStep(i, { language: e.target.value })}>
+                          <Select aria-label="Language" value={s.language ?? "en"} onChange={(e) => setStep(i, { language: e.target.value })}>
                             {Object.entries(SPEECH_LANGUAGES).map(([k, n]) => <option key={k} value={k}>{n}</option>)}
                           </Select>
-                          <Select value={s.voiceId ?? ""} onChange={(e) => setStep(i, { voiceId: e.target.value || undefined })}>
+                          <Select aria-label="Voice" value={s.voiceId ?? ""} onChange={(e) => setStep(i, { voiceId: e.target.value || undefined })}>
                             <option value="">Standard voice</option>
                             {voices?.voices.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
                           </Select>

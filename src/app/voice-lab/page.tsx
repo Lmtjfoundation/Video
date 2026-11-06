@@ -173,7 +173,7 @@ function TtsTab({ info, voice, setVoice }: { info: Info | null; voice: VoiceChoi
               <button key={k} type="button" onClick={() => insert(k)} title={t.label} className="rounded-lg bg-white/5 px-2.5 py-1 text-xs text-white/70 hover:bg-white/10">[{k}]</button>
             ))}
           </div>
-          <p className="text-xs text-white/45">Free voices read pauses and loudness from the tags; engine voices also act the emotion. {chars.toLocaleString()} / 5,000 characters.</p>
+          <p className="text-xs text-white/50">Free voices read pauses and loudness from the tags; engine voices also act the emotion. {chars.toLocaleString()} / 5,000 characters.</p>
           <Field label="Voice"><VoicePicker value={voice} onChange={setVoice} languages={info?.languages} /></Field>
           {voice.kind === "engine" && <EngineNote info={info} what="This voice" />}
           <Button variant="primary" size="lg" loading={tool.busy} disabled={!chars || (voice.kind === "engine" && info?.engine === false)} onClick={() => tool.run({ action: "speech", text, voice })}>
@@ -232,7 +232,7 @@ function LibraryTab({ use, onUse, onDesign }: { use?: VoiceUse; onUse: (v: Voice
                 {playing === v.id ? <Waves className="h-5 w-5 animate-pulse" /> : <Play className="h-5 w-5" />}
               </button>
               <div className="min-w-0">
-                <div className="font-semibold">{v.name} <span className="text-xs font-normal text-white/45">· {v.gender}, {v.accent}</span></div>
+                <div className="font-semibold">{v.name} <span className="text-xs font-normal text-white/50">· {v.gender}, {v.accent}</span></div>
                 <div className="text-sm text-white/65">{v.description}</div>
               </div>
             </div>
@@ -293,7 +293,7 @@ function DesignTab({ info, description, setDescription }: { info: Info | null; d
           <Button variant="primary" size="lg" loading={tool.busy} disabled={description.trim().length < 10 || info?.engine === false} onClick={() => tool.run({ action: "design", description, text, seed: Math.floor(Math.random() * 1e6) }, "The sample appears here when it's ready.")}>
             <Wand2 className="h-4 w-4" /> Design the voice · {info?.credits.voiceDesign ?? 2} credits
           </Button>
-          <p className="text-xs text-white/45">Each try gives a different voice from the same description. Keep the one you like: it joins My Voices and speaks every language.</p>
+          <p className="text-xs text-white/50">Each try gives a different voice from the same description. Keep the one you like: it joins My Voices and speaks every language.</p>
         </div>
       </Card>
       <Card className="h-fit">
@@ -338,7 +338,7 @@ function SttTab({ info, reload }: { info: Info | null; reload: () => void }) {
           <MediaSelect items={items} kinds={["audio", "video"]} value={mediaId} onChange={setMediaId} empty="Upload a recording or video first" />
           <div className="flex items-center gap-2 text-xs text-white/50"><Recorder label="Record now" onSaved={(id) => { reloadMedia(); setMediaId(id); }} /> or pick a file above.</div>
           <Button variant="primary" loading={tool.busy} disabled={!mediaId} onClick={() => tool.run({ action: "transcribe", mediaId }, "The transcript appears here when it's ready.")}>Transcribe (free)</Button>
-          <p className="text-xs text-white/45">Up to an hour per file. Download as SRT or VTT captions, or plain text.</p>
+          <p className="text-xs text-white/50">Up to an hour per file. Download as SRT or VTT captions, or plain text.</p>
         </div>
       </Card>
       <div className="grid grid-cols-1 h-fit gap-3">
@@ -359,7 +359,7 @@ function SttTab({ info, reload }: { info: Info | null; reload: () => void }) {
             {open === t.id && (
               <div className="max-h-96 overflow-y-auto border-t border-white/[0.06] p-4 text-sm">
                 {t.lines.map((l, i) => (
-                  <p key={i} className="py-0.5"><span className="mr-2 font-mono text-xs text-white/40">{new Date(l.start * 1000).toISOString().slice(l.start >= 3600 ? 11 : 14, 19)}</span>{l.text}</p>
+                  <p key={i} className="py-0.5"><span className="mr-2 font-mono text-xs text-white/50">{new Date(l.start * 1000).toISOString().slice(l.start >= 3600 ? 11 : 14, 19)}</span>{l.text}</p>
                 ))}
               </div>
             )}
@@ -393,7 +393,7 @@ function IsolateTab({ info }: { info: Info | null }) {
           <Button variant="primary" size="lg" loading={tool.busy} disabled={!mediaId || info?.isolate === false} onClick={() => tool.run({ action: "isolate", mediaId, stem })}>
             Separate · {info?.credits.isolateMinute ?? 1} credit a minute
           </Button>
-          <p className="text-xs text-white/45">A video keeps its picture with the new sound. Up to 30 minutes.</p>
+          <p className="text-xs text-white/50">A video keeps its picture with the new sound. Up to 30 minutes.</p>
         </div>
       </Card>
       <Recent prefixes={["voice-only-", "no-voice-"]} title="Latest separations" />
@@ -582,7 +582,7 @@ function VoiceToVideoTab({ info, voice, setVoice, onRecord }: { info: Info | nul
           <Button variant="primary" size="lg" loading={tool.busy} disabled={!videoId || (source === "script" ? !chars : !recId) || (needsEngine && info?.engine === false)} onClick={() => tool.run({ action: "voice-to-video", videoId, voice: source === "script" ? { text, choice: voice } : { mediaId: recId }, mix, captions, lipsync })}>
             Make the video · {estimate ? `about ${estimate} credits` : "free"}
           </Button>
-          <p className="text-xs text-white/45">If the voice is longer than the video, the picture loops to the end of the voice. Going the other way? <Link href="/studio" className="text-mint-300 underline">Audio to video</Link> in Content Studio makes a whole video from a recording.</p>
+          <p className="text-xs text-white/50">If the voice is longer than the video, the picture loops to the end of the voice. Going the other way? <Link href="/studio" className="text-mint-300 underline">Audio to video</Link> in Content Studio makes a whole video from a recording.</p>
         </div>
       </Card>
       <Recent prefixes={["voiced-"]} kind="video" title="Latest voiced videos" />

@@ -205,7 +205,7 @@ function VideoEdit({ info }: { info: Info | null }) {
           <Button variant="primary" size="lg" loading={tool.busy} disabled={!videoId || !prompt.trim() || (task === "motion" && !imageId) || (task === "inpaint" && (!box || box[2] < 0.02 || box[3] < 0.02)) || info?.engine === false} onClick={() => tool.run({ action: "edit", task, videoId, prompt, imageId: imageId || undefined, box: box ?? undefined })}>
             {t.name} · up to {info ? info.credits.editSecond * 5 : 80} credits
           </Button>
-          <p className="text-xs text-white/45">{info?.credits.editSecond ?? 16} credits per second of clip, up to 5 seconds.</p>
+          <p className="text-xs text-white/50">{info?.credits.editSecond ?? 16} credits per second of clip, up to 5 seconds.</p>
         </div>
       </Card>
       <Recent prefixes={["edit-"]} />

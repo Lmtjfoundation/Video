@@ -80,11 +80,11 @@ export default function PlatformsPage() {
                 key={p}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] ring-1",
-                  linked.includes(p) ? "bg-mint-400/[0.07] text-white ring-mint-400/25" : "bg-white/[0.02] text-white/45 ring-white/[0.06]",
+                  linked.includes(p) ? "bg-mint-400/[0.07] text-white ring-mint-400/25" : "bg-white/[0.02] text-white/50 ring-white/[0.06]",
                 )}
               >
                 <PlatformChip platform={p} /> {linked.includes(p) ? (platforms[p] ? "posting" : "linked, off") : "not linked"}
-                {status.credentials.find((c) => c.platform === p)?.via === "metricool" && <span className="text-white/40">· Metricool</span>}
+                {status.credentials.find((c) => c.platform === p)?.via === "metricool" && <span className="text-white/50">· Metricool</span>}
               </span>
             ))}
           </div>

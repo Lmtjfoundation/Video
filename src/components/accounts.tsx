@@ -149,7 +149,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press ‚Ä
                     <p className="text-white/60"><span className="text-white/85">Sends:</span> {spec.publish}</p>
                     <p className="text-white/60"><span className="text-white/85">Security:</span> https addresses only. Internal addresses are blocked. With a signing secret, each request carries an HMAC signature (X-GhostPost-Signature) over ‚Äútimestamp.body‚Äù.</p>
                   </div>
-                  <p className="text-[11px] text-white/35">The switch above turns this connection on or off for posting. {saveHint}</p>
+                  <p className="text-[11px] text-white/50">The switch above turns this connection on or off for posting. {saveHint}</p>
                 </div>
               </Card>
             );
@@ -222,7 +222,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press ‚Ä
                   <p className="rounded-xl bg-white/[0.03] p-3 text-[13px] text-white/60 ring-1 ring-white/[0.06]">{o.label} sign-in isn't switched on yet. Use <b className="text-white/80">Quick connect with Metricool</b> at the top of this page instead, or ask the workspace admin.</p>
                 )}
                 {isAdmin && st.oauthReady && !direct && (!viaMc || directOpen[p]) && (
-                  <p className="text-[12px] leading-relaxed text-white/45">
+                  <p className="text-[12px] leading-relaxed text-white/50">
                     <span className="text-white/70">If {o.label} shows an error instead of its sign-in page:</span> {SETUP_GUIDES[p].testing} Or use Quick connect with Metricool at the top.
                   </p>
                 )}
@@ -236,7 +236,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press ‚Ä
                   <p className="text-white/60"><span className="text-white/85">Engagement:</span> {spec.engage}</p>
                 </div>
 
-                <button className="focus-ring w-fit text-left text-xs text-white/45 hover:text-white" onClick={() => setManual({ ...manual, [p]: !manual[p] })}>
+                <button className="focus-ring w-fit text-left text-xs text-white/50 hover:text-white" onClick={() => setManual({ ...manual, [p]: !manual[p] })}>
                   {manual[p] ? "Hide manual token entry" : "Advanced: paste a token instead"}
                 </button>
                 {manual[p] && (
@@ -257,7 +257,7 @@ export function Accounts({ settings, setSettings, statuses, saveHint = "Press ‚Ä
                     </Button>
                   </div>
                 )}
-                <p className="text-[11px] text-white/35">The switch above turns {spec.name} on or off for posting. {saveHint}</p>
+                <p className="text-[11px] text-white/50">The switch above turns {spec.name} on or off for posting. {saveHint}</p>
               </div>
             </Card>
           );
@@ -333,7 +333,7 @@ function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; o
           <p className="text-sm font-semibold text-white">Set up {o.label}</p>
           <p className="text-xs text-white/50">You need: {g.needs}</p>
         </div>
-        <span className="shrink-0 text-xs tabular-nums text-white/45">{finished}/{g.steps.length} done</span>
+        <span className="shrink-0 text-xs tabular-nums text-white/50">{finished}/{g.steps.length} done</span>
       </div>
       <ol className="grid grid-cols-1 gap-2.5">
         {g.steps.map((st, i) => (
@@ -351,7 +351,7 @@ function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; o
               {Array.isArray(st.copy) &&
                 st.copy.map((k) => (
                   <div key={k} className="mt-2">
-                    <p className="text-[11px] uppercase tracking-wide text-white/40">{COPY_LABELS[k]}</p>
+                    <p className="text-[11px] uppercase tracking-wide text-white/50">{COPY_LABELS[k]}</p>
                     <CopyBox value={values[k]} />
                   </div>
                 ))}
@@ -373,7 +373,7 @@ function SetupWizard({ platform, origin, onSaved }: { platform: OAuthPlatform; o
           <Input type="password" value={secret} onChange={(e) => setSecret(e.target.value)} autoComplete="off" placeholder={`Paste ${g.secretLabel}`} />
         </Field>
       </div>
-      <p className="text-xs text-white/45">Stored encrypted on your server. Never shown again in the browser.</p>
+      <p className="text-xs text-white/50">Stored encrypted on your server. Never shown again in the browser.</p>
       <div className="flex flex-wrap gap-2">
         <Button variant="primary" loading={saving} disabled={!id.trim() || !secret.trim()} onClick={save}>
           <KeyRound className="h-4 w-4" /> Save and enable Connect
@@ -493,14 +493,14 @@ function ExtraAccounts({ platform, st, label, onChanged }: { platform: Platform;
     <div className="grid grid-cols-1 gap-2.5 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[13px] font-medium text-white">Accounts</span>
-        <span className="text-[11.5px] text-white/45">{extras.length + 1} of {MAX_EXTRA_ACCOUNTS + 1}</span>
+        <span className="text-[11.5px] text-white/50">{extras.length + 1} of {MAX_EXTRA_ACCOUNTS + 1}</span>
       </div>
       <ul className="grid grid-cols-1 gap-1.5 text-[13px]">
-        <li className="flex items-center gap-2 text-white/80"><Check className="h-3.5 w-3.5 text-mint-300" /> {st.handle || "Main account"} <span className="text-[11px] text-white/40">main</span></li>
+        <li className="flex items-center gap-2 text-white/80"><Check className="h-3.5 w-3.5 text-mint-300" /> {st.handle || "Main account"} <span className="text-[11px] text-white/50">main</span></li>
         {extras.map((a) => (
           <li key={a.id} className="flex items-center gap-2 text-white/80">
             <Check className="h-3.5 w-3.5 text-mint-300" /> {a.handle || "Another account"}
-            <span className="text-[11px] text-white/40">{a.method === "oauth" ? `linked with ${label}` : "token"}</span>
+            <span className="text-[11px] text-white/50">{a.method === "oauth" ? `linked with ${label}` : "token"}</span>
             <Button size="sm" variant="ghost" className="ml-auto" loading={busy === a.id} onClick={() => remove(a.id)}>{confirm === a.id ? "Confirm remove" : "Remove"}</Button>
           </li>
         ))}
@@ -523,7 +523,7 @@ function ExtraAccounts({ platform, st, label, onChanged }: { platform: Platform;
           <Button size="sm" variant="primary" className="w-fit" loading={busy === "new"} disabled={!form.accessToken?.trim()} onClick={save}><KeyRound className="h-3.5 w-3.5" /> Add account</Button>
         </div>
       )}
-      <p className="text-[11.5px] leading-relaxed text-white/45">Each post has an account picker. Posts without one use the main account.{st.oauthReady ? ` To add an account, sign out of ${label} in this browser first (or use a private window), then sign in as the other account.` : ""}</p>
+      <p className="text-[11.5px] leading-relaxed text-white/50">Each post has an account picker. Posts without one use the main account.{st.oauthReady ? ` To add an account, sign out of ${label} in this browser first (or use a private window), then sign in as the other account.` : ""}</p>
     </div>
   );
 }
@@ -544,7 +544,7 @@ function FacebookChoice({ oauthReady, isAdmin, origin, onSaved }: { oauthReady: 
               <Button variant="primary" className="w-full"><Link2 className="h-4 w-4" /> Connect a Page</Button>
             </a>
           ) : (
-            <p className="text-[12px] text-white/40">{isAdmin ? "Set up Facebook below first." : "The workspace admin switches this on once for everyone."}</p>
+            <p className="text-[12px] text-white/50">{isAdmin ? "Set up Facebook below first." : "The workspace admin switches this on once for everyone."}</p>
           )}
         </div>
         <div className="grid grid-cols-1 content-between gap-3 rounded-xl bg-gold-400/[0.04] p-3.5 ring-1 ring-gold-400/20">
@@ -685,7 +685,7 @@ function ProfileForm({ initialName = "", onSaved, onCancel }: { initialName?: st
           <Input value={url} onChange={(e) => setUrl(e.target.value)} inputMode="url" autoComplete="off" spellCheck={false} placeholder="facebook.com/yourname" />
         </Field>
       </div>
-      <p className="text-[12px] leading-relaxed text-white/45">No Facebook password or login needed. Nothing is posted without you: you make the final tap on every post.</p>
+      <p className="text-[12px] leading-relaxed text-white/50">No Facebook password or login needed. Nothing is posted without you: you make the final tap on every post.</p>
       <div className="flex flex-wrap gap-2">
         <Button variant="primary" loading={saving} disabled={!name.trim()} onClick={save}><UserRound className="h-4 w-4" /> Save profile</Button>
         {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}

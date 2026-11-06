@@ -96,7 +96,7 @@ export default function PlansPage() {
       {me && <VaultCard me={me} />}
       {me && !inNativeApp() && <PacksCard />}
       <PricingTable currentPlan={me?.plan.id} signedIn hasSubscription={!!sub?.subscriptionId && sub?.status !== "canceled"} trialEligible={me?.trial.eligible ?? false} />
-      <p className="mt-6 text-xs text-white/40">Post counts reset on the 1st of each month. Plan credits stay in your vault for 30 days and credit packs for a year; credits that expire unused go to the community pool. Prices in USD; taxes may apply at checkout.</p>
+      <p className="mt-6 text-xs text-white/50">Post counts reset on the 1st of each month. Plan credits stay in your vault for 30 days and credit packs for a year; credits that expire unused go to the community pool. Prices in USD; taxes may apply at checkout.</p>
     </>
   );
 }

@@ -82,7 +82,7 @@ function Connect() {
         </ul>
       </Card>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-white/45">Instagram needs a Creator or Business account (free: Instagram → Settings → Account type and tools).</p>
+        <p className="text-xs text-white/50">Instagram needs a Creator or Business account (free: Instagram → Settings → Account type and tools).</p>
         <a href={next}>
           <Button variant={connected.length ? "primary" : "secondary"}>
             {connected.length ? "Continue" : "Skip for now"} <ArrowRight className="h-4 w-4" />

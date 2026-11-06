@@ -86,7 +86,7 @@ export default function SeriesStudio() {
               </Field>
               {!!data?.characters.length && (
                 <div>
-                  <span className="mb-1.5 block text-[13px] font-medium text-white/80">Recurring cast <span className="font-normal text-white/40">· up to 6</span></span>
+                  <span className="mb-1.5 block text-[13px] font-medium text-white/80">Recurring cast <span className="font-normal text-white/50">· up to 6</span></span>
                   <div className="flex flex-wrap gap-2">
                     {data.characters.map((c) => (
                       <button key={c.id} onClick={() => setCast((s) => (s.includes(c.id) ? s.filter((x) => x !== c.id) : [...s, c.id].slice(0, 6)))} className={cn("focus-ring flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-xs ring-1", cast.includes(c.id) ? "bg-mint-400/15 text-mint-100 ring-mint-400/50" : "bg-white/[0.03] text-white/60 ring-white/10")}>
@@ -135,7 +135,7 @@ export default function SeriesStudio() {
               {data.series.map((s) => (
                 <button key={s.id} onClick={() => setOpen(s.id)} className={cn("focus-ring flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm", open === s.id ? "bg-white/[0.07] text-white" : "text-white/60 hover:text-white")}>
                   <span className="truncate">{s.title}</span>
-                  <span className="text-xs text-white/40">{s.episodes.filter((e) => e.postId).length}/{s.episodes.length}</span>
+                  <span className="text-xs text-white/50">{s.episodes.filter((e) => e.postId).length}/{s.episodes.length}</span>
                 </button>
               ))}
             </Card>
@@ -227,7 +227,7 @@ function EpisodeCard({ s, e, making, disabled, onMake, onSaved }: { s: Series; e
     <Card className="p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-white/40">Episode {e.n}</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-white/50">Episode {e.n}</p>
           <p className="text-lg font-semibold text-white">{e.title}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -255,7 +255,7 @@ function EpisodeCard({ s, e, making, disabled, onMake, onSaved }: { s: Series; e
           {e.hook && <p className="mt-2 text-[13px] text-gold-200/80">Ends on: {e.hook}</p>}
         </button>
       )}
-      {e.made?.message && status !== "done" && <p className="mt-2 text-xs text-white/45">{e.made.message}</p>}
+      {e.made?.message && status !== "done" && <p className="mt-2 text-xs text-white/50">{e.made.message}</p>}
     </Card>
   );
 }

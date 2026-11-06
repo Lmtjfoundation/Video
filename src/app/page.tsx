@@ -136,7 +136,7 @@ export default function Dashboard() {
                   : "Claude can't write right now — AI writing is paused for you and every subscriber"}
               </p>
               <p className="mt-1 text-[13px] leading-relaxed text-white/70">{aiDown.message}</p>
-              <p className="mt-1 text-[11px] text-white/40">Since {new Date(aiDown.at).toLocaleString()}. This clears by itself after the next successful Claude request or Test.</p>
+              <p className="mt-1 text-[11px] text-white/50">Since {new Date(aiDown.at).toLocaleString()}. This clears by itself after the next successful Claude request or Test.</p>
               <Link href="/admin?tab=settings" className="mt-2 inline-block text-[13px] text-mint-300 hover:underline">Open Integrations → Claude →</Link>
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function Dashboard() {
                   ("href" in s && s.href ? (
                     <Link href={s.href} className="mt-1 block text-[11px] text-mint-300 hover:underline">{s.hint} →</Link>
                   ) : (
-                    <p className="mt-1 text-[11px] text-white/45">{s.hint}</p>
+                    <p className="mt-1 text-[11px] text-white/50">{s.hint}</p>
                   ))}
               </div>
             ))}
@@ -211,7 +211,7 @@ export default function Dashboard() {
                   <ScoreRing score={p.moneyScore} size={38} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-white">{p.hook}</p>
-                    <p className="mt-0.5 text-xs text-white/45">{fmtDateTime(p.scheduledAt, settings.timezone)}</p>
+                    <p className="mt-0.5 text-xs text-white/50">{fmtDateTime(p.scheduledAt, settings.timezone)}</p>
                   </div>
                   <PlatformChip platform={p.platform} />
                 </li>
@@ -241,7 +241,7 @@ export default function Dashboard() {
                   <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", l.level === "error" ? "bg-red-400" : l.level === "warn" ? "bg-gold-400" : "bg-mint-400")} />
                   <div className="min-w-0">
                     <p className="text-[13px] leading-snug text-white/80">{l.message}</p>
-                    <p className="mt-0.5 text-[11px] text-white/35">
+                    <p className="mt-0.5 text-[11px] text-white/50">
                       {l.platform ? `${PLATFORM_SPECS[l.platform].name} · ` : ""}
                       {l.kind} · {timeAgo(l.at)}
                     </p>
@@ -255,7 +255,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-white/40">
+      <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-white/50">
         <Badge tone={env.storage === "supabase" ? "mint" : "neutral"}>Storage: {env.storage}</Badge>
         <Badge tone={connected ? "mint" : "neutral"}>{connected} account{connected === 1 ? "" : "s"} connected</Badge>
         <Badge>{settings.postsPerDay} posts/day/platform</Badge>
@@ -269,10 +269,10 @@ function Toggle({ icon, title, desc, checked, onChange, disabled }: { icon: Reac
   return (
     <div className="flex items-start justify-between gap-3 rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.06]">
       <div className="flex gap-3">
-        <span className={cn("mt-0.5", checked ? "text-mint-300" : "text-white/40")}>{icon}</span>
+        <span className={cn("mt-0.5", checked ? "text-mint-300" : "text-white/50")}>{icon}</span>
         <div>
           <p className="text-[13.5px] font-medium text-white">{title}</p>
-          <p className="mt-0.5 text-[12px] text-white/45">{desc}</p>
+          <p className="mt-0.5 text-[12px] text-white/50">{desc}</p>
         </div>
       </div>
       <Switch checked={checked} onChange={onChange} disabled={disabled} label={title} />

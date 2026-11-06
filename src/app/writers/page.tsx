@@ -75,7 +75,7 @@ export default function WritersRoom() {
                   </button>
                 ))
               ) : (
-                <p className="p-2 text-[13px] text-white/45">No projects yet. Start one above.</p>
+                <p className="p-2 text-[13px] text-white/50">No projects yet. Start one above.</p>
               )}
             </div>
           </Card>
@@ -143,7 +143,7 @@ function NewProject({ lib, onMade }: { lib: Library | null; onMade: (f: FilmProj
         <Button variant="primary" size="lg" loading={busy} disabled={premise.trim().length < 15} onClick={develop}>
           <Feather className="h-4 w-4" /> Develop it · {devCost(format)} credits
         </Button>
-        {busy && <p className="text-[12px] text-white/45">The room is writing — a feature or series takes up to two minutes.</p>}
+        {busy && <p className="text-[12px] text-white/50">The room is writing — a feature or series takes up to two minutes.</p>}
       </div>
     </Card>
   );
@@ -231,7 +231,7 @@ type Act = (key: string, b: Record<string, unknown>, ok?: string) => Promise<Fil
 function Block({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-1 gap-1">
-      <p className="text-[11px] font-medium uppercase tracking-wider text-white/40">{label}</p>
+      <p className="text-[11px] font-medium uppercase tracking-wider text-white/50">{label}</p>
       <div className="text-[14px] leading-relaxed text-white/80">{children}</div>
     </div>
   );
@@ -246,7 +246,7 @@ function StoryTab({ film }: { film: FilmProject }) {
       </div>
       {film.tone && <Block label="Tone">{film.tone}</Block>}
       <div className="grid grid-cols-1 gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-white/40">Structure</p>
+        <p className="text-[11px] font-medium uppercase tracking-wider text-white/50">Structure</p>
         {film.structure.map((b, i) => (
           <div key={i} className="rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
             <p className="text-[13px] font-medium text-mint-300">{b.name}</p>
@@ -407,7 +407,7 @@ function ReviewTab({ film, busy, act }: { film: FilmProject; busy: string | null
       <Button variant="secondary" className="w-fit" loading={busy === "revise"} disabled={notes.trim().length < 5} onClick={() => revise(notes)}>
         <PenLine className="h-4 w-4" /> Revise with my notes · {devCost(film.format)} credits
       </Button>
-      {!!film.notes.length && <p className="text-[12px] text-white/40">Revised {film.notes.length} time{film.notes.length === 1 ? "" : "s"}. Pages for scenes whose outline changed are cleared so they can be rewritten.</p>}
+      {!!film.notes.length && <p className="text-[12px] text-white/50">Revised {film.notes.length} time{film.notes.length === 1 ? "" : "s"}. Pages for scenes whose outline changed are cleared so they can be rewritten.</p>}
     </div>
   );
 }
@@ -452,7 +452,7 @@ function PromoteTab({ film, busy, act }: { film: FilmProject; busy: string | nul
           <Copyable label="Poster art prompt" text={p.posterPrompt} onCopy={copy} />
           <Block label="Trailer (60 seconds)"><ol className="list-decimal space-y-1 pl-5">{p.trailer.map((x, i) => <li key={i}>{x}</li>)}</ol></Block>
           <div className="grid grid-cols-1 gap-3">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-white/40">Character spotlights</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-white/50">Character spotlights</p>
             {p.characterSpotlights.map((c) => <Copyable key={c.name} label={c.name} text={c.caption} onCopy={copy} />)}
           </div>
           <Copyable label="Behind the story (pinned post)" text={p.behindTheStory} onCopy={copy} />
@@ -481,8 +481,8 @@ function Copyable({ label, text, onCopy }: { label: string; text: string; onCopy
   return (
     <div className="rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-white/40">{label}</p>
-        <button className="focus-ring rounded-md p-1 text-white/45 hover:text-white" onClick={() => onCopy(text)} aria-label={`Copy ${label}`}><Copy className="h-3.5 w-3.5" /></button>
+        <p className="text-[11px] font-medium uppercase tracking-wider text-white/50">{label}</p>
+        <button className="focus-ring rounded-md p-1 text-white/50 hover:text-white" onClick={() => onCopy(text)} aria-label={`Copy ${label}`}><Copy className="h-3.5 w-3.5" /></button>
       </div>
       <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-white/80">{text}</p>
     </div>

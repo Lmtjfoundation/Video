@@ -152,7 +152,7 @@ export default function StoryStudio() {
                 </Select>
               </Field>
             </div>
-            <p className="-mt-2 text-xs text-white/45">{STORY_TYPES[f.type]} · {STORY_FORMATS[f.format].note}</p>
+            <p className="-mt-2 text-xs text-white/50">{STORY_TYPES[f.type]} · {STORY_FORMATS[f.format].note}</p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Tone">
                 <Select value={f.tone} onChange={(e) => setF({ ...f, tone: e.target.value })}>{["Gripping and suspenseful", "Curious and investigative", "Deadpan and witty — the facts are the joke", "Calm documentary", "Fast and punchy"].map((x) => <option key={x}>{x}</option>)}</Select>
@@ -163,20 +163,20 @@ export default function StoryStudio() {
             </div>
 
             <div className="grid grid-cols-1 gap-2">
-              <span className="text-[13px] font-medium text-white/80">Your source material <span className="font-normal text-white/40">· optional</span></span>
+              <span className="text-[13px] font-medium text-white/80">Your source material <span className="font-normal text-white/50">· optional</span></span>
               <label className="flex cursor-pointer flex-col items-center gap-1 rounded-xl border border-dashed border-white/15 bg-ink-900/60 p-4 text-center hover:border-mint-400/60">
                 <FileText className="h-5 w-5 text-mint-300" />
                 <span className="text-sm text-white/80">Add notes, research or transcripts</span>
-                <span className="text-xs text-white/40">.txt .md .csv .srt .vtt .json</span>
+                <span className="text-xs text-white/50">.txt .md .csv .srt .vtt .json</span>
                 <input type="file" multiple accept=".txt,.md,.csv,.srt,.vtt,.json,text/plain" className="sr-only" onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
               </label>
               {sources.map((s, i) => (
                 <div key={i} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm ring-1 ring-white/[0.06]">
-                  <Badge tone="sky">text</Badge><span className="min-w-0 flex-1 truncate">{s.name}</span><span className="text-xs tabular-nums text-white/40">{s.text.length.toLocaleString()} chars</span>
-                  <button className="text-xs text-white/40 hover:text-white" onClick={() => setSources((x) => x.filter((_, j) => j !== i))}>Remove</button>
+                  <Badge tone="sky">text</Badge><span className="min-w-0 flex-1 truncate">{s.name}</span><span className="text-xs tabular-nums text-white/50">{s.text.length.toLocaleString()} chars</span>
+                  <button className="text-xs text-white/50 hover:text-white" onClick={() => setSources((x) => x.filter((_, j) => j !== i))}>Remove</button>
                 </div>
               ))}
-              <span className="mt-1 text-[13px] font-medium text-white/80">Reference images <span className="font-normal text-white/40">· up to 3</span></span>
+              <span className="mt-1 text-[13px] font-medium text-white/80">Reference images <span className="font-normal text-white/50">· up to 3</span></span>
               <div className="flex flex-wrap gap-2">
                 {media.slice(0, 12).map((m) => (
                   <button
@@ -194,7 +194,7 @@ export default function StoryStudio() {
                   <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => { uploadImages(e.target.files); e.target.value = ""; }} />
                 </label>
               </div>
-              <p className="text-xs text-white/40">For true stories, Claude sticks to your sources plus well-established facts.</p>
+              <p className="text-xs text-white/50">For true stories, Claude sticks to your sources plus well-established facts.</p>
             </div>
 
             {longLocked ? (
@@ -236,7 +236,7 @@ export default function StoryStudio() {
                     <Badge>{STORY_FORMATS[s.format].label.split(" · ")[0]}</Badge>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-white">{s.out.titles?.[0]?.title ?? s.topic ?? "Untitled"}</p>
-                      <p className="text-xs text-white/45">{s.niche} · {new Date(s.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-white/50">{s.niche} · {new Date(s.createdAt).toLocaleDateString()}</p>
                     </div>
                     <Button size="sm" variant={s.id === current ? "primary" : "secondary"} onClick={() => setCurrent(s.id)}>{s.id === current ? "Open" : "View"}</Button>
                   </li>
@@ -264,7 +264,7 @@ function StoryView({ st, onPost, onRepurpose, onDelete }: { st: Story; onPost: (
           <div className="grid grid-cols-1 gap-2">
             <p className="label">Watch the episode</p>
             <video src={`/api/media/remote?u=${encodeURIComponent(st.videoUrl)}`} controls playsInline preload="metadata" className="mx-auto aspect-[9/16] max-h-[560px] rounded-lg bg-black ring-1 ring-white/10" />
-            <p className="text-center text-xs text-white/45">Voiced by an AI cast with a narrator · the Instagram and Facebook drafts with this video are in your post queue.</p>
+            <p className="text-center text-xs text-white/50">Voiced by an AI cast with a narrator · the Instagram and Facebook drafts with this video are in your post queue.</p>
           </div>
         )}
         <div className="flex flex-wrap gap-2">
@@ -277,7 +277,7 @@ function StoryView({ st, onPost, onRepurpose, onDelete }: { st: Story; onPost: (
         </div>
         <div>
           <p className="label mb-2">Title options</p>
-          <ol className="grid grid-cols-1 list-decimal gap-1.5 pl-5 text-sm">{(o.titles ?? []).map((t) => <li key={t.title}><span className="font-medium text-white">{t.title}</span> <span className="text-white/45">{t.why}</span></li>)}</ol>
+          <ol className="grid grid-cols-1 list-decimal gap-1.5 pl-5 text-sm">{(o.titles ?? []).map((t) => <li key={t.title}><span className="font-medium text-white">{t.title}</span> <span className="text-white/50">{t.why}</span></li>)}</ol>
         </div>
         <div className="rounded-xl bg-gradient-to-br from-mint-400/10 to-gold-400/[0.06] p-4 ring-1 ring-mint-400/25">
           <p className="label mb-1.5">Hook · first 3 seconds</p>
@@ -314,7 +314,7 @@ function StoryView({ st, onPost, onRepurpose, onDelete }: { st: Story; onPost: (
           </div>
         )}
         {o.monetization && <p className="text-sm text-white/60"><span className="text-gold-300">Monetization:</span> {o.monetization}</p>}
-        {st.sources.length > 0 && <p className="text-xs text-white/40">Sources used: {st.sources.join(", ")}</p>}
+        {st.sources.length > 0 && <p className="text-xs text-white/50">Sources used: {st.sources.join(", ")}</p>}
       </div>
     </Card>
   );

@@ -64,7 +64,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             <li className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-mint-300" /> Posts to six platforms on schedule, with rules checks that protect your accounts.</li>
           </ul>
         </div>
-        <p className="text-xs text-white/35">Your social passwords are never stored. Accounts link through each platform's own sign-in.</p>
+        <p className="text-xs text-white/50">Your social passwords are never stored. Accounts link through each platform's own sign-in.</p>
       </section>
 
       <section className="flex items-center justify-center px-5 py-12">
@@ -101,17 +101,17 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             )}
           </p>
           {mode === "login" && (
-            <p className="mt-3 text-center text-xs text-white/40">
+            <p className="mt-3 text-center text-xs text-white/50">
               <Link href="/forgot" className="hover:text-white/70">Forgot your password?</Link>
             </p>
           )}
           {mode === "signup" && (
-            <p className="mt-3 text-center text-xs leading-relaxed text-white/40">
+            <p className="mt-3 text-center text-xs leading-relaxed text-white/50">
               By creating an account you agree to the <Link href="/terms" className="underline hover:text-white/70">Terms</Link> and{" "}
               <Link href="/privacy" className="underline hover:text-white/70">Privacy Policy</Link>.
             </p>
           )}
-          <p className="mt-3 text-center text-xs text-white/35"><Link href="/pricing" className="hover:text-white/60">See plans and pricing</Link></p>
+          <p className="mt-3 text-center text-xs text-white/50"><Link href="/pricing" className="hover:text-white/60">See plans and pricing</Link></p>
           <LegalFooter className="mt-6 justify-center" />
         </form>
       </section>

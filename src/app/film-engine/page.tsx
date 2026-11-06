@@ -154,13 +154,13 @@ export default function FilmEngine() {
                 data.cuts.map((c) => (
                   <button key={c.id} onClick={() => open(c)} className={cn("rounded-xl p-3 text-left ring-1 transition", openId === c.id ? "bg-mint-400/[0.08] ring-mint-400/30" : "bg-white/[0.03] ring-white/[0.06] hover:bg-white/[0.06]")}>
                     <p className="truncate text-sm font-medium text-white">{c.title}</p>
-                    <p className="mt-0.5 text-xs text-white/45">
+                    <p className="mt-0.5 text-xs text-white/50">
                       {c.segments.length} beats · {c.segments.filter((s) => s.clipMediaId).length} filmed · {c.segments.reduce((t, s) => t + s.seconds, 0)}s · {c.aspect}
                     </p>
                   </button>
                 ))
               ) : (
-                <p className="text-sm text-white/45">No films yet. Start one above.</p>
+                <p className="text-sm text-white/50">No films yet. Start one above.</p>
               )}
             </div>
           </Card>
@@ -320,7 +320,7 @@ function NewFilm({ data, admin, onMade }: { data: Data | null; admin: boolean; o
           <Field label="Frame"><Select value={aspect} onChange={(e) => setAspect(e.target.value)}>{ASPECTS.map((a) => <option key={a}>{a}</option>)}</Select></Field>
           <Field label="Engine"><Select value={engine} onChange={(e) => setEngine(e.target.value as Engine)}>{ENGINES.map((e) => <option key={e} value={e}>{e === "own" ? "Ghost Post engine" : e === "gemini" ? "Ghost Post Cinematic" : e === "seedance" ? "Ghost Post Cinematic Pro" : e === "wan" ? "Ghost Post Lite" : "Free"}</option>)}</Select></Field>
         </div>
-        <p className="text-xs text-white/45">About {beats * seconds} seconds of film. You can add your cast and references after planning; the shot lists cite them as @Name.</p>
+        <p className="text-xs text-white/50">About {beats * seconds} seconds of film. You can add your cast and references after planning; the shot lists cite them as @Name.</p>
         <Button variant="primary" loading={busyNow} disabled={!filmId && story.trim().length < 20} onClick={() => make(true)}>
           <Wand2 className="h-4 w-4" /> Plan with the director · {admin ? "owner" : `${data?.prices.plan ?? 4} credits`}
         </Button>
@@ -392,7 +392,7 @@ function References({ draft, data, onChange }: { draft: Cut; data: Data; onChang
                 <img src={c.imageUrl} alt={c.name} className="aspect-square w-full object-cover" />
                 <span className="block truncate px-1.5 py-1 text-[11px] text-white/80">{c.name}</span>
               </button>
-            )) : <p className="col-span-full text-sm text-white/45">No characters yet. Make them in Movie Studio, or add portraits from the Media Library.</p>}
+            )) : <p className="col-span-full text-sm text-white/50">No characters yet. Make them in Movie Studio, or add portraits from the Media Library.</p>}
           </div>
         )}
         {picker === "library" && (
@@ -403,7 +403,7 @@ function References({ draft, data, onChange }: { draft: Cut; data: Data; onChang
                 <span className="block truncate px-1.5 py-1 text-[11px] text-white/70">{m.name}</span>
               </button>
             ))}
-            {!media.length && <p className="col-span-full text-sm text-white/45">Your Media Library is empty. Upload pictures, clips or audio there first.</p>}
+            {!media.length && <p className="col-span-full text-sm text-white/50">Your Media Library is empty. Upload pictures, clips or audio there first.</p>}
           </div>
         )}
         {picker === "voice" && (
@@ -430,7 +430,7 @@ function References({ draft, data, onChange }: { draft: Cut; data: Data; onChang
             ))}
           </div>
         ) : (
-          <p className="text-sm text-white/45">Add your cast portraits first: they keep every face consistent across beats. Then add locations, style frames, motion clips or voice lines.</p>
+          <p className="text-sm text-white/50">Add your cast portraits first: they keep every face consistent across beats. Then add locations, style frames, motion clips or voice lines.</p>
         )}
       </div>
     </Card>
@@ -512,7 +512,7 @@ function Beat({ seg, index, count, engine, engineReady, costLabel, onEdit, onMov
           {seg.clipUrl ? (
             <video key={seg.clipUrl} src={seg.clipUrl} controls playsInline className="aspect-[9/16] w-full rounded-xl bg-black object-contain" />
           ) : (
-            <div className="grid grid-cols-1 aspect-[9/16] place-items-center rounded-xl bg-white/[0.03] p-4 text-center text-xs text-white/35 ring-1 ring-white/[0.06]">{working ? "Filming… this takes a few minutes." : "The beat's footage appears here."}</div>
+            <div className="grid grid-cols-1 aspect-[9/16] place-items-center rounded-xl bg-white/[0.03] p-4 text-center text-xs text-white/50 ring-1 ring-white/[0.06]">{working ? "Filming… this takes a few minutes." : "The beat's footage appears here."}</div>
           )}
         </div>
       </div>

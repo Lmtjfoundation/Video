@@ -7,7 +7,7 @@ import { Button, Card, CardHeader, Input, PageHeader } from "@/components/ui";
 
 type Key = { id: string; name: string; prefix: string; createdAt: string; lastUsedAt?: string };
 
-const Code = ({ children }: { children: string }) => <pre className="overflow-x-auto whitespace-pre rounded-lg bg-black/50 p-3 text-xs text-white/80">{children}</pre>;
+const Code = ({ children }: { children: string }) => <pre tabIndex={0} aria-label="Code example" className="focus-ring overflow-x-auto whitespace-pre rounded-lg bg-black/50 p-3 text-xs text-white/80">{children}</pre>;
 
 export default function Developers() {
   const { toast } = useApp();

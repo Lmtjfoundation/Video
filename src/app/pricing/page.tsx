@@ -27,7 +27,7 @@ export default async function PricingPage() {
       <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-white">Research the niche, write the story, post everywhere.</h1>
       <p className="mb-10 mt-3 max-w-2xl text-white/60">One plan replaces a scheduler, a script writer and a niche research tool. Start free; upgrade when it's paying for itself.</p>
       <PricingTable signedIn={false} initial={initial} />
-      <p className="mt-6 text-xs text-white/40">
+      <p className="mt-6 text-xs text-white/50">
         Prices in USD. Paid plans renew automatically each month or year until cancelled; cancel any time from Plans &amp; Billing and keep your plan until the end of the period.
         Post allowances reset on the 1st of each month. AI credits are added to your vault each billing period and stay there for 30 days; credits that expire unused move to a shared community pool that tops up other accounts.
       </p>

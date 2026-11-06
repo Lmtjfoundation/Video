@@ -193,7 +193,7 @@ function Library() {
           </button>
         ))}
         {!!data?.boards.length && (
-          <Select className="w-auto" value={shelf === "board" ? boardId : ""} onChange={(e) => { if (e.target.value) { setShelf("board"); setBoardId(e.target.value); } else setShelf("all"); }}>
+          <Select aria-label="Board" className="w-auto" value={shelf === "board" ? boardId : ""} onChange={(e) => { if (e.target.value) { setShelf("board"); setBoardId(e.target.value); } else setShelf("all"); }}>
             <option value="">Boards…</option>
             {data.boards.map((b) => <option key={b.id} value={b.id}>{b.name} ({b.count})</option>)}
           </Select>
@@ -207,10 +207,10 @@ function Library() {
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative min-w-[220px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
           <Input className="pl-9" placeholder={kind === "music" ? "Search by mood, genre, instrument, title…" : kind === "sfx" ? "Search sounds: rain, door slam, whoosh…" : "Search clips: city at night, ocean, office…"} value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <Select className="w-auto" value={sort} onChange={(e) => setSort(e.target.value)} disabled={!!similar}>
+        <Select aria-label="Sort" className="w-auto" value={sort} onChange={(e) => setSort(e.target.value)} disabled={!!similar}>
           {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
         </Select>
         <Button variant="ghost" onClick={() => setShowFilters((v) => !v)}>
@@ -230,7 +230,7 @@ function Library() {
         <Card className="mb-4 grid grid-cols-1 gap-4 p-4">
           {tags.map(([key, label, list]) => (
             <div key={key}>
-              <div className="mb-1.5 text-xs uppercase tracking-wide text-white/40">{label}</div>
+              <div className="mb-1.5 text-xs uppercase tracking-wide text-white/50">{label}</div>
               <div className="flex flex-wrap gap-1.5">
                 {list.map((t) => {
                   const on = facets[key].includes(t);
@@ -247,19 +247,19 @@ function Library() {
           <div className="flex flex-wrap gap-3">
             {kind === "music" && (
               <>
-                <Select className="w-auto" value={vocals} onChange={(e) => setVocals(e.target.value)}>
+                <Select aria-label="Vocals" className="w-auto" value={vocals} onChange={(e) => setVocals(e.target.value)}>
                   <option value="">Vocals and instrumental</option>
                   <option value="instrumental">Instrumental only</option>
                   <option value="vocals">With vocals</option>
                 </Select>
-                <Select className="w-auto" value={tempo} onChange={(e) => setTempo(e.target.value)}>
+                <Select aria-label="Tempo" className="w-auto" value={tempo} onChange={(e) => setTempo(e.target.value)}>
                   <option value="">Any tempo</option>
                   {TEMPOS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
                 </Select>
               </>
             )}
             {kind !== "footage" && (
-              <Select className="w-auto" value={length} onChange={(e) => setLength(e.target.value)}>
+              <Select aria-label="Length" className="w-auto" value={length} onChange={(e) => setLength(e.target.value)}>
                 <option value="">Any length</option>
                 {LENGTHS.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
               </Select>
@@ -280,7 +280,7 @@ function Library() {
         />
       ) : (
         <>
-          <div className="mb-2 flex items-center gap-2 text-xs text-white/40">
+          <div className="mb-2 flex items-center gap-2 text-xs text-white/50">
             {loading && <Spinner className="h-3 w-3" />} {data.total} {data.total === 1 ? "result" : "results"}
             {!data.canDownload && <span className="ml-auto">Free plan: preview and save. <Link href="/plans" className="text-mint-300 underline">Upgrade</Link> to download.</span>}
           </div>
@@ -312,7 +312,7 @@ function Library() {
                   <div className="col-span-2 flex items-center gap-3 md:col-span-1">
                     <Wave peaks={it.peaks} progress={playing?.id === it.id ? pos / it.seconds : 0} onSeek={(f) => seek(it, f)} />
                     <span className="w-10 shrink-0 text-right text-xs tabular-nums text-white/50">{fmtDuration(it.seconds)}</span>
-                    {kind === "music" && <span className="hidden w-16 shrink-0 text-xs text-white/40 lg:block">{it.bpm ? `${it.bpm} BPM` : ""}</span>}
+                    {kind === "music" && <span className="hidden w-16 shrink-0 text-xs text-white/50 lg:block">{it.bpm ? `${it.bpm} BPM` : ""}</span>}
                   </div>
                   <div className="col-span-2 md:col-span-1">
                     <Actions it={it} data={data} onFav={favorite} onBoard={setBoardFor} onDownload={getFile} onSimilar={setSimilar} onAct={act} reload={load} />
@@ -377,7 +377,7 @@ function FillCatalog({ kind, engine }: { kind: "music" | "sfx"; engine: boolean 
           {s ? `${s.inCatalog} in the catalog now; ${s.left} more ${kind === "music" ? "genre and mood recipes" : "sound recipes"} ready to make.` : "…"} Made on your engine in the background, free for admins.
         </div>
       </div>
-      <Select className="w-auto" value={count} onChange={(e) => setCount(e.target.value)}>
+      <Select aria-label="How many" className="w-auto" value={count} onChange={(e) => setCount(e.target.value)}>
         {["10", "25", "50", "100"].map((n) => <option key={n} value={n}>{n}</option>)}
       </Select>
       <Button variant="primary" loading={busy} disabled={!engine || s?.left === 0} onClick={async () => {
@@ -456,7 +456,7 @@ function BoardPicker({ item, boards, onClose, onAct, reload }: {
         {boards.map((b) => (
           <button key={b.id} className="rounded-lg bg-white/5 px-3 py-2 text-left text-sm hover:bg-white/10"
             onClick={async () => { if (await onAct({ action: "board-add", boardId: b.id, id: item.id }, `Added to ${b.name}`)) { onClose(); reload(); } }}>
-            {b.name} <span className="text-white/40">({b.count})</span>
+            {b.name} <span className="text-white/50">({b.count})</span>
           </button>
         ))}
       </div>

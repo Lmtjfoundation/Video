@@ -39,7 +39,7 @@ export function LegalShell({ title, intro, children }: { title: string; intro?: 
         </nav>
       </header>
       <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{title}</h1>
-      <p className="mt-2 text-sm text-white/45">Last updated {LEGAL_UPDATED}</p>
+      <p className="mt-2 text-sm text-white/50">Last updated {LEGAL_UPDATED}</p>
       {intro && <p className="mt-5 text-[15px] leading-relaxed text-white/75">{intro}</p>}
       <article className="legal mt-8 text-[15px] leading-relaxed text-white/75 [&_a]:text-mint-300 [&_a:hover]:underline [&_h2]:mb-3 [&_h2]:mt-10 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-white [&_li]:mt-1.5 [&_p]:mt-3 [&_strong]:text-white/90 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5">
         {children}

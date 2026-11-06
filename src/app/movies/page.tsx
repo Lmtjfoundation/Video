@@ -92,7 +92,7 @@ export default function MovieStudio() {
                     {p.render?.status === "failed" && <Badge tone="red">Render failed</Badge>}
                   </div>
                   <p className="line-clamp-2 text-sm font-medium text-white">{p.hook}</p>
-                  <p className="mt-1 text-xs text-white/45">{p.video?.scenes.length} scenes · {p.video?.ai?.veoScenes.length ?? 0} animated · render {renderCredits(p.video)} credits</p>
+                  <p className="mt-1 text-xs text-white/50">{p.video?.scenes.length} scenes · {p.video?.ai?.veoScenes.length ?? 0} animated · render {renderCredits(p.video)} credits</p>
                 </Link>
               ))}
             </div>
@@ -182,9 +182,9 @@ function CharactersCard({ lib, admin, creditsLeft, onChange }: { lib: Library | 
                 <div className="flex items-start justify-between gap-2 p-2.5">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-white">{c.name}</p>
-                    <p className="truncate text-[11px] text-white/45" title={c.look}>{c.look}</p>
+                    <p className="truncate text-[11px] text-white/50" title={c.look}>{c.look}</p>
                   </div>
-                  <button onClick={() => remove(c)} className="rounded-md p-1 text-white/35 hover:bg-red-500/10 hover:text-red-300" aria-label={`Delete ${c.name}`}>
+                  <button onClick={() => remove(c)} className="rounded-md p-1 text-white/50 hover:bg-red-500/10 hover:text-red-300" aria-label={`Delete ${c.name}`}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -201,7 +201,7 @@ function CharactersCard({ lib, admin, creditsLeft, onChange }: { lib: Library | 
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-ink-950/50 text-white/45 hover:border-mint-300/40 hover:text-mint-300"
+              className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/15 bg-ink-950/50 text-white/50 hover:border-mint-300/40 hover:text-mint-300"
             >
               {photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -236,7 +236,7 @@ function CharactersCard({ lib, admin, creditsLeft, onChange }: { lib: Library | 
             </label>
           )}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs text-white/45">{costLine(admin, creditsLeft, `${CREDIT_COST.character} credits`)}</p>
+            <p className="text-xs text-white/50">{costLine(admin, creditsLeft, `${CREDIT_COST.character} credits`)}</p>
             <Button variant="primary" loading={busy} disabled={!canCreate} onClick={create}>
               <Sparkles className="h-4 w-4" /> Create character
             </Button>
@@ -361,7 +361,7 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
           <Textarea rows={kind === "movie" ? 4 : 8} maxLength={12000} value={brief} onChange={(e) => setBrief(e.target.value)} placeholder={kind === "movie" ? "Maya finds a talking houseplant that only tells the truth, the day before her big job interview." : "Paste the text here…"} />
         </Field>
         <div>
-          <p className="mb-2 text-sm font-medium text-white/80">Cast <span className="font-normal text-white/40">(up to 6)</span></p>
+          <p className="mb-2 text-sm font-medium text-white/80">Cast <span className="font-normal text-white/50">(up to 6)</span></p>
           {chars.length ? (
             <div className="flex flex-wrap gap-2">
               {chars.map((c) => {
@@ -380,7 +380,7 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
               })}
             </div>
           ) : (
-            <p className="text-xs text-white/45">No characters yet. Create some on the left, or go without: scenes will show places, objects and anonymous figures.</p>
+            <p className="text-xs text-white/50">No characters yet. Create some on the left, or go without: scenes will show places, objects and anonymous figures.</p>
           )}
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -442,7 +442,7 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
             </Select>
           </Field>
         )}
-        <p className="text-xs leading-relaxed text-white/40">
+        <p className="text-xs leading-relaxed text-white/50">
           Each scene picture is {CREDIT_COST.aiImage} credits; each {engineName} scene is {engine === "seedance" ? CREDIT_COST.seedanceSecond : engine === "wan" ? CREDIT_COST.wanSecond : CREDIT_COST.veoSecond} credits a second (4–8 seconds). Scenes that can&apos;t be made are refunded automatically. Rendering takes a few minutes; animation adds about 1–3 minutes a clip.
         </p>
         <div className="flex justify-end">

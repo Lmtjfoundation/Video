@@ -96,7 +96,7 @@ export function LutGallery({ canDownload }: { canDownload: boolean }) {
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
       <div>
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Select className="w-auto" value={src} onChange={(e) => setSrc(e.target.value)}>
+          <Select aria-label="Look source" className="w-auto" value={src} onChange={(e) => setSrc(e.target.value)}>
             <option value="">Sample picture</option>
             {pics.slice(0, 40).map((p) => <option key={p.id} value={p.url}>{p.name}</option>)}
           </Select>
@@ -104,11 +104,11 @@ export function LutGallery({ canDownload }: { canDownload: boolean }) {
             <ImageUp className="h-4 w-4" /> Try on a photo
             <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setSrc(URL.createObjectURL(f)); }} />
           </label>
-          <Select className="w-auto" value={group} onChange={(e) => setGroup(e.target.value)}>
+          <Select aria-label="Look group" className="w-auto" value={group} onChange={(e) => setGroup(e.target.value)}>
             <option value="">All grades</option>
             {[...new Set(GRADES.map((g) => g.group))].map((g) => <option key={g}>{g}</option>)}
           </Select>
-          <span className="text-xs text-white/40">Your photo stays in your browser.</span>
+          <span className="text-xs text-white/50">Your photo stays in your browser.</span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {shown.map((g) => (

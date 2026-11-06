@@ -11,7 +11,8 @@
     "worker": "node scripts/worker.mjs",
     "gen:key": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
     "test": "vitest run",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test",
+    "a11y": "node scripts/a11y-scan.cjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@types/nodemailer": "^7.0.3",
     "@types/web-push": "^3.6.4",
+    "axe-core": "^4.10.3",
     "vitest": "^3.2.7"
   }
 }

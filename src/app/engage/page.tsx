@@ -92,7 +92,7 @@ export default function EngagePage() {
               onClick={() => setTab(t.key)}
               className={cn("focus-ring rounded-lg px-3 py-1.5 text-xs font-medium", tab === t.key ? "bg-white/10 text-white" : "text-white/50 hover:text-white")}
             >
-              {t.label} <span className={cn(n && t.key === "queue" ? "text-gold-300" : "text-white/35")}>{n}</span>
+              {t.label} <span className={cn(n && t.key === "queue" ? "text-gold-300" : "text-white/50")}>{n}</span>
             </button>
           );
         })}
@@ -157,7 +157,7 @@ function ReplyRow({ reply, onUpdate, onDone }: { reply: Reply; onUpdate: (r: Rep
         {reply.safetyFlags.filter((f) => f.startsWith("warn:")).map((f) => (
           <Badge key={f} tone="gold">{f.slice(5).replace(/_/g, " ")}</Badge>
         ))}
-        <span className="ml-auto text-[11px] text-white/35">{timeAgo(reply.createdAt)}</span>
+        <span className="ml-auto text-[11px] text-white/50">{timeAgo(reply.createdAt)}</span>
       </div>
 
       <blockquote className="mb-3 border-l-2 border-white/15 pl-3 text-[13.5px] leading-relaxed text-white/65">{reply.commentText}</blockquote>
@@ -171,12 +171,12 @@ function ReplyRow({ reply, onUpdate, onDone }: { reply: Reply; onUpdate: (r: Rep
       {editable ? (
         <>
           <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a reply…" className="min-h-[80px]" />
-          <div className="mt-1 text-right text-[11px] tabular-nums text-white/35">
+          <div className="mt-1 text-right text-[11px] tabular-nums text-white/50">
             <span className={cn(text.length > limit && "text-red-300")}>{text.length}</span>/{limit}
           </div>
         </>
       ) : (
-        <p className="rounded-xl bg-ink-950/60 p-3 text-[13.5px] leading-relaxed text-white/85 ring-1 ring-white/[0.05]">{reply.text || <span className="text-white/35">No reply</span>}</p>
+        <p className="rounded-xl bg-ink-950/60 p-3 text-[13.5px] leading-relaxed text-white/85 ring-1 ring-white/[0.05]">{reply.text || <span className="text-white/50">No reply</span>}</p>
       )}
       {reply.error && <p className="mt-2 text-xs text-red-300/80">{reply.error}</p>}
 

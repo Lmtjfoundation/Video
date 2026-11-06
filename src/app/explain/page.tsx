@@ -155,7 +155,7 @@ export default function ExplainPage() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/45">{title}</p>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">{title}</p>
       {children}
     </div>
   );

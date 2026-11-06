@@ -160,7 +160,7 @@ function Overview({ stats, onStats }: { stats: Stats | null; onStats: (s: Stats)
             const n = stats.byPlan[p.id] ?? 0;
             return (
               <div key={p.id} className="grid grid-cols-[110px_1fr_60px] items-center gap-3 text-sm">
-                <span className="text-white/80">{p.name} <span className="text-white/40">${p.monthly}</span></span>
+                <span className="text-white/80">{p.name} <span className="text-white/50">${p.monthly}</span></span>
                 <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]"><div className="h-full rounded-full bg-gradient-to-r from-mint-400 to-gold-400" style={{ width: `${stats.users ? (n / stats.users) * 100 : 0}%` }} /></div>
                 <span className="text-right tabular-nums text-white">{n}</span>
               </div>
@@ -226,7 +226,7 @@ function ProfitCard({ stats, onStats }: { stats: Stats; onStats: (s: Stats) => v
         <div className="grid grid-cols-1 gap-1.5 text-sm">
           {rows.map(([label, v, note]) => (
             <div key={label} className="flex items-baseline justify-between gap-4">
-              <span className="text-white/70">{label}{note && <span className="block text-xs text-white/40">{note}</span>}</span>
+              <span className="text-white/70">{label}{note && <span className="block text-xs text-white/50">{note}</span>}</span>
               <span className={cn("tabular-nums", v < 0 ? "text-white/70" : "text-white")}>{v < 0 ? `−${usd(-v)}` : usd(v)}</span>
             </div>
           ))}
@@ -248,23 +248,23 @@ function ProfitCard({ stats, onStats }: { stats: Stats; onStats: (s: Stats) => v
             <div className="flex items-end"><Button variant="primary" loading={busy} onClick={save}>Save costs</Button></div>
           </div>
         )}
-        <div className="overflow-x-auto">
+        <div role="region" aria-label="Table" tabIndex={0} className="focus-ring overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-sm">
-            <thead className="text-xs text-white/45">
+            <thead className="text-xs text-white/50">
               <tr><th className="py-2 font-medium">Plan</th><th className="font-medium">Leaves a month, typical use</th><th className="font-medium">Every credit used</th><th className="font-medium">Subscribers to pay all fixed bills</th></tr>
             </thead>
             <tbody>
               {stats.planEconomics.map((x) => (
                 <tr key={x.id} className="border-t border-white/[0.06]">
-                  <td className="py-2 text-white/85">{x.name} <span className="text-white/40">${x.monthly}</span></td>
+                  <td className="py-2 text-white/85">{x.name} <span className="text-white/50">${x.monthly}</span></td>
                   <td className="tabular-nums">{usd(x.typical)}</td>
-                  <td className="tabular-nums">{usd(x.full)}<span className="text-white/40"> · yearly {usd(x.fullYearly)}</span></td>
+                  <td className="tabular-nums">{usd(x.full)}<span className="text-white/50"> · yearly {usd(x.fullYearly)}</span></td>
                   <td className="tabular-nums">{x.breakEven ?? "never"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p className="mt-2 text-xs text-white/45">After card fees and AI. GPU work (clips, voices, lip sync) is priced in credits per job, so it is covered by the credits it uses. Anyone who needs more buys a credit pack.</p>
+          <p className="mt-2 text-xs text-white/50">After card fees and AI. GPU work (clips, voices, lip sync) is priced in credits per job, so it is covered by the credits it uses. Anyone who needs more buys a credit pack.</p>
         </div>
       </div>
     </Card>
@@ -305,7 +305,7 @@ function Review({ onChange }: { onChange: () => void }) {
           <option value="all">Everything</option>
         </Select>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by user email or text" className="pl-9" />
         </div>
       </Card>
@@ -347,7 +347,7 @@ function ReviewCard({ row, onDone }: { row: ContentRow; onDone: () => void }) {
         <StatusBadge status={p.status} />
         {p.mature && <Badge tone="red">18+ mature</Badge>}
         <span className="text-sm text-white/70">{row.email}</span>
-        <span className="ml-auto text-xs text-white/45">{p.scheduledAt ? new Date(p.scheduledAt).toLocaleString() : "No date"}</span>
+        <span className="ml-auto text-xs text-white/50">{p.scheduledAt ? new Date(p.scheduledAt).toLocaleString() : "No date"}</span>
       </div>
       {edit ? (
         <div className="grid grid-cols-1 gap-2">
@@ -416,9 +416,9 @@ function UsersTab({ onChange }: { onChange: () => void }) {
   return (
     <Card>
       <CardHeader title={`${users.length} users`} subtitle="Change plans, require approval before posting, suspend, or reset a password." action={<Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" className="w-48" aria-label="Search users" />} />
-      <div className="overflow-x-auto">
+      <div role="region" aria-label="Users table" tabIndex={0} className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[980px] text-left text-sm">
-          <thead className="text-[11px] uppercase tracking-wider text-white/40">
+          <thead className="text-[11px] uppercase tracking-wider text-white/50">
             <tr><th className="px-5 py-3">User</th><th className="px-3 py-3">Plan</th><th className="px-3 py-3">Usage this month</th><th className="px-3 py-3">Posts</th><th className="px-3 py-3">Approval</th><th className="px-3 py-3">Status</th><th className="px-5 py-3" /></tr>
           </thead>
           <tbody className="divide-y divide-white/[0.05]">
@@ -428,14 +428,14 @@ function UsersTab({ onChange }: { onChange: () => void }) {
                 <tr key={u.id} className="align-top">
                   <td className="px-5 py-3">
                     <p className="font-medium text-white">{u.name} {u.isOwner ? <Badge tone="gold">owner</Badge> : u.isCoOwner ? <Badge tone="gold">co-owner</Badge> : u.role === "admin" && <Badge tone="gold">admin</Badge>} {u.staff && u.role !== "admin" && <Badge tone="mint">employee · unlimited</Badge>}</p>
-                    <p className="text-xs text-white/45">{u.email}</p>
-                    <p className="text-xs text-white/35">Joined {new Date(u.createdAt).toLocaleDateString()}{u.signupSource ? ` from ${u.signupSource}` : ""}{u.lastLoginAt ? ` · last seen ${new Date(u.lastLoginAt).toLocaleDateString()}` : ""}</p>
+                    <p className="text-xs text-white/50">{u.email}</p>
+                    <p className="text-xs text-white/50">Joined {new Date(u.createdAt).toLocaleDateString()}{u.signupSource ? ` from ${u.signupSource}` : ""}{u.lastLoginAt ? ` · last seen ${new Date(u.lastLoginAt).toLocaleDateString()}` : ""}</p>
                   </td>
                   <td className="px-3 py-3">
                     <Select value={u.plan} onChange={(e) => patch(u.id, { plan: e.target.value }, `Plan changed to ${e.target.value}`)} className="w-36" aria-label="Plan">
                       {PLANS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </Select>
-                    {u.billing?.status && <p className="mt-1 text-xs text-white/40">Stripe: {u.billing.status}</p>}
+                    {u.billing?.status && <p className="mt-1 text-xs text-white/50">Stripe: {u.billing.status}</p>}
                   </td>
                   <td className="px-3 py-3 tabular-nums text-white/70">
                     {u.usage.credits.toLocaleString()} / {plan.credits.toLocaleString()} credits
@@ -532,7 +532,7 @@ function AppSettingsTab() {
           <Field label="Governing law" hint="used in the Terms">
             <Input defaultValue={s.legalJurisdiction} onBlur={(e) => e.target.value !== s.legalJurisdiction && save({ legalJurisdiction: e.target.value })} placeholder="the State of Texas, USA" />
           </Field>
-          <p className="text-xs text-white/45">
+          <p className="text-xs text-white/50">
             Public pages: <a className="text-mint-300 hover:underline" href="/terms" target="_blank">Terms</a> ·{" "}
             <a className="text-mint-300 hover:underline" href="/privacy" target="_blank">Privacy</a> ·{" "}
             <a className="text-mint-300 hover:underline" href="/data-deletion" target="_blank">Data deletion</a> — use these links in Stripe and in the X, Meta, Google, LinkedIn and TikTok developer portals.
@@ -546,7 +546,7 @@ function AppSettingsTab() {
             <li key={label} className="flex items-center gap-3 px-5 py-3 text-sm">
               <span className={cn("h-2 w-2 rounded-full", ok ? "bg-mint-400" : "bg-gold-400")} />
               <span className="text-white/85">{label}</span>
-              <span className={cn("ml-auto text-right text-xs", ok ? "text-mint-300/80" : "text-white/45")}>{ok ? "Ready" : hint}</span>
+              <span className={cn("ml-auto text-right text-xs", ok ? "text-mint-300/80" : "text-white/50")}>{ok ? "Ready" : hint}</span>
             </li>
           ))}
         </ul>
@@ -593,7 +593,7 @@ function Row({ title, desc, control }: { title: string; desc: string; control: R
     <div className="flex items-start justify-between gap-4 rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.06]">
       <div>
         <p className="text-sm font-medium text-white">{title}</p>
-        <p className="text-xs text-white/45">{desc}</p>
+        <p className="text-xs text-white/50">{desc}</p>
       </div>
       {control}
     </div>
@@ -787,7 +787,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             />
             <span>Use Gemini as the backup when Claude is busy or down, so nobody is blocked. When Claude is out of credits or its key is rejected, Gemini always takes over (and goes first for 10 minutes), even with this off.</span>
           </label>
-          <p className="text-[11px] leading-relaxed text-white/45">
+          <p className="text-[11px] leading-relaxed text-white/50">
             Use a key from a Google Cloud project with <b className="text-white/70">billing turned on</b>. On Google's free tier, prompts and answers may be used to improve Google's products, and daily limits are small. Gemini content is written by a different AI than Claude, so compare a few posts before relying on it for paying customers.
           </p>
           <Actions>
@@ -812,7 +812,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         >
           {st.replicate.source === "server" && <ServerNote />}
           <Input type="password" autoComplete="off" spellCheck={false} placeholder="Replicate API token (r8_…)" value={vals.replicateKey ?? ""} onChange={set("replicateKey")} />
-          <p className="text-[11px] leading-relaxed text-white/45">Turn on billing at replicate.com → Account → Billing first; Seedance won't run on an account without it.</p>
+          <p className="text-[11px] leading-relaxed text-white/50">Turn on billing at replicate.com → Account → Billing first; Seedance won't run on an account without it.</p>
           <Actions>
             <Button size="sm" variant="primary" loading={busy === "save:Replicate"} onClick={() => save(["replicateKey"], "Replicate", "replicate")}>Save &amp; test</Button>
             <Button size="sm" loading={busy === "test:replicate"} disabled={!st.replicate.set} onClick={() => check("replicate")}>Test</Button>
@@ -978,7 +978,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         >
           {st.pixabay.source === "server" && <ServerNote />}
           <Input type="password" autoComplete="off" spellCheck={false} placeholder="Pixabay API key (numbers-letters)" value={vals.pixabayKey ?? ""} onChange={set("pixabayKey")} />
-          <p className="text-[11px] leading-relaxed text-white/45">
+          <p className="text-[11px] leading-relaxed text-white/50">
             Sign in at pixabay.com, open the API docs page, and copy the value shown in the <b className="text-white/70">key</b> row of the parameters table.
           </p>
           <Actions>
@@ -1069,7 +1069,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             )}
           </Actions>
           {s.mode === "test" && (
-            <p className="text-[11px] leading-relaxed text-white/45">
+            <p className="text-[11px] leading-relaxed text-white/50">
               Test mode: pay with card 4242 4242 4242 4242, any future date, any CVC. To take real money, activate your Stripe account, then paste your <b className="text-white/70">sk_live_</b> key here and press the button again.
             </p>
           )}

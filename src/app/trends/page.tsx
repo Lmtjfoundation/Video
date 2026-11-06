@@ -183,7 +183,7 @@ export default function TrendsPage() {
                 )}
                 <div className="flex flex-wrap items-center gap-2">
                   <Button size="sm" variant="primary" loading={busy === "run"} onClick={runNow}><Play className="h-3.5 w-3.5" /> Run now</Button>
-                  {ap.lastRunAt && <span className="text-[12px] text-white/45">Last run {ago(ap.lastRunAt)}</span>}
+                  {ap.lastRunAt && <span className="text-[12px] text-white/50">Last run {ago(ap.lastRunAt)}</span>}
                 </div>
                 {ap.lastResult && <p className="text-[12px] text-white/50">{ap.lastResult}</p>}
               </div>
@@ -250,13 +250,13 @@ export default function TrendsPage() {
           {data.stories.map((st) => (
             <Card key={st.id} className="grid grid-cols-1 gap-3 p-4 md:grid-cols-[64px_1fr_auto] md:items-center">
               <div className="flex items-center gap-2 md:flex-col md:gap-1">
-                <Flame className={cn("h-5 w-5", st.heat >= 70 ? "text-red-400" : st.heat >= 45 ? "text-gold-300" : "text-white/35")} />
+                <Flame className={cn("h-5 w-5", st.heat >= 70 ? "text-red-400" : st.heat >= 45 ? "text-gold-300" : "text-white/50")} />
                 <span className="text-[12px] tabular-nums text-white/60">{st.heat}</span>
               </div>
               <div className="min-w-0">
                 <p className="text-[15px] font-medium leading-snug text-white">{st.title}</p>
                 {st.summary && <p className="mt-1 line-clamp-2 text-[13px] text-white/55">{st.summary}</p>}
-                <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-white/45">
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-white/50">
                   <a href={st.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-mint-300 hover:underline">{st.source} <ExternalLink className="h-3 w-3" /></a>
                   <span>· {ago(st.publishedAt)}</span>
                   <Badge tone={st.tier === "black_press" ? "violet" : "neutral"}>{TIER_LABEL[st.tier]}</Badge>
@@ -269,7 +269,7 @@ export default function TrendsPage() {
               </div>
             </Card>
           ))}
-          <p className="text-[12px] text-white/40">Heat combines how fresh a story is and how many newsrooms are covering it. It ranks stories; it doesn't predict views. A post from a story costs {CREDIT_COST.post + CREDIT_COST.liveCheck} credits; a video plan at this length costs {videoCredits(length, "plan") + CREDIT_COST.liveCheck} (each includes the live fact-check). Free during a trial's daily allowance, and on your own AI key.</p>
+          <p className="text-[12px] text-white/50">Heat combines how fresh a story is and how many newsrooms are covering it. It ranks stories; it doesn't predict views. A post from a story costs {CREDIT_COST.post + CREDIT_COST.liveCheck} credits; a video plan at this length costs {videoCredits(length, "plan") + CREDIT_COST.liveCheck} (each includes the live fact-check). Free during a trial's daily allowance, and on your own AI key.</p>
         </div>
       )}
 
@@ -285,7 +285,7 @@ export default function TrendsPage() {
                   <span className={cn("h-2 w-2 rounded-full", f.health == null ? "bg-white/25" : f.health.ok ? "bg-mint-400" : "bg-red-400")} />
                   <span className="text-white/80">{f.name}</span>
                   <Badge>{TIER_LABEL[f.tier]}</Badge>
-                  <span className="ml-auto text-[12px] text-white/40">{f.health == null ? "not checked yet" : f.health.ok ? `${f.health.items} items` : f.health.error ?? "not working"}</span>
+                  <span className="ml-auto text-[12px] text-white/50">{f.health == null ? "not checked yet" : f.health.ok ? `${f.health.items} items` : f.health.error ?? "not working"}</span>
                 </div>
               ))}
               {isAdmin && <CustomFeeds genre={genre} onSaved={() => load(genre, true)} />}

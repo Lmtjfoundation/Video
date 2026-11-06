@@ -160,17 +160,17 @@ function GenForm({ kind, info }: { kind: "music" | "sfx" | "footage"; info: Info
             <Button size="sm" variant="ghost" onClick={polish} loading={polishing} disabled={!prompt.trim()}>
               <Sparkles className="h-3.5 w-3.5" /> Auto-prompt{info ? ` (${info.credits.autoPrompt} credit)` : ""}
             </Button>
-            <span className="text-xs text-white/40">Turns a short idea into a detailed prompt.</span>
+            <span className="text-xs text-white/50">Turns a short idea into a detailed prompt.</span>
           </div>
 
           {kind === "music" && (
             <>
               <div>
-                <div className="mb-1.5 text-xs uppercase tracking-wide text-white/40">Genre (up to 3)</div>
+                <div className="mb-1.5 text-xs uppercase tracking-wide text-white/50">Genre (up to 3)</div>
                 <div className="flex flex-wrap gap-1.5">{GENRES.map((g) => <button key={g} className={chip(genres.includes(g))} onClick={() => toggle(genres, setGenres, g)}>{g}</button>)}</div>
               </div>
               <div>
-                <div className="mb-1.5 text-xs uppercase tracking-wide text-white/40">Mood (up to 3)</div>
+                <div className="mb-1.5 text-xs uppercase tracking-wide text-white/50">Mood (up to 3)</div>
                 <div className="flex flex-wrap gap-1.5">{MOODS.map((m) => <button key={m} className={chip(moods.includes(m))} onClick={() => toggle(moods, setMoods, m)}>{m}</button>)}</div>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -229,7 +229,7 @@ function GenForm({ kind, info }: { kind: "music" | "sfx" | "footage"; info: Info
               </Field>
               {!!pictures.length && (
                 <div className="sm:col-span-3">
-                  <div className="mb-1.5 text-xs uppercase tracking-wide text-white/40">Start from a picture (optional)</div>
+                  <div className="mb-1.5 text-xs uppercase tracking-wide text-white/50">Start from a picture (optional)</div>
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     <button onClick={() => setStartId("")} className={cn("grid h-20 w-16 shrink-0 place-items-center rounded-lg border text-xs", !startId ? "border-mint-400 text-mint-200" : "border-white/10 text-white/50")}>None</button>
                     {pictures.slice(0, 30).map((p) => (
