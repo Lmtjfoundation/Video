@@ -305,3 +305,21 @@
 2026-11-05 | tiktok | The Norrmalmstorg robbery (Stockholm, Aug 23, 1973): Jan-Erik Olsson, four hostages, Clark Olofsson brought from prison, Kristin Enmark's call to Olof Palme, six days in the vault, and how 'Stockholm syndrome' was named by a psychiatrist who never spoke to her (bank)
 2026-11-05 | youtube | The AWS us-east-1 outage (Oct 20, 2025): a race condition empties DynamoDB's DNS record, 6.5 million Downdetector reports, Snapchat, Fortnite, Ring and UK banks hit, smart beds stuck, about 14.5 hours to full recovery (bank)
 2026-11-05 | instagram | The Harry Winston heist (Paris, Dec 4, 2008): robbers disguised as women, 297 jewels and 104 watches, about €85M (reports differ), wrongly blamed on the Pink Panthers, an inside guard, and jewels found in a hand-cream bottle in a drain (bank)
+2026-11-06 | x | Mike Tyson earned an estimated $300–400 million in the ring and filed for bankruptcy in 2003 owing $23 million
+2026-11-06 | x | Claude Opus 4's blackmail test: 84% of rollouts in a fictional replacement scenario (Anthropic system card, May 2025)
+2026-11-06 | linkedin | Andy Grove and Gordon Moore's 1985 question: 'What would the new guy do?' and Intel's exit from memory chips
+2026-11-06 | linkedin | Sears: mail-order catalog (1888), Allstate (1931), Sears Tower (1973), Discover (1985), catalog ends (1993), Chapter 11 (Oct 15, 2018)
+2026-11-06 | facebook | Winston and Clementine Churchill: a proposal in the Temple of Diana (Aug 11, 1908), some 2,000 letters and 56 years married
+2026-11-06 | instagram | GPT-4.5 judged human 73% of the time in a three-party Turing test (Jones & Bergen, UC San Diego, March 2025)
+2026-11-06 | tiktok | Bre-X and Busang (1995–1997): 70 million claimed ounces, a C$6B+ market value, de Guzman's helicopter fall (March 19, 1997), salted samples and shares at 6 cents
+2026-11-06 | instagram | Nvidia's road to $5 trillion (Oct 29, 2025): a Denny's sketch, $40,000 in the bank (1993), 100 to 40 staff (1996), one month of payroll (1997), IPO (Jan 22, 1999), $1T (May 2023), $4T (July 2025)
+2026-11-06 | youtube | Dagen H (Sept 3, 1967): Sweden switches to right-hand traffic despite ~83% voting no in 1955; 360,000 signs, 628 million kronor, accidents fall then return to normal
+2026-11-06 | facebook | The Roseto effect: Dr. Falcone's tip to Stewart Wolf (1961), the 1964 JAMA paper, the 50-year Bangor follow-up (Egolf et al., 1992) and Holt-Lunstad's 148-study review (2010)
+2026-11-06 | x | Groupon turned down Google's $6 billion (Dec 3, 2010), IPO'd at $20 (Nov 2011), traded under $1 (March 2020) (bank)
+2026-11-06 | x | AlphaEvolve (Google DeepMind, May 14, 2025): 48 multiplications for 4x4 complex matrices, 0.7% of Google's compute recovered, 23% faster Gemini kernel (bank)
+2026-11-06 | linkedin | Southwest's 10-minute turn (1972): $143 in the bank, the fourth 737 sold and Bill Franklin's 'We can' (bank)
+2026-11-06 | facebook | Vincent and Theo van Gogh: 650+ letters, Theo's support, six months apart in death and Jo van Gogh-Bonger's 1914 edition (bank)
+2026-11-06 | instagram | Lizzie Magie's Landlord's Game (patent 1904) vs Charles Darrow's Monopoly: $7,000 up front (March 1935) and $500 for her patent (Nov 1935) (bank)
+2026-11-06 | tiktok | OneCoin and the 'Cryptoqueen' Ruja Ignatova: a 2014 'bitcoin killer', nearly $4B lost, the Oct 25, 2017 flight to Athens, FBI Ten Most Wanted (June 30, 2022) and a $5M reward (June 2024) (bank)
+2026-11-06 | youtube | The last circulating U.S. penny (Philadelphia, Nov 12, 2025): 232 years, 3.69 cents to make, 250 billion still in circulation and the Omega-marked final batch (bank)
+2026-11-06 | instagram | Barry Marshall drank H. pylori (Royal Perth Hospital, 1984) after a rejected paper and failed piglet trials, proving the bacteria's role in gastritis; Nobel Prize with Robin Warren (2005) (bank)
