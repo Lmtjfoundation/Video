@@ -6,7 +6,7 @@ import { enqueueRender } from "@/lib/render";
 import { getPost, getSettings, savePosts } from "@/lib/repo";
 import { PLATFORMS, type MediaItem, type Platform, type VideoPlan } from "@/lib/types";
 import { nowIso } from "@/lib/utils";
-import { generateVideoPosts } from "@/lib/video";
+import { generateVideoPosts, videoPost, type RawVideo } from "@/lib/video";
 import { VIDEO_LENGTHS, VIDEO_STYLES } from "@/lib/video-spec";
 
 export const dynamic = "force-dynamic";
@@ -19,14 +19,17 @@ export const maxDuration = 300;
  */
 export const POST = handle(async (req: Request) => {
   if (!cronAuthorized(req)) return fail("Unauthorized", 401);
-  const b = (await req.json().catch(() => ({}))) as { email?: string; topic?: string; platform?: string; length?: string; style?: string; niche?: string };
+  const b = (await req.json().catch(() => ({}))) as { email?: string; topic?: string; platform?: string; length?: string; style?: string; niche?: string; script?: RawVideo & { look?: string } };
   const user = await findUserByEmail(String(b.email ?? ""));
   if (!user) return fail("No account with that email.", 404);
   const platform = (PLATFORMS.includes(b.platform as Platform) ? b.platform : "tiktok") as Platform;
   const length = (b.length && b.length in VIDEO_LENGTHS ? b.length : "s30") as VideoPlan["length"];
   const style = (b.style && b.style in VIDEO_STYLES ? b.style : "true") as VideoPlan["style"];
   return asUser(user.id, async () => {
-    const posts = await generateVideoPosts({ platform, count: 1, niche: String(b.niche ?? "edu"), style, length, topic: String(b.topic ?? "").slice(0, 500) || undefined }, await getSettings());
+    // A finished script (e.g. a series episode written by hand) is rendered as it is; otherwise the writer writes one.
+    const opts = { platform, niche: String(b.niche ?? "edu"), style, length, topic: String(b.topic ?? "").slice(0, 500) || undefined };
+    const posts = b.script?.scenes?.length ? [videoPost(b.script, opts, await getSettings())] : await generateVideoPosts({ ...opts, count: 1 }, await getSettings());
+    if (b.script?.look) for (const p of posts) if (p.video) p.video.ai = { characterIds: [], look: String(b.script.look).slice(0, 300), veoScenes: [] };
     for (const p of posts) p.render = { status: "queued", progress: 0, message: "Waiting to render…", credits: 0, updatedAt: nowIso() };
     await savePosts(posts);
     for (const p of posts) enqueueRender(user.id, p.id, 0);
