@@ -241,6 +241,7 @@ def render(film, out):
     W, H, FPS = film.get("w", 1080), film.get("h", 1920), film.get("fps", 30)
     gname = film.get("grade", "cadmium_purple")
     split = bool(film.get("split"))
+    clean = bool(film.get("clean"))
     group = None
     enc = None if split else encoder(out, W, H, FPS)
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
@@ -296,7 +297,7 @@ def render(film, out):
             drift = (u - 0.5) * 2
             mx = bx - par * W * d * (0.6 * drift + (tx * 6))
             my = by - par * H * 0.35 * d * (z - 1.0) * 6 - par * H * d * ty * 4
-            f = cv2.remap(src, mx.astype(np.float32), my.astype(np.float32), cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+            f = cv2.remap(src, mx.astype(np.float32), my.astype(np.float32), cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
             # Effects
             if "fog" in fx or "steam" in fx or "ghost" in fx:
                 fog = 0.55 * fogs[0].sample(t * 22, t * 6) + 0.45 * fogs[1].sample(-t * 15, t * 3)
@@ -350,9 +351,10 @@ def render(film, out):
                 amp = 26 if "quake" in fx else 9
                 ox, oy = rng.normal(0, amp), rng.normal(0, amp)
                 f = cv2.warpAffine(f, np.float32([[1, 0, ox], [0, 1, oy]]), (W, H), borderMode=cv2.BORDER_REFLECT)
-            elif frame_no % 2 == 0:
+            elif frame_no % 2 == 0 and not clean:
                 f = cv2.warpAffine(f, np.float32([[1, 0, rng.normal(0, 0.6)], [0, 1, rng.normal(0, 0.6)]]), (W, H), borderMode=cv2.BORDER_REFLECT)
-            f = f * vign + grains[frame_no % len(grains)] * 0.035
+            # "clean": a sharp picture for films that add their own grade and grain afterwards.
+            f = f if clean else f * vign + grains[frame_no % len(grains)] * 0.035
             # Transitions in
             if "whip_in" in fx and t < 0.25:
                 kk = int(90 * (1 - t / 0.25)) * 2 + 1
