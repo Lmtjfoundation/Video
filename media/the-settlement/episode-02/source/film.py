@@ -12,7 +12,7 @@ ROOT, OUT = (os.path.abspath(p) for p in sys.argv[1:3])
 BEBAS, CINZEL = f"{ROOT}/fonts/BebasNeue-Regular.ttf", f"{ROOT}/fonts/Cinzel.ttf"
 W, H, FPS = 1080, 1920, 30
 PAD, LEAD = 1.1, 0.45  # seconds of air after and before each line
-PITCH = {"N": 0.95, "D": 0.93, "M": 0.95, "T": 1.0}  # the mix plays male voices a little slower (deeper)
+PITCH = {"N": 0.95, "D": 1.0, "M": 1.0, "T": 1.0}  # narrator (Kokoro) plays a little deeper; character voices are ElevenLabs takes at natural pitch
 CLIP, SKIP = 121 / 24, 0.2
 
 

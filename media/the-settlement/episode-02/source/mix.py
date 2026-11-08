@@ -379,7 +379,7 @@ for s in shots:
             add(voice, reverb(x, 0.9, 0.2) * 0.9, s["vo_at"], 1.0, pan=0.0)
     for item in s.get("sfx", []):
         if item[0] == "laugh_low":  # Dre's laugh, heard down the phone line
-            x = load(f"{ROOT}/vo/laugh.wav", 0.86)
+            x = load(f"{ROOT}/vo/laugh.wav", 1.0)
             add(voice, reverb(phone_eq(x), 0.6, 0.15) * 0.8, s["start"] + item[1], item[2])
 
 # Duck music (-14 dB) and effects under any voice.
@@ -400,7 +400,7 @@ def hush(a, b, fade=0.15, floor=0.0):
 
 bedmix = (music + fx) * hush(black["start"] + 1.0, black["start"] + black["dur"], 0.3, 0.25)
 # Total hush for "What do you want?" and for the silence on the line before the laugh.
-q = next(s for s in shots if s.get("vo") and s["vo"][1] == "What do you want?")
+q = next(s for s in shots if s.get("vo") and s["vo"][1] == "What you want?")
 bedmix *= hush(q["vo_at"] - 0.3, q["vo_at"] + q["vo_len"] + 0.6, 0.25, 0.25)
 out = bedmix + voice
 out = out[: int(T * SR)]
