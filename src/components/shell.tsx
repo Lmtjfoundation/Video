@@ -2,45 +2,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Activity, AudioLines, BookOpen, Video as VideoIcon, BookOpenText, CalendarDays, Clapperboard, Compass, CreditCard, Feather, Film, Flame, Images, LayoutDashboard, Library, Wand2, Workflow, Code2, Lightbulb, ListVideo, LogOut, Menu, Mic, MessageSquare, MessagesSquare, Palette, ScrollText, Settings, Share2, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Activity, LogOut, Menu, X } from "lucide-react";
+import { SECTIONS, matches, sectionFor, type Tool } from "@/lib/nav";
 import { useApp } from "@/lib/store";
 import { JobsTray } from "./jobs-tray";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; short: string; icon: typeof Activity; badge?: "pending" | "review"; admin?: boolean };
-const NAV: NavItem[] = [
-  { href: "/", label: "Command Center", short: "Home", icon: LayoutDashboard },
-  { href: "/trends", label: "Trend Radar", short: "Trends", icon: Flame },
-  { href: "/platforms", label: "Platforms", short: "Platforms", icon: Share2 },
-  { href: "/niche", label: "Niche Lab", short: "Niches", icon: Compass },
-  { href: "/stories", label: "Story Studio", short: "Stories", icon: BookOpenText },
-  { href: "/studio", label: "Content Studio", short: "Create", icon: Sparkles },
-  { href: "/writers", label: "Writers' Room", short: "Writers", icon: Feather },
-  { href: "/movies", label: "Movie Studio", short: "Movies", icon: Film },
-  { href: "/film-engine", label: "Film Engine", short: "Film", icon: Clapperboard },
-  { href: "/movie-maker", label: "Movie Maker", short: "Maker", icon: Clapperboard },
-  { href: "/director", label: "Director", short: "Director", icon: MessagesSquare },
-  { href: "/series", label: "Series Studio", short: "Series", icon: ListVideo },
-  { href: "/images", label: "Image Studio", short: "Images", icon: Palette },
-  { href: "/create", label: "AI Studio", short: "AI Studio", icon: Wand2 },
-  { href: "/story-video", label: "Story to Video", short: "Stories", icon: BookOpen },
-  { href: "/voice-lab", label: "Voice Lab", short: "Voices", icon: AudioLines },
-  { href: "/voice-lab?tab=record", label: "Record Voice", short: "Record", icon: Mic },
-  { href: "/video-tools", label: "Video Tools", short: "Video", icon: VideoIcon },
-  { href: "/library", label: "Library", short: "Library", icon: Library },
-  { href: "/flows", label: "Flows", short: "Flows", icon: Workflow },
-  { href: "/explain", label: "Explain", short: "Explain", icon: Lightbulb },
-  { href: "/calendar", label: "Calendar", short: "Calendar", icon: CalendarDays },
-  { href: "/media", label: "Media Library", short: "Media", icon: Images },
-  { href: "/engage", label: "Engagement", short: "Replies", icon: MessageSquare, badge: "pending" },
-  { href: "/logs", label: "Activity Log", short: "Log", icon: ScrollText },
-  { href: "/plans", label: "Plans & Billing", short: "Plans", icon: CreditCard },
-  { href: "/settings", label: "Settings", short: "Settings", icon: Settings },
-  { href: "/developers", label: "Developers", short: "API", icon: Code2 },
-  { href: "/admin", label: "Admin", short: "Admin", icon: ShieldCheck, badge: "review", admin: true },
-];
-/** Bottom bar on phones: the five things people do most. */
-const MOBILE_TABS = ["/", "/trends", "/studio", "/calendar", "/engage"];
 const BARE_ROUTES = ["/login", "/signup", "/pricing", "/welcome", "/offline", "/terms", "/privacy", "/data-deletion", "/forgot", "/reset", "/restore"];
 
 function Logo({ compact }: { compact?: boolean }) {
@@ -128,6 +95,7 @@ function Toaster() {
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const { status, refresh } = useApp();
   const bare = BARE_ROUTES.some((r) => path === r || path.startsWith(r + "/"));
@@ -138,7 +106,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
     const t = setInterval(refresh, 30_000);
     return () => clearInterval(t);
   }, [refresh, bare]);
-  useEffect(() => setOpen(false), [path]);
+  useEffect(() => {
+    setOpen(false);
+    setSearch(window.location.search.replace(/^\?/, ""));
+  }, [path]);
   useEffect(() => {
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") navigator.serviceWorker.register("/sw.js").catch(() => {});
   }, []);
@@ -146,28 +117,48 @@ export function Shell({ children }: { children: React.ReactNode }) {
   if (bare) return <><main id="main">{children}</main><Toaster /></>;
 
   const isAdmin = status?.me.user.role === "admin";
-  const items = NAV.filter((n) => !n.admin || isAdmin);
+  const sections = SECTIONS.filter((x) => !x.admin || isAdmin);
   const pending = (status?.stats.pendingReplies ?? 0) + (status?.stats.escalated ?? 0);
-  const badgeFor = (b?: NavItem["badge"]) => (b === "pending" ? pending : 0);
-  const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const badgeFor = (b?: Tool["badge"]) => (b === "pending" ? pending : 0);
+  const current = sectionFor(path, search ? `?${search}` : "");
+  const sectionBadge = (key: string) => sections.find((x) => x.key === key)?.tools.reduce((n, t) => n + badgeFor(t.badge), 0) ?? 0;
 
   const nav = (
-    <nav className="flex flex-col gap-0.5">
-      {items.map(({ href, label, icon: Icon, badge }) => (
-        <Link
-          key={href}
-          href={href}
-          className={cn(
-            "focus-ring group relative flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-medium transition-colors",
-            active(href) ? "bg-white/[0.07] text-white" : "text-white/55 hover:bg-white/[0.04] hover:text-white",
-          )}
-        >
-          {active(href) && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-mint-400 shadow-glow" />}
-          <Icon className={cn("h-[18px] w-[18px]", active(href) ? "text-mint-300" : "text-white/50 group-hover:text-white/70")} />
-          {label}
-          {badgeFor(badge) > 0 && <span className="ml-auto rounded-full bg-gold-400 px-1.5 text-[11px] font-semibold text-ink-950">{badgeFor(badge)}</span>}
-        </Link>
-      ))}
+    <nav className="flex flex-col gap-0.5" aria-label="Sections">
+      {sections.map(({ key, href, label, icon: Icon, tools }) => {
+        const on = current.key === key;
+        return (
+          <div key={key}>
+            <Link
+              href={href}
+              aria-current={on && path === href ? "page" : undefined}
+              className={cn(
+                "focus-ring group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-semibold transition-colors",
+                on ? "bg-white/[0.07] text-white" : "text-white/60 hover:bg-white/[0.04] hover:text-white",
+              )}
+            >
+              {on && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-mint-400 shadow-glow" />}
+              <Icon className={cn("h-[19px] w-[19px]", on ? "text-mint-300" : "text-white/50 group-hover:text-white/70")} />
+              {label}
+              {sectionBadge(key) > 0 && <span className="ml-auto rounded-full bg-gold-400 px-1.5 text-[11px] font-semibold text-ink-950">{sectionBadge(key)}</span>}
+            </Link>
+            {on && tools.length > 0 && (
+              <div className="mb-1 ml-[22px] mt-0.5 flex flex-col gap-0.5 border-l border-white/[0.08] pl-3">
+                {tools.map((t) => {
+                  const here = matches(t.href, path, path + (search ? `?${search}` : ""));
+                  return (
+                    <Link key={t.href} href={t.href} aria-current={here ? "page" : undefined}
+                      className={cn("focus-ring flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors", here ? "bg-white/[0.06] text-mint-200" : "text-white/55 hover:text-white")}>
+                      {t.label}
+                      {badgeFor(t.badge) > 0 && <span className="ml-auto rounded-full bg-gold-400 px-1.5 text-[10.5px] font-semibold text-ink-950">{badgeFor(t.badge)}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </nav>
   );
 
@@ -210,17 +201,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       {/* Phone bottom tab bar */}
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-white/[0.07] bg-ink-950/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden" aria-label="Main">
-        {MOBILE_TABS.map((href) => {
-          const item = NAV.find((n) => n.href === href)!;
-          const Icon = item.icon;
-          return (
-            <Link key={href} href={href} className={cn("relative flex flex-col items-center gap-1 py-2.5 text-[10.5px] font-medium", active(href) ? "text-mint-300" : "text-white/50")}>
-              <Icon className="h-5 w-5" />
-              {item.short}
-              {badgeFor(item.badge) > 0 && <span className="absolute right-[22%] top-1.5 h-2 w-2 rounded-full bg-gold-400" />}
-            </Link>
-          );
-        })}
+        {sections.filter((x) => !x.admin).map(({ key, href, short, icon: Icon }) => (
+          <Link key={key} href={href} className={cn("relative flex flex-col items-center gap-1 py-2.5 text-[10.5px] font-medium", current.key === key ? "text-mint-300" : "text-white/50")}>
+            <Icon className="h-5 w-5" />
+            {short}
+            {sectionBadge(key) > 0 && <span className="absolute right-[22%] top-1.5 h-2 w-2 rounded-full bg-gold-400" />}
+          </Link>
+        ))}
       </nav>
       <Toaster />
     </div>
