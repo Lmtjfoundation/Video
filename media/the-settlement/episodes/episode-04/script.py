@@ -1,0 +1,100 @@
+"""The Settlement, Episode 4: Static (motion graphics, vertical 1080x1920).
+Picks up Episode 3's hook: the text from D, "He called me. He knows." Marcus investigates quietly; Kev helps; the policy;
+the old baby monitor. Hook: "Ten o'clock. Telephone Road. Make sure he drives."
+vo: N narrator, M Marcus (Kokoro); D Dre, T Tasha, K Kev (ElevenLabs). R=True on a line: heard through the baby monitor."""
+
+SHOTS = [
+    dict(kind="motion", clips=["tasha_closet"], mood="dread", bed=["rain"], fx=["glow", "flicker"], sfx=[("phonebuzz", 0.2, 0.6), ("heartbeat", 0.0, 0.5)], moves=["push_in", "punch"],
+         vo=("N", "Three in the morning. Tasha read the message from D three times. Then she deleted it.")),
+    dict(kind="motion", clips=["marcus_awake"], bed=["rain"], fx=["flicker"], moves=["dolly", "punch"],
+         vo=("N", "Down the hall, her husband lay perfectly still. Eyes open. Counting her footsteps back to bed.")),
+    dict(kind="card", text="THE SETTLEMENT", sub="EPISODE FOUR", dur=4.0, font="cinzel", sfx=[("impact", 0.2, 0.9)]),
+    dict(kind="card", text="STATIC", dur=2.6, sfx=[("impact", 0.3, 0.5)]),
+    dict(kind="card", text="THE NEXT MORNING", dur=2.6, small=True, sfx=[("whoop", 0.3, 0.3)]),
+    # cold
+    dict(kind="motion", clips=["kitchen"], mood="cold", bed=["morning"], fx=["dust", "beam"], sfx=[("cup", 1.0, 0.5)], moves=["track", "punch"],
+         vo=("T", "You want some eggs, baby? You barely ate last night.")),
+    dict(kind="motion", clips=["kitchen"], offset=2.0, bed=["morning"], fx=["dust", "beam"], moves=["punch", "pull_back"],
+         vo=("M", "I'm good. Long day.")),
+    dict(kind="motion", clips=["marcus_watch"], bed=["morning"], fx=["dust"], moves=["push_in", "punch"],
+         vo=("N", "Twelve years of mornings. This was the first one he watched her like a stranger.")),
+    dict(kind="card", text="HOUSTON, 2013", dur=2.6, small=True, sfx=[("thunder", 0.0, 0.5)]),
+    # memory
+    dict(kind="motion", clips=["graduation"], mood="memory", bed=["hum"], fx=["dust", "glow"], moves=["push_in", "punch", "track"],
+         vo=("N", "The day he finished trade school, Tasha was waiting in the parking lot with a toolbox and a bow on top.")),
+    dict(kind="motion", clips=["truck_door"], bed=["hum"], fx=["glow"], moves=["dolly", "punch"],
+         vo=("N", "Grant Heating and Air. She had the name painted on the door before he ever fixed a single unit.")),
+    # grief
+    dict(kind="motion", clips=["foreclosure"], mood="grief", bed=["wind"], fx=["dust"], sfx=[("paper", 0.6, 0.6)], slam="90 DAYS", moves=["push_in", "crane_down"],
+         vo=("N", "Now there was a notice on his mother's door. The house his father built. Ninety days to pay, or get out.")),
+    dict(kind="motion", clips=["porch"], bed=["wind"], fx=["dust"], moves=["pull_back", "punch"],
+         vo=("M", "Mama, I'm gonna fix it. I swear. I just gotta find out who broke it.")),
+    dict(kind="card", text="SIX DAYS LATER", dur=2.4, small=True, sfx=[("impact", 0.1, 0.45)]),
+    # pulse: the investigation
+    dict(kind="motion", clips=["mailbox"], mood="pulse", bed=["cicadas"], fx=["dust"], sfx=[("paper", 1.0, 0.6)], moves=["track", "punch"],
+         vo=("N", "So Marcus started getting home at two. Before the mail. Before her.")),
+    dict(kind="motion", clips=["tow_yard"], bed=["night"], fx=["glow"], sfx=[("cardoor", 0.4, 0.6)], moves=["dolly", "push_in"],
+         vo=("N", "Then he drove out to Telephone Road, to the one man from the old days who never trusted Dre.")),
+    dict(kind="motion", clips=["kev_desk"], bed=["hum"], fx=["glow", "flicker"], moves=["push_in", "punch"],
+         vo=("K", "Marcus Grant. In my office. At midnight. You want the truth, or you want to sleep tonight?")),
+    dict(kind="motion", clips=["kev_marcus"], bed=["hum"], fx=["glow"], moves=["track", "punch"],
+         vo=("M", "The truth, Kev.")),
+    dict(kind="motion", clips=["statement"], bed=["hum"], fx=["flicker"], slam="D.A. HOLDINGS", moves=["crane_down", "punch"],
+         vo=("K", "Business account. Eighteen thousand out, every month, for a year. All to a company called D.A. Holdings. Registered to a P.O. box on the Southside.")),
+    dict(kind="motion", clips=["kev_desk"], offset=2.0, bed=["hum"], fx=["glow"], moves=["punch", "push_in"],
+         vo=("K", "D. A. Andre Davis. I told you twelve years ago. I never trusted Dre.")),
+    # tension: the policy
+    dict(kind="motion", clips=["insurance"], mood="tension", bed=["hum"], fx=["dust"], sfx=[("envelope", 0.4, 0.8)], slam="$2,000,000", moves=["push_in", "punch"],
+         vo=("N", "That night, in her car, he found an envelope. A life insurance policy on Marcus Grant. Doubled six months ago. Two million dollars.")),
+    dict(kind="motion", clips=["marcus_reading"], bed=["rain"], fx=["rain"], moves=["dolly", "punch"],
+         vo=("N", "Beneficiary. Tasha Grant.")),
+    # heart: the nursery
+    dict(kind="motion", clips=["nursery"], mood="heart", bed=["night"], fx=["dust", "beam"], sfx=[("creak", 0.3, 0.6)], moves=["push_in", "track"],
+         vo=("N", "Upstairs was the yellow room. They painted it for a baby that never came. Nobody had slept in it for nine years.")),
+    dict(kind="motion", clips=["marcus_floor"], bed=["night"], fx=["dust", "beam"], moves=["pull_back", "punch"], hush=True,
+         vo=("M", "We were supposed to be a family, Tasha. That was the whole point.")),
+    # dread: the monitor
+    dict(kind="motion", clips=["monitor"], mood="dread", bed=["night"], fx=["glow", "flicker"], sfx=[("monitor", 0.2, 0.9)], slam="STATIC", moves=["crash_zoom", "punch"],
+         vo=("N", "Then the old baby monitor crackled. The other half was in a box in the garage. Where she made her calls.")),
+    dict(kind="motion", clips=["garage"], bed=["night"], fx=["flicker"], monitor=True, moves=["push_in", "punch"],
+         vo=("T", "He's asking questions, Dre. He's been in the mail. He knows something.")),
+    dict(kind="motion", clips=["dre_phone"], bed=["night"], fx=["rain"], monitor=True, moves=["dolly", "punch"],
+         vo=("D", "Then we stop waiting. Friday.")),
+    dict(kind="card", text="NOW", dur=2.0, small=True, sfx=[("impact", 0.0, 0.8)]),
+    # climax
+    dict(kind="motion", clips=["marcus_monitor"], mood="climax", bed=["night"], fx=["flicker", "shake"], sfx=[("heartbeat", 0.0, 0.7)], moves=["push_in", "handheld"],
+         vo=("N", "Marcus held the monitor to his ear and didn't breathe.")),
+    dict(kind="motion", clips=["dre_phone"], offset=2.0, bed=["night"], fx=["rain", "glow"], monitor=True, moves=["crash_zoom", "punch"], min_dur=5.0,
+         vo=("D", "Ten o'clock. Telephone Road. Make sure he drives.")),
+    dict(kind="motion", clips=["telephone_road"], bed=["rain"], fx=["rain", "glow"], sfx=[("riser", 0.2, 0.9)], slam="10:00", flash=True, moves=["dolly"], min_dur=5.0,
+         vo=("N", "Friday. Ten o'clock. Telephone Road.")),
+    dict(kind="black", dur=1.4, sfx=[("impact", 0.0, 1.0)]),
+    dict(kind="card", text="EPISODE FIVE", sub="TEN O'CLOCK", dur=4.0, sfx=[("impact", 0.2, 0.5)]),
+    dict(kind="card", text="THE SETTLEMENT", sub="WHOSE SIDE ARE YOU ON?", dur=4.0, end=True, font="cinzel", sfx=[("impact", 0.1, 0.6)]),
+]
+
+STYLE = " Cinematic photorealistic film still, vertical 9:16, moody lighting, shallow depth of field, 35mm film look, Houston, Texas."
+PICTURES = {  # name: (cast refs, prompt)
+    "tasha_closet": (["tasha"], "The woman from the reference photo (Tasha, Black woman mid 30s, shoulder-length black hair, gold hoop earrings, silk robe) crouches in a dark walk-in closet at 3am reading a small black flip phone, blue screen glow on her frightened face, row of high heels beside her."),
+    "marcus_awake": (["marcus"], "The man from the reference photo (Marcus, heavyset Black man early 40s, short beard) lies in bed in a dark bedroom at night, eyes wide open, staring at the ceiling, listening, blue moonlight across his face, rain on the window."),
+    "kitchen": (["marcus", "tasha"], "Bright morning kitchen: the woman from the second reference photo (Tasha, white blouse, gold hoops) stands at the stove smiling over her shoulder holding a pan; the man from the first reference photo (Marcus, navy work shirt) sits at the kitchen table with coffee, not smiling, watching her. Warm sunlight through blinds."),
+    "marcus_watch": (["marcus"], "Close-up of the man from the reference photo (Marcus, navy work shirt) at a sunny kitchen table holding a coffee mug, staring across the room with quiet suspicion, sunlight striping his face."),
+    "graduation": (["marcus", "tasha"], "Year 2013, a trade school parking lot on a sunny day: the younger man from the first reference photo (Marcus, about 30, lean, short beard, polo shirt) laughs in surprise as the younger woman from the second reference photo (Tasha, about 27) hands him a red metal toolbox with a big bow on top."),
+    "truck_door": ([], "Close-up of the door of a white work pickup truck with fresh lettering reading GRANT HEATING & AIR, Marcus and Tasha Grant, a phone number, Houston sunlight, a red toolbox on the seat through the window."),
+    "foreclosure": ([], "The front door of a small old wooden house in a Houston neighborhood with a NOTICE OF FORECLOSURE sheet taped to it, peeling paint, potted plants on the porch, overcast late afternoon light."),
+    "porch": (["marcus"], "The man from the reference photo (Marcus, navy work shirt) sits on the front steps of a small old wooden house, head in his hands, a foreclosure notice on the door behind him, overcast evening light."),
+    "mailbox": (["marcus"], "The man from the reference photo (Marcus, navy work shirt) stands at a curbside mailbox on a hot suburban afternoon flipping through envelopes with a hard expression, his white work truck parked behind him."),
+    "tow_yard": ([], "A tow truck yard on Telephone Road in Houston at night, a big tow truck under a buzzing sodium light, chain-link fence, a small lit office trailer, wet ground reflecting neon."),
+    "kev_desk": (["kev"], "The man from the reference photo (Kev, Black man in his 50s, glasses, gray beard, red plaid flannel shirt, Houston Rockets cap) sits in a cramped tow-yard office at night surrounded by three glowing laptop screens and dashcam footage, looking up at camera with a knowing, nervous half smile."),
+    "kev_marcus": (["kev", "marcus"], "Night, a cramped tow-yard office: the man from the first reference photo (Kev, glasses, gray beard, plaid flannel, Rockets cap) points at a laptop screen full of bank transactions while the man from the second reference photo (Marcus, navy work shirt) leans over his shoulder, jaw tight. Screen glow."),
+    "statement": ([], "Close-up of a printed business bank statement on a desk, several rows highlighted in yellow marker reading TRANSFER TO D.A. HOLDINGS LLC 18,000.00, a pen and a glowing laptop beside it, night."),
+    "insurance": ([], "Close-up of a life insurance policy document on a car seat at night, the coverage line reading $2,000,000, insured MARCUS GRANT, beneficiary TASHA GRANT, dome light glow, an opened envelope beside it."),
+    "marcus_reading": (["marcus"], "The man from the reference photo (Marcus) sits in the driver seat of a car at night in the rain, holding a document under the dome light, face frozen in shock and hurt."),
+    "nursery": ([], "An empty child's nursery at night painted pale yellow, a white crib with a folded blanket, dust in a beam of streetlight through the window, an old baby monitor with tiny red lights on the dresser."),
+    "marcus_floor": (["marcus"], "The man from the reference photo (Marcus) sits on the floor of an empty pale yellow nursery at night with his back against a white crib, eyes wet, a beam of streetlight across him."),
+    "monitor": ([], "Extreme close-up of an old white baby monitor receiver on a dresser at night, its red sound lights glowing and flickering, static, a dark empty nursery behind it out of focus."),
+    "garage": (["tasha"], "The woman from the reference photo (Tasha, silk robe) stands in a dark cluttered garage at night whispering into a small black flip phone, an old baby monitor half out of a cardboard box on a shelf beside her, single bare bulb."),
+    "dre_phone": (["dre"], "The man from the reference photo (Dre, Black man early 40s, short twists, goatee, gold chain, black hoodie) sits in a dark car at night talking on a phone, cold calm expression, rain on the windshield, red tail light glow."),
+    "marcus_monitor": (["marcus"], "Close-up of the man from the reference photo (Marcus) in a dark room at night holding an old baby monitor to his ear, eyes wide with horror, red light from the monitor on his face."),
+    "telephone_road": ([], "A rain-soaked intersection at night with a green street sign reading Telephone Rd, a traffic light turning red, wet asphalt reflecting the light, an empty road vanishing into the dark, Houston."),
+}

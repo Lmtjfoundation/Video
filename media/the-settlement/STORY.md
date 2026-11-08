@@ -30,6 +30,12 @@ it through Tasha by telling her exactly what she has been waiting to hear.
 **Kev (50s).** Tow-truck driver who knew both men back in the day. Parks at the light on Telephone Road most nights.
 His dashcam is always running. He has never trusted Dre.
 
+**Detective Ruiz (50s).** Dallas P.D. The truck came out of a Dallas yard, so the crash is his case too. He questions
+Marcus at the hospital, and in the finale brings Houston P.D. to Telephone Road.
+
+**Keisha Davis (late 30s).** Dre's little sister. She knew Marcus back on the Southside, and she has kept his biggest
+secret for twelve years.
+
 ---
 
 ## The series: 10 episodes
@@ -94,7 +100,10 @@ Each episode is about 3–5 minutes, vertical, and ends on a hook.
 - Kev finds Marcus at a job site. He knew them both back in the day, and he never trusted Dre.
 - His dashcam caught every second: the car, the truck, and the driver on the phone right before the crash.
 - He didn't take it to the police. He brought it to Marcus.
-- **Hook:** *KEV: "I kept the tape. All of it. Every second."* The number on the driver's phone is Dre's.
+- **Hook:** *KEV: "I kept the tape. All of it. Every second."* The number on the driver's phone is Dre's: the one contact,
+  "D", in the shoebox phone from Episode 2.
+- His mother's foreclosure sale is postponed by the lender at the auction. Nobody tells Marcus why (Episode 9: Tasha
+  promised the bank the balance from the settlement).
 
 ### Episode 9: Old Ways
 - Marcus's old crew offers to handle Dre the way it used to get handled. For one night he's 22 again.
@@ -110,6 +119,9 @@ Each episode is about 3–5 minutes, vertical, and ends on a hook.
 - **Final image** mirrors 2012: twelve years ago she said "get in this car" and saved him. Now she's in the back of a
   police car, and he's the one standing on the curb.
 - **Three people. Two recordings. One settlement. And only one of them walks away.** *Whose side are you on?*
+- **Final twist (stinger after the tagline):** Marcus gave Tasha every key, every password, every dollar, all but one.
+  Three days later Keisha Davis, Dre's sister, is at his door with a twelve-year-old boy: Marcus's son, conceived in
+  2012, before Tasha got him out. *KEISHA: "He's twelve now. And he keeps asking about his daddy."*
 
 ---
 
