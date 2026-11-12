@@ -4,6 +4,13 @@
  * publishing every 5 minutes, engagement every 15, Trend Autopilot every 30. Leave it off on Vercel (vercel.json crons do this there).
  */
 export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    // Clear temp folders a crashed or restarted render left behind (older than two days), at start and every 6 hours.
+    const { sweepTemp } = await import("./lib/temp-cleanup");
+    const sweep = () => sweepTemp().then((n) => n && console.log(`[cleanup] removed ${n} old temp folders`), () => {});
+    setTimeout(sweep, 60_000);
+    setInterval(sweep, 6 * 3600_000).unref?.();
+  }
   if (process.env.NEXT_RUNTIME !== "nodejs" || process.env.INTERNAL_SCHEDULER !== "1") return;
   const g = globalThis as unknown as { __ghostPostScheduler?: boolean };
   if (g.__ghostPostScheduler) return;
