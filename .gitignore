@@ -12,3 +12,4 @@ next-env.d.ts
 __pycache__/
 *.pyc
 deliverables/
+.claude/settings.local.json
