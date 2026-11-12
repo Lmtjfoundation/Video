@@ -22,6 +22,9 @@ Make things (each prints the job, waits for it, and saves the result unless --no
                   [--lipsync] [--captions] [--mix replace|duck|swap] [-o out.mp4]
       Put a voice on any video; --lipsync moves the mouth to the new words.
   ghostpost music-video <song.mp3|med_id> "<look and story>" [--clips] [--aspect 9:16] [-o out.mp4]
+  ghostpost video "<idea>" [--length s15|s30|s60|s90] [--style cinematic|noir|documentary|horror|ad|classic]
+                  [--music song.mp3|med_id] [--no-voice] [-o out.mp4]
+      Video Lab: AI writes every shot, then films it with camera moves, effects, voice and music.
   ghostpost movie "<pitch or idea>" [--length s30|s60|s90|m3] [--voice am_onyx] [--platform youtube|tiktok|instagram]
       From a one-line pitch to a narrated, finished movie.
   ghostpost presenter "<script>" [--avatar lisa|harry|jeff|lori|max|meg] [--pose casual-sitting]
@@ -49,7 +52,7 @@ function parse(argv) {
     else if (a.startsWith("--")) {
       const k = a.slice(2);
       const next = argv[i + 1];
-      if (next === undefined || next.startsWith("--") || ["lipsync", "captions", "clips", "wait", "no-wait", "json", "no-captions"].includes(k)) out[k] = true;
+      if (next === undefined || next.startsWith("--") || ["lipsync", "captions", "clips", "wait", "no-wait", "json", "no-captions", "no-voice"].includes(k)) out[k] = true;
       else (out[k] = out[k] === undefined ? next : [].concat(out[k], next)), i++;
     } else out._.push(a);
   }
@@ -211,6 +214,17 @@ const commands = {
     const presenters = { lisa: "casual-sitting", harry: "business", jeff: "business", lori: "casual", max: "business", meg: "formal" };
     const avatar = o.avatar || "lisa";
     const r = await call("POST", "/api/voice-lab", { action: "presenter", script, avatar, style: o.pose || presenters[avatar] || "casual-sitting", voice: o.voice || "en-US-AvaMultilingualNeural", background: o.background || "white", captions: !o["no-captions"] });
+    console.error(`  ${r.credits ?? 0} credits`);
+    await follow(r.job, o, "video");
+  },
+  async video(o) {
+    const idea = o._.join(" ").trim();
+    if (!idea) die('describe the video: ghostpost video "A second line parade at sunset"');
+    const style = o.style || "cinematic";
+    const p = await call("POST", "/api/video-lab", { action: "plan", idea, length: o.length || "s30", style });
+    console.error(`  ${p.plan.scenes.length} shots written: ${p.plan.title}`);
+    const music = o.music ? await mediaId(o.music, "music") : undefined;
+    const r = await call("POST", "/api/movie-maker", { action: "render", plan: p.plan, grade: p.grade, characterIds: [], voice: !o["no-voice"], musicMediaId: music, endCard: "", fiction: !["documentary", "ad"].includes(style) });
     console.error(`  ${r.credits ?? 0} credits`);
     await follow(r.job, o, "video");
   },

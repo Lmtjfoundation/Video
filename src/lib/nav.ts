@@ -1,4 +1,4 @@
-import { Activity, AudioLines, BookOpenText, CalendarDays, Clapperboard, Code2, Compass, CreditCard, Feather, Film, Flame, FolderOpen, Images, LayoutDashboard, Library, Lightbulb, ListVideo, MessageSquare, MessagesSquare, Mic, Music2, Palette, Rocket, ScrollText, Settings, Share2, ShieldCheck, Sparkles, UserRound, Video, Wand2, Workflow } from "lucide-react";
+import { Activity, AudioLines, BookOpenText, CalendarDays, Clapperboard, Code2, Compass, CreditCard, Feather, Film, FlaskConical, Flame, FolderOpen, Images, LayoutDashboard, Library, Lightbulb, ListVideo, MessageSquare, MessagesSquare, Mic, Music2, Palette, Rocket, ScrollText, Settings, Share2, ShieldCheck, Sparkles, UserRound, Video, Wand2, Workflow } from "lucide-react";
 
 export type Tool = { href: string; label: string; blurb: string; icon: typeof Activity; badge?: "pending" | "review"; group?: string };
 export type Section = { key: string; href: string; label: string; short: string; blurb: string; icon: typeof Activity; tools: Tool[]; admin?: boolean };
@@ -14,6 +14,7 @@ export const SECTIONS: Section[] = [
     blurb: "Pick what you want to make. Start here has the most-used; everything else is below.",
     tools: [
       // Start here: the five things most people come to make, each one tap away.
+      { group: "Start here", href: "/video-lab", label: "Video Lab", icon: FlaskConical, blurb: "Describe a video. AI writes every shot and films it with camera moves, effects, voice and music." },
       { group: "Start here", href: "/story-video", label: "Pitch to Movie", icon: Clapperboard, blurb: "Type a one-line pitch. Get a narrated, finished movie with pictures, voice and music." },
       { group: "Start here", href: "/video-tools?tab=music", label: "Music Video", icon: Music2, blurb: "Add your song, describe the look. Get a video cut to the beat." },
       { group: "Start here", href: "/voice-lab?tab=v2v", label: "Voice & Lip Sync", icon: Mic, blurb: "Put any voice on any video, and make the mouth match the words." },

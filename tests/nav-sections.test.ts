@@ -6,7 +6,7 @@ import { SECTIONS, activeTool, grouped, sectionFor } from "@/lib/nav";
 // sidebar inside that section. Fewer tabs, same functions.
 const FORMER_TABS = ["/", "/trends", "/platforms", "/niche", "/stories", "/studio", "/writers", "/movies", "/film-engine", "/movie-maker",
   "/director", "/series", "/images", "/create", "/story-video", "/voice-lab", "/voice-lab?tab=record", "/video-tools", "/library", "/flows",
-  "/explain", "/video-tools?tab=music", "/voice-lab?tab=v2v", "/calendar", "/media", "/engage", "/logs", "/plans", "/settings", "/developers", "/admin"];
+  "/explain", "/video-lab", "/video-tools?tab=music", "/voice-lab?tab=v2v", "/calendar", "/media", "/engage", "/logs", "/plans", "/settings", "/developers", "/admin"];
 
 describe("navigation sections", () => {
   const all = SECTIONS.flatMap((s) => [s.href, ...s.tools.map((t) => t.href)]);
@@ -35,7 +35,7 @@ describe("navigation sections", () => {
     const make = SECTIONS.find((s) => s.key === "make")!;
     const groups = grouped(make.tools);
     expect(groups.map((g) => g.group)).toEqual(["Start here", "Movies & series", "Sound & video tools"]);
-    expect(groups[0].tools.map((t) => t.label)).toEqual(["Pitch to Movie", "Music Video", "Voice & Lip Sync", "Talking Presenter", "Pictures", "Posts & Captions"]);
+    expect(groups[0].tools.map((t) => t.label)).toEqual(["Video Lab", "Pitch to Movie", "Music Video", "Voice & Lip Sync", "Talking Presenter", "Pictures", "Posts & Captions"]);
     expect(new Set(make.tools.map((t) => t.href)).size).toBe(make.tools.length); // no tool listed twice
   });
   it("highlights the exact tool, not both the shortcut and its page", () => {
