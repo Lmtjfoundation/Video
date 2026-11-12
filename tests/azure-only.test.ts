@@ -45,7 +45,7 @@ describe("Azure only", () => {
 
     const { claude } = await import("@/lib/llm");
     expect(await claude({ system: "s", user: "Write a caption", maxTokens: 500 })).toBe("Written on Azure.");
-    expect(bodies[0]).toMatchObject({ model: "gpt-5-mini", max_completion_tokens: 4000, reasoning_effort: "low" });
+    expect(bodies[0]).toMatchObject({ model: "gpt-5.4-mini", max_completion_tokens: 4000, reasoning_effort: "low" });
     expect(bodies[0]).not.toHaveProperty("temperature");
     expect(await claude({ system: "s", user: "What's in this picture?", images: [{ mediaType: "image/png", base64: PNG.toString("base64") }] })).toBe("Written on Azure.");
     const withPicture = bodies[1] as { messages: { content: unknown }[] };

@@ -817,7 +817,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           <Input type="password" autoComplete="off" spellCheck={false} placeholder="KEY 1" value={vals.azureAiKey ?? ""} onChange={set("azureAiKey")} />
           <Input autoComplete="off" spellCheck={false} placeholder={`Deployment name (${st.azureAi?.deployment || "flux-kontext"})`} value={vals.azureAiImageDeployment ?? ""} onChange={set("azureAiImageDeployment")} />
           <Input autoComplete="off" spellCheck={false} placeholder={`Region, for voices and the talking presenter (${st.azureAi?.region || "eastus2"})`} value={vals.azureAiRegion ?? ""} onChange={set("azureAiRegion")} />
-          <Input autoComplete="off" spellCheck={false} placeholder={`Writing model deployment, for Azure only (${st.azureAi?.chat || "gpt-5-mini"})`} value={vals.azureAiChatDeployment ?? ""} onChange={set("azureAiChatDeployment")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={`Writing model deployment, for Azure only (${st.azureAi?.chat || "gpt-5.4-mini"})`} value={vals.azureAiChatDeployment ?? ""} onChange={set("azureAiChatDeployment")} />
           <label className="flex items-start gap-3 rounded-xl border border-mint-400/20 bg-mint-400/[0.05] p-3 text-sm text-white/80">
             <Switch
               checked={!!st.azureOnly}

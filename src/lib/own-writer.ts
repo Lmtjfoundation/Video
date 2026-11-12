@@ -42,7 +42,7 @@ export async function ownWriter(): Promise<OwnWriter | null> {
     const [endpoint, key, dep] = await Promise.all([pick("azureAiEndpoint", "AZURE_AI_ENDPOINT"), pick("azureAiKey", "AZURE_AI_KEY"), pick("azureAiChatDeployment", "AZURE_AI_CHAT_DEPLOYMENT")]);
     if (endpoint && key) {
       const u = new URL(endpoint.trim());
-      return { url: `${u.protocol}//${u.host}/openai/v1`, key, model: dep || "gpt-5-mini", mode: "only", only: true, sees: true };
+      return { url: `${u.protocol}//${u.host}/openai/v1`, key, model: dep || "gpt-5.4-mini", mode: "only", only: true, sees: true };
     }
   }
   const [url, key, model, i] = await Promise.all([pick("ownWriterUrl", "OWN_WRITER_URL"), pick("ownWriterKey", "OWN_WRITER_KEY"), pick("ownWriterModel", "OWN_WRITER_MODEL"), getIntegrations()]);
