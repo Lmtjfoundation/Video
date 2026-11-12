@@ -2,6 +2,7 @@ import "server-only";
 import { geminiImage, mediaKey, MediaGenError, type Aspect, type RefImage } from "./gemini-media";
 import { engineFirst, ownEngineAwake, ownEngineReady, ownImage } from "./own-video";
 import { fluxImage, replicateReady } from "./replicate-video";
+import { foundryImage, foundryReady } from "./azure-foundry";
 
 /**
  * Every AI picture in the app goes through here. Ghost Post's own engine (Qwen-Image on the owner's GPU) makes it
@@ -20,6 +21,16 @@ export async function makeImage(o: { prompt: string; refs?: RefImage[]; aspect: 
     } catch (e) {
       if (!backup || (e instanceof MediaGenError && e.kind === "blocked")) throw e;
       console.warn(`[pictures] Ghost Post's engine couldn't make this picture (${(e as Error).message.slice(0, 160)}); using the backup.`);
+    }
+  }
+  // Azure's GPUs (FLUX Kontext on Azure AI Foundry): billed per picture to the owner's Azure credits, and keeps a
+  // reference face. Any problem there falls through to the next maker.
+  if (await foundryReady()) {
+    try {
+      return await foundryImage(o);
+    } catch (e) {
+      if (e instanceof MediaGenError && e.kind === "blocked") throw e;
+      console.warn(`[pictures] Azure AI couldn't make this picture (${(e as Error).message.slice(0, 160)}); using the next maker.`);
     }
   }
   if (!(await mediaKey())) {
@@ -47,8 +58,9 @@ export async function makeImage(o: { prompt: string; refs?: RefImage[]; aspect: 
 }
 
 /** Whether the app can make AI pictures right now, and with what. */
-export async function picturesReady(): Promise<"own" | "gemini" | "flux" | null> {
+export async function picturesReady(): Promise<"own" | "azure" | "gemini" | "flux" | null> {
   if (await ownEngineReady()) return "own";
+  if (await foundryReady()) return "azure";
   if (await mediaKey()) return "gemini";
   return (await replicateReady()) ? "flux" : null;
 }

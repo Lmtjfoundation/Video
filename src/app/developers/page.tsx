@@ -72,6 +72,12 @@ export default function Developers() {
           <CardHeader title="Reference" subtitle="JSON over HTTPS. Send the key as a Bearer token. 60 requests a minute per key." />
           <div className="grid grid-cols-1 gap-5 p-5 text-sm text-white/80">
             <section className="grid grid-cols-1 gap-2">
+              <div className="font-semibold text-white">Command-line tool</div>
+              <div>Make pictures (with a face kept from a photo), put a voice on any video with lip sync, music videos, and full movies from a one-line pitch, all from your terminal. Needs Node 18 or newer; nothing else to install. Your key is asked once and saved only on your computer.</div>
+              <Code>{`curl -fsSLo ghostpost ${origin}/cli/ghostpost.mjs && chmod +x ghostpost\n./ghostpost login --url ${origin}\n./ghostpost image "A jazz club in New Orleans at night" -o club.png\n./ghostpost voice clip.mp4 --say "Welcome to the show" --lipsync -o voiced.mp4\n./ghostpost music-video song.mp3 "Neon second line parade at night"\n./ghostpost movie "Four friends in New Orleans chase one last deal" --length s90\n./ghostpost help`}</Code>
+              <div className="text-xs text-white/50">With a key, the tool can use every Ghost Post tool you can, except account, billing, API keys and admin pages, which always need you signed in.</div>
+            </section>
+            <section className="grid grid-cols-1 gap-2">
               <div className="font-semibold text-white">Search the Library</div>
               <div>GET <code>/api/v1/library</code> with <code>kind</code> (music, sfx, footage), <code>q</code>, <code>genres</code>, <code>moods</code>, <code>themes</code>, <code>instruments</code>, <code>categories</code>, <code>vocals</code> (instrumental, vocals), <code>tempo</code> (slow, medium, fast, very-fast), <code>length</code> (short, mid, long), <code>shelf</code> (catalog, mine), <code>sort</code> (new, popular, short, long), <code>similar</code> (an item id) and <code>limit</code> (up to 100). Each item has a <code>preview_url</code> that plays for six hours.</div>
               <Code>{`curl "${origin}/api/v1/library?kind=music&moods=Tense&tempo=slow" \\\n  -H "Authorization: Bearer gp_live_…"`}</Code>

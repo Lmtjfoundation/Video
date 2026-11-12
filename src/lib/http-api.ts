@@ -2,7 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { LLMError } from "./llm";
 import { asUser } from "./db";
-import { AuthError, QuotaError, userFromRequest, type User } from "./auth";
+import { AuthError, QuotaError, rollUsage, userFromRequest, type User } from "./auth";
 
 export const ok = <T>(data: T, init?: number) => NextResponse.json(data, { status: init ?? 200 });
 export const fail = (message: string, status = 400) => NextResponse.json({ error: message }, { status });
@@ -57,6 +57,9 @@ export async function movedAnswer(): Promise<Response | null> {
   return NextResponse.json({ error: `Ghost Post moved to ${to}. Open it there and sign in with the same email and password.`, movedTo: to }, { status: 410 });
 }
 
+/** Account, sign-in, billing and key routes: a leaked API key must not be able to take over the account. */
+const KEYLESS = ["/api/auth", "/api/account", "/api/billing", "/api/stripe", "/api/plans", "/api/developers", "/api/settings", "/api/admin", "/api/credentials", "/api/app-keys", "/api/ai-provider", "/api/connect", "/api/migrate", "/api/export"];
+
 export function authed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Response>, opts: { admin?: boolean } = {}) {
   return async (req: Request, ctx: Ctx) => {
     const moved = await movedAnswer();
@@ -64,6 +67,19 @@ export function authed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Respo
     let user: User | null = null;
     try {
       user = await userFromRequest(req);
+      // No session: a personal API key (Authorization: Bearer gp_live_…) works too, so the command-line tool and
+      // scripts can use every tool the app has. Owner-only (admin) routes never accept a key.
+      const bearer = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+      if (!user && bearer.startsWith("gp_live_")) {
+        if (opts.admin) return fail("Admin pages can't be used with an API key. Sign in to the app instead.", 403);
+        if (KEYLESS.some((p) => new URL(req.url).pathname.startsWith(p))) return fail("This needs you signed in to the app (account, billing and API keys can't be changed with an API key).", 403);
+        const { overLimit, touchKey, userForKey } = await import("./api-keys");
+        const found = await userForKey(bearer);
+        if (!found) return fail("That API key isn't valid (make one in Ghost Post → Developers).", 401);
+        if (overLimit(found.keyId)) return fail("Too many requests: the limit is 60 a minute per key.", 429);
+        void touchKey(found.keyId).catch(() => {});
+        user = await rollUsage(found.user);
+      }
       if (!user) return fail("Please sign in.", 401);
       if (opts.admin && user.role !== "admin") return fail("Admins only.", 403);
       const u = user;

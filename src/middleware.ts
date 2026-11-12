@@ -25,6 +25,7 @@ const PUBLIC = [
   "/sw.js",
   "/offline",
   "/icons/",
+  "/cli/", // the command-line tool (public/cli/ghostpost.mjs), downloaded before signing in
   "/promo/", // public ad videos and images that Metricool and the social networks download without signing in
   "/icon",
   "/apple-icon",
@@ -71,6 +72,8 @@ export async function middleware(req: NextRequest) {
   }
   if (PUBLIC.some((p) => pathname === p || pathname.startsWith(p))) return NextResponse.next();
   if (req.cookies.get("np_session")?.value) return NextResponse.next();
+  // A personal API key (developer API, command-line tool): checked properly by the route itself (http-api.ts).
+  if (pathname.startsWith("/api/") && /^Bearer\s+gp_live_/i.test(req.headers.get("authorization") ?? "")) return NextResponse.next();
   if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Please sign in." }, { status: 401 });
   const url = req.nextUrl.clone();
   if (pathname === "/") {

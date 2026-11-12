@@ -78,6 +78,7 @@ interface IntegrationStatus {
   gemini: KeyState & { model: string; forTrials: boolean; backup: boolean };
   elevenlabs: KeyState & { voiceId: string };
   replicate: KeyState;
+  azureAi?: KeyState & { url: string; deployment: string };
   videoEngine: KeyState & { url: string };
   vmWake?: KeyState & { vm: string };
   videoEngineGpu?: KeyState & { url: string };
@@ -633,7 +634,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost") {
+  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -679,7 +680,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost") {
+  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -798,6 +799,27 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             )}
             {st.gemini.set && (
               <Button size="sm" variant="ghost" loading={busy === "rm:geminiModel"} onClick={resetGeminiModel}>Reset model</Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Sparkles className="h-4 w-4" />}
+          title="Azure AI — pictures on Azure's GPUs (FLUX Kontext)"
+          desc="Makes every AI picture on Microsoft's GPUs, billed per picture to your Azure subscription (and its nonprofit credits). No GPU server or GPU quota needed. Keeps a cast member's face when a reference picture is given. In the Azure portal: create an Azure AI Foundry resource, deploy FLUX.1-Kontext-pro, then copy the endpoint and KEY 1 from Keys and Endpoint."
+          link={{ href: "https://ai.azure.com", label: "Open Azure AI Foundry" }}
+          state={st.azureAi ?? { set: false }}
+          result={results.azureAi}
+        >
+          {st.azureAi?.source === "server" && <ServerNote />}
+          <Input autoComplete="off" spellCheck={false} placeholder={st.azureAi?.url || "Endpoint (https://…services.ai.azure.com)"} value={vals.azureAiEndpoint ?? ""} onChange={set("azureAiEndpoint")} />
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="KEY 1" value={vals.azureAiKey ?? ""} onChange={set("azureAiKey")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={`Deployment name (${st.azureAi?.deployment || "flux-kontext"})`} value={vals.azureAiImageDeployment ?? ""} onChange={set("azureAiImageDeployment")} />
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Azure AI"} onClick={() => save(["azureAiEndpoint", "azureAiKey", "azureAiImageDeployment"], "Azure AI", "azureAi")}>Save &amp; test</Button>
+            <Button size="sm" loading={busy === "test:azureAi"} disabled={!st.azureAi?.set} onClick={() => check("azureAi")}>Test</Button>
+            {st.azureAi?.set && st.azureAi.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:azureAiKey"} onClick={() => remove("azureAiKey", "Azure AI")}><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
           </Actions>
         </Service>
