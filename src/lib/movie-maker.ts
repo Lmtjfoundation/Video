@@ -82,7 +82,8 @@ export interface MoviePlan {
   scenes: MovieScene[];
 }
 
-export const MAX_SCENES = 60;
+/** Up to 1 h 30 min at about 10 seconds a scene (long movies are filmed in chapters). */
+export const MAX_SCENES = 540;
 const clip = (s: string, n: number) => s.replace(/\s+/g, " ").trim().slice(0, n);
 
 /** The camera move an "Edit:" line asks for (first match wins, so "crash zoom" beats "zoom"). */

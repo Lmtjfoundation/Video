@@ -1,5 +1,8 @@
 import { asUser, db } from "@/lib/db";
-import { readFile, verifySignature } from "@/lib/media";
+import { createReadStream, promises as fs } from "fs";
+import { Readable } from "stream";
+import { localPath, readFile, storeOf, verifySignature } from "@/lib/media";
+import { blobReadUrl } from "@/lib/azure-blob";
 import type { MediaItem } from "@/lib/types";
 import { parseRange } from "@/lib/byte-range";
 
@@ -19,12 +22,29 @@ export async function GET(req: Request, { params }: { params: Promise<{ owner: s
   return asUser(owner, async () => {
     const item = await db().get<MediaItem>("media", id);
     if (!item) return new Response("Not found", { status: 404 });
-    const bytes = await readFile(item).catch(() => null);
-    if (!bytes) return new Response("Not found", { status: 404 });
-    const headers: Record<string, string> = { "Content-Type": item.type, "Accept-Ranges": "bytes", "Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff" };
     // ?dl=name.mp4 saves the file (e.g. to post it on a Facebook profile from a computer) instead of playing it.
     const dl = url.searchParams.get("dl")?.replace(/[^A-Za-z0-9._-]/g, "").slice(0, 100);
+    const where = storeOf(item);
+    // Kept in Azure: a short-lived signed link straight to the bucket, which streams and seeks by itself.
+    if (where === "azure") {
+      const to = await blobReadUrl(item.storagePath, 3600, dl || undefined).catch(() => null);
+      return to ? Response.redirect(to, 302) : new Response("Not found", { status: 404 });
+    }
+    const headers: Record<string, string> = { "Content-Type": item.type, "Accept-Ranges": "bytes", "Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff" };
     if (dl) headers["Content-Disposition"] = `attachment; filename="${dl}"`;
+    // On this server's disk: streamed from the file, never read whole (long movies are gigabytes).
+    if (where === "local") {
+      const file = localPath(item);
+      const size = (await fs.stat(file).catch(() => null))?.size;
+      if (size === undefined) return new Response("Not found", { status: 404 });
+      const range = parseRange(req.headers.get("range"), size);
+      if (range === null) return new Response(null, { status: 416, headers: { ...headers, "Content-Range": `bytes */${size}` } });
+      const [start, end] = range === "none" ? [0, size - 1] : [range.start, range.end];
+      const body = Readable.toWeb(createReadStream(file, { start, end })) as ReadableStream;
+      return new Response(body, range === "none" ? { headers: { ...headers, "Content-Length": String(size) } } : { status: 206, headers: { ...headers, "Content-Length": String(end - start + 1), "Content-Range": `bytes ${start}-${end}/${size}` } });
+    }
+    const bytes = await readFile(item).catch(() => null);
+    if (!bytes) return new Response("Not found", { status: 404 });
     const range = parseRange(req.headers.get("range"), bytes.length);
     if (range === null) return new Response(null, { status: 416, headers: { ...headers, "Content-Range": `bytes */${bytes.length}` } });
     if (range === "none") return new Response(new Uint8Array(bytes), { headers: { ...headers, "Content-Length": String(bytes.length) } });

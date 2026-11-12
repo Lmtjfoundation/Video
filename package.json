@@ -15,6 +15,7 @@
     "a11y": "node scripts/a11y-scan.cjs"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.34.0",
     "@huggingface/transformers": "^3.8.1",
     "@supabase/supabase-js": "^2.57.0",
     "@types/node": "^22.18.0",

@@ -18,7 +18,7 @@ import {
   type MoviePlan,
   type MovieScene,
 } from "@/lib/movie-maker";
-import { listMovies, motionEngineReady, movieJob, type RenderInput } from "@/lib/movie-maker-render";
+import { listMovies, MAX_MOVIE_SECONDS, motionEngineReady, movieJob, type RenderInput } from "@/lib/movie-maker-render";
 import { picturesReady } from "@/lib/pictures";
 import { CREDIT_COST } from "@/lib/plans";
 import { ffmpegAvailable } from "@/lib/render";
@@ -56,6 +56,7 @@ export const POST = authed(async (req, user) => {
   if (b.action !== "render") return fail("Unknown action.");
   const plan = cleanPlan(b.plan);
   if (!plan.scenes.length) return fail("Add at least one scene.");
+  if (plan.scenes.reduce((n, s) => n + s.seconds, 0) > MAX_MOVIE_SECONDS) return fail("Movies can be up to 1 hour 30 minutes. Shorten some scenes or remove a few.");
   if (plan.scenes.some((s) => !s.mediaId && !s.visual && !s.narration)) return fail("Every scene needs a picture description or a picture from your library.");
   if (!(await motionEngineReady()) || !(await ffmpegAvailable())) return fail("The motion engine isn't installed on this server yet.", 503);
   if (plan.scenes.some((s) => !s.mediaId) && !(await picturesReady())) return fail("Scene pictures can't be made right now. Pick pictures from your library for each scene, or ask the admin to connect pictures.", 503);

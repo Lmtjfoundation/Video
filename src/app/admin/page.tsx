@@ -80,6 +80,7 @@ interface IntegrationStatus {
   replicate: KeyState;
   azureAi?: KeyState & { url: string; deployment: string; region?: string; chat?: string };
   azureOnly?: boolean;
+  azureStorage?: KeyState & { container: string; account: string };
   videoEngine: KeyState & { url: string };
   vmWake?: KeyState & { vm: string };
   videoEngineGpu?: KeyState & { url: string };
@@ -635,7 +636,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi") {
+  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi" | "azureStorage") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -681,7 +682,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi") {
+  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi" | "azureStorage") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -835,6 +836,26 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             <Button size="sm" loading={busy === "test:azureAi"} disabled={!st.azureAi?.set} onClick={() => check("azureAi")}>Test</Button>
             {st.azureAi?.set && st.azureAi.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:azureAiKey"} onClick={() => remove("azureAiKey", "Azure AI")}><Trash2 className="h-3.5 w-3.5" /></Button>
+            )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<Sparkles className="h-4 w-4" />}
+          title="Azure storage — buckets for all media and long videos"
+          desc="Keeps every upload and every video Ghost Post makes in your Azure Storage account (private buckets, billed to your Azure subscription). Videos stream and seek straight from Azure, so movies up to 1 h 30 min play smoothly. Files kept before you connect it stay where they are and keep working."
+          link={{ href: "https://portal.azure.com/#browse/Microsoft.Storage%2FStorageAccounts", label: "Open storage accounts" }}
+          state={st.azureStorage ?? { set: false }}
+          result={results.azureStorage}
+        >
+          {st.azureStorage?.source === "server" && <ServerNote />}
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder={st.azureStorage?.account ? `Connected to ${st.azureStorage.account}` : "Connection string (DefaultEndpointsProtocol=https;AccountName=…)"} value={vals.azureStorageConnection ?? ""} onChange={set("azureStorageConnection")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={`Bucket name (${st.azureStorage?.container || "media"})`} value={vals.azureStorageContainer ?? ""} onChange={set("azureStorageContainer")} />
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Azure storage"} onClick={() => save(["azureStorageConnection", "azureStorageContainer"], "Azure storage", "azureStorage")}>Save &amp; test</Button>
+            <Button size="sm" loading={busy === "test:azureStorage"} disabled={!st.azureStorage?.set} onClick={() => check("azureStorage")}>Test</Button>
+            {st.azureStorage?.set && st.azureStorage.source === "app" && (
+              <Button size="sm" variant="ghost" loading={busy === "rm:azureStorageConnection"} onClick={() => remove("azureStorageConnection", "Azure storage")}><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
           </Actions>
         </Service>

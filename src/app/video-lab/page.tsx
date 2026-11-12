@@ -15,6 +15,13 @@ type Info = {
   lengths: Record<string, number>;
   characters: { id: string; name: string; imageUrl: string }[];
   ready: { pictures: string | null; engine: boolean };
+  longCredits: Record<string, { voice: number; silent: number }>;
+};
+
+/** Filming runs at about 8 times the video's length on the server's processors. */
+const filmTime = (sec: number) => {
+  const m = Math.ceil((sec * 8.5) / 60);
+  return m < 90 ? `about ${m} minutes` : `about ${Math.round(m / 60)} hours`;
 };
 type Movies = { movies: { id: string; title: string; seconds: number; videoUrl: string; createdAt: string }[]; cost: { aiImage: number; speech: number } };
 
@@ -51,6 +58,23 @@ export default function VideoLab() {
   }, [toast, loadMovies]);
 
   const credits = useMemo(() => (plan && movies ? movieCredits(plan, movies.cost, voice) : 0), [plan, movies, voice]);
+  const seconds = info?.lengths[length] ?? 30;
+  const long = seconds > 90;
+  const longCost = info?.longCredits[length]?.[voice ? "voice" : "silent"] ?? 0;
+
+  async function filmLong() {
+    setBusy("film");
+    try {
+      await api("/api/video-lab", { body: { action: "long", idea, length, style, characterIds: cast, voice, musicMediaId: music || undefined } });
+      jobStarted();
+      toast(`Writing and filming your ${seconds >= 3600 ? `${(seconds / 3600).toFixed(seconds % 3600 ? 1 : 0)}-hour` : `${seconds / 60}-minute`} video, chapter by chapter. You can close the app; you'll get a notification when it's ready.`, "success");
+      refresh();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy("");
+    }
+  }
   const offline = info && (!info.ready.pictures || !info.ready.engine);
 
   async function write() {
@@ -87,7 +111,7 @@ export default function VideoLab() {
 
   return (
     <>
-      <PageHeader title="Video Lab" subtitle="Describe a video. The AI writes every shot, then films it with real camera moves, depth, effects, voice and music. No GPU needed." />
+      <PageHeader title="Video Lab" subtitle="Describe a video, from 15 seconds to 1 hour 30 minutes. The AI writes every shot, then films it with real camera moves, depth, effects, voice and music. No GPU needed." />
       {offline && (
         <div className="mb-5 rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-sm text-white/80">
           {!info?.ready.pictures ? "Pictures aren't switched on yet. The admin connects Azure AI in Admin → App settings → Integrations." : "The motion engine isn't installed on this server yet."}
@@ -114,7 +138,7 @@ export default function VideoLab() {
               <Field label="Length">
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(info?.lengths ?? { s30: 30 }).map(([k, s]) => (
-                    <button key={k} onClick={() => setLength(k)} className={cn("focus-ring rounded-xl border px-3 py-2 text-sm tabular-nums", length === k ? "border-mint-400 bg-mint-400/10 text-white" : "border-white/10 bg-white/[0.03] text-white/70")}>{s < 60 ? `${s} sec` : `${Math.floor(s / 60)} min${s % 60 ? ` ${s % 60} s` : ""}`}</button>
+                    <button key={k} onClick={() => setLength(k)} className={cn("focus-ring rounded-xl border px-3 py-2 text-sm tabular-nums", length === k ? "border-mint-400 bg-mint-400/10 text-white" : "border-white/10 bg-white/[0.03] text-white/70")}>{s < 60 ? `${s} sec` : s >= 3600 ? `${Math.floor(s / 3600)} h${s % 3600 ? ` ${(s % 3600) / 60} min` : ""}` : `${Math.floor(s / 60)} min${s % 60 ? ` ${s % 60} s` : ""}`}</button>
                   ))}
                 </div>
               </Field>
@@ -134,13 +158,28 @@ export default function VideoLab() {
                   </div>
                 </Field>
               )}
-              <Button variant="primary" size="lg" loading={busy === "plan"} disabled={idea.trim().length < 8} onClick={write}>
-                <Sparkles className="h-4 w-4" /> Write the shots
-              </Button>
+              {long ? (
+                <>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={voice} onChange={setVoice} label="Voice reads the words" /> Voice reads the words</label>
+                    <MediaSelect items={items} kinds={["audio"]} value={music} onChange={setMusic} empty="No music (a score is drawn under the voice)" />
+                  </div>
+                  <Button variant="primary" size="lg" loading={busy === "film"} disabled={idea.trim().length < 8 || !!offline} onClick={filmLong}>
+                    <Film className="h-4 w-4" /> Write &amp; film it{longCost ? ` · about ${longCost.toLocaleString()} credits` : ""}
+                  </Button>
+                  <p className="text-xs text-white/55">
+                    Long videos are written as an outline, then chapter by chapter (about {Math.round(seconds / 300)} chapters of 5 minutes, a new picture every ~12 seconds), then filmed chapter by chapter and joined into one video. Filming takes {filmTime(seconds)} on Ghost Post&apos;s server, and it carries on by itself if the server restarts. You&apos;ll get a notification when it&apos;s ready.
+                  </p>
+                </>
+              ) : (
+                <Button variant="primary" size="lg" loading={busy === "plan"} disabled={idea.trim().length < 8} onClick={write}>
+                  <Sparkles className="h-4 w-4" /> Write the shots
+                </Button>
+              )}
             </div>
           </Card>
 
-          {plan && (
+          {plan && !long && (
             <Card>
               <CardHeader title={`2. ${plan.title || "Your shots"}`} subtitle="Change anything: what the voice says, what each picture shows, how the camera moves." icon={<Clapperboard className="h-4 w-4" />} />
               <div className="flex flex-col gap-3 p-5">

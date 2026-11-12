@@ -248,6 +248,8 @@ export interface MediaItem {
   size: number;
   kind: "image" | "video" | "audio";
   storagePath: string;
+  /** Where the file is kept: Azure Blob Storage, Supabase Storage or this server's disk (older files: unset). */
+  store?: "azure" | "supabase" | "local";
   createdAt: string;
   /** True for MP4s the app rendered from a video plan */
   rendered?: boolean;

@@ -39,6 +39,9 @@ export interface Integrations {
   azureAiImageDeployment?: string;
   /** Azure region of that resource, for its voices and talking presenter (e.g. eastus2). */
   azureAiRegion?: string;
+  /** Azure Blob Storage for media (a storage account's connection string) and the bucket (container) name. */
+  azureStorageConnection?: string;
+  azureStorageContainer?: string;
   /** The Azure OpenAI chat deployment that writes in Azure-only mode (e.g. gpt-5.4-mini). */
   azureAiChatDeployment?: string;
   /**
@@ -245,6 +248,7 @@ export async function integrationStatus() {
     replicate: entry("REPLICATE_API_TOKEN", i.replicateKey),
     azureAi: { ...entry("AZURE_AI_KEY", i.azureAiKey), url: i.azureAiEndpoint || process.env.AZURE_AI_ENDPOINT || "", deployment: i.azureAiImageDeployment || process.env.AZURE_AI_IMAGE_DEPLOYMENT || "flux-kontext", region: i.azureAiRegion || process.env.AZURE_AI_REGION || "eastus2", chat: i.azureAiChatDeployment || process.env.AZURE_AI_CHAT_DEPLOYMENT || "gpt-5.4-mini" },
     azureOnly: await azureOnly(i),
+    azureStorage: { ...entry("AZURE_STORAGE_CONNECTION_STRING", i.azureStorageConnection), container: i.azureStorageContainer || process.env.AZURE_STORAGE_CONTAINER || "media", account: (i.azureStorageConnection || process.env.AZURE_STORAGE_CONNECTION_STRING || "").match(/AccountName=([^;]+)/)?.[1] ?? "" },
     videoEngine: { ...entry("VIDEO_ENGINE_TOKEN", i.videoEngineToken), url: i.videoEngineUrl || process.env.VIDEO_ENGINE_URL || "" },
     vmWake: { ...entry("VM_WAKE", i.vmWake), vm: (i.vmWake || process.env.VM_WAKE || "").match(/vm=([^;]+)/)?.[1] ?? "" },
     uploadPost: entry("UPLOAD_POST_API_KEY", i.uploadPostKey),

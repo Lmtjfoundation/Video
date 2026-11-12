@@ -4,7 +4,7 @@ import os from "os";
 import path from "path";
 import { getCharacters, characterRef } from "./characters";
 import { db } from "./db";
-import { readFile, storeFile } from "./media";
+import { readFile, storeFile, storeFilePath } from "./media";
 import { makeImage } from "./pictures";
 import { loudnessFilter, MASTER_CHAIN } from "./mix";
 import { mediaDuration, narrate, runCmd } from "./render";
@@ -76,7 +76,12 @@ export async function sweepMovieWork(maxAgeMs = 2 * 86400_000) {
  * Make the movie: pictures, voices, the motion render, the sound mix. Returns the saved video. With `workDir`, each
  * finished step is kept there and reused when the job is picked up again after a restart.
  */
-export async function renderMovie(userId: string, input: RenderInput, say: (m: string) => void, workDir?: string): Promise<MovieRecord> {
+/** Scenes per chapter of a long movie: each chapter is filmed and mixed on its own, then the chapters are joined. */
+export const CHAPTER_SCENES = 30;
+/** The longest movie Ghost Post makes: 1 hour 30 minutes. */
+export const MAX_MOVIE_SECONDS = 90 * 60;
+
+export async function renderMovie(userId: string, input: RenderInput, say: (m: string) => void, workDir?: string, opts: { saveTo?: string } = {}): Promise<MovieRecord> {
   const dir = workDir ?? (await fs.mkdtemp(path.join(os.tmpdir(), "gp-movie-")));
   await fs.mkdir(dir, { recursive: true });
   try {
@@ -176,6 +181,12 @@ export async function renderMovie(userId: string, input: RenderInput, say: (m: s
     const out = path.join(dir, "movie.mp4");
     await runCmd("ffmpeg", ["-y", "-i", silent, "-i", audio, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "copy", "-shortest", "-movflags", "+faststart", out], 10 * 60_000);
 
+    // A chapter of a long movie: kept on disk for the join, not saved to the library on its own.
+    if (opts.saveTo) {
+      await fs.rename(out, opts.saveTo).catch(async () => fs.copyFile(out, opts.saveTo!));
+      await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+      return { id: "", title, scenes: plan.scenes.length, seconds: Math.round(total), mediaId: "", createdAt: nowIso() };
+    }
     // 5. Save it to the library.
     const item = await storeFile(userId, { name: `${title || "Movie"}.mp4`, type: "video/mp4", bytes: await fs.readFile(out) }, { uncapped: true });
     const rec: MovieRecord = { id: uid("mov"), title: title || "Movie", scenes: plan.scenes.length, seconds: Math.round(total), mediaId: item.id, createdAt: nowIso() };
@@ -189,12 +200,60 @@ export async function renderMovie(userId: string, input: RenderInput, say: (m: s
   }
 }
 
+/**
+ * A long movie (up to 1 h 30 min) in chapters: each chapter is filmed and mixed on its own and kept on disk, so a
+ * restart carries on from the next unfinished chapter; then the chapters are joined (no re-encoding) and the movie is
+ * sent to storage in blocks (Azure Blob when connected), never held in memory.
+ */
+export async function renderChaptered(userId: string, title: string, chapters: RenderInput[], say: (m: string) => void, workDir: string): Promise<MovieRecord> {
+  await fs.mkdir(workDir, { recursive: true });
+  const files: string[] = [];
+  let seconds = 0;
+  for (const [i, ch] of chapters.entries()) {
+    const file = path.join(workDir, `chapter${i + 1}.mp4`);
+    const done = path.join(workDir, `chapter${i + 1}.json`);
+    if (!(await exists(file)) || !(await exists(done))) {
+      const rec = await renderMovie(userId, ch, (m) => say(`Chapter ${i + 1} of ${chapters.length}: ${m}`), path.join(workDir, `ch${i + 1}`), { saveTo: file });
+      await writeDone(done, JSON.stringify({ seconds: rec.seconds }));
+    }
+    seconds += (JSON.parse(await fs.readFile(done, "utf8")) as { seconds: number }).seconds;
+    files.push(file);
+  }
+  say(`Joining ${chapters.length} chapters…`);
+  const list = path.join(workDir, "chapters.txt");
+  await fs.writeFile(list, files.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join("\n"));
+  const out = path.join(workDir, "movie.mp4");
+  await runCmd("ffmpeg", ["-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out], 60 * 60_000);
+  seconds = Math.round((await mediaDuration(out).catch(() => seconds)) || seconds);
+  say("Saving the movie…");
+  const item = await storeFilePath(userId, { name: `${title || "Movie"}.mp4`, type: "video/mp4", path: out });
+  const rec: MovieRecord = { id: uid("mov"), title: title || "Movie", scenes: chapters.reduce((n, c) => n + c.plan.scenes.length, 0), seconds, mediaId: item.id, createdAt: nowIso() };
+  await kvSet(ROW, [rec, ...(await listMovies())].slice(0, 50));
+  await fs.rm(workDir, { recursive: true, force: true }).catch(() => {});
+  return rec;
+}
+
+/** Splits a long plan into chapters: the title card opens the first, the end card closes the last. */
+export function chaptersOf(input: RenderInput): RenderInput[] {
+  const { scenes } = input.plan;
+  if (scenes.length <= CHAPTER_SCENES) return [input];
+  const out: RenderInput[] = [];
+  for (let i = 0; i < scenes.length; i += CHAPTER_SCENES) {
+    const last = i + CHAPTER_SCENES >= scenes.length;
+    out.push({ ...input, plan: { ...input.plan, title: i === 0 ? input.plan.title : "", scenes: scenes.slice(i, i + CHAPTER_SCENES) }, endCard: last ? input.endCard : "" });
+  }
+  return out;
+}
+
+const clock = (s: number) => (s >= 3600 ? `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`);
+
 /** The Movie Maker job: renders, refunds on a real failure (not on a shutdown, which resumes), and keeps its work. */
 export function movieJob(userId: string, input: RenderInput & { credits: number }): JobFn {
   return async (say, ctx) => {
     try {
-      const rec = await renderMovie(userId, input, say, movieWorkDir(ctx.jobId));
-      return { href: "/movie-maker", message: `Movie ready: ${rec.title} (${Math.floor(rec.seconds / 60)}:${String(rec.seconds % 60).padStart(2, "0")})` };
+      const chapters = chaptersOf(input);
+      const rec = chapters.length > 1 ? await renderChaptered(userId, input.plan.title, chapters, say, movieWorkDir(ctx.jobId)) : await renderMovie(userId, input, say, movieWorkDir(ctx.jobId));
+      return { href: "/movie-maker", message: `Movie ready: ${rec.title} (${clock(rec.seconds)})` };
     } catch (e) {
       if (!wasInterrupted(e) && input.credits) await refundCredits(userId, input.credits);
       throw e;

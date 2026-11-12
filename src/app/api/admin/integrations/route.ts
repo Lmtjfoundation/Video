@@ -24,6 +24,8 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   azureAiEndpoint: { re: /^https:\/\/[a-z0-9-]+\.(services\.ai|cognitiveservices|openai)\.azure\.com(\/[^\s]*)?$/i, msg: "Paste the Azure AI resource's endpoint, e.g. https://myresource.services.ai.azure.com (Azure portal → your AI resource → Keys and Endpoint)." },
   azureAiKey: { re: /^[A-Za-z0-9]{32,120}$/, msg: "Paste KEY 1 from the Azure AI resource (Azure portal → Keys and Endpoint)." },
   azureAiRegion: { re: /^[a-z]{2,20}[0-9]?$/, msg: "The region looks like eastus2 (Azure portal → your AI resource → Overview → Location)." },
+  azureStorageConnection: { re: /^DefaultEndpointsProtocol=https;AccountName=[a-z0-9]{3,24};AccountKey=[A-Za-z0-9+/=]{40,};EndpointSuffix=core\.windows\.net$/, msg: "Paste the whole connection string: Azure portal → your storage account → Access keys → Connection string (starts with DefaultEndpointsProtocol=https;AccountName=…)." },
+  azureStorageContainer: { re: /^[a-z0-9](?!.*--)[a-z0-9-]{1,61}[a-z0-9]$/, msg: "A bucket (container) name is 3-63 lowercase letters, numbers and dashes, e.g. media." },
   azureAiChatDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The writing model's deployment name, e.g. gpt-5.4-mini." },
   azureAiImageDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The deployment name is what you called the FLUX Kontext deployment, e.g. flux-kontext." },
   videoEngineUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the engine's web address, e.g. https://ghostpost-1a2b3c.eastus.cloudapp.azure.com (Azure) or https://abc123-8000.proxy.runpod.net (RunPod)." },
@@ -103,6 +105,7 @@ export const POST = authed(async (req, user) => {
   }
   if (b.action === "test" && b.which === "replicate") return ok(await testReplicate());
   if (b.action === "test" && b.which === "azureAi") return ok(await testAzureAi());
+  if (b.action === "test" && b.which === "azureStorage") return ok(await (await import("@/lib/azure-blob")).testBlob());
   if (b.action === "test" && b.which === "ownWriter") return ok(await testOwnWriter());
   if (b.action === "test" && b.which === "uploadPost") return ok(await testUploadPost());
   if (b.action === "test" && b.which === "videoEngine") return ok(await testOwnEngine("main"));

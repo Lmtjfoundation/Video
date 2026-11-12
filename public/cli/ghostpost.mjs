@@ -22,9 +22,10 @@ Make things (each prints the job, waits for it, and saves the result unless --no
                   [--lipsync] [--captions] [--mix replace|duck|swap] [-o out.mp4]
       Put a voice on any video; --lipsync moves the mouth to the new words.
   ghostpost music-video <song.mp3|med_id> "<look and story>" [--clips] [--aspect 9:16] [-o out.mp4]
-  ghostpost video "<idea>" [--length s15|s30|s60|s90] [--style cinematic|noir|documentary|horror|ad|classic]
+  ghostpost video "<idea>" [--length s15|s30|s60|s90|m5|m10|m20|m30|m45|m60|m90] [--style cinematic|noir|documentary|horror|ad|classic]
                   [--music song.mp3|med_id] [--no-voice] [-o out.mp4]
       Video Lab: AI writes every shot, then films it with camera moves, effects, voice and music.
+      m5 … m90 are long videos (5 min to 1 h 30 min), written and filmed chapter by chapter.
   ghostpost movie "<pitch or idea>" [--length s30|s60|s90|m3] [--voice am_onyx] [--platform youtube|tiktok|instagram]
       From a one-line pitch to a narrated, finished movie.
   ghostpost presenter "<script>" [--avatar lisa|harry|jeff|lori|max|meg] [--pose casual-sitting]
@@ -221,9 +222,14 @@ const commands = {
     const idea = o._.join(" ").trim();
     if (!idea) die('describe the video: ghostpost video "A second line parade at sunset"');
     const style = o.style || "cinematic";
+    const music = o.music ? await mediaId(o.music, "music") : undefined;
+    if (/^m\d+$/.test(o.length || "")) {
+      const r = await call("POST", "/api/video-lab", { action: "long", idea, length: o.length, style, voice: !o["no-voice"], musicMediaId: music });
+      console.error(`  ${r.credits ?? 0} credits · filmed chapter by chapter; this takes hours for long videos`);
+      return follow(r.job, o, "video");
+    }
     const p = await call("POST", "/api/video-lab", { action: "plan", idea, length: o.length || "s30", style });
     console.error(`  ${p.plan.scenes.length} shots written: ${p.plan.title}`);
-    const music = o.music ? await mediaId(o.music, "music") : undefined;
     const r = await call("POST", "/api/movie-maker", { action: "render", plan: p.plan, grade: p.grade, characterIds: [], voice: !o["no-voice"], musicMediaId: music, endCard: "", fiction: !["documentary", "ad"].includes(style) });
     console.error(`  ${r.credits ?? 0} credits`);
     await follow(r.job, o, "video");

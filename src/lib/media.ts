@@ -6,10 +6,13 @@ import { createClient } from "@supabase/supabase-js";
 import { db, asUser } from "./db";
 import type { MediaItem } from "./types";
 import { nowIso, uid } from "./utils";
+import { blobDelete, blobDownload, blobDownloadToFile, blobReady, blobUpload, blobUploadFile } from "./azure-blob";
 
 /**
  * Media library: images and videos users upload to attach to posts.
- * Files live in Supabase Storage (bucket "media") when Supabase is configured, otherwise in ./.data/uploads.
+ * Files live in Azure Blob Storage when a storage account is connected (src/lib/azure-blob.ts), else in Supabase Storage
+ * (bucket "media") when Supabase is configured, otherwise in ./.data/uploads. Each file remembers where it went, so
+ * files kept before a storage account was connected keep working.
  * Platforms like Instagram fetch images by URL, so each file can be served through a signed, expiring link.
  */
 export const ALLOWED_TYPES: Record<string, { ext: string; kind: MediaItem["kind"] }> = {
@@ -47,20 +50,71 @@ export async function storeFile(owner: string, file: { name: string; type: strin
   const id = uid("med");
   const storagePath = `${owner}/${id}.${t.ext}`;
   const sb = supa();
-  if (sb) {
+  let store: MediaItem["store"];
+  if (await blobReady()) {
+    await blobUpload(storagePath, file.bytes, file.type);
+    store = "azure";
+  } else if (sb) {
     const { error } = await sb.storage.from("media").upload(storagePath, file.bytes, { contentType: file.type, upsert: false });
     if (error) throw new Error(`Upload failed: ${error.message}`);
+    store = "supabase";
   } else {
     await fs.mkdir(localDir(owner), { recursive: true });
     await fs.writeFile(path.join(localDir(owner), `${id}.${t.ext}`), file.bytes);
+    store = "local";
   }
-  const item: MediaItem = { id, name: file.name.slice(0, 160), type: file.type, size: file.bytes.length, kind: t.kind, storagePath, createdAt: nowIso() };
+  const item: MediaItem = { id, name: file.name.slice(0, 160), type: file.type, size: file.bytes.length, kind: t.kind, storagePath, store, createdAt: nowIso() };
   await db().upsert("media", item);
   return item;
 }
 
+/**
+ * Keeps a file that's already on this server's disk (a long movie Ghost Post just made) without reading it into
+ * memory: sent to Azure in blocks, or moved into the uploads folder. Only Ghost Post's own renders use this.
+ */
+export async function storeFilePath(owner: string, file: { name: string; type: string; path: string }): Promise<MediaItem> {
+  const t = ALLOWED_TYPES[file.type];
+  if (!t) throw new Error("That file type isn't supported.");
+  const id = uid("med");
+  const storagePath = `${owner}/${id}.${t.ext}`;
+  const size = (await fs.stat(file.path)).size;
+  let store: MediaItem["store"];
+  if (await blobReady()) {
+    await blobUploadFile(storagePath, file.path, file.type);
+    store = "azure";
+  } else if (supa()) {
+    return storeFile(owner, { name: file.name, type: file.type, bytes: await fs.readFile(file.path) }, { uncapped: true });
+  } else {
+    await fs.mkdir(localDir(owner), { recursive: true });
+    const dest = path.join(localDir(owner), `${id}.${t.ext}`);
+    await fs.rename(file.path, dest).catch(async () => fs.copyFile(file.path, dest));
+    store = "local";
+  }
+  const item: MediaItem = { id, name: file.name.slice(0, 160), type: file.type, size, kind: t.kind, storagePath, store, createdAt: nowIso() };
+  await db().upsert("media", item);
+  return item;
+}
+
+/** Where a file is kept (older files don't say: Supabase when it's set up, otherwise this server's disk). */
+export const storeOf = (item: MediaItem): NonNullable<MediaItem["store"]> => item.store ?? (supa() ? "supabase" : "local");
+
+/** The path of a file kept on this server's disk. */
+export function localPath(item: MediaItem) {
+  const [owner, fileName] = item.storagePath.split("/");
+  return path.join(localDir(owner), fileName);
+}
+
+/** Copies a file to `dest` on disk without holding it in memory (for long videos). */
+export async function copyToFile(item: MediaItem, dest: string) {
+  const s = storeOf(item);
+  if (s === "azure") return blobDownloadToFile(item.storagePath, dest);
+  if (s === "local") return fs.copyFile(localPath(item), dest);
+  await fs.writeFile(dest, await readFile(item));
+}
+
 export async function readFile(item: MediaItem): Promise<Buffer> {
-  const sb = supa();
+  if (storeOf(item) === "azure") return blobDownload(item.storagePath);
+  const sb = storeOf(item) === "supabase" ? supa() : null;
   if (sb) {
     const { data, error } = await sb.storage.from("media").download(item.storagePath);
     if (error || !data) throw new Error("File not found.");
@@ -71,8 +125,9 @@ export async function readFile(item: MediaItem): Promise<Buffer> {
 }
 
 export async function deleteFile(item: MediaItem) {
-  const sb = supa();
-  if (sb) await sb.storage.from("media").remove([item.storagePath]);
+  const sb = storeOf(item) === "supabase" ? supa() : null;
+  if (storeOf(item) === "azure") await blobDelete(item.storagePath);
+  else if (sb) await sb.storage.from("media").remove([item.storagePath]);
   else {
     const [owner, fileName] = item.storagePath.split("/");
     await fs.rm(path.join(localDir(owner), fileName), { force: true });
@@ -139,7 +194,7 @@ export async function remoteVideoMedia(owner: string, rawUrl: string): Promise<M
   } finally {
     clearTimeout(timer);
   }
-  if (!supa()) await ensureSpace(bytes.length);
+  if (!supa() && !(await blobReady())) await ensureSpace(bytes.length);
   const name = decodeURIComponent(url.split("/").pop() || "video.mp4");
   const item = await storeFile(owner, { name, type: "video/mp4", bytes });
   item.sourceUrl = url;
