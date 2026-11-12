@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Activity, LogOut, Menu, X } from "lucide-react";
-import { SECTIONS, matches, sectionFor, type Tool } from "@/lib/nav";
+import { SECTIONS, activeTool, grouped, sectionFor, type Tool } from "@/lib/nav";
 import { useApp } from "@/lib/store";
 import { JobsTray } from "./jobs-tray";
 import { cn } from "@/lib/utils";
@@ -144,16 +144,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
             {on && tools.length > 0 && (
               <div className="mb-1 ml-[22px] mt-0.5 flex flex-col gap-0.5 border-l border-white/[0.08] pl-3">
-                {tools.map((t) => {
-                  const here = matches(t.href, path, path + (search ? `?${search}` : ""));
-                  return (
-                    <Link key={t.href} href={t.href} aria-current={here ? "page" : undefined}
-                      className={cn("focus-ring flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors", here ? "bg-white/[0.06] text-mint-200" : "text-white/55 hover:text-white")}>
-                      {t.label}
-                      {badgeFor(t.badge) > 0 && <span className="ml-auto rounded-full bg-gold-400 px-1.5 text-[10.5px] font-semibold text-ink-950">{badgeFor(t.badge)}</span>}
-                    </Link>
-                  );
-                })}
+                {grouped(tools).map(({ group, tools: list }) => (
+                  <div key={group || "tools"} className="flex flex-col gap-0.5">
+                    {group && <div className="px-2 pb-0.5 pt-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/50">{group}</div>}
+                    {list.map((t) => {
+                      const here = activeTool(tools, path, path + (search ? `?${search}` : ""))?.href === t.href;
+                      return (
+                        <Link key={t.href} href={t.href} aria-current={here ? "page" : undefined} onClick={() => setSearch(t.href.split("?")[1] ?? "")}
+                          className={cn("focus-ring flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors", here ? "bg-white/[0.06] text-mint-200" : "text-white/55 hover:text-white")}>
+                          {t.label}
+                          {badgeFor(t.badge) > 0 && <span className="ml-auto rounded-full bg-gold-400 px-1.5 text-[10.5px] font-semibold text-ink-950">{badgeFor(t.badge)}</span>}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </div>

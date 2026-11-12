@@ -220,6 +220,11 @@ function VideoTools() {
   useEffect(() => {
     api<Info>("/api/video-tools").then(setInfo).catch(() => {});
   }, []);
+  // The side menu's Music Video shortcut links here with ?tab=music: follow it while the page is open too.
+  useEffect(() => {
+    const t = params.get("tab") as Tab;
+    if ((["smart", "music", "edit"] as Tab[]).includes(t)) setTab(t);
+  }, [params]);
   return (
     <>
       <PageHeader title="Video Tools" subtitle="Multi-camera Smart Shots, beat-cut music videos, and edits to clips you already have: restyle, relight, motion control, new backgrounds and inpainting." actions={<Link href="/voice-lab?tab=record"><Button><Mic className="h-4 w-4" /> Record your voice over a video</Button></Link>} />
