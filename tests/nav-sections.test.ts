@@ -31,11 +31,11 @@ describe("navigation sections", () => {
     expect(sectionFor("/admin").key).toBe("admin");
     expect(sectionFor("/").key).toBe("home");
   });
-  it("opens with the five most-used jobs, then the rest by goal", () => {
+  it("opens with the most-used jobs, then the rest by goal", () => {
     const make = SECTIONS.find((s) => s.key === "make")!;
     const groups = grouped(make.tools);
     expect(groups.map((g) => g.group)).toEqual(["Start here", "Movies & series", "Sound & video tools"]);
-    expect(groups[0].tools.map((t) => t.label)).toEqual(["Pitch to Movie", "Music Video", "Voice & Lip Sync", "Pictures", "Posts & Captions"]);
+    expect(groups[0].tools.map((t) => t.label)).toEqual(["Pitch to Movie", "Music Video", "Voice & Lip Sync", "Talking Presenter", "Pictures", "Posts & Captions"]);
     expect(new Set(make.tools.map((t) => t.href)).size).toBe(make.tools.length); // no tool listed twice
   });
   it("highlights the exact tool, not both the shortcut and its page", () => {

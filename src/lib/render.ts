@@ -149,6 +149,9 @@ export async function narrateAs(v: NonNullable<VideoPlan["narrator"]>, text: str
   if (v.kind === "engine") {
     const { speak } = await import("./voice-studio");
     await fs.writeFile(file, await speak(text, v.language, v.voiceId));
+  } else if (v.kind === "azure") {
+    const { azureSpeak } = await import("./azure-speech");
+    await fs.writeFile(file, await azureSpeak(text, v.name, v.speed));
   } else await freeVoice(text, file, undefined, { voice: v.id, speed: v.speed });
   return file;
 }
@@ -660,7 +663,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       recording = path.join(dir, `recording.${m.name.split(".").pop() || "audio"}`);
       await fs.writeFile(recording, await readFile(m));
     }
-    const voice = !recording && plan.voiceover !== false && (plan.narrator?.kind === "engine" || !!(await elevenlabsKey()) || freeVoiceEnabled());
+    const voice = !recording && plan.voiceover !== false && (plan.narrator?.kind === "engine" || plan.narrator?.kind === "azure" || !!(await elevenlabsKey()) || freeVoiceEnabled());
     const motionOnly = plan.visuals === "motion";
     const jobs: SceneJob[] = [];
     const planned = renderableScenes(plan);

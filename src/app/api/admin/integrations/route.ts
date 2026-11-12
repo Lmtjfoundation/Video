@@ -23,6 +23,7 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   replicateKey: { re: /^r8_[A-Za-z0-9]{20,}$/, msg: "A Replicate API token starts with r8_ (replicate.com → Account → API tokens)." },
   azureAiEndpoint: { re: /^https:\/\/[a-z0-9-]+\.(services\.ai|cognitiveservices|openai)\.azure\.com(\/[^\s]*)?$/i, msg: "Paste the Azure AI resource's endpoint, e.g. https://myresource.services.ai.azure.com (Azure portal → your AI resource → Keys and Endpoint)." },
   azureAiKey: { re: /^[A-Za-z0-9]{32,120}$/, msg: "Paste KEY 1 from the Azure AI resource (Azure portal → Keys and Endpoint)." },
+  azureAiRegion: { re: /^[a-z]{2,20}[0-9]?$/, msg: "The region looks like eastus2 (Azure portal → your AI resource → Overview → Location)." },
   azureAiImageDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The deployment name is what you called the FLUX Kontext deployment, e.g. flux-kontext." },
   videoEngineUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the engine's web address, e.g. https://ghostpost-1a2b3c.eastus.cloudapp.azure.com (Azure) or https://abc123-8000.proxy.runpod.net (RunPod)." },
   videoEngineToken: { re: /^[A-Za-z0-9_.~-]{12,}$/, msg: "Paste the ENGINE_TOKEN you started the engine with (12+ letters, numbers, - or _)." },

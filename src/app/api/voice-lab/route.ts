@@ -167,6 +167,30 @@ export const POST = authed(async (req, user) => {
       run = async () => (await voiceToVideo(user.id, o)).name;
       break;
     }
+    case "presenter": {
+      // A lifelike presenter who says the script, filmed on Azure's GPUs (no Ghost Post engine needed).
+      const { AVATARS, AVATAR_BACKGROUNDS, azurePresenter, azureSpeechReady, isAzureVoice } = await import("@/lib/azure-speech");
+      if (!(await azureSpeechReady())) return fail("The talking presenter runs on Azure AI, which isn't connected yet. The admin adds it in Admin → App settings → Integrations → Azure AI.", 503);
+      const script = String(b.script ?? "").trim();
+      if (!stripTags(script)) return fail("Type what the presenter says.");
+      if (script.length > 3000) return fail("Up to 3,000 characters (about 3½ minutes).");
+      const avatar = String(b.avatar ?? "lisa");
+      const style = String(b.style ?? (AVATARS[avatar]?.[0] ?? ""));
+      if (!AVATARS[avatar]?.includes(style)) return fail("Choose a presenter and pose.");
+      const voice = String(b.voice ?? "en-US-AvaMultilingualNeural");
+      if (!isAzureVoice(voice)) return fail("Choose one of the Azure voices.");
+      const background = (Object.keys(AVATAR_BACKGROUNDS) as (keyof typeof AVATAR_BACKGROUNDS)[]).find((k) => k === b.background) ?? "white";
+      credits = CREDIT_COST.lipsyncSecond * Math.max(1, Math.ceil(stripTags(script).length / 14));
+      kind = "avatar";
+      title = "Talking presenter";
+      run = async () => {
+        const mp4 = await azurePresenter({ script, voice, avatar, style, background, captions: b.captions === true });
+        const { storeFile } = await import("@/lib/media");
+        const slug = stripTags(script).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32) || "presenter";
+        return (await storeFile(user.id, { name: `presenter-${slug}.mp4`, type: "video/mp4", bytes: mp4 }, { uncapped: true })).name;
+      };
+      break;
+    }
     default:
       return fail("Unknown action.");
   }

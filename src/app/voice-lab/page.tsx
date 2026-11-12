@@ -2,7 +2,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AudioLines, BookAudio, Captions, ChevronDown, ChevronUp, Copy, Download, Library, Mic, Play, Plus, Sparkles, Square, Trash2, Video, Wand2, Waves } from "lucide-react";
+import { AudioLines, BookAudio, Captions, ChevronDown, ChevronUp, Copy, Download, Library, Mic, Play, Plus, Sparkles, Square, Trash2, UserRound, Video, Wand2, Waves } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api, copyToClipboard } from "@/lib/client";
 import { jobStarted } from "@/lib/jobs-client";
@@ -14,7 +14,7 @@ import { RecordVoiceTab } from "@/components/record-voice";
 import { EMOTION_TAGS, stripTags, toSrt, toTxt, toVtt, type TimedText } from "@/lib/speech-text";
 import { DESIGN_PRESETS, STOCK_VOICES, VOICE_USES, type VoiceChoice, type VoiceUse } from "@/lib/voice-catalog";
 
-type Tab = "record" | "tts" | "library" | "design" | "stt" | "isolate" | "studio" | "v2v";
+type Tab = "record" | "tts" | "library" | "design" | "stt" | "isolate" | "studio" | "v2v" | "presenter";
 const TABS: { id: Tab; label: string; icon: typeof Mic }[] = [
   { id: "record", label: "Record Voice", icon: Mic },
   { id: "tts", label: "Text to Speech", icon: AudioLines },
@@ -24,6 +24,7 @@ const TABS: { id: Tab; label: string; icon: typeof Mic }[] = [
   { id: "isolate", label: "Voice Isolator", icon: Waves },
   { id: "studio", label: "Audio Studio", icon: BookAudio },
   { id: "v2v", label: "Voice to Video", icon: Video },
+  { id: "presenter", label: "Talking Presenter", icon: UserRound },
 ];
 
 type Credits = { voiceover: number; speech: number; voiceDesign: number; isolateMinute: number; lipsyncSecond: number };
@@ -530,6 +531,70 @@ function StudioTab({ info, reload }: { info: Info | null; reload: () => void }) 
   );
 }
 
+function PresenterTab({ info }: { info: Info | null }) {
+  const tool = useRun();
+  const { data } = useVoices();
+  const [script, setScript] = useState("");
+  const [avatar, setAvatar] = useState("lisa");
+  const [style, setStyle] = useState("casual-sitting");
+  const [voice, setVoice] = useState("en-US-AvaMultilingualNeural");
+  const [background, setBackground] = useState<"white" | "green" | "dark">("white");
+  const [captions, setCaptions] = useState(true);
+  const chars = stripTags(script).length;
+  const estimate = info ? info.credits.lipsyncSecond * Math.max(1, Math.ceil(chars / 14)) : 0;
+  const ready = !!data?.azure?.length;
+  return (
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <Card className="min-w-0">
+        <CardHeader title="Talking presenter" subtitle="A lifelike presenter says your script, with lips that match every word. Filmed on Azure's GPUs in full HD." icon={<UserRound className="h-4 w-4" />} />
+        <div className="grid grid-cols-1 gap-4 p-5">
+          {data && !ready && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">The talking presenter runs on Azure AI, which isn&apos;t connected yet. The admin adds it in Admin → App settings → Integrations → Azure AI.</div>}
+          <Field label="What the presenter says"><Textarea rows={5} maxLength={3000} value={script} onChange={(e) => setScript(e.target.value)} placeholder="Welcome to Ghost Post. Today I'll show you…" /></Field>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Field label="Presenter">
+              <Select aria-label="Presenter" value={avatar} onChange={(e) => { setAvatar(e.target.value); setStyle(PRESENTERS[e.target.value][0]); }}>
+                {Object.keys(PRESENTERS).map((k) => <option key={k} value={k}>{k[0].toUpperCase() + k.slice(1)}</option>)}
+              </Select>
+            </Field>
+            <Field label="Pose">
+              <Select aria-label="Pose" value={style} onChange={(e) => setStyle(e.target.value)}>
+                {PRESENTERS[avatar].map((p) => <option key={p} value={p}>{p.replace(/-/g, " ")}</option>)}
+              </Select>
+            </Field>
+            <Field label="Background">
+              <Select aria-label="Background" value={background} onChange={(e) => setBackground(e.target.value as "white" | "green" | "dark")}>
+                <option value="white">White</option>
+                <option value="dark">Dark</option>
+                <option value="green">Green screen</option>
+              </Select>
+            </Field>
+          </div>
+          <Field label="Voice">
+            <Select aria-label="Voice" value={voice} onChange={(e) => setVoice(e.target.value)}>
+              {(data?.azure ?? [{ name: "en-US-AvaMultilingualNeural", label: "Ava: bright, friendly (multilingual)" }]).map((v) => <option key={v.name} value={v.name}>{v.label}</option>)}
+            </Select>
+          </Field>
+          <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={captions} onChange={setCaptions} label="Captions on the video" /> Captions on the video</label>
+          <Button variant="primary" size="lg" loading={tool.busy} disabled={!ready || !chars} onClick={() => tool.run({ action: "presenter", script, avatar, style, voice, background, captions })}>
+            {chars ? `Film the presenter · about ${estimate} credits` : "Film the presenter"}
+          </Button>
+          <p className="text-xs text-white/50">Takes a minute or two for a short script. Pick Green screen to put the presenter over your own video in Video Tools or Movie Maker.</p>
+        </div>
+      </Card>
+      <Recent prefixes={["presenter-"]} kind="video" title="Latest presenters" />
+    </div>
+  );
+}
+
+const PRESENTERS: Record<string, string[]> = {
+  lisa: ["casual-sitting", "graceful-sitting", "graceful-standing", "technical-sitting", "technical-standing"],
+  harry: ["business", "casual", "youthful"],
+  jeff: ["business", "formal"],
+  lori: ["casual", "graceful", "formal"],
+  max: ["business", "casual", "formal"],
+  meg: ["formal", "casual", "business"],
+};
+
 function VoiceToVideoTab({ info, voice, setVoice, onRecord }: { info: Info | null; voice: VoiceChoice; setVoice: (v: VoiceChoice) => void; onRecord: () => void }) {
   const { items, reload } = useMedia();
   const tool = useRun();
@@ -629,6 +694,7 @@ function VoiceLab() {
       {tab === "stt" && <SttTab info={info} reload={reload} />}
       {tab === "isolate" && <IsolateTab info={info} />}
       {tab === "studio" && <StudioTab info={info} reload={reload} />}
+      {tab === "presenter" && <PresenterTab info={info} />}
       {tab === "v2v" && <VoiceToVideoTab info={info} voice={voice} setVoice={setVoice} onRecord={() => setTab("record")} />}
     </>
   );

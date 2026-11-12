@@ -24,6 +24,9 @@ Make things (each prints the job, waits for it, and saves the result unless --no
   ghostpost music-video <song.mp3|med_id> "<look and story>" [--clips] [--aspect 9:16] [-o out.mp4]
   ghostpost movie "<pitch or idea>" [--length s30|s60|s90|m3] [--voice am_onyx] [--platform youtube|tiktok|instagram]
       From a one-line pitch to a narrated, finished movie.
+  ghostpost presenter "<script>" [--avatar lisa|harry|jeff|lori|max|meg] [--pose casual-sitting]
+                  [--voice en-US-AvaMultilingualNeural] [--background white|dark|green] [-o out.mp4]
+      A lifelike talking presenter, lips matching every word (Azure's GPUs).
   ghostpost music|sfx|footage "<description>" [--seconds 30]
 
 Your files and jobs:
@@ -33,7 +36,9 @@ Your files and jobs:
   ghostpost job <job_id> [--wait]
   ghostpost api <GET|POST|PUT|DELETE> <path> ['<json>']   any Ghost Post endpoint, for scripts
 
-Free voices: af_heart, af_bella, af_nicole, af_sarah, am_michael, am_onyx (see the Voice Library for all).`;
+Free voices: af_heart, af_bella, af_nicole, af_sarah, am_michael, am_onyx (see the Voice Library for all).
+Azure voices (when the owner connects Azure AI): en-US-AndrewMultilingualNeural, en-US-AvaMultilingualNeural,
+en-US-BrianMultilingualNeural, en-US-EmmaMultilingualNeural, en-US-DavisNeural, en-GB-RyanNeural, es-MX-JorgeNeural …`;
 
 // ---------- small helpers ----------
 function parse(argv) {
@@ -44,7 +49,7 @@ function parse(argv) {
     else if (a.startsWith("--")) {
       const k = a.slice(2);
       const next = argv[i + 1];
-      if (next === undefined || next.startsWith("--") || ["lipsync", "captions", "clips", "wait", "no-wait", "json"].includes(k)) out[k] = true;
+      if (next === undefined || next.startsWith("--") || ["lipsync", "captions", "clips", "wait", "no-wait", "json", "no-captions"].includes(k)) out[k] = true;
       else (out[k] = out[k] === undefined ? next : [].concat(out[k], next)), i++;
     } else out._.push(a);
   }
@@ -148,7 +153,8 @@ async function follow(job, opts, kindHint) {
     await new Promise((r) => setTimeout(r, 4000));
   }
 }
-const voiceChoice = (id) => ({ kind: "free", id: id || "am_michael", speed: 1 });
+/** "Neural" names are Azure voices; the short ids are Ghost Post's free voices. */
+const voiceChoice = (id) => (/Neural$/.test(id || "") ? { kind: "azure", name: id, speed: 1 } : { kind: "free", id: id || "am_michael", speed: 1 });
 
 // ---------- commands ----------
 const commands = {
@@ -197,6 +203,15 @@ const commands = {
     const pitch = o._.join(" ").trim();
     if (!pitch) die('give the pitch: ghostpost movie "Four friends in New Orleans…"');
     const r = await call("POST", "/api/story-video", { action: "start", template: "general", source: { kind: "idea", text: pitch }, narrator: voiceChoice(o.voice || "am_onyx"), length: o.length || "s90", platform: o.platform || "youtube", instant: true });
+    await follow(r.job, o, "video");
+  },
+  async presenter(o) {
+    const script = o._.join(" ").trim();
+    if (!script) die('give the script: ghostpost presenter "Welcome to the show"');
+    const presenters = { lisa: "casual-sitting", harry: "business", jeff: "business", lori: "casual", max: "business", meg: "formal" };
+    const avatar = o.avatar || "lisa";
+    const r = await call("POST", "/api/voice-lab", { action: "presenter", script, avatar, style: o.pose || presenters[avatar] || "casual-sitting", voice: o.voice || "en-US-AvaMultilingualNeural", background: o.background || "white", captions: !o["no-captions"] });
+    console.error(`  ${r.credits ?? 0} credits`);
     await follow(r.job, o, "video");
   },
   async music(o) {

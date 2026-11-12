@@ -78,7 +78,7 @@ interface IntegrationStatus {
   gemini: KeyState & { model: string; forTrials: boolean; backup: boolean };
   elevenlabs: KeyState & { voiceId: string };
   replicate: KeyState;
-  azureAi?: KeyState & { url: string; deployment: string };
+  azureAi?: KeyState & { url: string; deployment: string; region?: string };
   videoEngine: KeyState & { url: string };
   vmWake?: KeyState & { vm: string };
   videoEngineGpu?: KeyState & { url: string };
@@ -806,7 +806,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Sparkles className="h-4 w-4" />}
           title="Azure AI — pictures on Azure's GPUs (FLUX Kontext)"
-          desc="Makes every AI picture on Microsoft's GPUs, billed per picture to your Azure subscription (and its nonprofit credits). No GPU server or GPU quota needed. Keeps a cast member's face when a reference picture is given. In the Azure portal: create an Azure AI Foundry resource, deploy FLUX.1-Kontext-pro, then copy the endpoint and KEY 1 from Keys and Endpoint."
+          desc="Pictures, natural voices in many languages, and a lip-synced talking presenter, all on Microsoft's GPUs. Makes every AI picture on Microsoft's GPUs, billed per picture to your Azure subscription (and its nonprofit credits). No GPU server or GPU quota needed. Keeps a cast member's face when a reference picture is given. In the Azure portal: create an Azure AI Foundry resource, deploy FLUX.1-Kontext-pro, then copy the endpoint and KEY 1 from Keys and Endpoint."
           link={{ href: "https://ai.azure.com", label: "Open Azure AI Foundry" }}
           state={st.azureAi ?? { set: false }}
           result={results.azureAi}
@@ -815,8 +815,9 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           <Input autoComplete="off" spellCheck={false} placeholder={st.azureAi?.url || "Endpoint (https://…services.ai.azure.com)"} value={vals.azureAiEndpoint ?? ""} onChange={set("azureAiEndpoint")} />
           <Input type="password" autoComplete="off" spellCheck={false} placeholder="KEY 1" value={vals.azureAiKey ?? ""} onChange={set("azureAiKey")} />
           <Input autoComplete="off" spellCheck={false} placeholder={`Deployment name (${st.azureAi?.deployment || "flux-kontext"})`} value={vals.azureAiImageDeployment ?? ""} onChange={set("azureAiImageDeployment")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={`Region, for voices and the talking presenter (${st.azureAi?.region || "eastus2"})`} value={vals.azureAiRegion ?? ""} onChange={set("azureAiRegion")} />
           <Actions>
-            <Button size="sm" variant="primary" loading={busy === "save:Azure AI"} onClick={() => save(["azureAiEndpoint", "azureAiKey", "azureAiImageDeployment"], "Azure AI", "azureAi")}>Save &amp; test</Button>
+            <Button size="sm" variant="primary" loading={busy === "save:Azure AI"} onClick={() => save(["azureAiEndpoint", "azureAiKey", "azureAiImageDeployment", "azureAiRegion"], "Azure AI", "azureAi")}>Save &amp; test</Button>
             <Button size="sm" loading={busy === "test:azureAi"} disabled={!st.azureAi?.set} onClick={() => check("azureAi")}>Test</Button>
             {st.azureAi?.set && st.azureAi.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:azureAiKey"} onClick={() => remove("azureAiKey", "Azure AI")}><Trash2 className="h-3.5 w-3.5" /></Button>

@@ -11,12 +11,13 @@ export const SECTIONS: Section[] = [
   { key: "home", href: "/", label: "Home", short: "Home", icon: LayoutDashboard, blurb: "Your agent's status, money pipeline and latest activity.", tools: [] },
   {
     key: "make", href: "/make", label: "Make", short: "Make", icon: Sparkles,
-    blurb: "Pick what you want to make. Start here has the five most-used; everything else is below.",
+    blurb: "Pick what you want to make. Start here has the most-used; everything else is below.",
     tools: [
       // Start here: the five things most people come to make, each one tap away.
       { group: "Start here", href: "/story-video", label: "Pitch to Movie", icon: Clapperboard, blurb: "Type a one-line pitch. Get a narrated, finished movie with pictures, voice and music." },
       { group: "Start here", href: "/video-tools?tab=music", label: "Music Video", icon: Music2, blurb: "Add your song, describe the look. Get a video cut to the beat." },
       { group: "Start here", href: "/voice-lab?tab=v2v", label: "Voice & Lip Sync", icon: Mic, blurb: "Put any voice on any video, and make the mouth match the words." },
+      { group: "Start here", href: "/voice-lab?tab=presenter", label: "Talking Presenter", icon: UserRound, blurb: "A lifelike presenter says your script, lips matching every word." },
       { group: "Start here", href: "/images", label: "Pictures", icon: Palette, blurb: "Make, edit and upscale pictures, keeping your characters' faces." },
       { group: "Start here", href: "/studio", label: "Posts & Captions", icon: Sparkles, blurb: "Posts, captions and short videos for every platform in one go." },
       // Movies & series: bigger projects, step by step.

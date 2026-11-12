@@ -53,4 +53,4 @@ export const DESIGN_SAMPLE_TEXT =
  * How a line is voiced: a free voice on Ghost Post's server (English, `speed` 0.7 to 1.3), or the engine in one of
  * its 23 languages, in its own voice or one of My Voices (cloned or designed).
  */
-export type VoiceChoice = { kind: "free"; id: string; speed?: number } | { kind: "engine"; language: string; voiceId?: string };
+export type VoiceChoice = { kind: "free"; id: string; speed?: number } | { kind: "engine"; language: string; voiceId?: string } | { kind: "azure"; name: string; speed?: number };

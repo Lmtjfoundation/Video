@@ -37,6 +37,8 @@ export interface Integrations {
   azureAiEndpoint?: string;
   azureAiKey?: string;
   azureAiImageDeployment?: string;
+  /** Azure region of that resource, for its voices and talking presenter (e.g. eastus2). */
+  azureAiRegion?: string;
   /** Ghost Post Video Engine (engine/ in this repo) on the owner's GPU: its address and the ENGINE_TOKEN it was started with. */
   videoEngineUrl?: string;
   videoEngineToken?: string;
@@ -227,7 +229,7 @@ export async function integrationStatus() {
     },
     elevenlabs: { ...entry("ELEVENLABS_API_KEY", i.elevenlabsKey), voiceId: i.elevenlabsVoiceId || process.env.ELEVENLABS_VOICE_ID || "" },
     replicate: entry("REPLICATE_API_TOKEN", i.replicateKey),
-    azureAi: { ...entry("AZURE_AI_KEY", i.azureAiKey), url: i.azureAiEndpoint || process.env.AZURE_AI_ENDPOINT || "", deployment: i.azureAiImageDeployment || process.env.AZURE_AI_IMAGE_DEPLOYMENT || "flux-kontext" },
+    azureAi: { ...entry("AZURE_AI_KEY", i.azureAiKey), url: i.azureAiEndpoint || process.env.AZURE_AI_ENDPOINT || "", deployment: i.azureAiImageDeployment || process.env.AZURE_AI_IMAGE_DEPLOYMENT || "flux-kontext", region: i.azureAiRegion || process.env.AZURE_AI_REGION || "eastus2" },
     videoEngine: { ...entry("VIDEO_ENGINE_TOKEN", i.videoEngineToken), url: i.videoEngineUrl || process.env.VIDEO_ENGINE_URL || "" },
     vmWake: { ...entry("VM_WAKE", i.vmWake), vm: (i.vmWake || process.env.VM_WAKE || "").match(/vm=([^;]+)/)?.[1] ?? "" },
     uploadPost: entry("UPLOAD_POST_API_KEY", i.uploadPostKey),

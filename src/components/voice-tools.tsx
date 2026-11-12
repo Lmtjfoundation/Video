@@ -24,8 +24,8 @@ export function useMedia() {
 }
 
 export function useVoices() {
-  const [data, setData] = useState<{ consentSentence: string; voices: Voice[] } | null>(null);
-  const load = useCallback(() => api<{ consentSentence: string; voices: Voice[] }>("/api/voices").then(setData).catch(() => {}), []);
+  const [data, setData] = useState<{ consentSentence: string; voices: Voice[]; azure?: { name: string; label: string }[] } | null>(null);
+  const load = useCallback(() => api<{ consentSentence: string; voices: Voice[]; azure?: { name: string; label: string }[] }>("/api/voices").then(setData).catch(() => {}), []);
   useEffect(() => {
     load();
   }, [load]);

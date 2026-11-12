@@ -1,6 +1,7 @@
 import { authed, body, fail, ok } from "@/lib/http-api";
 import { signedUrl } from "@/lib/media";
 import { CONSENT_SENTENCE, createVoice, deleteVoice, listVoices } from "@/lib/voices";
+import { AZURE_VOICES, azureSpeechReady } from "@/lib/azure-speech";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -10,6 +11,8 @@ export const GET = authed(async (_req, user) =>
   ok({
     consentSentence: CONSENT_SENTENCE,
     voices: (await listVoices()).map((v) => ({ id: v.id, name: v.name, createdAt: v.createdAt, consentBy: v.consent?.by ?? "", designed: v.designed, sampleUrl: signedUrl(user.id, v.sampleId, 6 * 3600) })),
+    // Azure's natural voices, once the owner connects Azure AI (Admin → Integrations).
+    azure: (await azureSpeechReady()) ? AZURE_VOICES.map((v) => ({ name: v.name, label: v.label })) : [],
   }),
 );
 

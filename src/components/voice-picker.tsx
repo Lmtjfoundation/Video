@@ -4,10 +4,10 @@ import { useVoices } from "@/components/voice-tools";
 import { cn } from "@/lib/utils";
 import { STOCK_VOICES, type VoiceChoice } from "@/lib/voice-catalog";
 
-/** Picks a voice: a free voice, the engine's own voice in a language, or one of My Voices (cloned or designed). */
+/** Picks a voice: a free voice, an Azure natural voice, the engine's own voice in a language, or one of My Voices (cloned or designed). */
 export function VoicePicker({ value, onChange, languages, compact }: { value: VoiceChoice; onChange: (v: VoiceChoice) => void; languages?: Record<string, string>; compact?: boolean }) {
   const { data } = useVoices();
-  const key = value.kind === "free" ? `free:${value.id}` : value.voiceId ? `mine:${value.voiceId}` : "engine:";
+  const key = value.kind === "free" ? `free:${value.id}` : value.kind === "azure" ? `azure:${value.name}` : value.voiceId ? `mine:${value.voiceId}` : "engine:";
   const lang = value.kind === "engine" ? value.language : "en";
   return (
     <div className={cn("grid gap-2", !compact && "sm:grid-cols-[minmax(0,1fr)_170px]")}>
@@ -17,12 +17,18 @@ export function VoicePicker({ value, onChange, languages, compact }: { value: Vo
         onChange={(e) => {
           const [k, id] = e.target.value.split(":");
           if (k === "free") onChange({ kind: "free", id, speed: value.kind === "free" ? value.speed : 1 });
+          else if (k === "azure") onChange({ kind: "azure", name: id, speed: value.kind === "azure" ? value.speed : 1 });
           else onChange({ kind: "engine", language: lang, voiceId: k === "mine" ? id : undefined });
         }}
       >
         <optgroup label="Free voices (English, run on Ghost Post)">
           {STOCK_VOICES.map((v) => <option key={v.id} value={`free:${v.id}`}>{v.name}: {v.description.toLowerCase()} ({v.accent})</option>)}
         </optgroup>
+        {!!data?.azure?.length && (
+          <optgroup label="Azure natural voices (many languages)">
+            {data.azure.map((v) => <option key={v.name} value={`azure:${v.name}`}>{v.label}</option>)}
+          </optgroup>
+        )}
         <optgroup label="23 languages (engine)">
           <option value="engine:">Ghost Post engine voice</option>
           {data?.voices.map((v) => <option key={v.id} value={`mine:${v.id}`}>My voice: {v.name}</option>)}

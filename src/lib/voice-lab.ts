@@ -64,6 +64,13 @@ export async function checkVoice(v: unknown): Promise<VoiceChoice> {
     if (!STOCK_VOICES.some((s) => s.id === c.id)) throw new Error("Choose a voice from the Voice Library.");
     return { kind: "free", id: c.id!, speed: Math.min(1.3, Math.max(0.7, Number(c.speed) || 1)) };
   }
+  if (c.kind === "azure") {
+    const { azureSpeechReady, isAzureVoice } = await import("./azure-speech");
+    const name = (v as { name?: string }).name;
+    if (!isAzureVoice(name)) throw new Error("Choose one of the Azure voices.");
+    if (!(await azureSpeechReady())) throw new Error("Azure voices aren't connected yet. The admin adds the Azure AI key in Admin → Integrations.");
+    return { kind: "azure", name: name as string, speed: Math.min(1.3, Math.max(0.7, Number(c.speed) || 1)) };
+  }
   if (c.kind === "engine") {
     if (!isSpeechLanguage(c.language)) throw new Error("Choose a language.");
     if (c.voiceId && !(await listVoices()).some((x) => x.id === c.voiceId)) throw new Error("That voice isn't in My Voices.");
@@ -97,7 +104,8 @@ export async function freeSpeak(text: string, voice: string, speed = 1): Promise
 }
 
 /** Any script in any voice choice, as a mono 48 kHz WAV. */
-export const voiceWav = (text: string, v: VoiceChoice) => (v.kind === "free" ? freeSpeak(text, v.id, v.speed) : speak(text, v.language, v.voiceId));
+export const voiceWav = async (text: string, v: VoiceChoice): Promise<Buffer> =>
+  v.kind === "free" ? freeSpeak(text, v.id, v.speed) : v.kind === "azure" ? (await import("./azure-speech")).azureSpeak(text, v.name, v.speed) : speak(text, v.language, v.voiceId);
 
 async function mp3(wav: Buffer, extra: string[] = []) {
   return tmp(async (dir) => {

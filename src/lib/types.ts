@@ -438,7 +438,7 @@ export interface VideoPlan {
    * Who narrates (Story to Video): a free voice on Ghost Post's server, or the engine in one of 23 languages,
    * optionally in one of My Voices. Missing = the usual narrator (ElevenLabs when its key is set, else the free voice).
    */
-  narrator?: { kind: "free"; id: string; speed?: number } | { kind: "engine"; language: string; voiceId?: string };
+  narrator?: { kind: "free"; id: string; speed?: number } | { kind: "engine"; language: string; voiceId?: string } | { kind: "azure"; name: string; speed?: number };
 }
 export const VIDEO_VISUALS = ["auto", "motion"] as const;
 export type VideoVisuals = (typeof VIDEO_VISUALS)[number];
