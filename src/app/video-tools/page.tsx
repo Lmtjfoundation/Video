@@ -12,7 +12,7 @@ import { MediaSelect, useMedia } from "@/components/voice-tools";
 
 type Tab = "smart" | "music" | "edit";
 type Task = "restyle" | "relight" | "motion" | "background" | "inpaint";
-type Info = { engine: boolean; credits: { image: number; second: number; editSecond: number } };
+type Info = { engine: boolean; pictures?: boolean; credits: { image: number; second: number; editSecond: number } };
 type Quote = { seconds: number; bpm: number; shots: number; cuts: number[]; credits: { pictures: number; clips: number } };
 
 const TASKS: { id: Task; name: string; text: string; placeholder: string }[] = [
@@ -136,8 +136,8 @@ function MusicVideo({ info }: { info: Info | null }) {
             ))}
           </div>
           <Field label="Shape"><Select value={aspect} onChange={(e) => setAspect(e.target.value)}>{ASPECTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
-          <EngineNote info={info} />
-          <Button variant="primary" size="lg" loading={tool.busy} disabled={!quote || !idea.trim() || info?.engine === false} onClick={() => tool.run({ action: "music-video", audioId, idea, aspect, motion })}>
+          {motion === "clips" ? <EngineNote info={info} /> : info && info.pictures === false ? <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">Pictures aren&apos;t switched on yet. The admin connects Azure AI or Ghost Post&apos;s engine in Admin → App settings → Integrations.</div> : null}
+          <Button variant="primary" size="lg" loading={tool.busy} disabled={!quote || !idea.trim() || (motion === "clips" ? info?.engine === false : info?.pictures === false)} onClick={() => tool.run({ action: "music-video", audioId, idea, aspect, motion })}>
             Make the music video{quote ? ` · ${quote.credits[motion]} credits` : ""}
           </Button>
         </div>

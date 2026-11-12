@@ -7,6 +7,7 @@ import { claudeJson } from "./llm";
 import { readFile, storeFile } from "./media";
 import { ENGINE_CLIP_SECONDS, ownClip, ownImage, ownVideoEdit, type VideoEditTask } from "./own-video";
 import { CREDIT_COST } from "./plans";
+import { makeImage } from "./pictures";
 import { runCmd } from "./render";
 import type { MediaItem } from "./types";
 import { pcm, SR } from "./voice-studio";
@@ -265,7 +266,7 @@ export async function musicVideoScenes(idea: string, shots: number, lyrics: stri
 }
 
 /** Music Video: a picture (or filmed clip) for every cut, each exactly as long as its stretch of beats, over the song. */
-export async function musicVideo(userId: string, o: MusicVideoInput, deps: { hear?: (file: string) => Promise<{ text: string }[]> } = {}, onStep?: (msg: string) => void): Promise<MediaItem> {
+export async function musicVideo(userId: string, o: MusicVideoInput, deps: { hear?: (file: string) => Promise<{ text: string }[]>; picture?: typeof makeImage } = {}, onStep?: (msg: string) => void): Promise<MediaItem> {
   const song = await media(o.audioId, ["audio", "video"], "the song");
   const [W, H] = frameSize(o.aspect);
   return tmp(async (dir) => {
@@ -282,7 +283,9 @@ export async function musicVideo(userId: string, o: MusicVideoInput, deps: { hea
       onStep?.(`Shot ${i + 1} of ${cuts.length - 1}…`);
       const len = cuts[i + 1] - cuts[i];
       const pic = path.join(dir, `pic${i}.png`);
-      await fs.writeFile(pic, await ownImage({ prompt: `${scenes[i]} Music video still, cinematic, ${o.idea.slice(0, 200)}. No text.`, aspect: o.aspect }));
+      // Any picture maker (Ghost Post's engine, Azure's GPUs, Gemini, Flux): only filmed clips need the GPU engine.
+      const still = await (deps.picture ?? makeImage)({ prompt: `${scenes[i]} Music video still, cinematic, ${o.idea.slice(0, 200)}. No text.`, aspect: o.aspect as "9:16" | "16:9" | "1:1" });
+      await fs.writeFile(pic, still.bytes);
       if (o.motion === "clips") {
         const clip = path.join(dir, `clip${i}.mp4`);
         await fs.writeFile(clip, await ownClip({ prompt: `${scenes[i]} Moves with the rhythm of the music, cinematic camera.`, start: { bytes: await fs.readFile(pic), mime: "image/png" }, aspect: o.aspect, seconds: Math.min(ENGINE_CLIP_SECONDS, Math.ceil(len)) }));

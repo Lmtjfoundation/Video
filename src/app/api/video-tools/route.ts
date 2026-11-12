@@ -2,6 +2,7 @@ import { authed, body, fail, ok, RequestError } from "@/lib/http-api";
 import { refundCredits, spendCredits } from "@/lib/auth";
 import { startJob } from "@/lib/jobs";
 import { ownEngineReady, type VideoEditTask } from "@/lib/own-video";
+import { picturesReady } from "@/lib/pictures";
 import { CREDIT_COST } from "@/lib/plans";
 import { log } from "@/lib/repo";
 import { editVideo, musicVideo, musicVideoCredits, smartShot, smartShotCredits, songCuts, videoEditCredits, videoEditSeconds, type MusicVideoInput } from "@/lib/video-tools";
@@ -17,7 +18,7 @@ const asked = <T>(p: Promise<T>) =>
     throw new RequestError(e.message);
   });
 
-export const GET = authed(async () => ok({ engine: await ownEngineReady(), credits: { image: CREDIT_COST.aiImage, second: CREDIT_COST.ownSecond, editSecond: CREDIT_COST.editSecond } }));
+export const GET = authed(async () => ok({ engine: await ownEngineReady(), pictures: !!(await picturesReady()), credits: { image: CREDIT_COST.aiImage, second: CREDIT_COST.ownSecond, editSecond: CREDIT_COST.editSecond } }));
 
 /** Smart Shot, Music Video and video edits. They run in the background; the credits come back if one fails. */
 export const POST = authed(async (req, user) => {
@@ -26,7 +27,9 @@ export const POST = authed(async (req, user) => {
     const q = await asked(songCuts(String(b.audioId ?? "")));
     return ok({ ...q, shots: q.cuts.length - 1, credits: { pictures: musicVideoCredits({ motion: "pictures" }, q.cuts), clips: musicVideoCredits({ motion: "clips" }, q.cuts) } });
   }
-  if (!(await ownEngineReady())) return fail(ENGINE_OFF, 503);
+  // A music video made of pictures only needs a picture maker (Azure's GPUs, Gemini…); everything else films on the engine.
+  const picturesOnly = b.action === "music-video" && b.motion !== "clips";
+  if (picturesOnly ? !(await picturesReady()) : !(await ownEngineReady())) return fail(picturesOnly ? "Music videos need pictures switched on. The admin connects Azure AI or Ghost Post's engine in Admin → App settings → Integrations." : ENGINE_OFF, 503);
   const aspect = ASPECTS.includes(String(b.aspect)) ? String(b.aspect) : "9:16";
   let credits: number;
   let title: string;
