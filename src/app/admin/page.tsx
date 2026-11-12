@@ -808,7 +808,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Sparkles className="h-4 w-4" />}
           title="Azure AI — pictures on Azure's GPUs (FLUX Kontext)"
-          desc="Pictures, natural voices in many languages, and a lip-synced talking presenter, all on Microsoft's GPUs. Makes every AI picture on Microsoft's GPUs, billed per picture to your Azure subscription (and its nonprofit credits). No GPU server or GPU quota needed. Keeps a cast member's face when a reference picture is given. In the Azure portal: create an Azure AI Foundry resource, deploy FLUX.1-Kontext-pro, then copy the endpoint and KEY 1 from Keys and Endpoint."
+          desc="Pictures (FLUX.2 pro, with FLUX Kontext as backup), natural voices in many languages, a lip-synced talking presenter, GPT-5.4 mini writing and the full GPT-5.4 (batch) for long videos, all on Microsoft's GPUs. Makes every AI picture on Microsoft's GPUs, billed per picture to your Azure subscription (and its nonprofit credits). No GPU server or GPU quota needed. Keeps a cast member's face when a reference picture is given. In the Azure portal: create an Azure AI Foundry resource, deploy FLUX.1-Kontext-pro, then copy the endpoint and KEY 1 from Keys and Endpoint."
           link={{ href: "https://ai.azure.com", label: "Open Azure AI Foundry" }}
           state={st.azureAi ?? { set: false }}
           result={results.azureAi}

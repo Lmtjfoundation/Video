@@ -37,6 +37,10 @@ export interface Integrations {
   azureAiEndpoint?: string;
   azureAiKey?: string;
   azureAiImageDeployment?: string;
+  /** "off" skips FLUX.2 pro (deployment "flux.2-pro") and makes every picture with Kontext. */
+  azureAiFlux2?: string;
+  /** The Azure OpenAI Batch deployment (full GPT-5.4) that writes long videos; "off" writes them the usual way. */
+  azureAiBatchDeployment?: string;
   /** Azure region of that resource, for its voices and talking presenter (e.g. eastus2). */
   azureAiRegion?: string;
   /** Azure Blob Storage for media (a storage account's connection string) and the bucket (container) name. */
