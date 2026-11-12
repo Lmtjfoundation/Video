@@ -39,6 +39,13 @@ export interface Integrations {
   azureAiImageDeployment?: string;
   /** Azure region of that resource, for its voices and talking presenter (e.g. eastus2). */
   azureAiRegion?: string;
+  /** The Azure OpenAI chat deployment that writes in Azure-only mode (e.g. gpt-5-mini). */
+  azureAiChatDeployment?: string;
+  /**
+   * Azure only: every AI job runs on Microsoft Azure (Azure AI Foundry, Azure OpenAI, Azure AI Speech and the
+   * owner's own Azure servers). Claude, Gemini, Replicate, ElevenLabs and outside stock footage are never called.
+   */
+  azureOnly?: boolean | "";
   /** Ghost Post Video Engine (engine/ in this repo) on the owner's GPU: its address and the ENGINE_TOKEN it was started with. */
   videoEngineUrl?: string;
   videoEngineToken?: string;
@@ -125,7 +132,14 @@ export async function saveIntegrations(patch: Partial<Record<keyof Integrations,
 
 export const pick = async (field: keyof Integrations, envName: string) => ((await getIntegrations())[field] as string | undefined) || process.env[envName] || "";
 
-export const anthropicKey = () => pick("anthropicKey", "ANTHROPIC_API_KEY");
+/** Azure-only mode (Admin switch, or AZURE_ONLY=1): AI runs only on Microsoft Azure. */
+export async function azureOnly(i?: Integrations) {
+  const s = i ?? (await getIntegrations());
+  return s.azureOnly === true || ["1", "true", "on"].includes((process.env.AZURE_ONLY ?? "").trim().toLowerCase());
+}
+/** Keys of outside AI services return nothing in Azure-only mode, so nothing outside Azure is ever called. */
+const outside = (field: keyof Integrations, env: string) => async () => ((await azureOnly()) ? "" : pick(field, env));
+export const anthropicKey = outside("anthropicKey", "ANTHROPIC_API_KEY");
 export const anthropicWorkspace = () => pick("anthropicWorkspaceId", "ANTHROPIC_WORKSPACE_ID");
 
 /** Headers for every Claude API call: the key, the API version and, when set, the workspace for multi-workspace keys. */
@@ -157,7 +171,7 @@ export interface OwnerGemini {
 export async function ownerGemini(): Promise<OwnerGemini | null> {
   const i = await getIntegrations();
   const key = i.geminiKey || process.env.GEMINI_API_KEY || "";
-  if (!key) return null;
+  if (!key || (await azureOnly(i))) return null;
   return {
     key,
     model: i.geminiModel || process.env.GEMINI_MODEL || AI_PROVIDERS.gemini.defaultModel,
@@ -166,8 +180,8 @@ export async function ownerGemini(): Promise<OwnerGemini | null> {
   };
 }
 
-export const elevenlabsKey = () => pick("elevenlabsKey", "ELEVENLABS_API_KEY");
-export const replicateKey = () => pick("replicateKey", "REPLICATE_API_TOKEN");
+export const elevenlabsKey = outside("elevenlabsKey", "ELEVENLABS_API_KEY");
+export const replicateKey = outside("replicateKey", "REPLICATE_API_TOKEN");
 export const videoEngineUrl = () => pick("videoEngineUrl", "VIDEO_ENGINE_URL");
 export const videoEngineToken = () => pick("videoEngineToken", "VIDEO_ENGINE_TOKEN");
 export const vmWake = () => pick("vmWake", "VM_WAKE");
@@ -175,10 +189,10 @@ export const videoEngineGpuUrl = () => pick("videoEngineGpuUrl", "VIDEO_ENGINE_G
 export const videoEngineGpuToken = () => pick("videoEngineGpuToken", "VIDEO_ENGINE_GPU_TOKEN");
 export const vmWakeGpu = () => pick("vmWakeGpu", "VM_WAKE_GPU");
 export const elevenlabsVoice = () => pick("elevenlabsVoiceId", "ELEVENLABS_VOICE_ID");
-export const pixabayKey = () => pick("pixabayKey", "PIXABAY_API_KEY");
+export const pixabayKey = outside("pixabayKey", "PIXABAY_API_KEY");
 /** True when any stock-footage source is connected. */
 export const stockReady = async () => !!((await pixabayKey()) || (await pexelsKey()));
-export const pexelsKey = () => pick("pexelsKey", "PEXELS_API_KEY");
+export const pexelsKey = outside("pexelsKey", "PEXELS_API_KEY");
 /** Pexels sits behind a firewall that rejects anonymous HTTP clients, so identify the app. */
 export const pexelsHeaders = (key: string) => ({
   Authorization: key,
@@ -229,7 +243,8 @@ export async function integrationStatus() {
     },
     elevenlabs: { ...entry("ELEVENLABS_API_KEY", i.elevenlabsKey), voiceId: i.elevenlabsVoiceId || process.env.ELEVENLABS_VOICE_ID || "" },
     replicate: entry("REPLICATE_API_TOKEN", i.replicateKey),
-    azureAi: { ...entry("AZURE_AI_KEY", i.azureAiKey), url: i.azureAiEndpoint || process.env.AZURE_AI_ENDPOINT || "", deployment: i.azureAiImageDeployment || process.env.AZURE_AI_IMAGE_DEPLOYMENT || "flux-kontext", region: i.azureAiRegion || process.env.AZURE_AI_REGION || "eastus2" },
+    azureAi: { ...entry("AZURE_AI_KEY", i.azureAiKey), url: i.azureAiEndpoint || process.env.AZURE_AI_ENDPOINT || "", deployment: i.azureAiImageDeployment || process.env.AZURE_AI_IMAGE_DEPLOYMENT || "flux-kontext", region: i.azureAiRegion || process.env.AZURE_AI_REGION || "eastus2", chat: i.azureAiChatDeployment || process.env.AZURE_AI_CHAT_DEPLOYMENT || "gpt-5-mini" },
+    azureOnly: await azureOnly(i),
     videoEngine: { ...entry("VIDEO_ENGINE_TOKEN", i.videoEngineToken), url: i.videoEngineUrl || process.env.VIDEO_ENGINE_URL || "" },
     vmWake: { ...entry("VM_WAKE", i.vmWake), vm: (i.vmWake || process.env.VM_WAKE || "").match(/vm=([^;]+)/)?.[1] ?? "" },
     uploadPost: entry("UPLOAD_POST_API_KEY", i.uploadPostKey),

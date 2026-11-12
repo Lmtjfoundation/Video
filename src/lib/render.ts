@@ -11,7 +11,7 @@ import { readFile, storeFile } from "./media";
 import { log, savePost } from "./repo";
 import { getUser, refundCredits } from "./auth";
 import { autoPublish } from "./publisher";
-import { elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey, pixabayKey } from "./integrations";
+import { azureOnly, elevenlabsKey, elevenlabsVoice, pexelsHeaders, pexelsKey, pixabayKey } from "./integrations";
 import { freeVoice, freeVoiceEnabled } from "./free-voice";
 import { drawShapes, isGraphicsLook, motionGraph, MOTION_PALETTES, roundPortrait, SHAPE_INPUTS } from "./motion-graphics";
 import type { Character, MediaItem, Post, VideoPlan, VideoScene } from "./types";
@@ -165,6 +165,16 @@ export async function narrate(text: string, base: string, note?: string): Promis
       return `${base}.wav`;
     } catch (e) {
       console.warn(`[render] Ghost Post's voice engine failed, using the next voice: ${(e as Error).message.slice(0, 200)}`);
+    }
+  }
+  // Azure only: Azure's natural voice reads it (the small free voice is the backup).
+  if ((await azureOnly()) && (await (await import("./azure-speech")).azureSpeechReady())) {
+    try {
+      const { azureSpeak } = await import("./azure-speech");
+      await fs.writeFile(`${base}.wav`, await azureSpeak(text, "en-US-AndrewMultilingualNeural"));
+      return `${base}.wav`;
+    } catch (e) {
+      console.warn(`[render] Azure voice failed, using the free voice: ${(e as Error).message.slice(0, 200)}`);
     }
   }
   if (await elevenlabsKey()) {

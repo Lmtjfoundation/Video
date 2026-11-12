@@ -2,7 +2,7 @@ import "server-only";
 import { engineWritingSkipped, ownEngineAwake, ownWrite } from "./own-video";
 import { ownWriter, writeWithOwnWriter } from "./own-writer";
 import { sleep } from "./utils";
-import { anthropicHeaders, anthropicKey, anthropicWorkspaceHint, ownerGemini, type OwnerGemini } from "./integrations";
+import { anthropicHeaders, anthropicKey, azureOnly, anthropicWorkspaceHint, ownerGemini, type OwnerGemini } from "./integrations";
 import { recordLlmHealth } from "./llm-health";
 import { getOwnAi, type OwnAi } from "./ai-provider";
 import { AI_PROVIDERS } from "./ai-providers";
@@ -275,7 +275,8 @@ export function resetClaudeDown() {
 }
 
 export async function claude(opts: CallOpts): Promise<string> {
-  const own = await getOwnAi();
+  // A subscriber's own AI keys (Settings) write for them, except in Azure-only mode, where only Azure is used.
+  const own = (await azureOnly()) ? null : await getOwnAi();
   if (own) return callOwnAi(own, opts);
 
   // While Ghost Post's own engine is running, it writes first, so no other company's AI credits are used (it isn't
@@ -311,10 +312,10 @@ export async function claude(opts: CallOpts): Promise<string> {
     }
   }
   if (writer) {
-    const canRead = !opts.images?.length;
+    const canRead = !opts.images?.length || !!writer.sees;
     if (canRead && (!opts.webSearch?.domains.length || writer.only)) {
       try {
-        return await writeWithOwnWriter(writer, { system: opts.system, user: opts.user, maxTokens: opts.maxTokens ?? 2500, temperature: opts.temperature ?? 0.85, json: opts.json });
+        return await writeWithOwnWriter(writer, { system: opts.system, user: opts.user, maxTokens: opts.maxTokens ?? 2500, temperature: opts.temperature ?? 0.85, json: opts.json, images: writer.sees ? opts.images : undefined });
       } catch (e) {
         console.warn(`[llm] own writer: ${(e as Error).message.slice(0, 200)}`);
         if (writer.only) throw new LLMError("AI writing failed this time. Please try again in a minute.", (e as Error).message, "busy");

@@ -1,5 +1,5 @@
 import "server-only";
-import { getIntegrations, pick } from "./integrations";
+import { azureOnly, getIntegrations, pick } from "./integrations";
 
 /**
  * Ghost Post's own writer: an open AI model the app owner runs (deploy/azure-app/install.sh puts Qwen3-4B on the
@@ -17,6 +17,8 @@ export interface OwnWriter {
   mode: OwnWriterMode;
   /** Never fall back to Claude or Gemini (mode "only"). */
   only: boolean;
+  /** Reads pictures too (Azure OpenAI's GPT models do; small open models don't). */
+  sees?: boolean;
 }
 
 const MODES: OwnWriterMode[] = ["first", "backup", "only"];
@@ -35,6 +37,14 @@ export async function ownWriterMode(i?: Awaited<ReturnType<typeof getIntegration
 }
 
 export async function ownWriter(): Promise<OwnWriter | null> {
+  // Azure only: Azure OpenAI (the chat deployment on the owner's Azure AI resource) writes everything.
+  if (await azureOnly()) {
+    const [endpoint, key, dep] = await Promise.all([pick("azureAiEndpoint", "AZURE_AI_ENDPOINT"), pick("azureAiKey", "AZURE_AI_KEY"), pick("azureAiChatDeployment", "AZURE_AI_CHAT_DEPLOYMENT")]);
+    if (endpoint && key) {
+      const u = new URL(endpoint.trim());
+      return { url: `${u.protocol}//${u.host}/openai/v1`, key, model: dep || "gpt-5-mini", mode: "only", only: true, sees: true };
+    }
+  }
   const [url, key, model, i] = await Promise.all([pick("ownWriterUrl", "OWN_WRITER_URL"), pick("ownWriterKey", "OWN_WRITER_KEY"), pick("ownWriterModel", "OWN_WRITER_MODEL"), getIntegrations()]);
   if (!url) return null;
   const mode = await ownWriterMode(i);
@@ -44,8 +54,13 @@ export async function ownWriter(): Promise<OwnWriter | null> {
 export class OwnWriterError extends Error {}
 
 /** Writes one answer. `json`: the model must answer with a JSON object (the server enforces it). */
-export async function writeWithOwnWriter(w: OwnWriter, o: { system: string; user: string; maxTokens: number; temperature: number; json?: boolean }, timeoutMs = 10 * 60_000): Promise<string> {
+/** GPT-5 and o-series models think before answering: they take max_completion_tokens (thinking included) and no temperature. */
+export const reasoningModel = (model: string) => /^(gpt-5|o\d)/i.test(model);
+
+export async function writeWithOwnWriter(w: OwnWriter, o: { system: string; user: string; maxTokens: number; temperature: number; json?: boolean; images?: { mediaType: string; base64: string }[] }, timeoutMs = 10 * 60_000): Promise<string> {
   let res: Response;
+  const thinks = reasoningModel(w.model);
+  const content = o.images?.length ? [...o.images.map((i) => ({ type: "image_url", image_url: { url: `data:${i.mediaType};base64,${i.base64}` } })), { type: "text", text: o.user }] : o.user;
   try {
     res = await fetch(`${w.url}/chat/completions`, {
       method: "POST",
@@ -54,10 +69,9 @@ export async function writeWithOwnWriter(w: OwnWriter, o: { system: string; user
         model: w.model,
         messages: [
           { role: "system", content: o.system },
-          { role: "user", content: o.user },
+          { role: "user", content },
         ],
-        max_tokens: o.maxTokens,
-        temperature: o.temperature,
+        ...(thinks ? { max_completion_tokens: Math.max(4000, o.maxTokens * 3), reasoning_effort: "low" } : { max_tokens: o.maxTokens, temperature: o.temperature }),
         ...(o.json ? { response_format: { type: "json_object" } } : {}),
       }),
       signal: AbortSignal.timeout(timeoutMs),

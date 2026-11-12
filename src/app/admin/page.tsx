@@ -78,7 +78,8 @@ interface IntegrationStatus {
   gemini: KeyState & { model: string; forTrials: boolean; backup: boolean };
   elevenlabs: KeyState & { voiceId: string };
   replicate: KeyState;
-  azureAi?: KeyState & { url: string; deployment: string; region?: string };
+  azureAi?: KeyState & { url: string; deployment: string; region?: string; chat?: string };
+  azureOnly?: boolean;
   videoEngine: KeyState & { url: string };
   vmWake?: KeyState & { vm: string };
   videoEngineGpu?: KeyState & { url: string };
@@ -816,8 +817,21 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           <Input type="password" autoComplete="off" spellCheck={false} placeholder="KEY 1" value={vals.azureAiKey ?? ""} onChange={set("azureAiKey")} />
           <Input autoComplete="off" spellCheck={false} placeholder={`Deployment name (${st.azureAi?.deployment || "flux-kontext"})`} value={vals.azureAiImageDeployment ?? ""} onChange={set("azureAiImageDeployment")} />
           <Input autoComplete="off" spellCheck={false} placeholder={`Region, for voices and the talking presenter (${st.azureAi?.region || "eastus2"})`} value={vals.azureAiRegion ?? ""} onChange={set("azureAiRegion")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={`Writing model deployment, for Azure only (${st.azureAi?.chat || "gpt-5-mini"})`} value={vals.azureAiChatDeployment ?? ""} onChange={set("azureAiChatDeployment")} />
+          <label className="flex items-start gap-3 rounded-xl border border-mint-400/20 bg-mint-400/[0.05] p-3 text-sm text-white/80">
+            <Switch
+              checked={!!st.azureOnly}
+              disabled={busy === "azureOnly" || (!st.azureOnly && !st.azureAi?.set)}
+              onChange={(v) => run("azureOnly", () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { azureOnly: v } }), (next) => { setSt(next); toast(v ? "Azure only: all AI now runs on Microsoft Azure." : "Azure only is off: the other services you've connected are used again.", "success"); })}
+              label="Azure only"
+            />
+            <span>
+              <span className="font-semibold text-white">Azure only</span>
+              <span className="mt-0.5 block text-xs text-white/60">All writing, pictures, voices and presenters run on Azure (Azure OpenAI, AI Foundry, AI Speech) and your own Azure servers. Claude, Gemini, Replicate, ElevenLabs, outside stock footage and subscribers&apos; own AI keys are never called.</span>
+            </span>
+          </label>
           <Actions>
-            <Button size="sm" variant="primary" loading={busy === "save:Azure AI"} onClick={() => save(["azureAiEndpoint", "azureAiKey", "azureAiImageDeployment", "azureAiRegion"], "Azure AI", "azureAi")}>Save &amp; test</Button>
+            <Button size="sm" variant="primary" loading={busy === "save:Azure AI"} onClick={() => save(["azureAiEndpoint", "azureAiKey", "azureAiImageDeployment", "azureAiRegion", "azureAiChatDeployment"], "Azure AI", "azureAi")}>Save &amp; test</Button>
             <Button size="sm" loading={busy === "test:azureAi"} disabled={!st.azureAi?.set} onClick={() => check("azureAi")}>Test</Button>
             {st.azureAi?.set && st.azureAi.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:azureAiKey"} onClick={() => remove("azureAiKey", "Azure AI")}><Trash2 className="h-3.5 w-3.5" /></Button>
