@@ -1,4 +1,5 @@
 import "server-only";
+import { SCREEN_CRAFT, genreStyle } from "./screen-craft";
 import { claude, claudeJson } from "./llm";
 import { kvGet, kvSet } from "./repo";
 import { nowIso, uid } from "./utils";
@@ -14,7 +15,7 @@ export const MAX_FILMS = 30;
 
 export const FILM_FORMATS = ["short", "feature", "series"] as const;
 export type FilmFormat = (typeof FILM_FORMATS)[number];
-export const FILM_GENRES = ["Drama", "Romance", "Thriller", "Crime", "Comedy", "Dramedy", "Horror", "Sci-fi", "Fantasy", "Mystery", "Action", "Family", "Animation", "Coming-of-age"] as const;
+export const FILM_GENRES = ["Drama", "Street crime saga", "Blockbuster", "Romance", "Thriller", "Crime", "Comedy", "Dramedy", "Horror", "Sci-fi", "Fantasy", "Mystery", "Action", "Family", "Animation", "Coming-of-age"] as const;
 
 const FORMAT_BRIEF: Record<FilmFormat, { label: string; structure: string; scenes: string }> = {
   short: { label: "short film (5–15 minutes)", structure: "three movements: setup, confrontation, resolution, with one clear turning point and a final image that reframes the opening", scenes: "8–14" },
@@ -108,7 +109,8 @@ const SYSTEM =
   "You are the head writer of an acclaimed writers' room: you've written festival-winning shorts, features and prestige series. " +
   "You write ORIGINAL fiction only: never real private people or public figures, never another writer's characters or plots. " +
   "Your standards: specific over generic, conflict in every scene, characters who want something and are changed by trying to get it, a theme the story argues rather than states, dialogue with subtext, images that tell the story without words. " +
-  "No clichés unless subverted. No padding. Tell the truth about weaknesses.";
+  "No clichés unless subverted. No padding. Tell the truth about weaknesses.\n" +
+  SCREEN_CRAFT;
 
 const clean = (s: unknown, max = 2000) => String(s ?? "").replace(/\u0000/g, "").trim().slice(0, max);
 const list = <T>(v: unknown, max: number): T[] => (Array.isArray(v) ? (v.slice(0, max) as T[]) : []);
@@ -142,7 +144,7 @@ ${notes}`
     : `DEVELOP an original ${f.label} from this idea.
 IDEA: ${input.premise}`;
   return `${base}
-GENRE: ${input.genre}. TONE: ${input.tone || "your call — what serves the story"}.${input.influences ? `\nINSPIRED BY THE FEEL OF (don't copy plots or characters): ${input.influences}` : ""}
+GENRE: ${input.genre}. TONE: ${input.tone || "your call — what serves the story"}.${genreStyle(input.genre) ? `\n${genreStyle(input.genre)}` : ""}${input.influences ? `\nINSPIRED BY THE FEEL OF (don't copy plots or characters): ${input.influences}` : ""}
 STRUCTURE: ${f.structure}.
 DELIVER:
 - "titles": 5 title options, strongest first: short, evocative, unforgettable, not generic.

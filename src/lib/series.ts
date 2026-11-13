@@ -1,4 +1,5 @@
 import "server-only";
+import { SCREEN_CRAFT } from "./screen-craft";
 import { claudeJson } from "./llm";
 import { kvGet, kvSet } from "./repo";
 import { getCharacters } from "./characters";
@@ -78,7 +79,7 @@ export async function planSeries(o: SeriesInput): Promise<Series> {
   const count = Math.max(MIN_EPISODES, Math.min(MAX_EPISODES, Math.round(o.episodes) || 10));
   const cast = await getCharacters(o.characterIds.slice(0, 6));
   const raw = await claudeJson<RawSeries>({
-    system: "You are the showrunner of an award-winning serialized drama. Every episode moves the story, every character has an arc, and every episode ends on a hook that makes people watch the next one.",
+    system: `You are the showrunner of an award-winning serialized drama. Every episode moves the story, every character has an arc, and every episode ends on a hook that makes people watch the next one.\n${SCREEN_CRAFT}`,
     user: `Plan a ${count}-episode series of short vertical episodes. Use what the creator gives you: keep every character, event and line they wrote, in their order, and fill in what's missing.
 CREATOR'S MATERIAL:
 """

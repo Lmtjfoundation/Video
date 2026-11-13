@@ -1,4 +1,5 @@
 import "server-only";
+import { SCREEN_CRAFT } from "./screen-craft";
 import { claudeJson } from "./llm";
 import { videoPost, type RawVideo } from "./video";
 import { PLATFORM_SPECS } from "./platforms/specs";
@@ -83,7 +84,7 @@ ${settings.brandVoiceNotes ? `CREATOR NOTES: ${settings.brandVoiceNotes}\n` : ""
   const raw = await claudeJson<RawMovie>({
     system:
       o.kind === "movie"
-        ? "You are an award-winning short-film writer and storyboard artist. Every scene moves the story, every shot is specific and visual, and nothing is padded."
+        ? `You are an award-winning short-film writer and storyboard artist. Every scene moves the story, every shot is specific and visual, and nothing is padded.\n${SCREEN_CRAFT}`
         : "You are a brilliant teacher and explainer-video producer. You make hard ideas simple without making them wrong, and every scene earns its place.",
     user,
     maxTokens: o.length === "m3" ? 9000 : 5000,
