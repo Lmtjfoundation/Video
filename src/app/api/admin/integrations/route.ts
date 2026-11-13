@@ -25,6 +25,10 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   azureAiKey: { re: /^[A-Za-z0-9]{32,120}$/, msg: "Paste KEY 1 from the Azure AI resource (Azure portal → Keys and Endpoint)." },
   azureAiRegion: { re: /^[a-z]{2,20}[0-9]?$/, msg: "The region looks like eastus2 (Azure portal → your AI resource → Overview → Location)." },
   azureStorageConnection: { re: /^DefaultEndpointsProtocol=https;AccountName=[a-z0-9]{3,24};AccountKey=[A-Za-z0-9+/=]{40,};EndpointSuffix=core\.windows\.net$/, msg: "Paste the whole connection string: Azure portal → your storage account → Access keys → Connection string (starts with DefaultEndpointsProtocol=https;AccountName=…)." },
+  azureApimUrl: { re: /^https:\/\/[a-z0-9-]+\.azure-api\.net\/?$/, msg: "The API Management gateway address, e.g. https://ghostpost-apim-2114.azure-api.net." },
+  azureStorageAccount: { re: /^[a-z0-9]{3,24}$/, msg: "The storage account's name: 3-24 lowercase letters and numbers, e.g. ghostpostmedia133314." },
+  azureCosmosEndpoint: { re: /^https:\/\/[a-z0-9-]+\.documents\.azure\.com(:443)?\/?$/, msg: "The Cosmos DB endpoint, e.g. https://ghostpost-cosmos-2114.documents.azure.com:443/." },
+  azureInsightsConnection: { re: /^InstrumentationKey=[0-9a-fA-F-]{36};.*IngestionEndpoint=https:\/\/[^;]+/, msg: "Paste Application Insights → Overview → Connection string (starts with InstrumentationKey=)." },
   azureStorageContainer: { re: /^[a-z0-9](?!.*--)[a-z0-9-]{1,61}[a-z0-9]$/, msg: "A bucket (container) name is 3-63 lowercase letters, numbers and dashes, e.g. media." },
   azureAiChatDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The writing model's deployment name, e.g. gpt-5.4-mini." },
   azureAiImageDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The deployment name is what you called the FLUX Kontext deployment, e.g. flux-kontext." },
@@ -105,6 +109,7 @@ export const POST = authed(async (req, user) => {
   }
   if (b.action === "test" && b.which === "replicate") return ok(await testReplicate());
   if (b.action === "test" && b.which === "azureAi") return ok(await testAzureAi());
+  if (b.action === "test" && b.which === "azureIdentity") return ok(await testAzureIdentity());
   if (b.action === "test" && b.which === "azureStorage") return ok(await (await import("@/lib/azure-blob")).testBlob());
   if (b.action === "test" && b.which === "ownWriter") return ok(await testOwnWriter());
   if (b.action === "test" && b.which === "uploadPost") return ok(await testUploadPost());
@@ -144,4 +149,37 @@ async function testAzureAi(): Promise<{ ok: boolean; message: string }> {
   } catch (e) {
     return { ok: false, message: (e as Error).message.slice(0, 400) };
   }
+}
+
+/** Admin → Azure keyless → Test: each part with the server's managed identity, no keys. */
+async function testAzureIdentity(): Promise<{ ok: boolean; message: string }> {
+  const parts: string[] = [];
+  let good = true;
+  const step = async (label: string, run: () => Promise<string>) => {
+    try {
+      parts.push(`${label}: ${await run()}`);
+    } catch (e) {
+      good = false;
+      parts.push(`${label}: ${(e as Error).message.slice(0, 160)}`);
+    }
+  };
+  const { apimUrl, foundryAuth } = await import("@/lib/azure-identity");
+  await step("Models (API Management)", async () => {
+    if (!(await apimUrl())) return "not set";
+    const a = await foundryAuth();
+    const r = await fetch(`${a!.base}/openai/v1/chat/completions`, { method: "POST", headers: { ...a!.headers, "Content-Type": "application/json" }, body: JSON.stringify({ model: "gpt-5.4-mini", messages: [{ role: "user", content: "Reply OK" }], max_completion_tokens: 200 }), signal: AbortSignal.timeout(60_000) });
+    if (!r.ok) throw new Error(`gateway answered ${r.status}`);
+    return `OK (${r.headers.get("x-cache") === "HIT" ? "from cache" : "live"})`;
+  });
+  await step("Storage", async () => ((await (await import("@/lib/azure-blob")).testBlob()).message));
+  await step("Cosmos DB", async () => {
+    const { cosmosReady, motionPresets } = await import("@/lib/azure-cosmos");
+    if (!(await cosmosReady())) return "not set";
+    return `OK, ${(await motionPresets()).length} motion presets`;
+  });
+  await step("Telemetry", async () => {
+    await (await import("@/lib/telemetry")).trackEvent("AdminTest", { at: new Date().toISOString() });
+    return "sent";
+  });
+  return { ok: good, message: parts.join(" · ") };
 }

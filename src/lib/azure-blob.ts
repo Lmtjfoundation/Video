@@ -1,5 +1,6 @@
 import "server-only";
-import { BlobSASPermissions, BlobServiceClient, type ContainerClient } from "@azure/storage-blob";
+import { BlobSASPermissions, BlobServiceClient, generateBlobSASQueryParameters, SASProtocol, type ContainerClient, type UserDelegationKey } from "@azure/storage-blob";
+import { azureCredential } from "./azure-identity";
 import { pick } from "./integrations";
 
 /**
@@ -10,19 +11,33 @@ import { pick } from "./integrations";
  */
 export const blobConnection = () => pick("azureStorageConnection", "AZURE_STORAGE_CONNECTION_STRING");
 export const blobContainerName = async () => (await pick("azureStorageContainer", "AZURE_STORAGE_CONTAINER")) || "media";
+/** Keyless: the storage account's name, reached with the server's managed identity (Storage Blob Data Contributor). */
+export const blobAccountName = () => pick("azureStorageAccount", "AZURE_STORAGE_ACCOUNT");
 
-let cached: { conn: string; name: string; client: ContainerClient } | null = null;
+let cached: { conn: string; name: string; client: ContainerClient; service: BlobServiceClient; identity: boolean } | null = null;
 
 export async function blobContainer(): Promise<ContainerClient | null> {
-  const [conn, name] = [await blobConnection(), await blobContainerName()];
-  if (!conn) return null;
-  if (cached?.conn === conn && cached.name === name) return cached.client;
-  const client = BlobServiceClient.fromConnectionString(conn).getContainerClient(name);
-  cached = { conn, name, client };
+  const [conn, name, account] = [await blobConnection(), await blobContainerName(), await blobAccountName()];
+  const key = conn || (account ? `identity:${account}` : "");
+  if (!key) return null;
+  if (cached?.conn === key && cached.name === name) return cached.client;
+  const identity = !conn;
+  const service = identity ? new BlobServiceClient(`https://${account}.blob.core.windows.net`, await azureCredential() as never) : BlobServiceClient.fromConnectionString(conn);
+  const client = service.getContainerClient(name);
+  cached = { conn: key, name, client, service, identity };
   return client;
 }
 
-export const blobReady = async () => !!(await blobConnection());
+export const blobReady = async () => !!((await blobConnection()) || (await blobAccountName()));
+
+/** A user delegation key (signed by Microsoft Entra for the managed identity), reused until an hour before it expires. */
+let udk: { key: UserDelegationKey; exp: number } | null = null;
+async function delegationKey(service: BlobServiceClient) {
+  if (udk && udk.exp - 3600_000 > Date.now()) return udk.key;
+  const start = new Date(Date.now() - 5 * 60_000), end = new Date(Date.now() + 6 * 3600_000);
+  udk = { key: await service.getUserDelegationKey(start, end), exp: end.getTime() };
+  return udk.key;
+}
 
 export async function blobUpload(storagePath: string, bytes: Buffer, contentType: string) {
   const c = await blobContainer();
@@ -58,19 +73,24 @@ export async function blobDelete(storagePath: string) {
 export async function blobReadUrl(storagePath: string, ttlSec: number, download?: string): Promise<string> {
   const c = await blobContainer();
   if (!c) throw new Error("Azure storage isn't connected.");
-  return c.getBlockBlobClient(storagePath).generateSasUrl({
+  const opts = {
     permissions: BlobSASPermissions.parse("r"),
     startsOn: new Date(Date.now() - 5 * 60_000),
-    expiresOn: new Date(Date.now() + ttlSec * 1000),
+    expiresOn: new Date(Date.now() + Math.min(ttlSec, 5 * 3600) * 1000),
     ...(download ? { contentDisposition: `attachment; filename="${download}"` } : {}),
-  });
+  };
+  const blob = c.getBlockBlobClient(storagePath);
+  if (!cached?.identity) return blob.generateSasUrl(opts);
+  // Keyless: signed with a user delegation key from the managed identity, not the account key.
+  const sas = generateBlobSASQueryParameters({ ...opts, containerName: c.containerName, blobName: storagePath, protocol: SASProtocol.Https }, await delegationKey(cached.service), c.accountName);
+  return `${blob.url}?${sas.toString()}`;
 }
 
 /** Admin → Integrations → Azure storage → Test: writes, reads and removes a tiny file. */
 export async function testBlob(): Promise<{ ok: boolean; message: string }> {
   try {
     const c = await blobContainer();
-    if (!c) return { ok: false, message: "Add the storage account's connection string first." };
+    if (!c) return { ok: false, message: "Add the storage account name (managed identity) or its connection string first." };
     await c.createIfNotExists();
     const p = `_ghost-post-test/${Date.now()}.txt`;
     await blobUpload(p, Buffer.from("ok"), "text/plain");

@@ -1,5 +1,7 @@
 import "server-only";
 import { MediaGenError, type Aspect, type RefImage } from "./gemini-media";
+import { foundryAuth } from "./azure-identity";
+import { trackEvent } from "./telemetry";
 import { pick } from "./integrations";
 
 /**
@@ -16,12 +18,12 @@ export const flux2Enabled = async () => (await pick("azureAiFlux2", "AZURE_AI_FL
 const FLUX2_SIZE: Record<Aspect, [number, number]> = { "9:16": [768, 1344], "16:9": [1344, 768], "1:1": [1024, 1024] };
 
 /** FLUX.2 pro on the owner's Azure AI resource. Null when it isn't deployed there (Kontext makes the picture then). */
-async function flux2Image(base: string, key: string, o: { prompt: string; refs?: RefImage[]; aspect: Aspect }): Promise<{ bytes: Buffer; mimeType: string } | null> {
+async function flux2Image(base: string, auth: Record<string, string>, o: { prompt: string; refs?: RefImage[]; aspect: Aspect }): Promise<{ bytes: Buffer; mimeType: string } | null> {
   const [width, height] = FLUX2_SIZE[o.aspect] ?? FLUX2_SIZE["9:16"];
   const refs = (o.refs ?? []).slice(0, 8);
   const body: Record<string, unknown> = { model: "FLUX.2-pro", prompt: refs.length ? `${o.prompt}\n${refs.length > 1 ? `Keep each person's exact face from the reference images, in order (image 1, image 2${refs.length > 2 ? ", …" : ""}).` : "Keep the exact face of the person in the reference image."}` : o.prompt, width, height };
   refs.forEach((r, i) => (body[i === 0 ? "input_image" : `input_image_${i + 1}`] = r.base64));
-  const res = await fetch(`${base}/providers/blackforestlabs/v1/flux-2-pro?api-version=preview`, { method: "POST", headers: { "api-key": key, "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(300_000) });
+  const res = await fetch(`${base}/providers/blackforestlabs/v1/flux-2-pro?api-version=preview`, { method: "POST", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(300_000) });
   const text = await res.text();
   if (res.status === 404 && /DeploymentNotFound|does not exist/i.test(text)) return null;
   if (!res.ok) fail(res.status, text);
@@ -36,8 +38,9 @@ export const foundryDeployment = async () => (await pick("azureAiImageDeployment
 const API = "2025-04-01-preview";
 const SIZE: Record<Aspect, string> = { "9:16": "768x1344", "16:9": "1344x768", "1:1": "1024x1024" };
 
+/** Pictures on Azure are available: through API Management with the managed identity, or with the endpoint and key. */
 export async function foundryReady() {
-  return !!((await foundryEndpoint()) && (await foundryKey()));
+  return !!(await foundryAuth());
 }
 
 /** The resource's base address, whatever form the owner pasted (…services.ai.azure.com, …openai.azure.com, with or without a path). */
@@ -71,19 +74,22 @@ function fail(status: number, body: string): never {
 }
 
 export async function foundryImage(o: { prompt: string; refs?: RefImage[]; aspect: Aspect }): Promise<{ bytes: Buffer; mimeType: string }> {
-  const [endpoint, key, dep] = [await foundryEndpoint(), await foundryKey(), await foundryDeployment()];
-  if (!endpoint || !key) throw new MediaGenError("Azure AI isn't set up: add its endpoint and key in Admin → Integrations.", "config");
+  const [auth, dep] = [await foundryAuth(), await foundryDeployment()];
+  if (!auth) throw new MediaGenError("Azure AI isn't set up: add the API Management address (managed identity), or the endpoint and key, in Admin → Integrations.", "config");
   // The newest model first; Kontext (one stitched reference) when FLUX.2 pro isn't deployed or can't make it.
   if (await flux2Enabled()) {
     try {
-      const made = await flux2Image(foundryBase(endpoint), key, o);
-      if (made) return made;
+      const made = await flux2Image(auth.base, auth.headers, o);
+      if (made) {
+        void trackEvent("ImageGenerated", { model: "FLUX.2-pro", via: auth.via, prompt: o.prompt, aspect: o.aspect, refs: o.refs?.length ?? 0 });
+        return made;
+      }
     } catch (e) {
       if (e instanceof MediaGenError && e.kind === "blocked") throw e;
       console.warn(`[pictures] FLUX.2 pro on Azure couldn't make it (${(e as Error).message.slice(0, 160)}); using Kontext.`);
     }
   }
-  const base = `${foundryBase(endpoint)}/openai/deployments/${encodeURIComponent(dep)}`;
+  const base = `${auth.base}/openai/deployments/${encodeURIComponent(dep)}`;
   const size = SIZE[o.aspect] ?? SIZE["9:16"];
   let res: Response;
   if (o.refs?.length) {
@@ -93,11 +99,11 @@ export async function foundryImage(o: { prompt: string; refs?: RefImage[]; aspec
     form.set("prompt", prompt);
     form.set("size", size);
     form.set("image", new Blob([new Uint8Array(ref.bytes)], { type: ref.mime }), "ref.png");
-    res = await fetch(`${base}/images/edits?api-version=${API}`, { method: "POST", headers: { "api-key": key }, body: form, signal: AbortSignal.timeout(300_000) });
+    res = await fetch(`${base}/images/edits?api-version=${API}`, { method: "POST", headers: auth.headers, body: form, signal: AbortSignal.timeout(300_000) });
   } else {
     res = await fetch(`${base}/images/generations?api-version=${API}`, {
       method: "POST",
-      headers: { "api-key": key, "Content-Type": "application/json" },
+      headers: { ...auth.headers, "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: o.prompt, size }),
       signal: AbortSignal.timeout(300_000),
     });
@@ -106,5 +112,6 @@ export async function foundryImage(o: { prompt: string; refs?: RefImage[]; aspec
   if (!res.ok) fail(res.status, text);
   const b64 = (JSON.parse(text) as { data?: { b64_json?: string }[] }).data?.[0]?.b64_json;
   if (!b64) throw new Error("Azure AI returned no picture.");
+  void trackEvent("ImageGenerated", { model: dep, via: auth.via, prompt: o.prompt, aspect: o.aspect, refs: o.refs?.length ?? 0 });
   return { bytes: Buffer.from(b64, "base64"), mimeType: "image/png" };
 }

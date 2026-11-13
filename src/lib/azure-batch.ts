@@ -1,6 +1,6 @@
 import "server-only";
 import { promises as fs } from "fs";
-import { foundryBase } from "./azure-foundry";
+import { foundryAuth } from "./azure-identity";
 import { pick } from "./integrations";
 import { reasoningModel } from "./own-writer";
 
@@ -12,9 +12,11 @@ import { reasoningModel } from "./own-writer";
 export const batchDeployment = async () => (await pick("azureAiBatchDeployment", "AZURE_AI_BATCH_DEPLOYMENT")) || "gpt-5.4-batch";
 
 async function conn() {
-  const [endpoint, key] = [await pick("azureAiEndpoint", "AZURE_AI_ENDPOINT"), await pick("azureAiKey", "AZURE_AI_KEY")];
-  if (!endpoint || !key) return null;
-  return { base: `${foundryBase(endpoint)}/openai/v1`, headers: { Authorization: `Bearer ${key}` } };
+  // API Management with the managed identity when set up, else the resource's endpoint and key.
+  const auth = await foundryAuth();
+  if (!auth) return null;
+  if (auth.via === "apim") return { base: `${auth.base}/openai/v1`, headers: auth.headers };
+  return { base: `${auth.base}/openai/v1`, headers: { Authorization: `Bearer ${auth.headers["api-key"]}` } };
 }
 export const batchReady = async () => !!(await conn()) && (await batchDeployment()) !== "off";
 

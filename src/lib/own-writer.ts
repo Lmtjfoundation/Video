@@ -1,4 +1,5 @@
 import "server-only";
+import { foundryAuth } from "./azure-identity";
 import { azureOnly, getIntegrations, pick } from "./integrations";
 
 /**
@@ -39,7 +40,10 @@ export async function ownWriterMode(i?: Awaited<ReturnType<typeof getIntegration
 export async function ownWriter(): Promise<OwnWriter | null> {
   // Azure only: Azure OpenAI (the chat deployment on the owner's Azure AI resource) writes everything.
   if (await azureOnly()) {
-    const [endpoint, key, dep] = await Promise.all([pick("azureAiEndpoint", "AZURE_AI_ENDPOINT"), pick("azureAiKey", "AZURE_AI_KEY"), pick("azureAiChatDeployment", "AZURE_AI_CHAT_DEPLOYMENT")]);
+    const [auth, dep] = await Promise.all([foundryAuth(), pick("azureAiChatDeployment", "AZURE_AI_CHAT_DEPLOYMENT")]);
+    // Through API Management with the managed identity: the identity's token is the bearer (fresh for each writer).
+    if (auth?.via === "apim") return { url: `${auth.base}/openai/v1`, key: auth.headers.Authorization.replace(/^Bearer /, ""), model: dep || "gpt-5.4-mini", mode: "only", only: true, sees: true };
+    const [endpoint, key] = await Promise.all([pick("azureAiEndpoint", "AZURE_AI_ENDPOINT"), pick("azureAiKey", "AZURE_AI_KEY")]);
     if (endpoint && key) {
       const u = new URL(endpoint.trim());
       return { url: `${u.protocol}//${u.host}/openai/v1`, key, model: dep || "gpt-5.4-mini", mode: "only", only: true, sees: true };

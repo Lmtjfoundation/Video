@@ -81,6 +81,7 @@ interface IntegrationStatus {
   azureAi?: KeyState & { url: string; deployment: string; region?: string; chat?: string };
   azureOnly?: boolean;
   azureStorage?: KeyState & { container: string; account: string };
+  azureIdentity?: { apim: string; storageAccount: string; cosmos: string; insights: boolean };
   videoEngine: KeyState & { url: string };
   vmWake?: KeyState & { vm: string };
   videoEngineGpu?: KeyState & { url: string };
@@ -636,7 +637,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi" | "azureStorage") {
+  function save(fields: string[], label: string, test?: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi" | "azureStorage" | "azureIdentity") {
     const patch = Object.fromEntries(fields.filter((f) => (vals[f] ?? "").trim()).map((f) => [f, vals[f].trim()]));
     if (!Object.keys(patch).length) return toast("Fill in a field first.", "error");
     run(`save:${label}`, () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: patch }), async (next) => {
@@ -682,7 +683,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
     });
   }
 
-  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi" | "azureStorage") {
+  async function check(which: "anthropic" | "gemini" | "elevenlabs" | "pixabay" | "pexels" | "stripe" | "email" | "replicate" | "videoEngine" | "videoEngineGpu" | "ownWriter" | "uploadPost" | "azureAi" | "azureStorage" | "azureIdentity") {
     await run(`test:${which}`, () => api<TestResult>("/api/admin/integrations", { body: { action: "test", which } }), (r) =>
       setResults((x) => ({ ...x, [which]: r })),
     );
@@ -857,6 +858,24 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             {st.azureStorage?.set && st.azureStorage.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:azureStorageConnection"} onClick={() => remove("azureStorageConnection", "Azure storage")}><Trash2 className="h-3.5 w-3.5" /></Button>
             )}
+          </Actions>
+        </Service>
+
+        <Service
+          icon={<ShieldCheck className="h-4 w-4" />}
+          title="Azure keyless — managed identity for the whole Azure stack"
+          desc="No keys anywhere: the server signs in with its managed identity. Model calls (pictures, writing, voices, presenter) go through your API Management gateway (one endpoint, rate limits, caching); files and the render queue use the storage account; motion presets, prompt templates, projects and render records live in Cosmos DB; every render is logged to Application Insights with the prompt and settings that made it. Access comes from Azure roles, so none of these values are secret."
+          link={{ href: "https://portal.azure.com/#browse/Microsoft.ApiManagement%2Fservice", label: "Open API Management" }}
+          state={{ set: !!st.azureIdentity?.apim || !!st.azureIdentity?.storageAccount, source: "app" }}
+          result={results.azureIdentity}
+        >
+          <Input autoComplete="off" spellCheck={false} placeholder={st.azureIdentity?.apim || "API Management gateway (https://…azure-api.net)"} value={vals.azureApimUrl ?? ""} onChange={set("azureApimUrl")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={st.azureIdentity?.storageAccount || "Storage account name (files and render queue)"} value={vals.azureStorageAccount ?? ""} onChange={set("azureStorageAccount")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={st.azureIdentity?.cosmos || "Cosmos DB endpoint (https://…documents.azure.com:443/)"} value={vals.azureCosmosEndpoint ?? ""} onChange={set("azureCosmosEndpoint")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={st.azureIdentity?.insights ? "Application Insights connected" : "Application Insights connection string"} value={vals.azureInsightsConnection ?? ""} onChange={set("azureInsightsConnection")} />
+          <Actions>
+            <Button size="sm" variant="primary" loading={busy === "save:Azure keyless"} onClick={() => save(["azureApimUrl", "azureStorageAccount", "azureCosmosEndpoint", "azureInsightsConnection"], "Azure keyless", "azureIdentity")}>Save &amp; test</Button>
+            <Button size="sm" loading={busy === "test:azureIdentity"} onClick={() => check("azureIdentity")}>Test</Button>
           </Actions>
         </Service>
 

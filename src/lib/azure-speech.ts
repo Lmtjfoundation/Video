@@ -1,5 +1,5 @@
 import "server-only";
-import { foundryKey } from "./azure-foundry";
+import { speechAuth } from "./azure-identity";
 import { pick } from "./integrations";
 import { stripTags } from "./speech-text";
 
@@ -9,7 +9,7 @@ import { stripTags } from "./speech-text";
  * GPUs, billed to the Azure subscription; neither needs Ghost Post's GPU engine.
  */
 export const speechRegion = async () => (await pick("azureAiRegion", "AZURE_AI_REGION")) || "eastus2";
-export const azureSpeechReady = async () => !!(await foundryKey());
+export const azureSpeechReady = async () => !!(await speechAuth("tts"));
 
 /** A short list of Azure's best voices. The multilingual ones also speak 40+ other languages in the same voice. */
 export const AZURE_VOICES = [
@@ -47,10 +47,10 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const ssml = (text: string, voice: string, speed = 1) =>
   `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US"><voice name="${esc(voice)}"><prosody rate="${Math.round((speed - 1) * 100)}%">${esc(stripTags(text))}</prosody></voice></speak>`;
 
-async function key() {
-  const k = await foundryKey();
-  if (!k) throw new Error("Azure voices aren't set up: add the Azure AI key in Admin → Integrations.");
-  return k;
+async function speech(kind: "tts" | "avatar") {
+  const a = await speechAuth(kind);
+  if (!a) throw new Error("Azure voices aren't set up: add the API Management address (managed identity), or the Azure AI key, in Admin → Integrations.");
+  return a;
 }
 
 /** Speech as a 48 kHz mono WAV (the app's working format), up to about 9 minutes per call. */
@@ -58,9 +58,10 @@ export async function azureSpeak(text: string, voice: string, speed = 1): Promis
   if (!isAzureVoice(voice)) throw new Error("Choose one of the Azure voices.");
   const words = stripTags(text).trim();
   if (!words) throw new Error("Type what the voice says.");
-  const res = await fetch(`https://${await speechRegion()}.tts.speech.microsoft.com/cognitiveservices/v1`, {
+  const tts = await speech("tts");
+  const res = await fetch(tts.url, {
     method: "POST",
-    headers: { "Ocp-Apim-Subscription-Key": await key(), "Content-Type": "application/ssml+xml", "X-Microsoft-OutputFormat": "riff-48khz-16bit-mono-pcm", "User-Agent": "ghost-post" },
+    headers: { ...tts.headers, "Content-Type": "application/ssml+xml", "X-Microsoft-OutputFormat": "riff-48khz-16bit-mono-pcm", "User-Agent": "ghost-post" },
     body: ssml(words, voice, Math.min(1.3, Math.max(0.7, speed))),
     signal: AbortSignal.timeout(180_000),
   });
@@ -83,8 +84,9 @@ export async function azurePresenter(o: PresenterInput, onStep?: (m: string) => 
   if (!isAzureVoice(o.voice)) throw new Error("Choose one of the Azure voices.");
   const script = stripTags(o.script).trim();
   if (!script) throw new Error("Type what the presenter says.");
-  const base = `https://${await speechRegion()}.api.cognitive.microsoft.com/avatar/batchsyntheses`;
-  const headers = { "Ocp-Apim-Subscription-Key": await key(), "Content-Type": "application/json" };
+  const av = await speech("avatar");
+  const base = av.url;
+  const headers = { ...av.headers, "Content-Type": "application/json" };
   const id = `gp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const start = await fetch(`${base}/${id}?api-version=2024-08-01`, {
     method: "PUT",
