@@ -10,7 +10,7 @@ export const maxDuration = 300;
 
 export const GET = authed(async () => ok({ voices: KOKORO_VOICES, maxChars: VOICE_MAX_CHARS, creditsPer1000: CREDIT_COST.voiceover, enabled: freeVoiceEnabled() }));
 
-/** AI Voiceover: text read aloud by a free voice on Kinetrove's own server, saved to the Media Library. */
+/** AI Voiceover: text read aloud by a free voice on Curbflix's own server, saved to the Media Library. */
 export const POST = authed(async (req, user) => {
   const b = await body<{ text?: string; voice?: string; speed?: number }>(req);
   const text = String(b.text ?? "").trim();

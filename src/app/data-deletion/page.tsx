@@ -2,14 +2,14 @@ import Link from "next/link";
 import { Contact, LegalShell, legalInfo } from "@/components/legal";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Data deletion · Kinetrove" };
+export const metadata = { title: "Data deletion · Curbflix" };
 
 export default async function DataDeletionPage() {
   const { email } = await legalInfo();
   return (
     <LegalShell
       title="Delete your data"
-      intro="You can delete your Kinetrove account and everything stored with it yourself, at any time. Here's how, plus how to remove Kinetrove's access from each social platform."
+      intro="You can delete your Curbflix account and everything stored with it yourself, at any time. Here's how, plus how to remove Curbflix's access from each social platform."
     >
       <h2>Delete your account and all data</h2>
       <ul>
@@ -29,16 +29,16 @@ export default async function DataDeletionPage() {
 
       <h2>Disconnect a single platform</h2>
       <p>
-        On the <strong>Platforms</strong> tab, press Disconnect next to the platform. Kinetrove deletes the stored access token straight away and stops posting there.
+        On the <strong>Platforms</strong> tab, press Disconnect next to the platform. Curbflix deletes the stored access token straight away and stops posting there.
       </p>
 
       <h2>Remove access on the platform side</h2>
       <ul>
-        <li><strong>Facebook and Instagram (Meta):</strong> Facebook Settings &amp; privacy → Settings → Business integrations (or Apps and websites) → Kinetrove → Remove.</li>
-        <li><strong>X:</strong> Settings and privacy → Security and account access → Apps and sessions → Connected apps → Kinetrove → Revoke app permissions.</li>
-        <li><strong>YouTube (Google):</strong> open <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer">myaccount.google.com/permissions</a> → Kinetrove → Remove access.</li>
-        <li><strong>LinkedIn:</strong> Settings → Data privacy → Permitted services → Kinetrove → Remove.</li>
-        <li><strong>TikTok:</strong> Settings and privacy → Security and permissions → Apps and services permissions → Kinetrove → Remove access.</li>
+        <li><strong>Facebook and Instagram (Meta):</strong> Facebook Settings &amp; privacy → Settings → Business integrations (or Apps and websites) → Curbflix → Remove.</li>
+        <li><strong>X:</strong> Settings and privacy → Security and account access → Apps and sessions → Connected apps → Curbflix → Revoke app permissions.</li>
+        <li><strong>YouTube (Google):</strong> open <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer">myaccount.google.com/permissions</a> → Curbflix → Remove access.</li>
+        <li><strong>LinkedIn:</strong> Settings → Data privacy → Permitted services → Curbflix → Remove.</li>
+        <li><strong>TikTok:</strong> Settings and privacy → Security and permissions → Apps and services permissions → Curbflix → Remove access.</li>
       </ul>
       <p>
         Posts that were already published stay on each platform until you delete them there. For more detail, see our <Link href="/privacy">Privacy Policy</Link>.

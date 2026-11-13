@@ -4,7 +4,7 @@ import { MediaGenError } from "./gemini-media";
 import { sleep } from "./utils";
 
 /**
- * Kinetrove Video Engine: the app's own video model (Wan 2.2 I2V-A14B by default, or TI2V-5B; open weights) running
+ * Curbflix Video Engine: the app's own video model (Wan 2.2 I2V-A14B by default, or TI2V-5B; open weights) running
  * on the owner's GPU server from engine/ in this repo. No per-clip fee: the owner pays only for the GPU while it runs.
  * One clip is about 5 seconds of 720p, from a first frame (or the prompt alone).
  */
@@ -13,7 +13,7 @@ export const ENGINE_CLIP_SECONDS = 5;
 export type EngineKind = "main" | "gpu";
 export type Engine = { kind: EngineKind; url: string; token: string };
 
-/** The first engine (Admin → Integrations → Kinetrove Video Engine). */
+/** The first engine (Admin → Integrations → Curbflix Video Engine). */
 export async function videoEngine(): Promise<Engine | null> {
   const [url, token] = await Promise.all([videoEngineUrl(), videoEngineToken()]);
   return url && token ? { kind: "main", url: url.replace(/\/+$/, ""), token } : null;
@@ -101,7 +101,7 @@ export async function ownEngineAwake(cap: EngineCapability): Promise<boolean> {
 }
 
 /**
- * Whether `cap` should go to Kinetrove's own engine first, waking it if it's asleep, with outside services (Gemini,
+ * Whether `cap` should go to Curbflix's own engine first, waking it if it's asleep, with outside services (Gemini,
  * Replicate, ElevenLabs) only as the backup. On whenever an engine that can do it is connected, unless the admin
  * turned it off (Admin → Integrations) or ENGINE_FIRST=off.
  */
@@ -119,8 +119,8 @@ export async function engineFirst(cap: EngineCapability): Promise<boolean> {
 async function need(cap: EngineCapability): Promise<Engine> {
   const e = await engineFor(cap);
   if (e) return e;
-  if (!(await engines()).length) throw new MediaGenError("Kinetrove's video engine isn't connected. The admin adds its address and token in Admin → App settings → Integrations → Kinetrove Video Engine.", "config");
-  throw new MediaGenError("This needs Kinetrove's GPU engine. The admin connects it in Admin → App settings → Integrations → GPU engine.", "config");
+  if (!(await engines()).length) throw new MediaGenError("Curbflix's video engine isn't connected. The admin adds its address and token in Admin → App settings → Integrations → Curbflix Video Engine.", "config");
+  throw new MediaGenError("This needs Curbflix's GPU engine. The admin connects it in Admin → App settings → Integrations → GPU engine.", "config");
 }
 
 /** When each engine last answered (so a busy run of calls doesn't check its health every time). */
@@ -139,7 +139,7 @@ async function call<T>(e: Engine, path: string, init: RequestInit = {}, raw = fa
     try {
       await wakeEngine(e.url, { kind: e.kind });
     } catch (err) {
-      throw new MediaGenError(`Kinetrove's engine couldn't be woken: ${(err as Error).message}`);
+      throw new MediaGenError(`Curbflix's engine couldn't be woken: ${(err as Error).message}`);
     }
   };
   // The machine may be switched off (it stops itself when idle): with wake on use set up, a quick check first (a
@@ -156,7 +156,7 @@ async function call<T>(e: Engine, path: string, init: RequestInit = {}, raw = fa
     }
   } catch (err) {
     if (err instanceof MediaGenError) throw err;
-    if (!canWake) throw new MediaGenError(`Kinetrove's video engine didn't answer at ${e.url} (${(err as Error).message}). Check the GPU server is running.`);
+    if (!canWake) throw new MediaGenError(`Curbflix's video engine didn't answer at ${e.url} (${(err as Error).message}). Check the GPU server is running.`);
     await wake();
     res = await send();
   }

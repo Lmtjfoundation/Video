@@ -17,7 +17,7 @@ import type { MediaItem } from "./types";
 import { nowIso, uid } from "./utils";
 
 /**
- * Film Engine: Kinetrove's filmmaker, built around how Seedance 2.5 works.
+ * Film Engine: Curbflix's filmmaker, built around how Seedance 2.5 works.
  *  - A film is a sequence of segments (beats) of up to 30 seconds. Each segment is one generation holding several
  *    connected shots, written as a timestamped shot list in camera language ("0–8s: wide establishing shot…").
  *  - The reference library holds the cast, locations and style frames (up to 30 pictures), clips (10) and voice
@@ -36,13 +36,13 @@ export const MAX_SEGMENT_SECONDS = 30;
 export const REF_LIMITS = { image: 30, video: 10, audio: 10 } as const;
 export const FILM_ENGINES = ["own", "gemini", "seedance", "wan", "free"] as const;
 export type FilmEngineId = (typeof FILM_ENGINES)[number];
-export const ENGINE_NAME: Record<FilmEngineId, string> = { own: "Kinetrove's video engine", gemini: "Gemini Omni Flash", seedance: "Seedance 2.5", wan: "Wan 2.2", free: "the free engine" };
+export const ENGINE_NAME: Record<FilmEngineId, string> = { own: "Curbflix's video engine", gemini: "Gemini Omni Flash", seedance: "Seedance 2.5", wan: "Wan 2.2", free: "the free engine" };
 export const FILM_ASPECTS = ["9:16", "16:9", "21:9", "1:1"] as const;
 export type FilmAspect = (typeof FILM_ASPECTS)[number];
 const SIZE: Record<FilmAspect, [number, number]> = { "9:16": [1080, 1920], "16:9": [1920, 1080], "21:9": [1920, 822], "1:1": [1080, 1080] };
 /** Seconds of the previous segment handed to Seedance to continue from. */
 const CONTINUE_TAIL = 5;
-/** Wan 2.2 and Kinetrove's engine make about 5 seconds per clip. */
+/** Wan 2.2 and Curbflix's engine make about 5 seconds per clip. */
 const CHAIN_CLIP = 5;
 /** Gemini clips are planned as 8 seconds (4 or 6 for the last; Veo only makes those lengths), then trimmed. */
 const VEO_CLIP = 8;
@@ -447,9 +447,9 @@ async function makeSegment(userId: string, cutId: string, segId: string, credits
 }
 
 /**
- * Wan 2.2 and Kinetrove's own engine make a beat as ~5-second clips. Each clip starts from the last frame of the one
+ * Wan 2.2 and Curbflix's own engine make a beat as ~5-second clips. Each clip starts from the last frame of the one
  * before (continuous motion); a shot that cites a picture of its own starts from that picture instead (a cut to a new
- * place or person). Kinetrove's engine can also start from the prompt alone; Wan needs a picture. Gemini makes ~8-second
+ * place or person). Curbflix's engine can also start from the prompt alone; Wan needs a picture. Gemini makes ~8-second
  * clips with their own sound (the dialogue too, when the film has native sound on); without a picture it starts from
  * one Gemini draws from the first shot and the cast portraits.
  */
@@ -516,7 +516,7 @@ async function drawStart(cut: FilmCut, cast: FilmRef[], shot: string, dir: strin
 }
 
 /**
- * Engines without their own sound get the dialogue spoken by Kinetrove's voice (ElevenLabs, else the free voice),
+ * Engines without their own sound get the dialogue spoken by Curbflix's voice (ElevenLabs, else the free voice),
  * each line starting with its shot. Without a voice on this server the footage is returned as it is.
  */
 async function speakLines(video: string, shots: Shot[], dir: string) {

@@ -1,8 +1,8 @@
 /**
  * Movie Maker: a scene plan (pasted in the "VIDEO PLAN" format or written scene by scene) becomes a movie-style
- * short. Each scene's picture is animated by Kinetrove's motion engine (scripts/movie-motion/engine.py): a 2.5D
+ * short. Each scene's picture is animated by Curbflix's motion engine (scripts/movie-motion/engine.py): a 2.5D
  * depth camera, effects (fog, frost, glass shatter, ghost mist…), a colour grade, film grain, cinema bars and kinetic
- * titles. It all runs on Kinetrove's own server: no outside video service.
+ * titles. It all runs on Curbflix's own server: no outside video service.
  *
  * This file has the parts that are pure (parsing, defaults, the engine's film spec), so they are tested without a
  * server; the render job is in movie-maker-render.ts.

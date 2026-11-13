@@ -33,7 +33,7 @@ export function JobsTray() {
             const text = j.status === "done" ? `Ready: ${j.title}` : `Couldn't finish “${j.title}”: ${j.message}`;
             toast(text, j.status === "done" ? "success" : "error");
             try {
-              if (typeof Notification !== "undefined" && Notification.permission === "granted" && document.visibilityState !== "visible") new Notification("Kinetrove", { body: text, tag: j.href ?? "/" }); // same tag as the server push, so it shows once
+              if (typeof Notification !== "undefined" && Notification.permission === "granted" && document.visibilityState !== "visible") new Notification("Curbflix", { body: text, tag: j.href ?? "/" }); // same tag as the server push, so it shows once
             } catch {
               /* ignore */
             }
@@ -89,7 +89,7 @@ export function JobsTray() {
               <button onClick={() => setOpen(false)} className="focus-ring rounded p-1 text-white/50 hover:text-white" aria-label="Hide"><ChevronDown className="h-4 w-4" /></button>
             </div>
           </div>
-          {!!active.length && <p className="px-4 pb-2 text-[11.5px] text-white/50">Runs on Kinetrove&apos;s server. You can close the app or lock your phone; you&apos;ll get a notification when it&apos;s ready.</p>}
+          {!!active.length && <p className="px-4 pb-2 text-[11.5px] text-white/50">Runs on Curbflix&apos;s server. You can close the app or lock your phone; you&apos;ll get a notification when it&apos;s ready.</p>}
           <ul className="max-h-80 divide-y divide-white/[0.06] overflow-y-auto">
             {recent.map((j) => (
               <li key={j.id} className="px-4 py-2.5">

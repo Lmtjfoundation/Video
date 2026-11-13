@@ -32,14 +32,14 @@ export const GET = authed(async (_req, user) => {
   });
 });
 
-const ENGINE_OFF = "Making pictures needs Kinetrove's engine. The admin connects it in Admin → App settings → Integrations → Kinetrove Video Engine.";
+const ENGINE_OFF = "Making pictures needs Curbflix's engine. The admin connects it in Admin → App settings → Integrations → Curbflix Video Engine.";
 
 /** A picture tool (erase, expand, new background, upscale…) on one of the person's pictures. */
 async function runTool(userId: string, b: Partial<ImageToolInput>) {
   const t = imageTool(String(b.tool));
   if (!t) return fail("Unknown tool.");
   if (!b.mediaId) return fail("Choose the picture.");
-  // Upscale and cut-outs run on dedicated models on Kinetrove's own engine; the rest also work with Gemini pictures.
+  // Upscale and cut-outs run on dedicated models on Curbflix's own engine; the rest also work with Gemini pictures.
   if (t.cost === "image" ? !(await picturesReady()) : !(await ownEngineReady(t.id === "upscale" ? "upscale" : "remove-bg"))) return fail(ENGINE_OFF, 503);
   if (t.ask?.required && !String(b.prompt ?? "").trim()) return fail(`${t.ask.label}?`);
   const credits = imageToolCredits(t.id);

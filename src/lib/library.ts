@@ -11,7 +11,7 @@ import { LENGTHS, TEMPOS, type AssetKind, type SortId } from "./library-tags";
  *  - the catalog: tracks and clips the app's owner published for every subscriber (stored under the app-wide owner);
  *  - "My library": everything a person made with the AI generators, private to them.
  * Favorites and boards (named collections) are per person and can hold assets from both.
- * Everything in it was made by Kinetrove's own models, so it comes with Kinetrove's license (licenseText).
+ * Everything in it was made by Curbflix's own models, so it comes with Curbflix's license (licenseText).
  */
 export interface LibraryAsset {
   id: string;
@@ -207,12 +207,12 @@ export function assetUrls(a: LibraryAsset) {
 
 export const licenseText = (a: LibraryAsset, licensee: { name?: string; email: string }, when = nowIso()) =>
   [
-    "KINETROVE CONTENT LICENSE",
+    "CURBFLIX CONTENT LICENSE",
     "",
     `Item: ${a.title} (${a.kind === "sfx" ? "sound effect" : a.kind}, ${a.id})`,
     `Licensed to: ${licensee.name ? `${licensee.name} <${licensee.email}>` : licensee.email}`,
     `Date: ${when.slice(0, 10)}`,
-    `Made with: ${a.model}, run on Kinetrove's own engine`,
+    `Made with: ${a.model}, run on Curbflix's own engine`,
     "",
     "You may use this item, edited or as it is, in videos, podcasts, ads, social media posts, films, games and other",
     "projects, for personal and commercial use, worldwide and with no further fee, including after your subscription",

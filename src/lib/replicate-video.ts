@@ -6,7 +6,7 @@ import { sleep } from "./utils";
 /**
  * Video engines on Replicate for animating Movie Studio scenes, next to Veo:
  * - Seedance 2.5 (ByteDance): the richest motion; $0.2312 a second at 720p from an image (Oct 2026).
- * - Wan 2.2 (Alibaba, open weights, Apache 2.0): Kinetrove's low-cost engine; about 5-second clips for at most
+ * - Wan 2.2 (Alibaba, open weights, Apache 2.0): Curbflix's low-cost engine; about 5-second clips for at most
  *   $0.145 each at 720p (Oct 2026).
  * The scene's AI picture is uploaded with Replicate's files API and used as the first frame. Model audio is off:
  * the render adds the voiceover, music and captions. Replicate bills the token's account.

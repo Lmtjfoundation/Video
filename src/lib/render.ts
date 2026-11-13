@@ -157,14 +157,14 @@ export async function narrateAs(v: NonNullable<VideoPlan["narrator"]>, text: str
 }
 
 export async function narrate(text: string, base: string, note?: string): Promise<string> {
-  // Kinetrove's own voice engine first when it's connected (outside voices are the backup).
+  // Curbflix's own voice engine first when it's connected (outside voices are the backup).
   if (await engineFirst("speech")) {
     try {
       const { speak } = await import("./voice-studio");
       await fs.writeFile(`${base}.wav`, await speak(text, "en"));
       return `${base}.wav`;
     } catch (e) {
-      console.warn(`[render] Kinetrove's voice engine failed, using the next voice: ${(e as Error).message.slice(0, 200)}`);
+      console.warn(`[render] Curbflix's voice engine failed, using the next voice: ${(e as Error).message.slice(0, 200)}`);
     }
   }
   // Azure only: Azure's natural voice reads it (the small free voice is the backup).
@@ -564,7 +564,7 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
 
   const veo = jobs.map((job, i) => ({ job, i, original: indexes[i] })).filter(({ original }) => ai.veoScenes.includes(original));
   let animated = 0;
-  const engine = ai.engine === "seedance" ? "Seedance" : ai.engine === "wan" ? "Wan" : ai.engine === "own" ? "Kinetrove's engine" : "Veo";
+  const engine = ai.engine === "seedance" ? "Seedance" : ai.engine === "wan" ? "Wan" : ai.engine === "own" ? "Curbflix's engine" : "Veo";
   let animBlocked: string | undefined;
   await mapLimit(veo, 2, async ({ job, i }) => {
     const seconds = veoSeconds(job.scene);
@@ -572,7 +572,7 @@ async function paintScenes(post: Post, ai: NonNullable<VideoPlan["ai"]>, indexes
     try {
       if (!still) throw new MediaGenError("No picture to animate.");
       if (animBlocked) throw new MediaGenError(animBlocked, "config");
-      await setRender(post, { message: engine === "Veo" || engine === "Seedance" || engine === "Wan" ? `Animating scene ${i + 1} with ${engine} (about 1–3 minutes a clip)…` : `Animating scene ${i + 1} on Kinetrove's engine (it starts itself if it's asleep, about 3–5 minutes)…` });
+      await setRender(post, { message: engine === "Veo" || engine === "Seedance" || engine === "Wan" ? `Animating scene ${i + 1} with ${engine} (about 1–3 minutes a clip)…` : `Animating scene ${i + 1} on Curbflix's engine (it starts itself if it's asleep, about 3–5 minutes)…` });
       const prompt = `${job.scene.motion || "Subtle, natural movement with a slow cinematic camera move."} ${job.scene.visual}`.slice(0, 1500) + ` Art style: ${ai.look}. Keep the characters exactly as they appear in the starting frame.${isRealisticLook(ai.look) ? " Real people moving naturally: realistic faces, blinking, breathing and natural body weight; no morphing." : ""} No text or captions.`;
       const clip = { prompt, start: still, aspect: portrait ? ("9:16" as const) : ("16:9" as const), seconds };
       // Seedance also gets each character's portrait, so faces, bodies and outfits hold through the motion.
@@ -679,7 +679,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
     const planned = renderableScenes(plan);
     const scenes = planned.map((p) => p.scene);
     if (!scenes.length) throw new Error("This plan has no scenes to render.");
-    // Pictures for every scene: the plan's own art direction, or, when Kinetrove's picture machine is connected,
+    // Pictures for every scene: the plan's own art direction, or, when Curbflix's picture machine is connected,
     // cinematic AI pictures by default (its pictures cost only machine time, so no credits are charged for them).
     const ai =
       plan.ai && !mediaFiles.length && !motionOnly

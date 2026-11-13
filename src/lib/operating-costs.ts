@@ -1,5 +1,5 @@
 /**
- * What it costs to run Kinetrove, so the admin sees real profit and every plan is priced to pay for its share.
+ * What it costs to run Curbflix, so the admin sees real profit and every plan is priced to pay for its share.
  *
  * Defaults are Azure list prices (East US, Linux, pay-as-you-go, Oct 2026, prices.azure.com):
  *   app server D4ads_v7 $0.228/h (≈ $166/month always on) · P10 disk $19.71/month · static IPv4 $0.005/h (≈ $3.65)

@@ -4,7 +4,7 @@ import Link from "next/link";
 export function LegalFooter({ className = "mt-14" }: { className?: string }) {
   return (
     <footer className={`${className} flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/[0.06] pt-6 text-xs text-white/50`}>
-      <span>© {new Date().getFullYear()} Kinetrove</span>
+      <span>© {new Date().getFullYear()} Curbflix</span>
       <Link href="/terms" className="inline-block py-1 hover:text-white/70">Terms</Link>
       <Link href="/privacy" className="inline-block py-1 hover:text-white/70">Privacy</Link>
       <Link href="/terms#refunds" className="inline-block py-1 hover:text-white/70">Refunds</Link>

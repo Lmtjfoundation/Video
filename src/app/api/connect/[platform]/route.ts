@@ -45,7 +45,7 @@ async function run(req: Request, { params }: { params: Promise<{ platform: strin
   }
   try {
     // The social connect service, when set up: the network's own sign-in through Upload-Post, no developer app needed.
-    // (Extra accounts on one network still use Kinetrove's own sign-in: a service profile holds one per network.)
+    // (Extra accounts on one network still use Curbflix's own sign-in: a service profile holds one per network.)
     const up = await import("@/lib/upload-post");
     const viaService = !account && up.isUpPlatform(platform) && (await up.uploadPostReady());
     const target = viaService

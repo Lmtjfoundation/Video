@@ -45,7 +45,7 @@ export function TemplatePanel() {
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <Card>
-        <CardHeader title="Video templates" subtitle="Titles, lower thirds, end screens and more, with your words and colors. Free: drawn on Kinetrove's server." icon={<Clapperboard className="h-4 w-4" />} />
+        <CardHeader title="Video templates" subtitle="Titles, lower thirds, end screens and more, with your words and colors. Free: drawn on Curbflix's server." icon={<Clapperboard className="h-4 w-4" />} />
         <div className="grid grid-cols-1 gap-4 p-5">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {TEMPLATE_DEFS.map((d) => (

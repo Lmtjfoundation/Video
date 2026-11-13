@@ -8,7 +8,7 @@ import { gdb, storageMode } from "./db";
 import { OAUTH } from "./oauth-config";
 
 /**
- * Moving Kinetrove to a new server, server to server, without secrets passing through anyone's hands:
+ * Moving Curbflix to a new server, server to server, without secrets passing through anyone's hands:
  *   1. On the old server the owner makes a one-time code (Admin → App settings → Move to a new server).
  *   2. On the new server (empty, started with MIGRATE_FROM = the old address) the owner pastes the code.
  *   3. The new server asks the old one for its settings and the list of its files, copies every file, writes the

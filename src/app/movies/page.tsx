@@ -257,11 +257,11 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
   const [length, setLength] = useState<MovieLength>("s60");
   const [veo, setVeo] = useState(3);
   const [engine, setEngine] = useState<AnimationEngine>("veo");
-  // Kinetrove's own engine is the default once it's connected.
+  // Curbflix's own engine is the default once it's connected.
   useEffect(() => {
     if (lib?.ownClips) setEngine((e) => (e === "veo" ? "own" : e));
   }, [lib?.ownClips]);
-  const engineName = engine === "seedance" ? "Kinetrove Cinematic Pro" : engine === "wan" ? "Kinetrove Lite" : engine === "own" ? "Kinetrove engine" : "Kinetrove Cinematic";
+  const engineName = engine === "seedance" ? "Curbflix Cinematic Pro" : engine === "wan" ? "Curbflix Lite" : engine === "own" ? "Curbflix engine" : "Curbflix Cinematic";
   const [renderNow, setRenderNow] = useState(true);
   const [voiceover, setVoiceover] = useState(true);
   const settings = useApp((s) => s.status?.settings);
@@ -401,16 +401,16 @@ function MovieCard({ lib, admin, creditsLeft }: { lib: Library | null; admin: bo
           </Field>
           {graphics ? (
             <p className="rounded-xl bg-mint-400/[0.06] p-3 text-[13px] leading-relaxed text-white/70 ring-1 ring-mint-400/20 sm:col-span-2">
-              <b className="text-white">Motion graphics:</b> every scene is animated by Kinetrove's own graphics engine — moving shapes, a living background and the key words sliding in. No AI pictures, so no picture or animation credits.
+              <b className="text-white">Motion graphics:</b> every scene is animated by Curbflix's own graphics engine — moving shapes, a living background and the key words sliding in. No AI pictures, so no picture or animation credits.
             </p>
           ) : (
           <>
-          <Field label="Animate with" hint={engine === "own" ? "Kinetrove's own video model: it starts itself when needed (the first clip can take a few extra minutes)" : !lib?.replicate ? "Cinematic Pro and Lite switch on when the admin connects them (Admin → Integrations → Replicate)" : engine === "wan" ? "The lowest cost: about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice the Cinematic price" : "Strong motion, lighting and sound"}>
+          <Field label="Animate with" hint={engine === "own" ? "Curbflix's own video model: it starts itself when needed (the first clip can take a few extra minutes)" : !lib?.replicate ? "Cinematic Pro and Lite switch on when the admin connects them (Admin → Integrations → Replicate)" : engine === "wan" ? "The lowest cost: about 5 seconds of motion a scene" : engine === "seedance" ? "The richest motion, at about twice the Cinematic price" : "Strong motion, lighting and sound"}>
             <Select value={engine} onChange={(e) => setEngine(e.target.value as AnimationEngine)}>
-              {lib?.ownClips && <option value="own">Kinetrove engine · {CREDIT_COST.ownSecond} credits a second</option>}
-              <option value="veo">Kinetrove Cinematic · {CREDIT_COST.veoSecond} credits a second</option>
-              <option value="seedance" disabled={!lib?.replicate}>Kinetrove Cinematic Pro · {CREDIT_COST.seedanceSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
-              <option value="wan" disabled={!lib?.replicate}>Kinetrove Lite · {CREDIT_COST.wanSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
+              {lib?.ownClips && <option value="own">Curbflix engine · {CREDIT_COST.ownSecond} credits a second</option>}
+              <option value="veo">Curbflix Cinematic · {CREDIT_COST.veoSecond} credits a second</option>
+              <option value="seedance" disabled={!lib?.replicate}>Curbflix Cinematic Pro · {CREDIT_COST.seedanceSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
+              <option value="wan" disabled={!lib?.replicate}>Curbflix Lite · {CREDIT_COST.wanSecond} credits a second{lib?.replicate ? "" : " (not connected)"}</option>
             </Select>
           </Field>
           <Field label={`Animated scenes: ${veo}`} hint={veo ? "Real motion for the key moments; other scenes get a slow camera move." : "Pictures with slow camera moves only (cheapest)."}>

@@ -43,7 +43,7 @@ afterEach(() => {
   for (const k of ["VIDEO_ENGINE_GPU_URL", "VIDEO_ENGINE_GPU_TOKEN", "GEMINI_API_KEY", "ENGINE_FIRST"]) delete process.env[k];
 });
 
-describe("Kinetrove's engine first", () => {
+describe("Curbflix's engine first", () => {
   it("makes pictures on the GPU engine first, even though a Gemini key is set", async () => {
     const seen: string[] = [];
     stubNet(seen, "ok");
@@ -80,7 +80,7 @@ describe("Kinetrove's engine first", () => {
     delete process.env.VM_WAKE_GPU;
   });
 
-  it("charges Kinetrove engine animation at its own rate", async () => {
+  it("charges Curbflix engine animation at its own rate", async () => {
     const { animationSecondCredits } = await import("@/lib/video-spec");
     const { CREDIT_COST } = await import("@/lib/plans");
     expect(animationSecondCredits("own")).toBe(CREDIT_COST.ownSecond);

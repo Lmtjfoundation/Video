@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CREDIT_PACKS, CREDIT_LABEL } from "@/lib/plans";
 
-/** Customer-facing copy sells Kinetrove as its own studio: no AI vendor names (admin screens keep them). */
+/** Customer-facing copy sells Curbflix as its own studio: no AI vendor names (admin screens keep them). */
 const VENDORS = /\b(Gemini|Google|Veo|ElevenLabs|Seedance|ByteDance|Replicate|OpenArt|Mootion|Artlist|Kokoro|Claude|Anthropic|Flux|Qwen|Wan 2|Chatterbox|ACE-Step|MuseTalk)\b/;
 
 describe("own brand", () => {

@@ -85,12 +85,12 @@ export default function ImageStudio() {
       <PageHeader title="Image Studio" subtitle="Make pictures, change them by describing the change, and put your characters into any scene. Everything is saved to your Media Library." />
       {data && !data.engine && (
         <Card className="mb-6 p-4 text-sm text-white/70">
-          Pictures need Kinetrove&apos;s own engine. The admin connects it in Admin → App settings → Integrations → Kinetrove Video Engine.
+          Pictures need Curbflix&apos;s own engine. The admin connects it in Admin → App settings → Integrations → Curbflix Video Engine.
         </Card>
       )}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[400px_1fr]">
         <Card className="h-fit xl:sticky xl:top-10">
-          <CardHeader title="Make a picture" subtitle={m.text} icon={<ImagePlus className="h-4 w-4" />} action={data?.engine === "own" ? <Badge tone="mint">Kinetrove engine</Badge> : undefined} />
+          <CardHeader title="Make a picture" subtitle={m.text} icon={<ImagePlus className="h-4 w-4" />} action={data?.engine === "own" ? <Badge tone="mint">Curbflix engine</Badge> : undefined} />
           <div className="grid grid-cols-1 gap-4 p-5">
             <div className="grid grid-cols-4 gap-1.5">
               {MODES.map((x) => (

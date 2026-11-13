@@ -27,9 +27,9 @@ describe("forgot password", () => {
     vi.resetModules(); // the integrations cache lasts 15 s; a fresh module reads the saved account
     const fresh = await import("@/lib/email");
     expect(await fresh.emailReady()).toBe(true);
-    await fresh.sendEmail({ to: "maker@example.com", subject: "Reset your Kinetrove password", text: "link", html: "<p>link</p>" });
+    await fresh.sendEmail({ to: "maker@example.com", subject: "Reset your Curbflix password", text: "link", html: "<p>link</p>" });
     expect(transports.at(-1)).toMatchObject({ host: "smtp.gmail.com", port: 587, secure: false, auth: { user: "owner@gmail.com", pass: "abcdefghijklmnop" } });
-    expect(sent.at(-1)).toMatchObject({ from: "owner@gmail.com", to: "maker@example.com", subject: "Reset your Kinetrove password" });
+    expect(sent.at(-1)).toMatchObject({ from: "owner@gmail.com", to: "maker@example.com", subject: "Reset your Curbflix password" });
   });
 
   it("an admin reset link sets a new password, once", async () => {

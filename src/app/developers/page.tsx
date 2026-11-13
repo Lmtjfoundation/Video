@@ -24,7 +24,7 @@ export default function Developers() {
 
   return (
     <>
-      <PageHeader title="Developers" subtitle="Kinetrove's API: search the Library and make music, sound effects and footage from your own code. Requests use your plan's credits." />
+      <PageHeader title="Developers" subtitle="Curbflix's API: search the Library and make music, sound effects and footage from your own code. Requests use your plan's credits." />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
         <Card className="h-fit">
           <CardHeader title="API keys" subtitle="Keep keys secret: anyone with one can spend your credits." icon={<KeyRound className="h-4 w-4" />} />
@@ -75,7 +75,7 @@ export default function Developers() {
               <div className="font-semibold text-white">Command-line tool</div>
               <div>Make pictures (with a face kept from a photo), put a voice on any video with lip sync, music videos, and full movies from a one-line pitch, all from your terminal. Needs Node 18 or newer; nothing else to install. Your key is asked once and saved only on your computer.</div>
               <Code>{`curl -fsSLo ghostpost ${origin}/cli/ghostpost.mjs && chmod +x ghostpost\n./ghostpost login --url ${origin}\n./ghostpost image "A jazz club in New Orleans at night" -o club.png\n./ghostpost voice clip.mp4 --say "Welcome to the show" --lipsync -o voiced.mp4\n./ghostpost music-video song.mp3 "Neon second line parade at night"\n./ghostpost movie "Four friends in New Orleans chase one last deal" --length s90\n./ghostpost help`}</Code>
-              <div className="text-xs text-white/50">With a key, the tool can use every Kinetrove tool you can, except account, billing, API keys and admin pages, which always need you signed in.</div>
+              <div className="text-xs text-white/50">With a key, the tool can use every Curbflix tool you can, except account, billing, API keys and admin pages, which always need you signed in.</div>
             </section>
             <section className="grid grid-cols-1 gap-2">
               <div className="font-semibold text-white">Search the Library</div>

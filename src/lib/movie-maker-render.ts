@@ -78,7 +78,7 @@ export async function sweepMovieWork(maxAgeMs = 2 * 86400_000) {
  */
 /** Scenes per chapter of a long movie: each chapter is filmed and mixed on its own, then the chapters are joined. */
 export const CHAPTER_SCENES = 30;
-/** The longest movie Kinetrove makes: 1 hour 30 minutes. */
+/** The longest movie Curbflix makes: 1 hour 30 minutes. */
 export const MAX_MOVIE_SECONDS = 90 * 60;
 
 export async function renderMovie(userId: string, input: RenderInput, say: (m: string) => void, workDir?: string, opts: { saveTo?: string } = {}): Promise<MovieRecord> {

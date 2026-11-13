@@ -42,7 +42,7 @@ afterEach(() => {
   for (const k of ["OWN_WRITER_URL", "OWN_WRITER_KEY", "OWN_WRITER_ONLY", "OWN_WRITER_MODE", "ANTHROPIC_API_KEY"]) delete process.env[k];
 });
 
-describe("Kinetrove's own writer", () => {
+describe("Curbflix's own writer", () => {
   it("by default lets Claude write first when its key is set, and covers only when Claude can't answer", async () => {
     delete process.env.OWN_WRITER_MODE;
     const { claude, resetClaudeDown } = await import("@/lib/llm");

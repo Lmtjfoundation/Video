@@ -21,7 +21,7 @@ export function VoicePicker({ value, onChange, languages, compact }: { value: Vo
           else onChange({ kind: "engine", language: lang, voiceId: k === "mine" ? id : undefined });
         }}
       >
-        <optgroup label="Free voices (English, run on Kinetrove)">
+        <optgroup label="Free voices (English, run on Curbflix)">
           {STOCK_VOICES.map((v) => <option key={v.id} value={`free:${v.id}`}>{v.name}: {v.description.toLowerCase()} ({v.accent})</option>)}
         </optgroup>
         {!!data?.azure?.length && (
@@ -30,7 +30,7 @@ export function VoicePicker({ value, onChange, languages, compact }: { value: Vo
           </optgroup>
         )}
         <optgroup label="23 languages (engine)">
-          <option value="engine:">Kinetrove engine voice</option>
+          <option value="engine:">Curbflix engine voice</option>
           {data?.voices.map((v) => <option key={v.id} value={`mine:${v.id}`}>My voice: {v.name}</option>)}
         </optgroup>
       </Select>

@@ -283,7 +283,7 @@ export async function musicVideo(userId: string, o: MusicVideoInput, deps: { hea
       onStep?.(`Shot ${i + 1} of ${cuts.length - 1}…`);
       const len = cuts[i + 1] - cuts[i];
       const pic = path.join(dir, `pic${i}.png`);
-      // Any picture maker (Kinetrove's engine, Azure's GPUs, Gemini, Flux): only filmed clips need the GPU engine.
+      // Any picture maker (Curbflix's engine, Azure's GPUs, Gemini, Flux): only filmed clips need the GPU engine.
       const still = await (deps.picture ?? makeImage)({ prompt: `${scenes[i]} Music video still, cinematic, ${o.idea.slice(0, 200)}. No text.`, aspect: o.aspect as "9:16" | "16:9" | "1:1" });
       await fs.writeFile(pic, still.bytes);
       if (o.motion === "clips") {

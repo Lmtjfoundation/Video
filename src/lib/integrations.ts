@@ -63,7 +63,7 @@ export interface Integrations {
    * owner's own Azure servers). Claude, Gemini, Replicate, ElevenLabs and outside stock footage are never called.
    */
   azureOnly?: boolean | "";
-  /** Kinetrove Video Engine (engine/ in this repo) on the owner's GPU: its address and the ENGINE_TOKEN it was started with. */
+  /** Curbflix Video Engine (engine/ in this repo) on the owner's GPU: its address and the ENGINE_TOKEN it was started with. */
   videoEngineUrl?: string;
   videoEngineToken?: string;
   /** Wake on use: "tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" for a service principal that may start the engine's VM. */
@@ -76,7 +76,7 @@ export interface Integrations {
   videoEngineGpuToken?: string;
   vmWakeGpu?: string;
   /**
-   * Kinetrove's own writer (src/lib/own-writer.ts): an OpenAI-compatible address, its key and model. ownWriterMode says
+   * Curbflix's own writer (src/lib/own-writer.ts): an OpenAI-compatible address, its key and model. ownWriterMode says
    * when it writes: "backup" (after Claude and Gemini), "first" (before them) or "only" (they're never used).
    * ownWriterOnly is the older switch for "only".
    */
@@ -87,7 +87,7 @@ export interface Integrations {
   ownWriterModel?: string;
   ownWriterOnly?: boolean;
   ownWriterMode?: "first" | "backup" | "only" | "";
-  /** Make pictures, clips and voices on Kinetrove's own engine first (waking it), outside services only as backup. On unless false. */
+  /** Make pictures, clips and voices on Curbflix's own engine first (waking it), outside services only as backup. On unless false. */
   engineFirst?: boolean | "";
   /** Pixabay (https://pixabay.com/api/docs/) — free stock video, the main footage source. */
   pixabayKey?: string;
@@ -106,7 +106,7 @@ export interface Integrations {
   stripeCoupons?: Record<string, string>;
   /** Resend (https://resend.com) API key for password-reset emails. Email goes over HTTPS. */
   resendKey?: string;
-  /** Sender, e.g. "Kinetrove <support@yourdomain.com>" (the domain must be verified in Resend). */
+  /** Sender, e.g. "Curbflix <support@yourdomain.com>" (the domain must be verified in Resend). */
   emailFrom?: string;
   /** Any mail account instead of Resend (Gmail with an app password, Outlook, Zoho, SendGrid…): host, port, login. */
   smtpHost?: string;

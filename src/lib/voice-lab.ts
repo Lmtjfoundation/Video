@@ -17,9 +17,9 @@ import { chunks, pcm, SR, speak, wavBytes } from "./voice-studio";
 import { listVoices } from "./voices";
 
 /**
- * Voice Lab: Kinetrove's own text to speech with emotion tags, voice design, a voice library, speech to text,
+ * Voice Lab: Curbflix's own text to speech with emotion tags, voice design, a voice library, speech to text,
  * a voice isolator, Audio Studio (long-form narration in chapters) and voice to video. Free voices and speech to
- * text run on Kinetrove's server; cloned and designed voices, the 23 languages, isolation and lip sync run on
+ * text run on Curbflix's server; cloned and designed voices, the 23 languages, isolation and lip sync run on
  * the engine. Every result goes to the Media Library.
  */
 
@@ -149,7 +149,7 @@ const TRANSCRIPTS = "transcripts";
 export const MAX_TRANSCRIPTS = 50;
 export const listTranscripts = async () => (await kvGet<Transcript[]>(TRANSCRIPTS)) ?? [];
 
-/** Speech to text on Kinetrove's own server (Whisper): every line with its timing, in any language Whisper knows. */
+/** Speech to text on Curbflix's own server (Whisper): every line with its timing, in any language Whisper knows. */
 export async function transcribeMedia(o: { mediaId: string }, deps: { hear?: (file: string) => Promise<TimedText[]> } = {}): Promise<Transcript> {
   const m = await media(o.mediaId, ["audio", "video"], "a recording or video");
   const t = await tmp(async (dir) => {

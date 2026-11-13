@@ -18,7 +18,7 @@ export interface AudioCut {
   text: string;
 }
 
-/** Longest recording Audio to video takes (10 minutes, the longest video Kinetrove makes). */
+/** Longest recording Audio to video takes (10 minutes, the longest video Curbflix makes). */
 export const MAX_AUDIO_SECONDS = 600;
 
 const FRAME = 1 / 30;

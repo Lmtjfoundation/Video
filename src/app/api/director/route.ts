@@ -63,7 +63,7 @@ export const POST = authed(async (req, user) => {
   if (!lengthAllowed(length, platform)) return fail("X allows videos up to 2 minutes 20 seconds. Pick a shorter length for X.");
   const cast = await getCharacters(Array.isArray(b.characterIds) ? b.characterIds.slice(0, 6) : []);
   const look = String(b.look ?? "").trim().slice(0, 160) || cast[0]?.look || CHARACTER_LOOKS[0];
-  if (!isGraphicsLook(look) && !(await picturesReady())) return fail("The Director needs Kinetrove's engine for pictures. The admin connects it in Admin → App settings → Integrations.", 503);
+  if (!isGraphicsLook(look) && !(await picturesReady())) return fail("The Director needs Curbflix's engine for pictures. The admin connects it in Admin → App settings → Integrations.", 503);
   const start = async () => {
     const r = await withCredits(videoCredits(length, "plan"), async () => startSession({ message, characterIds: cast.map((c) => c.id), look, platform, length }, await getSettings()));
     await log("info", "generate", `Director: “${r.post.hook}”`, { postId: r.post.id });

@@ -50,7 +50,7 @@ export default function RestorePage() {
   return (
     <div className="mx-auto grid grid-cols-1 max-w-xl gap-6 py-10">
       <Card>
-        <CardHeader title="Move Kinetrove to this server" subtitle={s?.from ? `Copies every account, post, upload and setting from ${s.from}.` : "Copies every account, post, upload and setting from your old server."} icon={<ArrowRightLeft className="h-4 w-4" />} />
+        <CardHeader title="Move Curbflix to this server" subtitle={s?.from ? `Copies every account, post, upload and setting from ${s.from}.` : "Copies every account, post, upload and setting from your old server."} icon={<ArrowRightLeft className="h-4 w-4" />} />
         <div className="grid grid-cols-1 gap-4 p-5 text-sm">
           {s?.error && <p className="text-white/70">{s.error}</p>}
           {s?.state === "done" ? (
@@ -68,7 +68,7 @@ export default function RestorePage() {
           ) : (
             <>
               <ol className="list-decimal space-y-1 pl-5 text-white/70">
-                <li>Sign in to your old Kinetrove as the owner.</li>
+                <li>Sign in to your old Curbflix as the owner.</li>
                 <li>Open Admin → App settings → Move to a new server and press <b>Make a move code</b>.</li>
                 <li>Paste the code here within 15 minutes.</li>
               </ol>

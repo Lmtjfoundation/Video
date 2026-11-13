@@ -189,7 +189,7 @@ const COST_FIELDS: [keyof Costs, string, string][] = [
   ["cpuEngineHourly", "Tools engine, $ an hour while on", "Ghost (Spot D2nlds v6): $0.0295"],
 ];
 
-/** Revenue minus every cost of running Kinetrove, what each plan leaves, and how many subscribers pay the bills. */
+/** Revenue minus every cost of running Curbflix, what each plan leaves, and how many subscribers pay the bills. */
 function ProfitCard({ stats, onStats }: { stats: Stats; onStats: (s: Stats) => void }) {
   const toast = useApp((s) => s.toast);
   const [edit, setEdit] = useState(false);
@@ -531,7 +531,7 @@ function AppSettingsTab() {
             <Input type="email" defaultValue={s.supportEmail} onBlur={(e) => e.target.value !== s.supportEmail && save({ supportEmail: e.target.value })} placeholder="support@yourdomain.com" />
           </Field>
           <Field label="Business name" hint="shown on Terms and Privacy">
-            <Input defaultValue={s.legalName} onBlur={(e) => e.target.value !== s.legalName && save({ legalName: e.target.value })} placeholder="Kinetrove" />
+            <Input defaultValue={s.legalName} onBlur={(e) => e.target.value !== s.legalName && save({ legalName: e.target.value })} placeholder="Curbflix" />
           </Field>
           <Field label="Governing law" hint="used in the Terms">
             <Input defaultValue={s.legalJurisdiction} onBlur={(e) => e.target.value !== s.legalJurisdiction && save({ legalJurisdiction: e.target.value })} placeholder="the State of Texas, USA" />
@@ -577,7 +577,7 @@ function MoveServerCard() {
   }
   return (
     <Card>
-      <CardHeader title="Move to a new server" subtitle="Copies every account, post, upload and setting to a new Kinetrove server, then sends everyone from this address to the new one." />
+      <CardHeader title="Move to a new server" subtitle="Copies every account, post, upload and setting to a new Curbflix server, then sends everyone from this address to the new one." />
       <div className="grid grid-cols-1 gap-3 p-5 text-sm">
         <p className="text-white/65">On the new server, open <span className="font-mono text-white/85">/restore</span> and paste the code. It works once and only for 15 minutes. Keep it private: it lets the new server copy everything, including your keys.</p>
         {code ? (
@@ -844,7 +844,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Sparkles className="h-4 w-4" />}
           title="Azure storage — buckets for all media and long videos"
-          desc="Keeps every upload and every video Kinetrove makes in your Azure Storage account (private buckets, billed to your Azure subscription). Videos stream and seek straight from Azure, so movies up to 1 h 30 min play smoothly. Files kept before you connect it stay where they are and keep working."
+          desc="Keeps every upload and every video Curbflix makes in your Azure Storage account (private buckets, billed to your Azure subscription). Videos stream and seek straight from Azure, so movies up to 1 h 30 min play smoothly. Files kept before you connect it stay where they are and keep working."
           link={{ href: "https://portal.azure.com/#browse/Microsoft.Storage%2FStorageAccounts", label: "Open storage accounts" }}
           state={st.azureStorage ?? { set: false }}
           result={results.azureStorage}
@@ -919,7 +919,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
 
         <Service
           icon={<Bot className="h-4 w-4" />}
-          title="Kinetrove's own writer — no Claude or Gemini credits"
+          title="Curbflix's own writer — no Claude or Gemini credits"
           desc="An open AI model (Qwen3-4B) running on your own Azure server that can write posts, scripts, plans and replies. It costs nothing per use: it loads when someone writes and unloads after 30 quiet minutes. It's slower than Claude (a post takes about 30–90 seconds) and can't read pictures or search the web."
           link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/README.md#go-live-on-an-azure-vm-what-ghost-post-runs-on", label: "Setup guide" }}
           state={st.ownWriter ?? { set: false }}
@@ -955,8 +955,8 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
 
         <Service
           icon={<Film className="h-4 w-4" />}
-          title="Kinetrove Video Engine — your own video model"
-          desc="Kinetrove's own filmmaking model (Wan 2.2 I2V-A14B, the strongest open video model; or TI2V-5B for smaller GPUs) on a GPU server you rent (Microsoft Azure in one command, using the nonprofit Azure credit, or RunPod). The Film Engine makes moving footage with it: no Seedance, no Replicate, no per-clip fee; you pay only for the GPU while it runs. Set it up from engine/README.md in the repo, then paste the server's address and its ENGINE_TOKEN here."
+          title="Curbflix Video Engine — your own video model"
+          desc="Curbflix's own filmmaking model (Wan 2.2 I2V-A14B, the strongest open video model; or TI2V-5B for smaller GPUs) on a GPU server you rent (Microsoft Azure in one command, using the nonprofit Azure credit, or RunPod). The Film Engine makes moving footage with it: no Seedance, no Replicate, no per-clip fee; you pay only for the GPU while it runs. Set it up from engine/README.md in the repo, then paste the server's address and its ENGINE_TOKEN here."
           link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/engine/README.md", label: "Setup guide" }}
           state={st.videoEngine}
           result={results.videoEngine}
@@ -976,7 +976,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Power className="h-4 w-4" />}
           title="Wake the engine's VM — start it when it's needed"
-          desc="When the engine's machine is switched off (for example by its nightly shutdown), Kinetrove starts it through Azure the next time someone uses an engine tool, and waits for it (about 2–4 minutes). Paste the wake line you were given: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…. It can only read and start that one VM."
+          desc="When the engine's machine is switched off (for example by its nightly shutdown), Curbflix starts it through Azure the next time someone uses an engine tool, and waits for it (about 2–4 minutes). Paste the wake line you were given: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…. It can only read and start that one VM."
           link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/engine/README.md", label: "Setup guide" }}
           state={st.vmWake ?? { set: false }}
         >
@@ -993,7 +993,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         <Service
           icon={<Sparkles className="h-4 w-4" />}
           title="Second engine (GPU, or the CPU picture machine) — pictures, clips, voices and lip sync"
-          desc="A second engine on a GPU machine (for example an Azure NV36ads A10 v5, billed only while it runs). Kinetrove sends it everything the engine above can't do, starts it when needed with its own wake line, and it stops itself after 20 idle minutes."
+          desc="A second engine on a GPU machine (for example an Azure NV36ads A10 v5, billed only while it runs). Curbflix sends it everything the engine above can't do, starts it when needed with its own wake line, and it stops itself after 20 idle minutes."
           link={{ href: "https://github.com/Lmtjfoundation/Video/blob/nexus-pulse-autopilot/engine/README.md", label: "Setup guide" }}
           state={st.videoEngineGpu ?? { set: false }}
           result={results.videoEngineGpu}
@@ -1005,10 +1005,10 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             <Switch
               checked={st.engineFirst !== false}
               disabled={busy === "engineFirst"}
-              onChange={(v) => run("engineFirst", () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { engineFirst: v } }), (next) => { setSt(next); toast(v ? "Pictures, clips and voices are made on Kinetrove's engine first." : "Outside services are used first again; the engine only while it's on.", "success"); })}
-              label="Make everything on Kinetrove's engine first"
+              onChange={(v) => run("engineFirst", () => api<IntegrationStatus>("/api/admin/integrations", { method: "PUT", body: { engineFirst: v } }), (next) => { setSt(next); toast(v ? "Pictures, clips and voices are made on Curbflix's engine first." : "Outside services are used first again; the engine only while it's on.", "success"); })}
+              label="Make everything on Curbflix's engine first"
             />
-            Make everything on Kinetrove&apos;s engine first (outside services only as backup)
+            Make everything on Curbflix&apos;s engine first (outside services only as backup)
           </label>
           <Actions>
             <Button size="sm" variant="primary" loading={busy === "save:GPU engine"} onClick={() => save(["videoEngineGpuUrl", "videoEngineGpuToken", "vmWakeGpu"].filter((k) => vals[k]), "GPU engine", "videoEngineGpu")}>Save &amp; test</Button>
@@ -1092,7 +1092,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           <Input
             autoComplete="off"
             spellCheck={false}
-            placeholder={st.email.from ? `From: ${st.email.from}` : "From (optional for a mail account), e.g. Kinetrove <you@gmail.com>"}
+            placeholder={st.email.from ? `From: ${st.email.from}` : "From (optional for a mail account), e.g. Curbflix <you@gmail.com>"}
             value={vals.emailFrom ?? ""}
             onChange={set("emailFrom")}
           />

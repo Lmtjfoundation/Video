@@ -25,7 +25,7 @@ export const POST = authed(async (req, user) => {
     tool?: string; text?: string; language?: string; voiceId?: string; mediaId?: string; voice?: string; rightsConfirmed?: boolean;
     keepBackground?: boolean; lipsync?: boolean; videoId?: string; audioId?: string; pictureId?: string; aspect?: string; direction?: string;
   }>(req);
-  if (!(await ownEngineReady())) return fail("The voice tools need Kinetrove's engine. The admin connects it in Admin → App settings → Integrations → Kinetrove Video Engine.", 503);
+  if (!(await ownEngineReady())) return fail("The voice tools need Curbflix's engine. The admin connects it in Admin → App settings → Integrations → Curbflix Video Engine.", 503);
   const myVoice = async (id?: string) => {
     if (!id) return undefined;
     if (!(await listVoices()).some((v) => v.id === id)) throw new Error("That voice isn't in My Voices.");

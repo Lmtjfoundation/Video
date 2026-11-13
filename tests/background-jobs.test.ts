@@ -93,7 +93,7 @@ describe("movie work is reused after a restart", () => {
 describe("ready notifications", () => {
   it("words done and failed jobs, and only opens app paths", async () => {
     const { jobMessage } = await import("@/lib/push");
-    expect(jobMessage({ title: "Glass Tongue", status: "done", message: "Movie ready: Glass Tongue (3:02)", href: "/movie-maker" })).toEqual({ title: "Ready in Kinetrove", body: "Movie ready: Glass Tongue (3:02)", url: "/movie-maker" });
+    expect(jobMessage({ title: "Glass Tongue", status: "done", message: "Movie ready: Glass Tongue (3:02)", href: "/movie-maker" })).toEqual({ title: "Ready in Curbflix", body: "Movie ready: Glass Tongue (3:02)", url: "/movie-maker" });
     expect(jobMessage({ title: "Ep 2", status: "failed", message: "No pictures (credits refunded)", href: "https://evil.example" })).toEqual({ title: "Didn't finish", body: "Ep 2: No pictures (credits refunded)", url: "/" });
   });
 
@@ -151,9 +151,9 @@ describe("service worker notifications", () => {
     };
     vm.runInNewContext(readFileSync("public/sw.js", "utf8"), { self, caches: {}, fetch: () => {}, URL });
     let wait: Promise<unknown> = Promise.resolve();
-    listeners.push({ data: { json: () => ({ title: "Ready in Kinetrove", body: "Movie ready: Glass Tongue (3:02)", url: "/movie-maker" }) }, waitUntil: (p: Promise<unknown>) => (wait = p) });
+    listeners.push({ data: { json: () => ({ title: "Ready in Curbflix", body: "Movie ready: Glass Tongue (3:02)", url: "/movie-maker" }) }, waitUntil: (p: Promise<unknown>) => (wait = p) });
     await wait;
-    expect(shown).toEqual([["Ready in Kinetrove", expect.objectContaining({ body: "Movie ready: Glass Tongue (3:02)", data: { url: "/movie-maker" } })]]);
+    expect(shown).toEqual([["Ready in Curbflix", expect.objectContaining({ body: "Movie ready: Glass Tongue (3:02)", data: { url: "/movie-maker" } })]]);
     listeners.notificationclick({ notification: { close: () => {}, data: { url: "/movie-maker" } }, waitUntil: (p: Promise<unknown>) => (wait = p) });
     await wait;
     expect(opened).toEqual(["https://ghostpost.example/movie-maker"]);

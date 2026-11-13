@@ -38,14 +38,14 @@ export const POST = authed(async (req: Request) => {
 
 /**
  * Autopilot for the profile: posts go to Instagram, and Instagram's own "Share to Facebook" setting puts them on
- * the profile. Needs Instagram connected directly in Kinetrove.
+ * the profile. Needs Instagram connected directly in Curbflix.
  */
 export const PATCH = authed(async (req: Request) => {
   const input = await body<{ viaInstagram?: boolean }>(req);
   const cur = await getCredential("facebook");
   if (!cur || !isProfileCred(cur)) return fail("Add your Facebook profile first.");
   if (input.viaInstagram && !(await getCredential("instagram"))?.accessToken && !(await metricoolFor("instagram"))) {
-    return fail("Connect Instagram first — in Kinetrove (Platforms → Instagram) or through Metricool — then switch this on.");
+    return fail("Connect Instagram first — in Curbflix (Platforms → Instagram) or through Metricool — then switch this on.");
   }
   await saveCredential("facebook", { ...cur, viaInstagram: input.viaInstagram ? "1" : undefined });
   await log("info", "system", input.viaInstagram ? "Facebook profile on autopilot: posts go out through Instagram's sharing to Facebook" : "Facebook profile back to one-tap posting", { platform: "facebook" });

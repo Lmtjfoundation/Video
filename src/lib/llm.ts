@@ -53,7 +53,7 @@ interface CallOpts {
    * web search isn't enabled for the organization.
    */
   webSearch?: { domains: string[]; maxUses?: number };
-  /** The answer must be a JSON object (Kinetrove's own writer enforces it; the others are told in the prompt). */
+  /** The answer must be a JSON object (Curbflix's own writer enforces it; the others are told in the prompt). */
   json?: boolean;
 }
 
@@ -279,7 +279,7 @@ export async function claude(opts: CallOpts): Promise<string> {
   const own = (await azureOnly()) ? null : await getOwnAi();
   if (own) return callOwnAi(own, opts);
 
-  // While Kinetrove's own engine is running, it writes first, so no other company's AI credits are used (it isn't
+  // While Curbflix's own engine is running, it writes first, so no other company's AI credits are used (it isn't
   // started just to write: a GPU machine billed by the hour costs more than the writing). Its model reads text only, so
   // requests with pictures (and ones that need live web search) go to Claude or Gemini; if the engine can't answer,
   // the usual order below takes over.
@@ -287,11 +287,11 @@ export async function claude(opts: CallOpts): Promise<string> {
     try {
       return await ownWrite({ system: opts.system, user: opts.user, maxTokens: opts.maxTokens ?? 2500, temperature: opts.temperature ?? 0.85 });
     } catch (e) {
-      console.warn(`[llm] Kinetrove's engine couldn't write (${(e as Error).message.slice(0, 200)}); using the next AI.`);
+      console.warn(`[llm] Curbflix's engine couldn't write (${(e as Error).message.slice(0, 200)}); using the next AI.`);
     }
   }
 
-  // Kinetrove's own writer (an open model on the owner's server) uses no outside AI credits but writes less well. As
+  // Curbflix's own writer (an open model on the owner's server) uses no outside AI credits but writes less well. As
   // the backup (the default when Claude or Gemini is set up) it covers only when they can't answer; set to write first,
   // it goes before them. It can't read pictures or search the web, so those requests go on to Claude or Gemini, unless
   // the owner allows only the own writer (then web searches are written without the search).

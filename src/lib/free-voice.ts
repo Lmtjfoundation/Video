@@ -2,7 +2,7 @@ import "server-only";
 import path from "path";
 
 /**
- * Free voiceover that runs on Kinetrove's own server: Kokoro-82M (open weights, Apache 2.0) through kokoro-js.
+ * Free voiceover that runs on Curbflix's own server: Kokoro-82M (open weights, Apache 2.0) through kokoro-js.
  * Used when no ElevenLabs key is set, or when ElevenLabs fails (quota, key). The model (about 90 MB) downloads from
  * Hugging Face on first use and is cached on the data volume, so later renders start in a second or two.
  * Set FREE_VOICE=off to turn it off.
