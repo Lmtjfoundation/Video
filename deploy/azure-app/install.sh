@@ -39,9 +39,11 @@ IP="$(curl -fsS -4 --max-time 10 https://api.ipify.org || true)"
 [ -n "$DOMAIN" ] || { [ -n "$IP" ] && DOMAIN="ghostpost.${IP//./-}.sslip.io"; }
 [ -n "$DOMAIN" ] || die "Couldn't find this VM's public IP. Run it again with --domain your.domain.example"
 
-say "Packages (Node 22, ffmpeg, Caddy)"
+say "Packages (Node 22, ffmpeg, Caddy, motion engine libraries)"
 apt-get update -q
 DEBIAN_FRONTEND=noninteractive apt-get install -y -q git ffmpeg curl gnupg ca-certificates debian-keyring debian-archive-keyring apt-transport-https build-essential
+# The motion engine (scripts/movie-motion/engine.py: Movie Maker, motion scenes) runs python3 with these.
+DEBIAN_FRONTEND=noninteractive apt-get install -y -q python3 python3-opencv python3-numpy python3-pil python3-scipy fonts-dejavu-core
 if ! node --version 2>/dev/null | grep -q '^v22\.'; then
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
   DEBIAN_FRONTEND=noninteractive apt-get install -y -q nodejs
