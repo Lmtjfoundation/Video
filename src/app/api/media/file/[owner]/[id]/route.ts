@@ -1,6 +1,6 @@
 import { asUser, db } from "@/lib/db";
-import { createReadStream, promises as fs } from "fs";
-import { Readable } from "stream";
+import { promises as fs } from "fs";
+import { fileStream } from "@/lib/file-stream";
 import { localPath, readFile, storeOf, verifySignature } from "@/lib/media";
 import { blobReadUrl } from "@/lib/azure-blob";
 import type { MediaItem } from "@/lib/types";
@@ -40,7 +40,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ owner: s
       const range = parseRange(req.headers.get("range"), size);
       if (range === null) return new Response(null, { status: 416, headers: { ...headers, "Content-Range": `bytes */${size}` } });
       const [start, end] = range === "none" ? [0, size - 1] : [range.start, range.end];
-      const body = Readable.toWeb(createReadStream(file, { start, end })) as ReadableStream;
+      const body = fileStream(file, start, end);
       return new Response(body, range === "none" ? { headers: { ...headers, "Content-Length": String(size) } } : { status: 206, headers: { ...headers, "Content-Length": String(end - start + 1), "Content-Range": `bytes ${start}-${end}/${size}` } });
     }
     const bytes = await readFile(item).catch(() => null);

@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, randomBytes, timingSafeEqual } from "crypto";
-import { createReadStream, createWriteStream, promises as fs } from "fs";
+import { createWriteStream, promises as fs } from "fs";
+import { fileStream } from "./file-stream";
 import path from "path";
 import { Readable } from "stream";
 import { pipeline } from "stream/promises";
@@ -116,7 +117,7 @@ export async function exportFile(code: string, rel: string) {
   const full = safeDataPath(rel);
   const st = await fs.stat(full).catch(() => null);
   if (!st?.isFile()) throw new MigrateError("That file isn't there any more.");
-  return { stream: Readable.toWeb(createReadStream(full)) as ReadableStream, size: st.size };
+  return { stream: fileStream(full), size: st.size };
 }
 
 /** Step 4, old server: from now on every visitor goes to the new address and the scheduler stops. */
