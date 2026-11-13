@@ -71,6 +71,14 @@ export class OwnWriterError extends Error {}
 /** Writes one answer. `json`: the model must answer with a JSON object (the server enforces it). */
 /** GPT-5 and o-series models think before answering: they take max_completion_tokens (thinking included) and no temperature. */
 export const reasoningModel = (model: string) => /^(gpt-5|o\d)/i.test(model);
+/**
+ * Other models that think before answering (Kimi, MAI-Thinking, DeepSeek, Grok reasoning, Phi reasoning). Their
+ * thinking counts against the token limit, so a script-sized limit leaves nothing for the answer (an empty reply):
+ * they get a much bigger budget. They don't take OpenAI's reasoning_effort.
+ */
+export const thinkingModel = (model: string) => /^(kimi|mai-thinking|deepseek|grok-[\w.-]*(?<!non-)reasoning|phi-4[\w-]*reasoning)/i.test(model);
+/** Token budget for a thinking model: the answer's limit plus room to think (about 5,000 tokens on a one-page scene). */
+export const thinkingBudget = (maxTokens: number) => Math.min(64_000, Math.max(12_000, maxTokens * 3));
 
 export async function writeWithOwnWriter(w: OwnWriter, o: { system: string; user: string; maxTokens: number; temperature: number; json?: boolean; images?: { mediaType: string; base64: string }[]; premium?: boolean }, timeoutMs = 10 * 60_000): Promise<string> {
   let res: Response;
@@ -87,7 +95,11 @@ export async function writeWithOwnWriter(w: OwnWriter, o: { system: string; user
           { role: "system", content: o.system },
           { role: "user", content },
         ],
-        ...(thinks ? { max_completion_tokens: Math.max(4000, o.maxTokens * 3), reasoning_effort: "low" } : { max_tokens: o.maxTokens, temperature: o.temperature }),
+        ...(thinks
+          ? { max_completion_tokens: Math.max(4000, o.maxTokens * 3), reasoning_effort: "low" }
+          : thinkingModel(model)
+            ? { max_completion_tokens: thinkingBudget(o.maxTokens) }
+            : { max_tokens: o.maxTokens, temperature: o.temperature }),
         ...(o.json ? { response_format: { type: "json_object" } } : {}),
       }),
       signal: AbortSignal.timeout(timeoutMs),

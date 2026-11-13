@@ -40,6 +40,29 @@ describe("Azure premium writer", () => {
     expect(models).toEqual(["gpt-5.4-mini", "kimi-k3.1-pro", "kimi-k3.1-pro", "gpt-5.4-mini"]);
   });
 
+  it("gives thinking models room to think, so a long script never comes back empty", async () => {
+    azureOnly();
+    process.env.AZURE_AI_PREMIUM_DEPLOYMENT = "kimi-k3.1-pro";
+    const bodies: Record<string, unknown>[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_u: string, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return Response.json({ choices: [{ message: { content: "INT. CLUB - NIGHT" } }] });
+    }));
+    const { claude } = await import("@/lib/llm");
+    await claude({ system: "s", user: "Cold open", maxTokens: 2500, model: "premium" });
+    await claude({ system: "s", user: "Pilot", maxTokens: 16000 });
+    expect(bodies[0]).toMatchObject({ model: "kimi-k3.1-pro", max_completion_tokens: 12000 });
+    expect(bodies[1]).toMatchObject({ model: "kimi-k3.1-pro", max_completion_tokens: 48000 });
+    for (const b of bodies) {
+      expect(b).not.toHaveProperty("max_tokens");
+      expect(b).not.toHaveProperty("temperature");
+      expect(b).not.toHaveProperty("reasoning_effort");
+    }
+    const { thinkingModel } = await import("@/lib/own-writer");
+    expect(["kimi-k3.1-pro", "mai-thinking-1", "DeepSeek-V4-Pro", "grok-4-20-reasoning"].every(thinkingModel)).toBe(true);
+    expect(["gpt-5.4-mini", "grok-4-20-non-reasoning", "qwen3:4b"].some(thinkingModel)).toBe(false);
+  });
+
   it("writerModel: no premium deployment means the usual model for everything", async () => {
     const { writerModel } = await import("@/lib/own-writer");
     const w = { url: "u", key: "k", model: "gpt-5.4-mini", mode: "only" as const, only: true };
