@@ -3,7 +3,7 @@ import { foundryAuth } from "./azure-identity";
 import { azureOnly, getIntegrations, pick } from "./integrations";
 
 /**
- * Curbvue's own writer: an open AI model the app owner runs (deploy/azure-app/install.sh puts Qwen3-4B on the
+ * Vueio's own writer: an open AI model the app owner runs (deploy/azure-app/install.sh puts Qwen3-4B on the
  * Azure server's processor with Ollama), reached through the OpenAI Chat Completions format. It writes before Claude
  * and Gemini, so writing needs no outside AI credits. The same setting can point at Azure OpenAI's /openai/v1 endpoint
  * or any other OpenAI-compatible service later.
@@ -81,14 +81,14 @@ export async function writeWithOwnWriter(w: OwnWriter, o: { system: string; user
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (e) {
-    throw new OwnWriterError(`Curbvue's own writer didn't answer at ${w.url} (${(e as Error).message}).`);
+    throw new OwnWriterError(`Vueio's own writer didn't answer at ${w.url} (${(e as Error).message}).`);
   }
-  if (res.status === 401 || res.status === 403) throw new OwnWriterError("Curbvue's own writer rejected its key. Check it in Admin → App settings → Integrations → Own writer.");
-  if (!res.ok) throw new OwnWriterError(`Curbvue's own writer answered ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
+  if (res.status === 401 || res.status === 403) throw new OwnWriterError("Vueio's own writer rejected its key. Check it in Admin → App settings → Integrations → Own writer.");
+  if (!res.ok) throw new OwnWriterError(`Vueio's own writer answered ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
   const j = (await res.json().catch(() => null)) as { choices?: { message?: { content?: string } }[] } | null;
   // Some open models think out loud first; only the answer is kept.
   const text = (j?.choices?.[0]?.message?.content ?? "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-  if (!text) throw new OwnWriterError("Curbvue's own writer returned nothing.");
+  if (!text) throw new OwnWriterError("Vueio's own writer returned nothing.");
   return text;
 }
 

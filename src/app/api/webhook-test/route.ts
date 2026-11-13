@@ -14,7 +14,7 @@ export const POST = authed(async () => {
       {
         event: "test",
         platform: "webhook",
-        text: "This is a test message from Curbvue. If you can read this, your connection works.",
+        text: "This is a test message from Vueio. If you can read this, your connection works.",
         sentAt: new Date().toISOString(),
       },
       cred.refreshToken,

@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 /** Installable app (Android, iOS "Add to Home Screen", desktop). */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Curbvue Autopilot",
-    short_name: "Curbvue",
+    name: "Vueio Autopilot",
+    short_name: "Vueio",
     description: "Niche research, faceless story scripts and autopilot posting for six platforms.",
     start_url: "/",
     scope: "/",

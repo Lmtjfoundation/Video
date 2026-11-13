@@ -30,7 +30,7 @@ export const GET = authed(async (_req, user) => {
 export const POST = authed(async (req, user) => {
   const b = await body<{ name?: string; description?: string; look?: string; photoId?: string; consent?: boolean }>(req);
   if (b.photoId && !b.consent) return fail("Confirm the photo is of you, or that you have permission from the person in it.");
-  if (!(await picturesReady())) return fail("Making characters needs Curbvue's engine (or the app's Gemini key). Ask the admin to connect one in Admin → App settings → Integrations.", 503);
+  if (!(await picturesReady())) return fail("Making characters needs Vueio's engine (or the app's Gemini key). Ask the admin to connect one in Admin → App settings → Integrations.", 503);
   const credits = CREDIT_COST.character;
   await spendCredits(user.id, credits);
   try {

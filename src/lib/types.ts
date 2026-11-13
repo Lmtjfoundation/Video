@@ -339,7 +339,7 @@ export interface CredentialStatus {
   accounts?: { id: string; handle?: string; method?: string; updatedAt?: string }[];
   /** "metricool" or "upload-post" when this platform posts through that service instead of its own sign-in. */
   via?: "metricool" | "upload-post";
-  /** Connected directly in Curbvue (its own sign-in or token), as opposed to only through Metricool. */
+  /** Connected directly in Vueio (its own sign-in or token), as opposed to only through Metricool. */
   direct?: boolean;
 }
 
@@ -429,7 +429,7 @@ export interface VideoPlan {
   ai?: AiVisuals;
   /** false = no narration audio (captions, visuals and music only). Missing = on. */
   voiceover?: boolean;
-  /** "motion" = Curbvue's motion graphics for every scene; "auto" (or missing) = stock footage or AI pictures. */
+  /** "motion" = Vueio's motion graphics for every scene; "auto" (or missing) = stock footage or AI pictures. */
   visuals?: VideoVisuals;
   /**
    * Audio to video: an uploaded recording (Media Library id) is the soundtrack, played as it is. Scene i is shown
@@ -437,7 +437,7 @@ export interface VideoPlan {
    */
   audio?: { mediaId: string; cuts: { start: number; end: number }[] };
   /**
-   * Who narrates (Story to Video): a free voice on Curbvue's server, or the engine in one of 23 languages,
+   * Who narrates (Story to Video): a free voice on Vueio's server, or the engine in one of 23 languages,
    * optionally in one of My Voices. Missing = the usual narrator (ElevenLabs when its key is set, else the free voice).
    */
   narrator?: { kind: "free"; id: string; speed?: number } | { kind: "engine"; language: string; voiceId?: string } | { kind: "azure"; name: string; speed?: number };

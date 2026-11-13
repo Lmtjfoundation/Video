@@ -178,7 +178,7 @@ export const CREDIT_COST = {
   filmReview: 3,
   filmPromo: 2,
   /**
-   * Curbvue Video Engine on the owner's GPU. Wan 2.2 A14B takes about 1,056 s for a 5-second 720p clip on one
+   * Vueio Video Engine on the owner's GPU. Wan 2.2 A14B takes about 1,056 s for a 5-second 720p clip on one
    * H100 (Novita AI's figure; an A100 is slower), and Azure's A100 VM is $3.673 an hour in East US (Oct 2026), so a
    * second of footage costs roughly 20–35¢. 16 credits (32¢ at the cost basis, 53–62¢ charged) keeps it profitable;
    * lower it once your own timings show a faster GPU.
@@ -236,9 +236,9 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   repurposePerPlatform: "Repurpose to one platform",
   liveCheck: "Live fact-check of a news piece (added to the post or video)",
   aiImage: "AI picture for one movie or explainer scene",
-  veoSecond: "Each second of a Curbvue Cinematic scene, 4–8 seconds per scene",
-  seedanceSecond: "Each second of a Curbvue Cinematic Pro scene (4–8 seconds per scene)",
-  wanSecond: "Each second of a Curbvue Lite scene (4–8 seconds per scene)",
+  veoSecond: "Each second of a Vueio Cinematic scene, 4–8 seconds per scene",
+  seedanceSecond: "Each second of a Vueio Cinematic Pro scene (4–8 seconds per scene)",
+  wanSecond: "Each second of a Vueio Lite scene (4–8 seconds per scene)",
   character: "Create a character from a photo or description",
   explain: "Explain a text in plain language (2 credits over 8,000 characters)",
   aiMusic: "AI Music: one track up to 4 minutes, with the license",
@@ -259,7 +259,7 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   filmPage: "Writers' Room: screenplay pages, per scene",
   filmReview: "Writers' Room: awards-readiness review",
   filmPromo: "Writers' Room: promotion kit",
-  ownSecond: "Each second of footage from Curbvue's own video engine",
+  ownSecond: "Each second of footage from Vueio's own video engine",
   filmPlan: "Film Engine: plan a film as beats with timestamped shot lists",
   filmBeat: "Film Engine: write the next beat",
 };

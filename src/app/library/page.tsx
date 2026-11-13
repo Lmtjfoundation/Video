@@ -275,7 +275,7 @@ function Library() {
         <Empty
           icon={<LibraryIcon className="h-6 w-6" />}
           title={shelf === "favorites" ? "No favorites yet" : shelf === "mine" ? `You haven't made any ${KIND_LABEL[kind].toLowerCase()} yet` : "Nothing matches"}
-          body={shelf === "favorites" ? "Tap the heart on anything in the Library to keep it here." : data.engine ? "Make something new with the AI generators: it lands here with a title, tags and a license." : "The AI generators need Curbvue's engine; the admin connects it in Admin → App settings → Integrations."}
+          body={shelf === "favorites" ? "Tap the heart on anything in the Library to keep it here." : data.engine ? "Make something new with the AI generators: it lands here with a title, tags and a license." : "The AI generators need Vueio's engine; the admin connects it in Admin → App settings → Integrations."}
           action={<Link href={`/create?kind=${kind}`}><Button variant="primary"><Wand2 className="h-4 w-4" /> Make {kind === "music" ? "a track" : kind === "sfx" ? "a sound" : "a clip"}</Button></Link>}
         />
       ) : (
@@ -358,7 +358,7 @@ function Library() {
   );
 }
 
-/** Admins: have the engine fill the shared catalog from Curbvue's recipe list. */
+/** Admins: have the engine fill the shared catalog from Vueio's recipe list. */
 function FillCatalog({ kind, engine }: { kind: "music" | "sfx"; engine: boolean }) {
   const { toast } = useApp();
   const [status, setStatus] = useState<{ music: { left: number; inCatalog: number }; sfx: { left: number; inCatalog: number } } | null>(null);

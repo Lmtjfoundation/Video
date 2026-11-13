@@ -65,7 +65,7 @@ export default function PlatformsPage() {
     <>
       <PageHeader
         title="Platforms"
-        subtitle="Connect the social accounts Curbvue posts to, and switch each one on or off."
+        subtitle="Connect the social accounts Vueio posts to, and switch each one on or off."
         actions={<Link href="/connect?next=%2Fplatforms"><Button variant="primary"><Zap className="h-4 w-4" /> Quick connect</Button></Link>}
       />
 

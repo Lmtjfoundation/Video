@@ -140,7 +140,7 @@ export function VoicesPanel() {
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
       <Card>
-        <CardHeader title="Make a voice from your own" subtitle="Speak for 20–60 seconds. Curbvue checks the consent sentence before it copies any voice." icon={<UserRound className="h-4 w-4" />} />
+        <CardHeader title="Make a voice from your own" subtitle="Speak for 20–60 seconds. Vueio checks the consent sentence before it copies any voice." icon={<UserRound className="h-4 w-4" />} />
         <div className="grid grid-cols-1 gap-4 p-5">
           <div className="rounded-xl border border-mint-400/30 bg-mint-400/10 p-4 text-sm">
             <div className="mb-1 text-xs uppercase tracking-wide text-mint-200">Start the recording by saying</div>
@@ -224,7 +224,7 @@ export function DubPanel() {
   const [lips, setLips] = useState(true);
   return (
     <Card className="max-w-3xl">
-      <CardHeader title="Dubbing" subtitle="Curbvue hears every line, translates it, speaks it at the same moment in the new language and can sync the lips." icon={<Languages className="h-4 w-4" />} />
+      <CardHeader title="Dubbing" subtitle="Vueio hears every line, translates it, speaks it at the same moment in the new language and can sync the lips." icon={<Languages className="h-4 w-4" />} />
       <div className="grid grid-cols-1 gap-4 p-5">
         <Field label="Video or recording"><MediaSelect items={items} kinds={["video", "audio"]} value={mediaId} onChange={setMediaId} empty="Upload a video to the Media Library first" /></Field>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

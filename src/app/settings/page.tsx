@@ -124,12 +124,12 @@ export default function SettingsPage() {
             </div>
           </Card>
           <Card className="lg:col-span-2">
-            <CardHeader title="When something is ready" subtitle="Movies, videos and other long jobs run on Curbvue's server. You can close the app or lock your phone while they run." />
+            <CardHeader title="When something is ready" subtitle="Movies, videos and other long jobs run on Vueio's server. You can close the app or lock your phone while they run." />
             <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2">
               <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
                 <div>
                   <p className="text-sm text-white">Notify this device</p>
-                  <p className="text-xs text-white/50">Lock-screen and desktop notifications. On iPhone, add Curbvue to the Home Screen first.</p>
+                  <p className="text-xs text-white/50">Lock-screen and desktop notifications. On iPhone, add Vueio to the Home Screen first.</p>
                 </div>
                 <Button size="sm" onClick={async () => toast((await enablePush()) ? "This device will be notified when things are ready." : "Notifications aren't available here. Allow them in the browser settings, or use email.", "success")}>Turn on</Button>
               </div>

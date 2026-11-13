@@ -7,7 +7,7 @@ import { nowIso, uid } from "./utils";
 
 /**
  * Personal API keys for the developer API (/api/v1): music, sound effects and footage from code, like Artlist's
- * Music API. A key is shown once; Curbvue keeps only its SHA-256, plus an app-wide index from that hash to the
+ * Music API. A key is shown once; Vueio keeps only its SHA-256, plus an app-wide index from that hash to the
  * owner so a request can be matched without a session. Requests count against the owner's credits.
  */
 export interface ApiKey {

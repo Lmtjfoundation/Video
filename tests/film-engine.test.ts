@@ -181,7 +181,7 @@ describe.skipIf(!hasFfmpeg)("Film Engine making footage", () => {
     });
   }, 180_000);
 
-  it("films with Curbvue's own engine: clips chained from each last frame, a cut to a shot's own picture", async () => {
+  it("films with Vueio's own engine: clips chained from each last frame, a cut to a shot's own picture", async () => {
     process.env.VIDEO_ENGINE_URL = "https://gpu.example/";
     process.env.VIDEO_ENGINE_TOKEN = "engine-token-123";
     const posts: { body: Record<string, unknown>; auth: string }[] = [];
@@ -209,7 +209,7 @@ describe.skipIf(!hasFfmpeg)("Film Engine making footage", () => {
       await queueSegment("usr_film", cut.id, cut.segments[0].id, 0);
       await queueSegment("usr_film", cut.id, cut.segments[1].id, 0);
       const done = (await getCut(cut.id))!;
-      expect(done.segments.map((s) => [s.status, s.message])).toEqual([["done", "Filmed with Curbvue's video engine."], ["done", "Filmed with Curbvue's video engine."]]);
+      expect(done.segments.map((s) => [s.status, s.message])).toEqual([["done", "Filmed with Vueio's video engine."], ["done", "Filmed with Vueio's video engine."]]);
     });
     expect(posts.every((p) => p.auth === "Bearer engine-token-123")).toBe(true);
     expect(posts.map((p) => [p.body.aspect, p.body.seconds])).toEqual([["9:16", 5], ["9:16", 2], ["9:16", 3]]);

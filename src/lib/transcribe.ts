@@ -6,7 +6,7 @@ import { runCmd } from "./render";
 import type { TimedLine } from "./audio-scenes";
 
 /**
- * Free speech-to-text that runs on Curbvue's own server: OpenAI's Whisper (base, open weights, MIT) through
+ * Free speech-to-text that runs on Vueio's own server: OpenAI's Whisper (base, open weights, MIT) through
  * transformers.js, the same library the free voice uses. About 150 MB, downloaded once on first use and cached on the
  * data volume. Roughly 8× faster than real time on two CPU cores; any language Whisper knows.
  */

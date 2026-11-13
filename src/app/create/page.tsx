@@ -51,7 +51,7 @@ function AiStudio() {
     <>
       <PageHeader
         title="AI Studio"
-        subtitle="Make music, sound effects, footage and voiceovers on Curbvue's own models. Everything lands in your Library with a title, tags and a commercial license."
+        subtitle="Make music, sound effects, footage and voiceovers on Vueio's own models. Everything lands in your Library with a title, tags and a commercial license."
         actions={<Link href="/library"><Button><Library className="h-4 w-4" /> Open Library</Button></Link>}
       />
       <div className="mb-5 flex flex-wrap gap-2">
@@ -65,8 +65,8 @@ function AiStudio() {
       {info && !info.engine && tab !== "templates" && (
         <Card className="mb-5 p-4 text-sm text-white/70">
           {tab === "voice"
-            ? "English voiceovers work now. Other languages and My Voices need Curbvue's engine, which the admin connects in Admin → App settings → Integrations."
-            : "These tools run on Curbvue's own engine. The admin connects it in Admin → App settings → Integrations → Curbvue Video Engine."}
+            ? "English voiceovers work now. Other languages and My Voices need Vueio's engine, which the admin connects in Admin → App settings → Integrations."
+            : "These tools run on Vueio's own engine. The admin connects it in Admin → App settings → Integrations → Vueio Video Engine."}
         </Card>
       )}
       {tab === "voice" ? <VoiceForm /> : tab === "voices" ? <VoicesPanel /> : tab === "dub" ? <DubPanel /> : tab === "avatar" ? <AvatarPanel /> : tab === "templates" ? <TemplatePanel /> : <GenForm key={tab} kind={tab} info={info} />}
@@ -145,7 +145,7 @@ function GenForm({ kind, info }: { kind: "music" | "sfx" | "footage"; info: Info
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <Card>
-        <CardHeader title={`Make ${kind === "music" ? "music" : kind === "sfx" ? "a sound effect" : "footage"}`} subtitle={meta.text} icon={<meta.icon className="h-4 w-4" />} action={<Badge tone="mint">Curbvue engine</Badge>} />
+        <CardHeader title={`Make ${kind === "music" ? "music" : kind === "sfx" ? "a sound effect" : "footage"}`} subtitle={meta.text} icon={<meta.icon className="h-4 w-4" />} action={<Badge tone="mint">Vueio engine</Badge>} />
         <div className="grid grid-cols-1 gap-4 p-5">
           {kind === "footage" && preset?.needsSubject && (
             <Field label="Subject" hint="Goes into the preset">
@@ -281,7 +281,7 @@ function VoiceForm() {
   useEffect(() => {
     api<Voices>("/api/library/voiceover").then(setV).catch((e) => toast((e as Error).message, "error"));
   }, [toast]);
-  // English stock voices run free on Curbvue's server; any other language, or one of My Voices, uses the engine.
+  // English stock voices run free on Vueio's server; any other language, or one of My Voices, uses the engine.
   const free = language === "en" && !!v?.voices.some((x) => x.id === voice);
   useEffect(() => {
     if (language !== "en" && v?.voices.some((x) => x.id === voice)) setVoice("standard");

@@ -38,7 +38,7 @@ function Connect() {
 
   return (
     <div className="mx-auto grid max-w-2xl grid-cols-1 gap-6">
-      <PageHeader title="Connect your accounts" subtitle="Tap a network and sign in there. You come straight back here, and Curbvue can post for you. You can add more later on the Platforms tab." />
+      <PageHeader title="Connect your accounts" subtitle="Tap a network and sign in there. You come straight back here, and Vueio can post for you. You can add more later on the Platforms tab." />
       {error && (
         <p role="alert" className="flex items-start gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-200 ring-1 ring-red-400/25">
           <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}

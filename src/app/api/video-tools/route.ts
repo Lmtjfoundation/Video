@@ -10,7 +10,7 @@ import { editVideo, musicVideo, musicVideoCredits, smartShot, smartShotCredits, 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const ENGINE_OFF = "Video tools run on Curbvue's engine (a GPU). The admin connects it in Admin → App settings → Integrations → Curbvue Video Engine.";
+const ENGINE_OFF = "Video tools run on Vueio's engine (a GPU). The admin connects it in Admin → App settings → Integrations → Vueio Video Engine.";
 const ASPECTS = ["9:16", "16:9", "1:1"];
 const TASKS: VideoEditTask[] = ["restyle", "relight", "motion", "background", "inpaint"];
 const asked = <T>(p: Promise<T>) =>
@@ -29,7 +29,7 @@ export const POST = authed(async (req, user) => {
   }
   // A music video made of pictures only needs a picture maker (Azure's GPUs, Gemini…); everything else films on the engine.
   const picturesOnly = b.action === "music-video" && b.motion !== "clips";
-  if (picturesOnly ? !(await picturesReady()) : !(await ownEngineReady())) return fail(picturesOnly ? "Music videos need pictures switched on. The admin connects Azure AI or Curbvue's engine in Admin → App settings → Integrations." : ENGINE_OFF, 503);
+  if (picturesOnly ? !(await picturesReady()) : !(await ownEngineReady())) return fail(picturesOnly ? "Music videos need pictures switched on. The admin connects Azure AI or Vueio's engine in Admin → App settings → Integrations." : ENGINE_OFF, 503);
   const aspect = ASPECTS.includes(String(b.aspect)) ? String(b.aspect) : "9:16";
   let credits: number;
   let title: string;

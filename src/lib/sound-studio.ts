@@ -15,7 +15,7 @@ import { nowIso, uid } from "./utils";
 
 /**
  * The AI generators behind the Library: music (ACE-Step 1.5), sound effects (MOSS-SoundEffect v2) and footage
- * (Wan 2.2), all on Curbvue's own engine. Each result is filed in the person's library with a title, tags, a
+ * (Wan 2.2), all on Vueio's own engine. Each result is filed in the person's library with a title, tags, a
  * waveform and a browser-friendly preview, ready to search, save to boards and download with the license.
  */
 export const MUSIC_MODEL = "ACE-Step 1.5";

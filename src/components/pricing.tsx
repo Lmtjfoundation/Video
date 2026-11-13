@@ -85,7 +85,7 @@ export function PricingTable({
             </button>
           ))}
         </div>
-        {native && <p className="text-sm text-white/55">Plans can be changed on the Curbvue website.</p>}
+        {native && <p className="text-sm text-white/55">Plans can be changed on the Vueio website.</p>}
       </div>
       {error && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-200 ring-1 ring-red-400/25">{error}</p>}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -156,16 +156,16 @@ export function PricingTable({
         <Card>
           <CardHeader title="How the price compares" subtitle="Entry plans of popular tools (2026 list prices). Most cover only scheduling or only video." />
           <div className="grid grid-cols-1 gap-2.5 p-5">
-            {[...COMPETITORS, ["Curbvue Creator", 12] as [string, number], ["Curbvue Pro", 29] as [string, number]]
+            {[...COMPETITORS, ["Vueio Creator", 12] as [string, number], ["Vueio Pro", 29] as [string, number]]
               .sort((a, b) => a[1] - b[1])
               .map(([n, pr]) => (
                 <div key={n} className="grid grid-cols-[150px_1fr_44px] items-center gap-3 text-sm">
-                  <span className={n.startsWith("Curbvue") ? "font-medium text-white" : "text-white/55"}>{n}</span>
-                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]"><div className={cn("h-full rounded-full", n.startsWith("Curbvue") ? "bg-gradient-to-r from-mint-400 to-gold-400" : "bg-white/20")} style={{ width: `${(pr / 40) * 100}%` }} /></div>
+                  <span className={n.startsWith("Vueio") ? "font-medium text-white" : "text-white/55"}>{n}</span>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]"><div className={cn("h-full rounded-full", n.startsWith("Vueio") ? "bg-gradient-to-r from-mint-400 to-gold-400" : "bg-white/20")} style={{ width: `${(pr / 40) * 100}%` }} /></div>
                   <span className="text-right tabular-nums text-white/80">${pr}</span>
                 </div>
               ))}
-            <p className="mt-2 text-xs text-white/50">Curbvue combines niche research, story scripts, video and film making, scheduling for six platforms and reply automation in one plan.</p>
+            <p className="mt-2 text-xs text-white/50">Vueio combines niche research, story scripts, video and film making, scheduling for six platforms and reply automation in one plan.</p>
           </div>
         </Card>
       </div>

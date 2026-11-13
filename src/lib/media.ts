@@ -33,7 +33,7 @@ export const ALLOWED_TYPES: Record<string, { ext: string; kind: MediaItem["kind"
   "audio/webm": { ext: "webm", kind: "audio" },
   "audio/ogg": { ext: "ogg", kind: "audio" },
 };
-/** Largest file a person can upload or link (MAX_UPLOAD_MB, 2 GB by default). Videos Curbvue makes itself have no cap. */
+/** Largest file a person can upload or link (MAX_UPLOAD_MB, 2 GB by default). Videos Vueio makes itself have no cap. */
 export const MAX_FILE_BYTES = Math.max(1, Number(process.env.MAX_UPLOAD_MB) || 2048) * 1024 * 1024;
 export const MAX_FILE_LABEL = MAX_FILE_BYTES >= 1024 ** 3 ? `${+(MAX_FILE_BYTES / 1024 ** 3).toFixed(1)} GB` : `${Math.round(MAX_FILE_BYTES / 1024 ** 2)} MB`;
 
@@ -69,8 +69,8 @@ export async function storeFile(owner: string, file: { name: string; type: strin
 }
 
 /**
- * Keeps a file that's already on this server's disk (a long movie Curbvue just made) without reading it into
- * memory: sent to Azure in blocks, or moved into the uploads folder. Only Curbvue's own renders use this.
+ * Keeps a file that's already on this server's disk (a long movie Vueio just made) without reading it into
+ * memory: sent to Azure in blocks, or moved into the uploads folder. Only Vueio's own renders use this.
  */
 export async function storeFilePath(owner: string, file: { name: string; type: string; path: string }): Promise<MediaItem> {
   const t = ALLOWED_TYPES[file.type];

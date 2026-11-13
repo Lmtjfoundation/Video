@@ -293,6 +293,6 @@ export async function storyPackage(storyId: string): Promise<{ name: string; byt
   for (const [i, s] of v.scenes.entries()) await add(s.mediaId ?? s.painted?.mediaId, `scenes/${String(i + 1).padStart(2, "0")}`);
   await add(post.render?.status === "done" ? post.render.mediaId : undefined, "video");
   await add(rec.thumbnailId, "thumbnail");
-  if (session) text("README.txt", `Made with Curbvue's Story to Video.\nStory: ${session.title}\nLanguage: ${SPEECH_LANGUAGES[rec.language] ?? rec.language}\nScenes: ${v.scenes.length}\n${post.render?.status === "done" ? "" : "The video isn't rendered yet: render it in the Director to include it here.\n"}`);
+  if (session) text("README.txt", `Made with Vueio's Story to Video.\nStory: ${session.title}\nLanguage: ${SPEECH_LANGUAGES[rec.language] ?? rec.language}\nScenes: ${v.scenes.length}\n${post.render?.status === "done" ? "" : "The video isn't rendered yet: render it in the Director to include it here.\n"}`);
   return { name: `${slug}.zip`, bytes: zip(files) };
 }

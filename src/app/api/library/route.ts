@@ -78,7 +78,7 @@ export const POST = authed(async (req, user) => {
       return ok(await fillStatus());
     case "fill-catalog": {
       if (user.role !== "admin") return fail("Only the app's admins manage the catalog.", 403);
-      if (!(await ownEngineReady())) return fail("Filling the catalog needs Curbvue's engine connected.", 503);
+      if (!(await ownEngineReady())) return fail("Filling the catalog needs Vueio's engine connected.", 503);
       const kind = b.kind === "sfx" ? "sfx" : "music";
       const count = Math.max(1, Math.min(200, Math.round(Number(b.count) || 10)));
       const job = await startJob(user.id, { kind: "catalog", title: `Catalog: ${count} ${kind === "sfx" ? "sound effects" : "tracks"}` }, async () => {

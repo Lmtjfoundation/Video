@@ -1,6 +1,6 @@
 /**
- * The Voice Library (safe in the browser): Curbvue's ready-made voices, each with the uses it suits, and voice
- * design starting points. Free voices run on Curbvue's own server (Kokoro, English); designed voices are made
+ * The Voice Library (safe in the browser): Vueio's ready-made voices, each with the uses it suits, and voice
+ * design starting points. Free voices run on Vueio's own server (Kokoro, English); designed voices are made
  * once on the engine from their description and then speak in 23 languages.
  */
 export const VOICE_USES = ["Narration", "Audiobooks", "Ads", "Social", "Characters", "Conversational", "Kids", "Meditation", "News"] as const;
@@ -50,7 +50,7 @@ export const DESIGN_SAMPLE_TEXT =
   "Hello, and welcome. Today I'm going to tell you a story about a small town, a long summer, and a secret nobody was supposed to find. Are you ready? Then let's begin.";
 
 /**
- * How a line is voiced: a free voice on Curbvue's server (English, `speed` 0.7 to 1.3), or the engine in one of
+ * How a line is voiced: a free voice on Vueio's server (English, `speed` 0.7 to 1.3), or the engine in one of
  * its 23 languages, in its own voice or one of My Voices (cloned or designed).
  */
 export type VoiceChoice = { kind: "free"; id: string; speed?: number } | { kind: "engine"; language: string; voiceId?: string } | { kind: "azure"; name: string; speed?: number };

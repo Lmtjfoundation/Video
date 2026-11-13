@@ -22,7 +22,7 @@ export interface GenerationRequest {
 export async function startGeneration(user: User, b: GenerationRequest) {
   const prompt = String(b.prompt ?? "").trim().slice(0, 500);
   if (!prompt) throw new RequestError("Describe what to make.");
-  if (!(await ownEngineReady())) throw new RequestError("The AI generators need Curbvue's engine. The admin connects it in Admin → App settings → Integrations → Curbvue Video Engine.", 503);
+  if (!(await ownEngineReady())) throw new RequestError("The AI generators need Vueio's engine. The admin connects it in Admin → App settings → Integrations → Vueio Video Engine.", 503);
   const seconds = Number(b.seconds) || 0;
   let credits: number;
   let title: string;

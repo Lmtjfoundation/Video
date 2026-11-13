@@ -1,5 +1,5 @@
 /**
- * Curbvue LUTs: color grades as standard .cube files (33×33×33) that open in Premiere Pro, DaVinci Resolve,
+ * Vueio LUTs: color grades as standard .cube files (33×33×33) that open in Premiere Pro, DaVinci Resolve,
  * Final Cut Pro, CapCut and phone editors. Each grade is a small, readable color formula, so the same code builds
  * the downloadable file and the live preview in the browser. Written for Rec.709 footage (what phones and most
  * cameras record).
@@ -93,7 +93,7 @@ export function gradePixel(g: Grade, [r, gr, b]: Rgb): Rgb {
 
 /** The grade as an Adobe/Resolve .cube file (red changes fastest, as the format requires). */
 export function cubeFile(g: Grade, size = 33): string {
-  const lines = [`TITLE "Curbvue - ${g.name}"`, `# ${g.blurb}. Made by Curbvue for Rec.709 footage.`, `LUT_3D_SIZE ${size}`, "DOMAIN_MIN 0.0 0.0 0.0", "DOMAIN_MAX 1.0 1.0 1.0"];
+  const lines = [`TITLE "Vueio - ${g.name}"`, `# ${g.blurb}. Made by Vueio for Rec.709 footage.`, `LUT_3D_SIZE ${size}`, "DOMAIN_MIN 0.0 0.0 0.0", "DOMAIN_MAX 1.0 1.0 1.0"];
   for (let bi = 0; bi < size; bi++)
     for (let gi = 0; gi < size; gi++)
       for (let ri = 0; ri < size; ri++) {

@@ -1,11 +1,11 @@
 import "server-only";
 
 /**
- * Wake on use: when the engine's machine is switched off (it shuts down at night to save money), Curbvue starts it
+ * Wake on use: when the engine's machine is switched off (it shuts down at night to save money), Vueio starts it
  * through the Azure API and waits for the engine to answer. It uses a service principal that may only read and start
  * that one VM. Settings: one line in Admin → Integrations (or VM_WAKE), e.g.
  *   tenant=…;client=…;secret=…;subscription=…;group=GHOSTPOST;vm=Ghost
- * When Curbvue itself runs on an Azure VM, its managed identity can do it instead, with no secret to store:
+ * When Vueio itself runs on an Azure VM, its managed identity can do it instead, with no secret to store:
  *   identity=1;subscription=…;group=GHOSTPOST;vm=Ghost
  * (give the app VM's identity "Virtual Machine Contributor" on the engine VM).
  */

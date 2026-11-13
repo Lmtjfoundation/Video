@@ -5,11 +5,11 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { cubeFile, GRADES, gradePixel, type Grade } from "@/lib/luts";
 
-describe("Curbvue LUTs", () => {
+describe("Vueio LUTs", () => {
   it("writes standard 33-point .cube files", () => {
     const text = cubeFile(GRADES[0]);
     const lines = text.trim().split("\n");
-    expect(lines[0]).toBe('TITLE "Curbvue - Teal & Orange"');
+    expect(lines[0]).toBe('TITLE "Vueio - Teal & Orange"');
     expect(lines).toContain("LUT_3D_SIZE 33");
     const rows = lines.filter((l) => /^[\d.]+ [\d.]+ [\d.]+$/.test(l));
     expect(rows).toHaveLength(33 ** 3);
