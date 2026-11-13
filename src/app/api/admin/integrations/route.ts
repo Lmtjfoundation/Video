@@ -31,6 +31,8 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
   azureInsightsConnection: { re: /^InstrumentationKey=[0-9a-fA-F-]{36};.*IngestionEndpoint=https:\/\/[^;]+/, msg: "Paste Application Insights → Overview → Connection string (starts with InstrumentationKey=)." },
   azureStorageContainer: { re: /^[a-z0-9](?!.*--)[a-z0-9-]{1,61}[a-z0-9]$/, msg: "A bucket (container) name is 3-63 lowercase letters, numbers and dashes, e.g. media." },
   azureAiChatDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The writing model's deployment name, e.g. gpt-5.4-mini." },
+  azureAiPremiumDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The premium writing model's deployment name, e.g. kimi-k3.1-pro (or off)." },
+  azureAiTranscribeDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The Whisper deployment name, e.g. whisper (or off)." },
   azureAiImageDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The deployment name is what you called the FLUX Kontext deployment, e.g. flux-kontext." },
   videoEngineUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the engine's web address, e.g. https://ghostpost-1a2b3c.eastus.cloudapp.azure.com (Azure) or https://abc123-8000.proxy.runpod.net (RunPod)." },
   videoEngineToken: { re: /^[A-Za-z0-9_.~-]{12,}$/, msg: "Paste the ENGINE_TOKEN you started the engine with (12+ letters, numbers, - or _)." },

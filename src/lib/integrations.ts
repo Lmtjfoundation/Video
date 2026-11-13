@@ -49,6 +49,13 @@ export interface Integrations {
   /** The Azure OpenAI chat deployment that writes in Azure-only mode (e.g. gpt-5.4-mini). */
   azureAiChatDeployment?: string;
   /**
+   * Azure-only mode: the stronger model for premium and long writing (stories on Pro/Unlimited, full scripts), e.g. a
+   * Kimi-K3.1-Pro deployment. Empty: everything uses the chat deployment.
+   */
+  azureAiPremiumDeployment?: string;
+  /** Azure OpenAI Whisper deployment for speech to text (words with timings). "off" keeps the free on-server Whisper. */
+  azureAiTranscribeDeployment?: string;
+  /**
    * Keyless Azure (managed identity). The API Management gateway every model call goes through, the storage account
    * name (blobs and the render queues, reached with the server's identity), the Cosmos DB endpoint (presets, prompt
    * templates, projects, render records) and the Application Insights connection string (render telemetry). None of
@@ -260,7 +267,7 @@ export async function integrationStatus() {
     },
     elevenlabs: { ...entry("ELEVENLABS_API_KEY", i.elevenlabsKey), voiceId: i.elevenlabsVoiceId || process.env.ELEVENLABS_VOICE_ID || "" },
     replicate: entry("REPLICATE_API_TOKEN", i.replicateKey),
-    azureAi: { ...entry("AZURE_AI_KEY", i.azureAiKey), url: i.azureAiEndpoint || process.env.AZURE_AI_ENDPOINT || "", deployment: i.azureAiImageDeployment || process.env.AZURE_AI_IMAGE_DEPLOYMENT || "flux-kontext", region: i.azureAiRegion || process.env.AZURE_AI_REGION || "eastus2", chat: i.azureAiChatDeployment || process.env.AZURE_AI_CHAT_DEPLOYMENT || "gpt-5.4-mini" },
+    azureAi: { ...entry("AZURE_AI_KEY", i.azureAiKey), url: i.azureAiEndpoint || process.env.AZURE_AI_ENDPOINT || "", deployment: i.azureAiImageDeployment || process.env.AZURE_AI_IMAGE_DEPLOYMENT || "flux-kontext", region: i.azureAiRegion || process.env.AZURE_AI_REGION || "eastus2", chat: i.azureAiChatDeployment || process.env.AZURE_AI_CHAT_DEPLOYMENT || "gpt-5.4-mini", premium: i.azureAiPremiumDeployment || process.env.AZURE_AI_PREMIUM_DEPLOYMENT || "", transcribe: i.azureAiTranscribeDeployment || process.env.AZURE_AI_TRANSCRIBE_DEPLOYMENT || "" },
     azureOnly: await azureOnly(i),
     azureStorage: { ...entry("AZURE_STORAGE_CONNECTION_STRING", i.azureStorageConnection), container: i.azureStorageContainer || process.env.AZURE_STORAGE_CONTAINER || "media", account: (i.azureStorageConnection || process.env.AZURE_STORAGE_CONNECTION_STRING || "").match(/AccountName=([^;]+)/)?.[1] || i.azureStorageAccount || process.env.AZURE_STORAGE_ACCOUNT || "" },
     azureIdentity: {

@@ -315,7 +315,7 @@ export async function claude(opts: CallOpts): Promise<string> {
     const canRead = !opts.images?.length || !!writer.sees;
     if (canRead && (!opts.webSearch?.domains.length || writer.only)) {
       try {
-        return await writeWithOwnWriter(writer, { system: opts.system, user: opts.user, maxTokens: opts.maxTokens ?? 2500, temperature: opts.temperature ?? 0.85, json: opts.json, images: writer.sees ? opts.images : undefined });
+        return await writeWithOwnWriter(writer, { system: opts.system, user: opts.user, maxTokens: opts.maxTokens ?? 2500, temperature: opts.temperature ?? 0.85, json: opts.json, images: writer.sees ? opts.images : undefined, premium: !!opts.model });
       } catch (e) {
         console.warn(`[llm] own writer: ${(e as Error).message.slice(0, 200)}`);
         if (writer.only) throw new LLMError("AI writing failed this time. Please try again in a minute.", (e as Error).message, "busy");

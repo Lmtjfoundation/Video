@@ -20,6 +20,16 @@ export interface OwnWriter {
   only: boolean;
   /** Reads pictures too (Azure OpenAI's GPT models do; small open models don't). */
   sees?: boolean;
+  /** Azure only: the stronger deployment for premium and long writing (text only). */
+  premium?: string;
+}
+
+/** Long writing (full scripts, long stories) goes to the premium model when there is one. */
+export const PREMIUM_MIN_TOKENS = 6000;
+/** Which model writes this request: the premium one for premium or long text-only requests, else the usual one. */
+export function writerModel(w: OwnWriter, o: { premium?: boolean; maxTokens?: number; images?: unknown[] }): string {
+  if (w.premium && !o.images?.length && (o.premium || (o.maxTokens ?? 0) >= PREMIUM_MIN_TOKENS)) return w.premium;
+  return w.model;
 }
 
 const MODES: OwnWriterMode[] = ["first", "backup", "only"];
@@ -40,13 +50,14 @@ export async function ownWriterMode(i?: Awaited<ReturnType<typeof getIntegration
 export async function ownWriter(): Promise<OwnWriter | null> {
   // Azure only: Azure OpenAI (the chat deployment on the owner's Azure AI resource) writes everything.
   if (await azureOnly()) {
-    const [auth, dep] = await Promise.all([foundryAuth(), pick("azureAiChatDeployment", "AZURE_AI_CHAT_DEPLOYMENT")]);
+    const [auth, dep, prem] = await Promise.all([foundryAuth(), pick("azureAiChatDeployment", "AZURE_AI_CHAT_DEPLOYMENT"), pick("azureAiPremiumDeployment", "AZURE_AI_PREMIUM_DEPLOYMENT")]);
+    const premium = prem && prem !== "off" ? prem : undefined;
     // Through API Management with the managed identity: the identity's token is the bearer (fresh for each writer).
-    if (auth?.via === "apim") return { url: `${auth.base}/openai/v1`, key: auth.headers.Authorization.replace(/^Bearer /, ""), model: dep || "gpt-5.4-mini", mode: "only", only: true, sees: true };
+    if (auth?.via === "apim") return { url: `${auth.base}/openai/v1`, key: auth.headers.Authorization.replace(/^Bearer /, ""), model: dep || "gpt-5.4-mini", mode: "only", only: true, sees: true, premium };
     const [endpoint, key] = await Promise.all([pick("azureAiEndpoint", "AZURE_AI_ENDPOINT"), pick("azureAiKey", "AZURE_AI_KEY")]);
     if (endpoint && key) {
       const u = new URL(endpoint.trim());
-      return { url: `${u.protocol}//${u.host}/openai/v1`, key, model: dep || "gpt-5.4-mini", mode: "only", only: true, sees: true };
+      return { url: `${u.protocol}//${u.host}/openai/v1`, key, model: dep || "gpt-5.4-mini", mode: "only", only: true, sees: true, premium };
     }
   }
   const [url, key, model, i] = await Promise.all([pick("ownWriterUrl", "OWN_WRITER_URL"), pick("ownWriterKey", "OWN_WRITER_KEY"), pick("ownWriterModel", "OWN_WRITER_MODEL"), getIntegrations()]);
@@ -61,16 +72,17 @@ export class OwnWriterError extends Error {}
 /** GPT-5 and o-series models think before answering: they take max_completion_tokens (thinking included) and no temperature. */
 export const reasoningModel = (model: string) => /^(gpt-5|o\d)/i.test(model);
 
-export async function writeWithOwnWriter(w: OwnWriter, o: { system: string; user: string; maxTokens: number; temperature: number; json?: boolean; images?: { mediaType: string; base64: string }[] }, timeoutMs = 10 * 60_000): Promise<string> {
+export async function writeWithOwnWriter(w: OwnWriter, o: { system: string; user: string; maxTokens: number; temperature: number; json?: boolean; images?: { mediaType: string; base64: string }[]; premium?: boolean }, timeoutMs = 10 * 60_000): Promise<string> {
   let res: Response;
-  const thinks = reasoningModel(w.model);
+  const model = writerModel(w, o);
+  const thinks = reasoningModel(model);
   const content = o.images?.length ? [...o.images.map((i) => ({ type: "image_url", image_url: { url: `data:${i.mediaType};base64,${i.base64}` } })), { type: "text", text: o.user }] : o.user;
   try {
     res = await fetch(`${w.url}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(w.key ? { Authorization: `Bearer ${w.key}` } : {}) },
       body: JSON.stringify({
-        model: w.model,
+        model,
         messages: [
           { role: "system", content: o.system },
           { role: "user", content },

@@ -78,7 +78,7 @@ interface IntegrationStatus {
   gemini: KeyState & { model: string; forTrials: boolean; backup: boolean };
   elevenlabs: KeyState & { voiceId: string };
   replicate: KeyState;
-  azureAi?: KeyState & { url: string; deployment: string; region?: string; chat?: string };
+  azureAi?: KeyState & { url: string; deployment: string; region?: string; chat?: string; premium?: string; transcribe?: string };
   azureOnly?: boolean;
   azureStorage?: KeyState & { container: string; account: string };
   azureIdentity?: { apim: string; storageAccount: string; cosmos: string; insights: boolean };
@@ -820,6 +820,8 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           <Input autoComplete="off" spellCheck={false} placeholder={`Deployment name (${st.azureAi?.deployment || "flux-kontext"})`} value={vals.azureAiImageDeployment ?? ""} onChange={set("azureAiImageDeployment")} />
           <Input autoComplete="off" spellCheck={false} placeholder={`Region, for voices and the talking presenter (${st.azureAi?.region || "eastus2"})`} value={vals.azureAiRegion ?? ""} onChange={set("azureAiRegion")} />
           <Input autoComplete="off" spellCheck={false} placeholder={`Writing model deployment, for Azure only (${st.azureAi?.chat || "gpt-5.4-mini"})`} value={vals.azureAiChatDeployment ?? ""} onChange={set("azureAiChatDeployment")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={`Premium writing deployment, for long scripts and premium stories (${st.azureAi?.premium || "none"})`} value={vals.azureAiPremiumDeployment ?? ""} onChange={set("azureAiPremiumDeployment")} />
+          <Input autoComplete="off" spellCheck={false} placeholder={`Whisper deployment, for speech to text (${st.azureAi?.transcribe || "whisper in Azure only"})`} value={vals.azureAiTranscribeDeployment ?? ""} onChange={set("azureAiTranscribeDeployment")} />
           <label className="flex items-start gap-3 rounded-xl border border-mint-400/20 bg-mint-400/[0.05] p-3 text-sm text-white/80">
             <Switch
               checked={!!st.azureOnly}
@@ -833,7 +835,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
             </span>
           </label>
           <Actions>
-            <Button size="sm" variant="primary" loading={busy === "save:Azure AI"} onClick={() => save(["azureAiEndpoint", "azureAiKey", "azureAiImageDeployment", "azureAiRegion", "azureAiChatDeployment"], "Azure AI", "azureAi")}>Save &amp; test</Button>
+            <Button size="sm" variant="primary" loading={busy === "save:Azure AI"} onClick={() => save(["azureAiEndpoint", "azureAiKey", "azureAiImageDeployment", "azureAiRegion", "azureAiChatDeployment", "azureAiPremiumDeployment", "azureAiTranscribeDeployment"], "Azure AI", "azureAi")}>Save &amp; test</Button>
             <Button size="sm" loading={busy === "test:azureAi"} disabled={!st.azureAi?.set} onClick={() => check("azureAi")}>Test</Button>
             {st.azureAi?.set && st.azureAi.source === "app" && (
               <Button size="sm" variant="ghost" loading={busy === "rm:azureAiKey"} onClick={() => remove("azureAiKey", "Azure AI")}><Trash2 className="h-3.5 w-3.5" /></Button>

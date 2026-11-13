@@ -19,10 +19,53 @@ async function load(): Promise<Asr> {
   return (await pipeline("automatic-speech-recognition", process.env.WHISPER_MODEL || "onnx-community/whisper-base", { dtype: "q8", device: "cpu" })) as unknown as Asr;
 }
 
-/** The words in an audio (or video) file, as timed lines. */
+/** Azure OpenAI's Whisper takes files up to 25 MB; the audio is sent as small mono MP3, so that's about 100 minutes. */
+const AZURE_MAX_BYTES = 24 * 1024 * 1024;
+
+/** The Whisper deployment on the owner's Azure AI resource, or null when Azure isn't set up or it's switched off. */
+export async function azureTranscriber(): Promise<{ url: string; headers: Record<string, string> } | null> {
+  const { pick, azureOnly } = await import("./integrations");
+  const set = await pick("azureAiTranscribeDeployment", "AZURE_AI_TRANSCRIBE_DEPLOYMENT");
+  if (set === "off" || (!set && !(await azureOnly()))) return null;
+  const { foundryAuth } = await import("./azure-identity");
+  const auth = await foundryAuth();
+  if (!auth) return null;
+  return { url: `${auth.base}/openai/deployments/${encodeURIComponent(set || "whisper")}/audio/transcriptions?api-version=2024-06-01`, headers: auth.headers };
+}
+
+/** Timed lines from Azure's Whisper (verbose JSON segments). Null when the file is too big for one request. */
+export async function transcribeOnAzure(file: string, az: { url: string; headers: Record<string, string> }, dir: string): Promise<TimedLine[] | null> {
+  const mp3 = path.join(dir, "audio.mp3");
+  await runCmd("ffmpeg", ["-hide_banner", "-y", "-i", file, "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k", mp3], 5 * 60_000);
+  const bytes = await fs.readFile(mp3);
+  if (bytes.length > AZURE_MAX_BYTES) return null;
+  const form = new FormData();
+  form.append("file", new Blob([new Uint8Array(bytes)], { type: "audio/mpeg" }), "audio.mp3");
+  form.append("response_format", "verbose_json");
+  form.append("timestamp_granularities[]", "segment");
+  const res = await fetch(az.url, { method: "POST", headers: az.headers, body: form, signal: AbortSignal.timeout(10 * 60_000) });
+  if (!res.ok) throw new Error(`Azure Whisper answered ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
+  const j = (await res.json()) as { text?: string; segments?: { start: number; end: number; text: string }[] };
+  if (j.segments?.length) return j.segments.map((s) => ({ start: s.start, end: s.end, text: s.text }));
+  return j.text?.trim() ? [{ start: 0, end: null, text: j.text }] : [];
+}
+
+/**
+ * The words in an audio (or video) file, as timed lines. Azure OpenAI's Whisper (large, far more accurate) when the
+ * owner's Azure AI resource is set up for it; the free on-server Whisper otherwise, or if Azure can't answer.
+ */
 export async function transcribe(file: string): Promise<TimedLine[]> {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "ghost-post-asr-"));
   try {
+    const az = await azureTranscriber().catch(() => null);
+    if (az) {
+      try {
+        const lines = await transcribeOnAzure(file, az, dir);
+        if (lines) return lines;
+      } catch (e) {
+        console.warn(`[transcribe] Azure Whisper: ${(e as Error).message.slice(0, 200)}; using the on-server Whisper.`);
+      }
+    }
     // Whisper takes 16 kHz mono floats.
     const raw = path.join(dir, "audio.f32");
     await runCmd("ffmpeg", ["-hide_banner", "-y", "-i", file, "-vn", "-ac", "1", "-ar", "16000", "-f", "f32le", raw], 5 * 60_000);
