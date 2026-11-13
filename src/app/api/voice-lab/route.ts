@@ -19,7 +19,7 @@ import { addDesignedVoice } from "@/lib/voices";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const ENGINE_OFF = "This needs Ghost Post's engine (a GPU). The admin connects it in Admin → App settings → Integrations → Ghost Post Video Engine. Free voices and Speech to Text work without it.";
+const ENGINE_OFF = "This needs Kinetrove's engine (a GPU). The admin connects it in Admin → App settings → Integrations → Kinetrove Video Engine. Free voices and Speech to Text work without it.";
 
 /** A bad choice in the request (unknown voice, missing file) is the caller's to fix: a 400, not a 500. */
 const asked = <T>(p: Promise<T>) => p.catch((e: Error) => {
@@ -161,14 +161,14 @@ export const POST = authed(async (req, user) => {
       const o: VoiceToVideoOptions = { videoId: String(b.videoId ?? ""), voice, mix: b.mix === "duck" ? "duck" : b.mix === "swap" ? "swap" : "replace", captions: b.captions === true, lipsync: b.lipsync === true, offset, cleanup: b.cleanup === true };
       if (!o.videoId) return fail("Choose the video.");
       if (o.lipsync) needsEngine();
-      if (o.mix === "swap" && !(await ownEngineReady("isolate"))) return fail("Taking the old voice out needs Ghost Post's tools engine, which isn't connected. Choose Replace all sound, or the admin connects it in Admin → App settings → Integrations.", 503);
+      if (o.mix === "swap" && !(await ownEngineReady("isolate"))) return fail("Taking the old voice out needs Kinetrove's tools engine, which isn't connected. Choose Replace all sound, or the admin connects it in Admin → App settings → Integrations.", 503);
       credits = voiceToVideoCredits(o, secs, o.mix === "swap" ? await asked(mediaSeconds(o.videoId)) : 0);
       title = "Voice to video";
       run = async () => (await voiceToVideo(user.id, o)).name;
       break;
     }
     case "presenter": {
-      // A lifelike presenter who says the script, filmed on Azure's GPUs (no Ghost Post engine needed).
+      // A lifelike presenter who says the script, filmed on Azure's GPUs (no Kinetrove engine needed).
       const { AVATARS, AVATAR_BACKGROUNDS, azurePresenter, azureSpeechReady, isAzureVoice } = await import("@/lib/azure-speech");
       if (!(await azureSpeechReady())) return fail("The talking presenter runs on Azure AI, which isn't connected yet. The admin adds it in Admin → App settings → Integrations → Azure AI.", 503);
       const script = String(b.script ?? "").trim();

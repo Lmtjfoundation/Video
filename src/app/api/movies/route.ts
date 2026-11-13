@@ -37,7 +37,7 @@ export const POST = authed(async (req, user) => {
   const characters = await getCharacters(Array.isArray(b.characterIds) ? b.characterIds.slice(0, 6) : []);
   const look = String(b.look ?? "").trim().slice(0, 160) || characters[0]?.look || CHARACTER_LOOKS[0];
   // Graphics styles are drawn by the free motion-graphics engine; everything else needs Gemini for the pictures.
-  if (!isGraphicsLook(look) && !(await picturesReady())) return fail("AI movies need Ghost Post's engine (or the app's Gemini key) for pictures. Ask the admin to connect one in Admin → App settings → Integrations, or pick a Graphics style (free).", 503);
+  if (!isGraphicsLook(look) && !(await picturesReady())) return fail("AI movies need Kinetrove's engine (or the app's Gemini key) for pictures. Ask the admin to connect one in Admin → App settings → Integrations, or pick a Graphics style (free).", 503);
   // In the background the person can leave the page; the jobs tray says when the video is ready.
   if (b.background) {
     const job = await startJob(user.id, { kind: "movie", title: brief.slice(0, 80) }, async () => {

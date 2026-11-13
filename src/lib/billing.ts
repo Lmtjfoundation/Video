@@ -106,7 +106,7 @@ export async function createPackCheckout(user: User, packId: string, origin: str
         price_data: {
           currency: "usd",
           unit_amount: pack.price * 100,
-          product_data: { name: `Ghost Post ${pack.credits.toLocaleString("en-US")} AI credits` },
+          product_data: { name: `Kinetrove ${pack.credits.toLocaleString("en-US")} AI credits` },
         },
       },
     },
@@ -168,7 +168,7 @@ interface SProduct {
   statement_descriptor?: string | null;
 }
 /** What subscribers see on their card statement for these plans (max 22 characters, letters required). */
-const STATEMENT_DESCRIPTOR = "GHOST POST";
+const STATEMENT_DESCRIPTOR = "KINETROVE";
 interface SPrice {
   id: string;
   unit_amount: number | null;
@@ -227,7 +227,7 @@ export async function stripePricesStale(): Promise<boolean> {
  * Creates (or reuses) everything subscriptions need in the owner's Stripe account:
  * one product per paid plan, a monthly and a yearly USD price each, a webhook pointed at this app (its signing
  * secret is captured on creation) and a customer-portal configuration that allows plan changes, card updates,
- * invoices and cancel-at-period-end. Safe to run again: existing Ghost Post products/prices are reused.
+ * invoices and cancel-at-period-end. Safe to run again: existing Kinetrove products/prices are reused.
  */
 export async function setupStripeBilling(secretKey: string, appUrl: string, opts: { keepWebhook?: boolean } = {}) {
   const sk = secretKey.trim();
@@ -248,7 +248,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
     let prod = products.data.find((x) => (x.metadata?.ghost_post_plan ?? x.metadata?.nexus_plan) === p.id);
     if (!prod) {
       prod = await call<SProduct>("/products", {
-        name: `Ghost Post ${p.name}`,
+        name: `Kinetrove ${p.name}`,
         description: p.blurb,
         statement_descriptor: STATEMENT_DESCRIPTOR,
         metadata: { ghost_post_plan: p.id, app: "ghost-post" },
@@ -315,7 +315,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
     hook = await call<SHook>("/webhook_endpoints", {
       url,
       enabled_events: ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"],
-      description: "Ghost Post subscriptions",
+      description: "Kinetrove subscriptions",
       metadata: { app: "ghost-post" },
     });
     if (!hook.secret) throw new Error("Stripe didn't return the webhook signing secret. Try again.");
@@ -324,7 +324,7 @@ export async function setupStripeBilling(secretKey: string, appUrl: string, opts
   // Customer portal: plan switching between the three paid plans (monthly/yearly), cards, invoices, cancel.
   const portalParams = {
     business_profile: {
-      headline: "Manage your Ghost Post subscription",
+      headline: "Manage your Kinetrove subscription",
       privacy_policy_url: `${base}/privacy`,
       terms_of_service_url: `${base}/terms`,
     },

@@ -7,7 +7,7 @@ import { runCmd } from "./render";
 import type { VideoScene } from "./types";
 
 /**
- * Motion for every picture scene, so videos don't look like slideshows: Ghost Post's motion engine
+ * Motion for every picture scene, so videos don't look like slideshows: Kinetrove's motion engine
  * (scripts/movie-motion/engine.py) turns each still into 2–3 shots — a depth-camera move, a punch-in on the subject, a
  * third move — with effects from the scene's words, a colour grade, film grain and a whip, flash or light-leak into
  * each new scene. Captions and on-screen text are added afterwards by the normal scene renderer.

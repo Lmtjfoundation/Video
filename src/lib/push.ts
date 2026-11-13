@@ -49,7 +49,7 @@ export async function removeSub(endpoint: string) {
 export function jobMessage(j: { title: string; status: "done" | "failed"; message: string; href?: string }) {
   const done = j.status === "done";
   return {
-    title: done ? "Ready in Ghost Post" : "Didn't finish",
+    title: done ? "Ready in Kinetrove" : "Didn't finish",
     body: (done ? j.message && j.message !== "Ready" ? j.message : `Ready: ${j.title}` : `${j.title}: ${j.message}`).slice(0, 180),
     url: j.href && j.href.startsWith("/") ? j.href : "/",
   };
@@ -92,7 +92,7 @@ export async function notifyFinished(userId: string, j: { kind: string; title: s
       to: user.email,
       subject: msg.body.slice(0, 120),
       text: `${msg.body}\n\nOpen it: ${link}\n\nTurn these emails off in Settings.`,
-      html: `<p>${safe(msg.body)}</p><p><a href="${safe(link)}">Open it in Ghost Post</a></p><p style="color:#888;font-size:12px">Turn these emails off in Settings.</p>`,
+      html: `<p>${safe(msg.body)}</p><p><a href="${safe(link)}">Open it in Kinetrove</a></p><p style="color:#888;font-size:12px">Turn these emails off in Settings.</p>`,
     });
   } catch (e) {
     console.warn(`[notify] email failed: ${(e as Error).message.slice(0, 160)}`);

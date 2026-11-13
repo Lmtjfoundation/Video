@@ -18,7 +18,7 @@ export function AdPlayer({ src, webm, poster }: { src: string; webm?: string; po
   };
   return (
     <div className="relative overflow-hidden rounded-[2rem] border-4 border-white/10 bg-black shadow-glow">
-      <video ref={video} poster={poster} autoPlay muted loop playsInline preload="metadata" className="aspect-[9/16] w-full object-cover" aria-label="Ghost Post ad, made with Ghost Post">
+      <video ref={video} poster={poster} autoPlay muted loop playsInline preload="metadata" className="aspect-[9/16] w-full object-cover" aria-label="Kinetrove ad, made with Kinetrove">
         {/* WebM first for browsers without H.264 (some Linux builds); everyone else plays the MP4. */}
         {webm && <source src={webm} type="video/webm" />}
         <source src={src} type="video/mp4" />

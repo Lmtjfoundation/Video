@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 /** Installable app (Android, iOS "Add to Home Screen", desktop). */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Ghost Post Autopilot",
-    short_name: "Ghost Post",
+    name: "Kinetrove Autopilot",
+    short_name: "Kinetrove",
     description: "Niche research, faceless story scripts and autopilot posting for six platforms.",
     start_url: "/",
     scope: "/",

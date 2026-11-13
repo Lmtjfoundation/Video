@@ -168,7 +168,7 @@ export default function VideoLab() {
                     <Film className="h-4 w-4" /> Write &amp; film it{longCost ? ` · about ${longCost.toLocaleString()} credits` : ""}
                   </Button>
                   <p className="text-xs text-white/55">
-                    Long videos are written as an outline, then chapter by chapter (about {Math.round(seconds / 300)} chapters of 5 minutes, a new picture every ~12 seconds), then filmed chapter by chapter and joined into one video. Filming takes {filmTime(seconds)} on Ghost Post&apos;s server, and it carries on by itself if the server restarts. You&apos;ll get a notification when it&apos;s ready.
+                    Long videos are written as an outline, then chapter by chapter (about {Math.round(seconds / 300)} chapters of 5 minutes, a new picture every ~12 seconds), then filmed chapter by chapter and joined into one video. Filming takes {filmTime(seconds)} on Kinetrove&apos;s server, and it carries on by itself if the server restarts. You&apos;ll get a notification when it&apos;s ready.
                   </p>
                 </>
               ) : (

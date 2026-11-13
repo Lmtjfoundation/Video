@@ -4,7 +4,7 @@ import { azureCredential } from "./azure-identity";
 import { pick } from "./integrations";
 
 /**
- * Azure Blob Storage buckets for Ghost Post's media: every new upload and every video Ghost Post makes is kept here
+ * Azure Blob Storage buckets for Kinetrove's media: every new upload and every video Kinetrove makes is kept here
  * when the owner connects a storage account (Admin → Integrations → Azure storage, or AZURE_STORAGE_CONNECTION_STRING).
  * Files are private; people get them through short-lived signed links straight from Azure, which stream and seek
  * without the app holding a multi-gigabyte movie in memory.

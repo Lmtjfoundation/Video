@@ -5,7 +5,7 @@ import { fluxImage, replicateReady } from "./replicate-video";
 import { foundryImage, foundryReady } from "./azure-foundry";
 
 /**
- * Every AI picture in the app goes through here. Ghost Post's own engine (Qwen-Image on the owner's GPU) makes it
+ * Every AI picture in the app goes through here. Kinetrove's own engine (Qwen-Image on the owner's GPU) makes it
  * when that GPU is already running, or when there's no Gemini key. Otherwise Gemini makes it: about 5¢ a picture,
  * where starting a GPU billed by the hour for one picture costs far more than the picture earns. When Gemini can't
  * (no key, or a key or billing problem the owner has to fix), FLUX.2 on Replicate makes it instead, so videos get real
@@ -20,7 +20,7 @@ export async function makeImage(o: { prompt: string; refs?: RefImage[]; aspect: 
       return { bytes, mimeType: "image/png" };
     } catch (e) {
       if (!backup || (e instanceof MediaGenError && e.kind === "blocked")) throw e;
-      console.warn(`[pictures] Ghost Post's engine couldn't make this picture (${(e as Error).message.slice(0, 160)}); using the backup.`);
+      console.warn(`[pictures] Kinetrove's engine couldn't make this picture (${(e as Error).message.slice(0, 160)}); using the backup.`);
     }
   }
   // Azure's GPUs (FLUX Kontext on Azure AI Foundry): billed per picture to the owner's Azure credits, and keeps a
@@ -41,10 +41,10 @@ export async function makeImage(o: { prompt: string; refs?: RefImage[]; aspect: 
     return await geminiImage(o);
   } catch (e) {
     if (!(e instanceof MediaGenError && e.kind === "config")) throw e;
-    // Gemini can't (no billing, a key problem): Ghost Post's own engine, waking it if it sleeps, then Flux.
+    // Gemini can't (no billing, a key problem): Kinetrove's own engine, waking it if it sleeps, then Flux.
     if (await ownEngineReady(cap)) {
       try {
-        console.warn(`[pictures] Gemini can't make pictures (${e.message.slice(0, 160)}); using Ghost Post's engine.`);
+        console.warn(`[pictures] Gemini can't make pictures (${e.message.slice(0, 160)}); using Kinetrove's engine.`);
         const bytes = await ownImage({ prompt: o.prompt, refs: (o.refs ?? []).slice(0, 3).map((r) => ({ bytes: Buffer.from(r.base64, "base64"), mime: r.mimeType })), aspect: o.aspect });
         return { bytes, mimeType: "image/png" };
       } catch (own) {

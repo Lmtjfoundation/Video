@@ -41,7 +41,7 @@ const CRED_FIELDS: Record<Platform, { key: "accessToken" | "refreshToken" | "acc
   tiktok: [{ key: "accessToken", label: "Access token (optional — publishing is copy-ready)", secret: true }],
   webhook: [
     { key: "accessToken", label: "Webhook URL", secret: true, placeholder: "https://hooks.zapier.com/… or your Make / n8n / Slack / Discord URL" },
-    { key: "refreshToken", label: "Signing secret (optional)", secret: true, placeholder: "lets your receiver verify posts came from Ghost Post" },
+    { key: "refreshToken", label: "Signing secret (optional)", secret: true, placeholder: "lets your receiver verify posts came from Kinetrove" },
   ],
 };
 
@@ -436,7 +436,7 @@ function AccountTypeNote({ platform }: { platform: string }) {
   if (platform === "facebook")
     return (
       <div className="rounded-xl bg-blue-500/[0.06] p-3 text-[13px] leading-relaxed text-blue-50/85 ring-1 ring-blue-400/20">
-        <b className="text-white">Pages and profiles both work.</b> A <b className="text-white">Page</b> posts automatically. A <b className="text-white">profile</b> — including a monetized profile in professional mode — can't be posted to by any app (Facebook's rule), so Ghost Post gets each post ready at its time, HD video and caption included, and you post it from your phone with one tap.
+        <b className="text-white">Pages and profiles both work.</b> A <b className="text-white">Page</b> posts automatically. A <b className="text-white">profile</b> — including a monetized profile in professional mode — can't be posted to by any app (Facebook's rule), so Kinetrove gets each post ready at its time, HD video and caption included, and you post it from your phone with one tap.
       </div>
     );
   if (platform === "instagram")
@@ -623,7 +623,7 @@ function FacebookTargets({ st, handoffEmail, igConnected, onChanged }: { st: Cre
             <Switch checked={viaIg} onChange={setAutopilot} label="Post to my Facebook profile automatically through Instagram" />
           </div>
           <p className="text-[12.5px] leading-relaxed text-white/60">
-            Facebook doesn't let any app post to a profile, but Instagram can share to it. Ghost Post posts each video or picture to your Instagram, and Instagram puts it on your Facebook profile — no taps.
+            Facebook doesn't let any app post to a profile, but Instagram can share to it. Kinetrove posts each video or picture to your Instagram, and Instagram puts it on your Facebook profile — no taps.
             Text-only posts still come to you for one tap.
           </p>
           <ol className="list-decimal space-y-1 pl-5 text-[12.5px] leading-relaxed text-white/60">

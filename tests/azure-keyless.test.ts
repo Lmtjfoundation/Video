@@ -68,3 +68,14 @@ describe("Keyless Azure (managed identity)", () => {
     expect(ev.data.baseData).toMatchObject({ name: "RenderQueued", properties: { prompt: "A man sprints", settings: '{"frames":33}' } });
   });
 });
+
+describe("Multi-tenant context", () => {
+  it("maps each account to its own tenant and plan, with no tenant borrowed outside a request", async () => {
+    const { SERVICE_PLAN, tenantIdFor, tenantHeaders } = await import("@/lib/tenancy");
+    expect(SERVICE_PLAN).toEqual({ free: "free", creator: "pro", pro: "studio", unlimited: "studio" });
+    expect(tenantIdFor("abc")).toBe("user-abc");
+    expect(tenantIdFor("abc")).not.toBe(tenantIdFor("abd"));
+    // A background job (no signed-in user) sends no tenant headers, so it can never act as someone else's tenant.
+    expect(await tenantHeaders()).toEqual({});
+  });
+});

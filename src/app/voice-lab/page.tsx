@@ -128,7 +128,7 @@ function download(name: string, text: string, type = "text/plain") {
 
 function EngineNote({ info, what }: { info: Info | null; what: string }) {
   if (!info || info.engine) return null;
-  return <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">{what} needs Ghost Post&apos;s engine (a GPU), which isn&apos;t connected yet. The admin connects it in Admin → App settings → Integrations.</div>;
+  return <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">{what} needs Kinetrove&apos;s engine (a GPU), which isn&apos;t connected yet. The admin connects it in Admin → App settings → Integrations.</div>;
 }
 
 /** The latest Media Library items whose names start with one of `prefixes`, with players. */
@@ -334,7 +334,7 @@ function SttTab({ info, reload }: { info: Info | null; reload: () => void }) {
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[400px_minmax(0,1fr)]">
       <Card className="h-fit">
-        <CardHeader title="Speech to text" subtitle="Every word with its timing, in any language Whisper knows. Free, on Ghost Post's own server." icon={<Captions className="h-4 w-4" />} />
+        <CardHeader title="Speech to text" subtitle="Every word with its timing, in any language Whisper knows. Free, on Kinetrove's own server." icon={<Captions className="h-4 w-4" />} />
         <div className="grid grid-cols-1 gap-3 p-4">
           <MediaSelect items={items} kinds={["audio", "video"]} value={mediaId} onChange={setMediaId} empty="Upload a recording or video first" />
           <div className="flex items-center gap-2 text-xs text-white/50"><Recorder label="Record now" onSaved={(id) => { reloadMedia(); setMediaId(id); }} /> or pick a file above.</div>
@@ -549,7 +549,7 @@ function PresenterTab({ info }: { info: Info | null }) {
         <CardHeader title="Talking presenter" subtitle="A lifelike presenter says your script, with lips that match every word. Filmed on Azure's GPUs in full HD." icon={<UserRound className="h-4 w-4" />} />
         <div className="grid grid-cols-1 gap-4 p-5">
           {data && !ready && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">The talking presenter runs on Azure AI, which isn&apos;t connected yet. The admin adds it in Admin → App settings → Integrations → Azure AI.</div>}
-          <Field label="What the presenter says"><Textarea rows={5} maxLength={3000} value={script} onChange={(e) => setScript(e.target.value)} placeholder="Welcome to Ghost Post. Today I'll show you…" /></Field>
+          <Field label="What the presenter says"><Textarea rows={5} maxLength={3000} value={script} onChange={(e) => setScript(e.target.value)} placeholder="Welcome to Kinetrove. Today I'll show you…" /></Field>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Field label="Presenter">
               <Select aria-label="Presenter" value={avatar} onChange={(e) => { setAvatar(e.target.value); setStyle(PRESENTERS[e.target.value][0]); }}>
@@ -674,7 +674,7 @@ function VoiceLab() {
   }, [tab]);
   return (
     <>
-      <PageHeader title="Voice Lab" subtitle="Record your voice over a video, lifelike speech, voice design, a voice library, transcripts, voice isolation, audiobooks and voice-over for video, all built into Ghost Post. No outside voice service needed." />
+      <PageHeader title="Voice Lab" subtitle="Record your voice over a video, lifelike speech, voice design, a voice library, transcripts, voice isolation, audiobooks and voice-over for video, all built into Kinetrove. No outside voice service needed." />
       <div ref={strip} className="mb-5 flex gap-2 overflow-x-auto pb-1">
         {TABS.map((t) => (
           <button key={t.id} data-active={tab === t.id} onClick={() => setTab(t.id)} className={cn("flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition", tab === t.id ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>

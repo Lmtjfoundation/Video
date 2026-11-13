@@ -13,7 +13,7 @@ import type { MediaItem } from "./types";
 import { voiceSample } from "./voices";
 
 /**
- * The voice tools in AI Studio, on Ghost Post's own engine: voiceovers in 23 languages (in a stock voice or one of
+ * The voice tools in AI Studio, on Kinetrove's own engine: voiceovers in 23 languages (in a stock voice or one of
  * My Voices), voice-to-voice, dubbing a video into another language, lip sync, and avatars (a picture that speaks).
  * Every result is saved to the Media Library.
  */
@@ -191,7 +191,7 @@ export function placeLines(lines: { start: number; samples: Float32Array }[], to
 }
 
 /**
- * Dubs a video (or a recording) into another language: Ghost Post's Whisper hears each line with its timing, the
+ * Dubs a video (or a recording) into another language: Kinetrove's Whisper hears each line with its timing, the
  * writer translates the lines, the engine speaks each one in the chosen voice at the same moment, and (optionally)
  * the mouth is lip-synced to the new words.
  */

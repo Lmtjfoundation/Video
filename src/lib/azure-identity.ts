@@ -33,7 +33,10 @@ export async function azureToken(scope: string): Promise<string> {
 /** The API Management gateway, e.g. https://ghostpost-apim-2114.azure-api.net (Admin → Integrations, or AZURE_APIM_URL). */
 export const apimUrl = async () => (await pick("azureApimUrl", "AZURE_APIM_URL")).replace(/\/+$/, "");
 /** APIM accepts the app's managed identity: a token for Azure Resource Manager, checked against the app's client id. */
-const apimHeaders = async () => ({ Authorization: `Bearer ${await azureToken("https://management.azure.com/.default")}` });
+const apimHeaders = async () => {
+  const { tenantHeaders } = await import("./tenancy");
+  return { Authorization: `Bearer ${await azureToken("https://management.azure.com/.default")}`, ...(await tenantHeaders()) };
+};
 
 /** Where model calls go and how they're signed: APIM with the managed identity when set, else the endpoint + key. */
 export async function foundryAuth(): Promise<{ base: string; headers: Record<string, string>; via: "apim" | "key" } | null> {

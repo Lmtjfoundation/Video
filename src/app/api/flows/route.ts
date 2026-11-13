@@ -32,7 +32,7 @@ export const POST = authed(async (req, user) => {
   if (!flow) return fail("That flow wasn't found.", 404);
   const idea = String(b.idea ?? "").trim();
   if (!idea) return fail("Type the idea to run the flow with.");
-  if (!(await ownEngineReady())) return fail("Flows run on Ghost Post's engine. The admin connects it in Admin → App settings → Integrations.", 503);
+  if (!(await ownEngineReady())) return fail("Flows run on Kinetrove's engine. The admin connects it in Admin → App settings → Integrations.", 503);
   const credits = flowCredits(flow, idea.length);
   await spendCredits(user.id, credits);
   const job = await startJob(user.id, { kind: "flow", title: `${flow.name}: ${idea.slice(0, 60)}` }, async () => {

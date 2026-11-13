@@ -1,6 +1,6 @@
 import { Hub } from "@/components/hub";
 
-export const metadata = { title: "Make · Ghost Post" };
+export const metadata = { title: "Make · Kinetrove" };
 
 export default function Page() {
   return <Hub section="make" />;

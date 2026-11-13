@@ -33,7 +33,7 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
     const msg =
       (data && typeof data === "object" && "error" in data ? (data as { error: string }).error : null) ??
       (GATEWAY.has(res.status) || res.status === 503
-        ? "Ghost Post is restarting or busy for a moment. Please try again in a minute; anything already started keeps running."
+        ? "Kinetrove is restarting or busy for a moment. Please try again in a minute; anything already started keeps running."
         : `Request failed (${res.status})`);
     throw new Error(msg);
   }

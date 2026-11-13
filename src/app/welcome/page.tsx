@@ -8,8 +8,8 @@ import { plansPayload } from "@/lib/plans-public";
 
 export const dynamic = "force-dynamic";
 
-const TITLE = "Ghost Post: your whole AI studio in one app";
-const DESCRIPTION = "Pictures, videos, voices, music and sound effects made by Ghost Post's own AI, then posted to TikTok, Instagram, YouTube and Facebook for you. Start free, no card needed.";
+const TITLE = "Kinetrove: your whole AI studio in one app";
+const DESCRIPTION = "Pictures, videos, voices, music and sound effects made by Kinetrove's own AI, then posted to TikTok, Instagram, YouTube and Facebook for you. Start free, no card needed.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const base = (process.env.APP_URL || "https://ghostpost.eastus.cloudapp.azure.com").replace(/\/$/, "");
@@ -18,12 +18,12 @@ export async function generateMetadata(): Promise<Metadata> {
     title: TITLE,
     description: DESCRIPTION,
     alternates: { canonical: `${base}/welcome` },
-    openGraph: { type: "website", url: `${base}/welcome`, title: TITLE, description: DESCRIPTION, siteName: "Ghost Post", images: [{ url: image, width: 1200, height: 630 }], videos: [{ url: `${base}/promo/studio-ad-web.mp4`, type: "video/mp4", width: 720, height: 1280 }] },
+    openGraph: { type: "website", url: `${base}/welcome`, title: TITLE, description: DESCRIPTION, siteName: "Kinetrove", images: [{ url: image, width: 1200, height: 630 }], videos: [{ url: `${base}/promo/studio-ad-web.mp4`, type: "video/mp4", width: 720, height: 1280 }] },
     twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, images: [image] },
   };
 }
 
-/** Everything in the gallery was made with Ghost Post's own tools (scripts/make-ad.py has the prompts). */
+/** Everything in the gallery was made with Kinetrove's own tools (scripts/make-ad.py has the prompts). */
 const GALLERY = [
   { src: "/promo/showcase/h2.jpg", tool: "Story to Video", line: "A true story, painted scene by scene" },
   { src: "/promo/showcase/h1.jpg", tool: "Story to Video", line: "Dresden, November 2019: the power goes out" },
@@ -35,9 +35,9 @@ const GALLERY = [
 ];
 
 const STEPS = [
-  { n: "1", title: "Create", text: "Describe a picture, a story or a song. Ghost Post makes it: scenes, motion, voice, music and captions." },
+  { n: "1", title: "Create", text: "Describe a picture, a story or a song. Kinetrove makes it: scenes, motion, voice, music and captions." },
   { n: "2", title: "Polish", text: "Change any scene, keep your characters the same, swap in your own voice, pick the music." },
-  { n: "3", title: "Post", text: "Connect your accounts once. Ghost Post writes the captions and posts at the best times, every day." },
+  { n: "3", title: "Post", text: "Connect your accounts once. Kinetrove writes the captions and posts at the best times, every day." },
 ];
 
 /** The studio, tool by tool: each with a screen from the real app (public/promo/studio, taken from a demo account). */
@@ -59,7 +59,7 @@ export default async function WelcomePage() {
       <header className="mb-10 flex items-center justify-between gap-3">
         <Link href="/welcome" className="flex items-center gap-3">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-mint-300 to-mint-500"><Activity className="h-5 w-5 text-ink-950" strokeWidth={2.6} /></span>
-          <span className="font-semibold text-white">Ghost Post</span>
+          <span className="font-semibold text-white">Kinetrove</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm sm:gap-3">
           <a href="#plans" className="hidden rounded-lg px-3 py-2 text-white/70 hover:text-white sm:inline">Plans</a>
@@ -70,9 +70,9 @@ export default async function WelcomePage() {
 
       <section className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="min-w-0">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-mint-400/30 bg-mint-400/10 px-3 py-1 text-xs font-medium text-mint-300"><Sparkles className="h-3.5 w-3.5" /> The ad on this page was made with Ghost Post</p>
+          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-mint-400/30 bg-mint-400/10 px-3 py-1 text-xs font-medium text-mint-300"><Sparkles className="h-3.5 w-3.5" /> The ad on this page was made with Kinetrove</p>
           <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">Your whole AI studio in one app.</h1>
-          <p className="mt-4 max-w-xl text-lg text-white/65">Pictures, videos, voices, music and sound effects, made by Ghost Post&apos;s own AI. Then it writes the captions and posts to TikTok, Instagram, YouTube and Facebook for you.</p>
+          <p className="mt-4 max-w-xl text-lg text-white/65">Pictures, videos, voices, music and sound effects, made by Kinetrove&apos;s own AI. Then it writes the captions and posts to TikTok, Instagram, YouTube and Facebook for you.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/signup" className="rounded-xl bg-mint-400 px-6 py-3.5 text-base font-semibold text-ink-950 shadow-glow hover:bg-mint-300">Start free</Link>
             <a href="#plans" className="rounded-xl border border-white/15 px-6 py-3.5 text-base font-medium text-white hover:bg-white/5">See plans</a>
@@ -85,7 +85,7 @@ export default async function WelcomePage() {
       </section>
 
       <section className="mt-20">
-        <h2 className="text-2xl font-semibold text-white">Made with Ghost Post</h2>
+        <h2 className="text-2xl font-semibold text-white">Made with Kinetrove</h2>
         <p className="mt-2 text-white/55">Every picture below came out of the app. No stock photos, no editing.</p>
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {GALLERY.map((g) => (
@@ -127,7 +127,7 @@ export default async function WelcomePage() {
           {STUDIO.map(({ icon: Icon, title, shot, text }) => (
             <article key={title} className="glass min-w-0 overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={shot} alt={`${title} in Ghost Post`} loading="lazy" className="aspect-[16/10] w-full border-b border-white/10 object-cover object-top" />
+              <img src={shot} alt={`${title} in Kinetrove`} loading="lazy" className="aspect-[16/10] w-full border-b border-white/10 object-cover object-top" />
               <div className="p-5">
                 <p className="flex items-center gap-2 font-semibold text-white"><Icon className="h-5 w-5 text-mint-300" /> {title}</p>
                 <p className="mt-2 text-sm text-white/60">{text}</p>
@@ -146,7 +146,7 @@ export default async function WelcomePage() {
 
       <section className="mt-20 rounded-3xl border border-mint-400/25 bg-gradient-to-br from-mint-400/15 to-transparent p-8 text-center sm:p-12">
         <h2 className="text-3xl font-semibold text-white">Your studio is ready.</h2>
-        <p className="mx-auto mt-3 max-w-lg text-white/65">Make your first picture, voice, song or video free, and let Ghost Post post it for you.</p>
+        <p className="mx-auto mt-3 max-w-lg text-white/65">Make your first picture, voice, song or video free, and let Kinetrove post it for you.</p>
         <Link href="/signup" className="mt-6 inline-block rounded-xl bg-mint-400 px-8 py-4 text-lg font-semibold text-ink-950 shadow-glow hover:bg-mint-300">Start free</Link>
       </section>
 

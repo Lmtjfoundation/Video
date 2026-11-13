@@ -13,7 +13,7 @@ export const cosmosReady = async () => !!(await cosmosEndpoint());
 type Container = import("@azure/cosmos").Container;
 let db: { endpoint: string; get: (name: string) => Container } | null = null;
 
-export async function cosmos(name: "presets" | "templates" | "projects" | "renders"): Promise<Container> {
+export async function cosmos(name: "presets" | "templates" | "projects" | "renders" | "tenants" | "usage" | "jobs"): Promise<Container> {
   const endpoint = await cosmosEndpoint();
   if (!endpoint) throw new Error("Cosmos DB isn't connected: add its endpoint in Admin → Integrations.");
   if (db?.endpoint !== endpoint) {

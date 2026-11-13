@@ -69,7 +69,7 @@ export const PUT = authed(async (req) => {
   // Off unless switched on: only then are Claude and Gemini never used.
   if ("ownWriterOnly" in b) (patch as Record<string, unknown>).ownWriterOnly = b.ownWriterOnly === true ? true : "";
   // When the own writer writes: after Claude and Gemini, before them, or alone. It replaces the older switch.
-  // On unless switched off: pictures, clips and voices go to Ghost Post's own engine first.
+  // On unless switched off: pictures, clips and voices go to Kinetrove's own engine first.
   if ("engineFirst" in b) (patch as Record<string, unknown>).engineFirst = b.engineFirst === false ? false : "";
   // Off unless switched on: then every AI job runs on Azure only.
   if ("azureOnly" in b) (patch as Record<string, unknown>).azureOnly = b.azureOnly === true ? true : "";
@@ -80,7 +80,7 @@ export const PUT = authed(async (req) => {
   }
   if ("emailFrom" in b) {
     const from = typeof b.emailFrom === "string" ? b.emailFrom.trim() : "";
-    if (from && !validFrom(from)) return fail('Use an address like "Ghost Post <support@yourdomain.com>" or support@yourdomain.com.');
+    if (from && !validFrom(from)) return fail('Use an address like "Kinetrove <support@yourdomain.com>" or support@yourdomain.com.');
     patch.emailFrom = from;
   }
   if (!Object.keys(patch).length) return fail("Nothing to save.");
@@ -96,7 +96,7 @@ export const POST = authed(async (req, user) => {
     try {
       await sendEmail({
         to: user.email,
-        subject: "Ghost Post test email",
+        subject: "Kinetrove test email",
         text: "Email works. Password-reset links will be sent from this address.",
         html: emailLayout({ title: "Email works", lines: ["Password-reset links will be sent from this address."] }),
       });

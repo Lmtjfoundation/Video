@@ -23,7 +23,7 @@ type Data = {
 type MediaItem = { id: string; name: string; kind: Kind; url: string };
 type Character = { id: string; name: string; imageMediaId: string; imageUrl: string };
 
-const ENGINE_LABEL: Record<Engine, string> = { own: "Ghost Post engine — Ghost Post's own video model", gemini: "Ghost Post Cinematic — full motion with its own sound", seedance: "Ghost Post Cinematic Pro — full motion, references, native sound", wan: "Ghost Post Lite — low-cost motion, chained clips", free: "Free — camera moves on your pictures" };
+const ENGINE_LABEL: Record<Engine, string> = { own: "Kinetrove engine — Kinetrove's own video model", gemini: "Kinetrove Cinematic — full motion with its own sound", seedance: "Kinetrove Cinematic Pro — full motion, references, native sound", wan: "Kinetrove Lite — low-cost motion, chained clips", free: "Free — camera moves on your pictures" };
 const ASPECTS = ["9:16", "16:9", "21:9", "1:1"];
 const busy = (s?: { status: Status }) => s?.status === "queued" || s?.status === "generating";
 const STATUS_TONE: Record<Status, "neutral" | "gold" | "mint" | "red"> = { draft: "neutral", queued: "gold", generating: "gold", done: "mint", failed: "red" };
@@ -140,8 +140,8 @@ export default function FilmEngine() {
       {data && !data.engines.own && !data.engines.gemini && !data.engines.seedance && (
         <div className="mb-5 rounded-xl bg-gold-400/[0.08] p-4 text-sm text-gold-300 ring-1 ring-gold-300/25">
           {admin
-            ? "Full motion needs a video model on a GPU. Ghost Post has its own (Wan 2.2, open weights): start it on a rented GPU server with engine/README.md, then add its address and token in Admin → App settings → Integrations → Ghost Post Video Engine. Until then, films use the free engine: cinematic camera moves on your reference pictures."
-            : "Full-motion filming isn't switched on yet (the app's owner needs to start Ghost Post's video engine). You can direct and film with the free engine now."}
+            ? "Full motion needs a video model on a GPU. Kinetrove has its own (Wan 2.2, open weights): start it on a rented GPU server with engine/README.md, then add its address and token in Admin → App settings → Integrations → Kinetrove Video Engine. Until then, films use the free engine: cinematic camera moves on your reference pictures."
+            : "Full-motion filming isn't switched on yet (the app's owner needs to start Kinetrove's video engine). You can direct and film with the free engine now."}
         </div>
       )}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
@@ -318,7 +318,7 @@ function NewFilm({ data, admin, onMade }: { data: Data | null; admin: boolean; o
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Frame"><Select value={aspect} onChange={(e) => setAspect(e.target.value)}>{ASPECTS.map((a) => <option key={a}>{a}</option>)}</Select></Field>
-          <Field label="Engine"><Select value={engine} onChange={(e) => setEngine(e.target.value as Engine)}>{ENGINES.map((e) => <option key={e} value={e}>{e === "own" ? "Ghost Post engine" : e === "gemini" ? "Ghost Post Cinematic" : e === "seedance" ? "Ghost Post Cinematic Pro" : e === "wan" ? "Ghost Post Lite" : "Free"}</option>)}</Select></Field>
+          <Field label="Engine"><Select value={engine} onChange={(e) => setEngine(e.target.value as Engine)}>{ENGINES.map((e) => <option key={e} value={e}>{e === "own" ? "Kinetrove engine" : e === "gemini" ? "Kinetrove Cinematic" : e === "seedance" ? "Kinetrove Cinematic Pro" : e === "wan" ? "Kinetrove Lite" : "Free"}</option>)}</Select></Field>
         </div>
         <p className="text-xs text-white/50">About {beats * seconds} seconds of film. You can add your cast and references after planning; the shot lists cite them as @Name.</p>
         <Button variant="primary" loading={busyNow} disabled={!filmId && story.trim().length < 20} onClick={() => make(true)}>

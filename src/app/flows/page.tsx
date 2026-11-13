@@ -73,7 +73,7 @@ export default function FlowsPage() {
   return (
     <>
       <PageHeader title="Flows" subtitle="Chain the AI tools into one pipeline you can run again with any idea: pictures, footage, music, sound, voice, and a finished video at the end." />
-      {data && !data.engine && <Card className="mb-5 p-4 text-sm text-white/70">Flows run on Ghost Post&apos;s own engine. The admin connects it in Admin → App settings → Integrations → Ghost Post Video Engine.</Card>}
+      {data && !data.engine && <Card className="mb-5 p-4 text-sm text-white/70">Flows run on Kinetrove&apos;s own engine. The admin connects it in Admin → App settings → Integrations → Kinetrove Video Engine.</Card>}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
         <Card className="h-fit">
           <CardHeader title="Your flows" icon={<Workflow className="h-4 w-4" />} action={<Button size="sm" onClick={() => setEdit({ name: "New flow", steps: [{ type: "image" }, { type: "footage" }, { type: "music" }, { type: "finish" }], credits: 0 })}><Plus className="h-3.5 w-3.5" /> New</Button>} />

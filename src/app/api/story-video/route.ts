@@ -81,7 +81,7 @@ export const POST = authed(async (req, user) => {
   if (b.action === "thumbnail") {
     const id = String(b.id ?? "");
     if (!(await listStories()).some((s) => s.id === id)) return fail("That story wasn't found.", 404);
-    if (!(await ownEngineReady())) return fail("Thumbnails are painted on Ghost Post's engine, which isn't connected yet.", 503);
+    if (!(await ownEngineReady())) return fail("Thumbnails are painted on Kinetrove's engine, which isn't connected yet.", 503);
     const credits = CREDIT_COST.aiImage;
     await spendCredits(user.id, credits);
     const job = await startJob(user.id, { kind: "director", title: "Story thumbnail" }, async () => {
@@ -105,13 +105,13 @@ export const POST = authed(async (req, user) => {
   const narrator = await asked(checkVoice(b.narrator));
   if (narrator.kind === "free" && language !== "en") return fail("The free voices speak English. For other languages, choose the engine voice or one of My Voices.");
   if (narrator.kind === "engine") narrator.language = language;
-  if (narrator.kind === "engine" && !(await ownEngineReady())) return fail("That narrator speaks on Ghost Post's engine, which isn't connected yet. Choose a free voice (English) for now.", 503);
+  if (narrator.kind === "engine" && !(await ownEngineReady())) return fail("That narrator speaks on Kinetrove's engine, which isn't connected yet. Choose a free voice (English) for now.", 503);
   const platform = PLATFORMS.includes(b.platform as Platform) && b.platform !== "webhook" ? (b.platform as Platform) : "tiktok";
   const length = MOVIE_LENGTHS.includes(b.length as MovieLength) ? (b.length as MovieLength) : t.length;
   if (!lengthAllowed(length, platform)) return fail("X allows videos up to 2 minutes 20 seconds. Pick a shorter length for X.");
   const cast = await getCharacters(Array.isArray(b.characterIds) ? b.characterIds.map(String).slice(0, 6) : []);
   const look = String(b.look ?? "").trim().slice(0, 160) || (cast.length ? cast[0].look : t.look);
-  if (!(await picturesReady())) return fail("Story pictures are painted on Ghost Post's engine. The admin connects it in Admin → App settings → Integrations.", 503);
+  if (!(await picturesReady())) return fail("Story pictures are painted on Kinetrove's engine. The admin connects it in Admin → App settings → Integrations.", 503);
   if (b.instant === true && !(await ffmpegAvailable())) return fail("Video rendering isn't switched on for this server yet (ffmpeg missing).", 503);
   // Text sources are checked now, so a typo is a message, not a failed job.
   if (src.kind !== "media" && src.kind !== "link") await asked(sourceText(src));

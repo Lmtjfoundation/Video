@@ -4,7 +4,7 @@ import path from "path";
 import { promisify } from "util";
 
 /**
- * Ghost Post's own motion graphics, drawn by ffmpeg on the server (free, no AI service): a moving gradient, a
+ * Kinetrove's own motion graphics, drawn by ffmpeg on the server (free, no AI service): a moving gradient, a
  * scrolling dot grid, a drifting glow, a ring, a light bar sweeping across, a big faded scene number, and the
  * scene's on-screen words with an accent underline that wipes in. Each scene rotates through the palettes.
  * The shapes are drawn once per render as transparent PNGs and animated as overlays, so a scene renders about as
