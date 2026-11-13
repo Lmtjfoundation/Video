@@ -38,7 +38,7 @@ export async function readAudio(mediaId: string) {
     const file = path.join(dir, `in.${item.name.split(".").pop() || "audio"}`);
     await fs.writeFile(file, await readFile(item));
     const total = await mediaDuration(file);
-    if (!(total > 1)) throw new AudioVideoError("That file has no audio Curbflix can read. Try an MP3, WAV or M4A.");
+    if (!(total > 1)) throw new AudioVideoError("That file has no audio Curbvue can read. Try an MP3, WAV or M4A.");
     if (total > MAX_AUDIO_SECONDS + 0.5) throw new AudioVideoError(`That recording is ${clock(total)} long. Audio to video takes up to ${clock(MAX_AUDIO_SECONDS)}: trim it and upload it again.`);
     return { item, total, lines: await transcribe(file) };
   } finally {

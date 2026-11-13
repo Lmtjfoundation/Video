@@ -11,7 +11,7 @@ vi.mock("@/lib/utils", async (orig) => ({ ...(await orig<typeof import("@/lib/ut
 
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 
-/** A tiny stand-in for Curbflix's engine: records each picture request and answers with a 1×1 PNG. */
+/** A tiny stand-in for Curbvue's engine: records each picture request and answers with a 1×1 PNG. */
 function fakeEngine() {
   const requests: { prompt: string; images: string[]; aspect: string }[] = [];
   const fetchFn = vi.fn(async (url: string, init?: RequestInit) => {
@@ -33,7 +33,7 @@ afterEach(() => {
   delete process.env.VIDEO_ENGINE_TOKEN;
 });
 
-describe("Image Studio on Curbflix's own engine", () => {
+describe("Image Studio on Curbvue's own engine", () => {
   it("makes, edits and stages pictures on the engine (never Gemini) and saves them to the Media Library", async () => {
     const engine = fakeEngine();
     vi.stubGlobal("fetch", engine.fetchFn);

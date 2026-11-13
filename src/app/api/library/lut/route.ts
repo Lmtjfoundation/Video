@@ -4,7 +4,7 @@ import { cubeFile, gradeById } from "@/lib/luts";
 
 export const dynamic = "force-dynamic";
 
-/** One Curbflix LUT as a .cube file (paid plans, like every Library download). */
+/** One Curbvue LUT as a .cube file (paid plans, like every Library download). */
 export const GET = authed(async (req, user) => {
   const g = gradeById(new URL(req.url).searchParams.get("id") ?? "");
   if (!g) return fail("That LUT wasn't found.", 404);

@@ -25,7 +25,7 @@ type Data = {
 };
 
 const SOURCES: { id: StorySourceKind; label: string; icon: typeof Lightbulb; hint: string }[] = [
-  { id: "idea", label: "Idea", icon: Lightbulb, hint: "A sentence or two. Curbflix writes the story." },
+  { id: "idea", label: "Idea", icon: Lightbulb, hint: "A sentence or two. Curbvue writes the story." },
   { id: "script", label: "Script", icon: PenLine, hint: "Your words, narrated as written." },
   { id: "media", label: "Audio or video", icon: Mic, hint: "A podcast, voice note or video: its words become the story." },
   { id: "link", label: "Web link", icon: Globe, hint: "An article or page: its facts become the story." },
@@ -82,7 +82,7 @@ export default function StoryVideo() {
         body: { action: "start", template, source: { kind, text, url, mediaId, fileName }, language, secondLanguage: t?.bilingual ? second : undefined, narrator, characterIds: cast, look: look || undefined, platform, length: len, instant },
       });
       jobStarted();
-      toast(instant ? "Writing and rendering your story on Curbflix's server. You can close the app; you'll get a notification when it's ready." : "Writing the storyboard. The tray opens it in the Director when it's ready.", "success");
+      toast(instant ? "Writing and rendering your story on Curbvue's server. You can close the app; you'll get a notification when it's ready." : "Writing the storyboard. The tray opens it in the Director when it's ready.", "success");
       refresh();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -190,7 +190,7 @@ export default function StoryVideo() {
                 </button>
               ))}
             </div>
-            {data && !data.engine && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">Story pictures are painted on Curbflix&apos;s engine (a GPU), which isn&apos;t connected yet. The admin connects it in Admin → App settings → Integrations.</div>}
+            {data && !data.engine && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">Story pictures are painted on Curbvue&apos;s engine (a GPU), which isn&apos;t connected yet. The admin connects it in Admin → App settings → Integrations.</div>}
             <Button variant="primary" size="lg" loading={busy} disabled={!ready || busy} onClick={start}>
               {instant ? "Make the video" : "Write the storyboard"} · up to {estimate} credits
             </Button>

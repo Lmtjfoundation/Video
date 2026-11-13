@@ -7,11 +7,11 @@ import type { Platform, Post } from "./types";
 
 /**
  * Upload-Post (upload-post.com): a social posting service whose apps are already approved by Instagram, Facebook,
- * TikTok, YouTube, LinkedIn and X. With its key saved once (Admin → Integrations), every Curbflix user connects a
- * network with one tap: Curbflix asks Upload-Post for that network's sign-in page, the person signs in there, and
+ * TikTok, YouTube, LinkedIn and X. With its key saved once (Admin → Integrations), every Curbvue user connects a
+ * network with one tap: Curbvue asks Upload-Post for that network's sign-in page, the person signs in there, and
  * comes straight back. No developer apps, testers or app reviews on the owner's side.
  *
- * Each Curbflix user has one Upload-Post profile ("gp_<user id>") that holds one account per network.
+ * Each Curbvue user has one Upload-Post profile ("gp_<user id>") that holds one account per network.
  */
 export const UP_PLATFORMS = ["instagram", "facebook", "tiktok", "youtube", "linkedin", "x"] as const satisfies readonly Platform[];
 export type UpPlatform = (typeof UP_PLATFORMS)[number];
@@ -55,7 +55,7 @@ export async function ensureProfile(displayName?: string) {
   const name = profileName();
   if ((await kvGet<string>("upload-post-profile")) === name) return name;
   const { status, body } = await call("/api/uploadposts/users", { method: "POST", body: JSON.stringify({ username: name, ...(displayName ? { display_name: displayName.slice(0, 100) } : {}) }) });
-  if (status === 403) throw new UploadPostError("Curbflix's social connect service is full. The owner can add more profiles in Upload-Post (upload-post.com → Plans).");
+  if (status === 403) throw new UploadPostError("Curbvue's social connect service is full. The owner can add more profiles in Upload-Post (upload-post.com → Plans).");
   if (status !== 201 && status !== 200 && status !== 409) throw new UploadPostError(`The social connect service couldn't set up your profile: ${message(body as Json) || status}`);
   await kvSet("upload-post-profile", name);
   return name;

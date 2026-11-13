@@ -22,7 +22,7 @@ export const POST = authed(async (req, user) => {
   if (!ep) return fail("Episode not found.", 404);
   const series = s;
   const episode = ep;
-  if (!isGraphicsLook(s.look) && !(await picturesReady())) return fail("Episodes need Curbflix's engine for pictures. The admin connects it in Admin → App settings → Integrations.", 503);
+  if (!isGraphicsLook(s.look) && !(await picturesReady())) return fail("Episodes need Curbvue's engine for pictures. The admin connects it in Admin → App settings → Integrations.", 503);
   // In the background the person can leave the page; the jobs tray says when the video is ready.
   if (b.background) return ok({ job: await startJob(user.id, { kind: "episode", title: `${series.title}: Episode ${episode.n}` }, async () => { const r = await make(); return { post: r.post, href: "/series", message: r.note || undefined }; }) });
   return ok(await make());

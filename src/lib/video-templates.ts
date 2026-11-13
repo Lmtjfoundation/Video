@@ -10,7 +10,7 @@ import { TEMPLATE_DEFS, type TemplateBackground, type TemplateInput } from "./te
 
 /**
  * Video templates: titles, lower thirds, end screens, quotes, countdowns, promos and episode cards, filled in with
- * your words and colors and rendered on Curbflix's server by ffmpeg (no AI, no credits). On a color, a picture or
+ * your words and colors and rendered on Curbvue's server by ffmpeg (no AI, no credits). On a color, a picture or
  * a video of yours as an MP4, or with a see-through background as a ProRes 4444 .mov to lay over footage in Premiere,
  * Resolve, Final Cut or CapCut.
  */

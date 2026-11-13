@@ -48,13 +48,13 @@ type Ctx = { params: Promise<Record<string, string>> };
  * all per-user data scoped to them. `admin: true` restricts it to admins.
  */
 /**
- * After this server was moved (Admin → Move to a new server), its API answers with where Curbflix lives now, so an
+ * After this server was moved (Admin → Move to a new server), its API answers with where Curbvue lives now, so an
  * old open tab or an old link can't keep using the stale copy. Null while it hasn't moved.
  */
 export async function movedAnswer(): Promise<Response | null> {
   const to = await (await import("./migrate")).movedTo().catch(() => null);
   if (!to) return null;
-  return NextResponse.json({ error: `Curbflix moved to ${to}. Open it there and sign in with the same email and password.`, movedTo: to }, { status: 410 });
+  return NextResponse.json({ error: `Curbvue moved to ${to}. Open it there and sign in with the same email and password.`, movedTo: to }, { status: 410 });
 }
 
 /** Account, sign-in, billing and key routes: a leaked API key must not be able to take over the account. */
@@ -75,7 +75,7 @@ export function authed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Respo
         if (KEYLESS.some((p) => new URL(req.url).pathname.startsWith(p))) return fail("This needs you signed in to the app (account, billing and API keys can't be changed with an API key).", 403);
         const { overLimit, touchKey, userForKey } = await import("./api-keys");
         const found = await userForKey(bearer);
-        if (!found) return fail("That API key isn't valid (make one in Curbflix → Developers).", 401);
+        if (!found) return fail("That API key isn't valid (make one in Curbvue → Developers).", 401);
         if (overLimit(found.keyId)) return fail("Too many requests: the limit is 60 a minute per key.", 429);
         void touchKey(found.keyId).catch(() => {});
         user = await rollUsage(found.user);
@@ -103,7 +103,7 @@ export function apiKeyed(fn: (req: Request, user: User, ctx: Ctx) => Promise<Res
       const { overLimit, touchKey, userForKey } = await import("./api-keys");
       const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
       const found = token ? await userForKey(token) : null;
-      if (!found) return fail("Send a valid API key: Authorization: Bearer gp_live_… (make one in Curbflix → Developers).", 401);
+      if (!found) return fail("Send a valid API key: Authorization: Bearer gp_live_… (make one in Curbvue → Developers).", 401);
       if (overLimit(found.keyId)) return fail("Too many requests: the limit is 60 a minute per key.", 429);
       user = found.user;
       const u = found.user;

@@ -34,7 +34,7 @@ afterEach(async () => {
   (await import("@/lib/own-video")).resetEngineWriting();
 });
 
-describe("writing on Curbflix's own engine", () => {
+describe("writing on Curbvue's own engine", () => {
   const connect = () => {
     process.env.VIDEO_ENGINE_URL = "https://gpu.example/";
     process.env.VIDEO_ENGINE_TOKEN = "engine-token";

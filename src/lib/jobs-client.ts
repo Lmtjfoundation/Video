@@ -8,7 +8,7 @@ const b64 = (s: string) => {
 
 /**
  * Ask (once) to notify this device when work finishes, and register it with the server, so the message arrives on
- * the lock screen even with Curbflix closed. Silent where push isn't available (e.g. inside the phone app).
+ * the lock screen even with Curbvue closed. Silent where push isn't available (e.g. inside the phone app).
  */
 export async function enablePush(): Promise<boolean> {
   try {

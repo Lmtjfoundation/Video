@@ -11,11 +11,11 @@ import { nowIso, uid } from "./utils";
 
 /**
  * My Voices: voice cloning with consent. A voice is made from a 10–60 second recording that starts with the speaker
- * saying the consent sentence below; Curbflix transcribes it on its own server and only accepts the voice when the
+ * saying the consent sentence below; Curbvue transcribes it on its own server and only accepts the voice when the
  * sentence is heard, so nobody can clone a voice from a clip found online. The engine (Chatterbox, which watermarks
  * everything it makes) then speaks in that voice in 23 languages: voiceovers, voice-to-voice and dubbing.
  */
-export const CONSENT_SENTENCE = "I agree to Curbflix making an AI voice from my recording.";
+export const CONSENT_SENTENCE = "I agree to Curbvue making an AI voice from my recording.";
 const ROW = "voices";
 export const MAX_VOICES = 20;
 

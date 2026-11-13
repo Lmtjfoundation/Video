@@ -59,7 +59,7 @@ describe("voice tools", () => {
     const { storeFile } = await import("@/lib/media");
     const { CONSENT_SENTENCE, consentScore, createVoice, listVoices, deleteVoice } = await import("@/lib/voices");
     expect(consentScore(` ${CONSENT_SENTENCE} Hi, I'm Monica and this is how I sound.`)).toBe(1);
-    expect(consentScore("I agree to Curbflix making an AI voice from my recording")).toBe(1);
+    expect(consentScore("I agree to Curbvue making an AI voice from my recording")).toBe(1);
     expect(consentScore("Welcome back to the channel, today we're talking money")).toBeLessThan(0.3);
     const user = "usr_voice";
     await asUser(user, async () => {

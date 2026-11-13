@@ -25,7 +25,7 @@ async function uploadMedia(file: File) {
 
 /**
  * Record Voice: the video plays while you talk, so your voice lands exactly where you said it. Keep the best take,
- * then Curbflix puts it in the video (cleaned up, with captions, over or instead of the original sound).
+ * then Curbvue puts it in the video (cleaned up, with captions, over or instead of the original sound).
  */
 export function RecordVoiceTab({ engine, isolate, lipsyncSecond, isolateMinute }: { engine: boolean | undefined; isolate?: boolean; lipsyncSecond?: number; isolateMinute?: number }) {
   const { toast, refresh } = useApp();
@@ -365,8 +365,8 @@ export function RecordVoiceTab({ engine, isolate, lipsyncSecond, isolateMinute }
               <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={captions} onChange={setCaptions} label="Burned-in captions (free)" /> Burned-in captions (free)</label>
               <label className="flex items-center gap-3 text-sm text-white/80"><Switch checked={lipsync && engine === true} disabled={engine !== true} onChange={(v) => setLipsync(v && engine === true)} label="Lip sync the face" /> Lip sync the face</label>
             </div>
-            {isolate === false && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">Replacing only the AI voice needs Curbflix&apos;s tools engine, which isn&apos;t connected. Choose another option, or the admin connects it in Admin → Integrations.</div>}
-            {engine === false && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">Lip sync needs Curbflix&apos;s engine with a GPU, which isn&apos;t connected yet. Everything else here works now.</div>}
+            {isolate === false && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">Replacing only the AI voice needs Curbvue&apos;s tools engine, which isn&apos;t connected. Choose another option, or the admin connects it in Admin → Integrations.</div>}
+            {engine === false && <div className="rounded-xl border border-gold-300/30 bg-gold-300/10 p-3 text-xs text-white/75">Lip sync needs Curbvue&apos;s engine with a GPU, which isn&apos;t connected yet. Everything else here works now.</div>}
             <Button variant="primary" size="lg" loading={busy} disabled={!take || !videoId || recording} onClick={finish}>
               Put my voice in the video · {cost ? `about ${cost} credit${cost === 1 ? "" : "s"}` : "free"}
             </Button>

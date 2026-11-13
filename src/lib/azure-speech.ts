@@ -6,7 +6,7 @@ import { stripTags } from "./speech-text";
 /**
  * Azure AI Speech on the same Azure AI resource as the pictures (one key): natural neural voices in 100+ languages,
  * and the talking presenter (a lifelike person who says a script with matching lip movement). Both run on Microsoft's
- * GPUs, billed to the Azure subscription; neither needs Curbflix's GPU engine.
+ * GPUs, billed to the Azure subscription; neither needs Curbvue's GPU engine.
  */
 export const speechRegion = async () => (await pick("azureAiRegion", "AZURE_AI_REGION")) || "eastus2";
 export const azureSpeechReady = async () => !!(await speechAuth("tts"));

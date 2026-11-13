@@ -4,10 +4,10 @@ import { Shell } from "@/components/shell";
 import { MovedRedirect } from "@/components/moved-redirect";
 
 export const metadata: Metadata = {
-  title: "Curbflix Autopilot",
+  title: "Curbvue Autopilot",
   description: "Niche research, faceless story scripts and autopilot posting for six platforms.",
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Curbflix" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Curbvue" },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
 

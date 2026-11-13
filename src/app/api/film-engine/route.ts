@@ -198,7 +198,7 @@ export const POST = authed(async (req, user) => {
       if (busy(seg)) return ok(cut);
       if (!(await ffmpegAvailable())) return fail("Video tools (ffmpeg) aren't installed on this server yet. Ask the admin to add them.", 503);
       if (cut.engine === "own" && !(await ownEngineReady()))
-        return fail("Curbflix's video engine isn't connected yet. The admin starts it on a GPU server (engine/README.md) and adds its address and token in Admin → App settings → Integrations → Curbflix Video Engine. Until then, switch the engine to Free.", 503);
+        return fail("Curbvue's video engine isn't connected yet. The admin starts it on a GPU server (engine/README.md) and adds its address and token in Admin → App settings → Integrations → Curbvue Video Engine. Until then, switch the engine to Free.", 503);
       if (cut.engine === "gemini" && !(await mediaKey()))
         return fail("Gemini Omni Flash runs on the app's Gemini key, and none is saved yet. The admin adds it in Admin → App settings → Integrations → Gemini (video needs billing turned on in Google AI Studio). Until then, switch the engine to Free.", 503);
       if ((cut.engine === "seedance" || cut.engine === "wan") && !(await replicateReady()))
