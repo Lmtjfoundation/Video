@@ -1,0 +1,13 @@
+{
+  "name": "ghostpost-render-functions",
+  "version": "1.0.0",
+  "description": "Azure Functions for the Ghost Post render pipeline: queue-triggered jobs, on-demand render VMs, idle and budget guards.",
+  "main": "src/functions/*.js",
+  "type": "commonjs",
+  "dependencies": {
+    "@azure/cosmos": "4.2.0",
+    "@azure/functions": "4.6.0",
+    "@azure/identity": "4.5.0",
+    "@azure/storage-queue": "12.25.0"
+  }
+}
