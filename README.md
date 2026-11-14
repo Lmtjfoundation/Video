@@ -207,6 +207,30 @@ Then flip **Autopilot posting** (and, if you want it, **Auto-engagement**) on in
    | YouTube | Resumable upload (Shorts for vertical) | Needs `youtube.upload` — reconnect YouTube. Apps that haven't passed Google's API audit have uploads locked to private. |
    | TikTok | Upload to the creator's TikTok inbox (drafts) | The creator taps Post in TikTok. Public direct posting needs TikTok's app audit. |
 
+## Run Vueio standalone on AWS (one command)
+
+Vueio can run as a standalone application on one AWS EC2 server: the website, its database folder, the built-in
+scheduler and its own CPU writer, behind HTTPS. No Railway, Vercel or Supabase is needed; the data lives on the
+server's encrypted disk.
+
+1. Open **CloudShell** (the `>_` button at the top of console.aws.amazon.com) and run:
+
+   ```bash
+   curl -sL https://raw.githubusercontent.com/Lmtjfoundation/Video/claude/vueio-aws-standalone/deploy/aws-app/deploy.sh | bash
+   ```
+
+   It opens ports 80 and 443, reserves a fixed address (Elastic IP), starts an Ubuntu 24.04 `m7i.xlarge`
+   (4 vCPU, 16 GB, 100 GB disk) with Session Manager access, runs `deploy/azure-app/install.sh` on it and prints the
+   app's **address** and **setup code**. Options go before `bash`: `REGION=us-west-2`, `TYPE=t3.xlarge`, `DISK=200`,
+   `DOMAIN=app.example.com` (point its A record at the address first), `WRITER=off` (no own writer; then
+   `TYPE=t3.large` is enough), `MIGRATE_FROM=https://old-server` (then open `/restore`), `SSH_CIDR=<your-ip>/32`.
+2. Allow 10–15 minutes for the first build, open the address and sign up with the setup code (the first account is
+   the admin). Then connect Stripe and add service keys in **Admin → App settings**.
+3. Like the Azure VM, the server deploys new commits of the `nexus-pulse-autopilot` branch by itself every 2 minutes.
+   The script prints the commands to stop, start, back up and delete it.
+
+The GPU engines stay separate (`engine/aws/deploy.sh`); paste their address and token in Admin → Integrations.
+
 ## Go live on an Azure VM (what Ghost Post runs on)
 
 The app runs on its own always-on VM; the engines run on VMs that start when used and stop themselves when idle.
