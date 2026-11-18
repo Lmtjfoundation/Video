@@ -146,6 +146,13 @@ the engine and its side services as systemd services, and Caddy with a free HTTP
 
 Stop the pod when you aren't making films; the model stays on the volume, so the next start is quick.
 
+## Or on Modal (serverless: pay only while it works)
+
+`engine/modal_app.py` runs the same container on a Modal GPU (H100 by default) that starts when Vueio sends work and
+stops after 15 idle minutes. Models are kept in a Modal Volume. Steps are at the top of that file:
+`modal secret create vueio-engine ENGINE_TOKEN=…`, then `modal deploy engine/modal_app.py`, then paste the printed
+address and the token in Admin → Integrations → Video Engine (GPU).
+
 ## Or with Docker
 
 ```bash
