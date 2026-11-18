@@ -17,10 +17,36 @@ vi.mock("@azure/identity", () => ({
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  for (const k of ["AZURE_APIM_URL", "AZURE_AI_ENDPOINT", "AZURE_AI_KEY", "APPLICATIONINSIGHTS_CONNECTION_STRING", "AZURE_AI_FLUX2"]) delete process.env[k];
+  for (const k of ["AZURE_APIM_URL", "AZURE_AI_ENDPOINT", "AZURE_AI_KEY", "APPLICATIONINSIGHTS_CONNECTION_STRING", "AZURE_AI_FLUX2", "AZURE_AI_IDENTITY", "AZURE_AI_RESOURCE_ID", "AZURE_ONLY", "AZURE_AI_CHAT_DEPLOYMENT"]) delete process.env[k];
 });
 
 describe("Keyless Azure (managed identity)", () => {
+  it("signs in straight to the Azure AI resource with the identity when there's no API Management or key", async () => {
+    process.env.AZURE_AI_ENDPOINT = "https://vueio-ai-1.cognitiveservices.azure.com/";
+    const { foundryAuth, speechAuth } = await import("@/lib/azure-identity");
+    expect(await foundryAuth()).toBeNull(); // not switched on: nothing is called
+    process.env.AZURE_AI_IDENTITY = "1";
+    const f = await foundryAuth();
+    expect(f).toEqual({ base: "https://vueio-ai-1.cognitiveservices.azure.com", via: "identity", headers: { Authorization: "Bearer tok:https://cognitiveservices.azure.com/.default" } });
+    expect(await speechAuth("tts")).toBeNull(); // voices need the resource ID too
+    process.env.AZURE_AI_RESOURCE_ID = "/subscriptions/s/resourceGroups/g/providers/Microsoft.CognitiveServices/accounts/vueio-ai-1";
+    const sp = await speechAuth("tts");
+    expect(sp!.url).toBe("https://eastus2.tts.speech.microsoft.com/cognitiveservices/v1");
+    expect(sp!.headers.Authorization).toBe("Bearer aad#/subscriptions/s/resourceGroups/g/providers/Microsoft.CognitiveServices/accounts/vueio-ai-1#tok:https://cognitiveservices.azure.com/.default");
+    // A key, when there is one, still wins over the identity.
+    process.env.AZURE_AI_KEY = "k".repeat(84);
+    expect((await foundryAuth())!.via).toBe("key");
+  });
+
+  it("Azure-only writing uses the identity's token against the resource", async () => {
+    process.env.AZURE_AI_ENDPOINT = "https://vueio-ai-1.cognitiveservices.azure.com";
+    process.env.AZURE_AI_IDENTITY = "1";
+    process.env.AZURE_ONLY = "1";
+    process.env.AZURE_AI_CHAT_DEPLOYMENT = "grok-4-1-fast";
+    const { ownWriter } = await import("@/lib/own-writer");
+    expect(await ownWriter()).toMatchObject({ url: "https://vueio-ai-1.cognitiveservices.azure.com/openai/v1", key: "tok:https://cognitiveservices.azure.com/.default", model: "grok-4-1-fast", only: true });
+  });
+
   it("sends model and speech calls through API Management with the identity's token, no key", async () => {
     process.env.AZURE_APIM_URL = "https://gp-apim.azure-api.net/";
     const { foundryAuth, speechAuth } = await import("@/lib/azure-identity");

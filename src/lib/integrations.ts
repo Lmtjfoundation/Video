@@ -48,6 +48,10 @@ export interface Integrations {
   azureStorageContainer?: string;
   /** The Azure OpenAI chat deployment that writes in Azure-only mode (e.g. gpt-5.4-mini). */
   azureAiChatDeployment?: string;
+  /** "1": sign in to the Azure AI resource with the server's managed identity (no key, no API Management). */
+  azureAiIdentity?: string;
+  /** The Azure AI resource's ID (/subscriptions/…/accounts/…), for keyless voices. */
+  azureAiResourceId?: string;
   /**
    * Azure-only mode: the stronger model for premium and long writing (stories on Pro/Unlimited, full scripts), e.g. a
    * Kimi-K3.1-Pro deployment. Empty: everything uses the chat deployment.

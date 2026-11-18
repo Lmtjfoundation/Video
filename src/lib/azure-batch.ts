@@ -15,7 +15,7 @@ async function conn() {
   // API Management with the managed identity when set up, else the resource's endpoint and key.
   const auth = await foundryAuth();
   if (!auth) return null;
-  if (auth.via === "apim") return { base: `${auth.base}/openai/v1`, headers: auth.headers };
+  if (auth.via !== "key") return { base: `${auth.base}/openai/v1`, headers: auth.headers };
   return { base: `${auth.base}/openai/v1`, headers: { Authorization: `Bearer ${auth.headers["api-key"]}` } };
 }
 export const batchReady = async () => !!(await conn()) && (await batchDeployment()) !== "off";

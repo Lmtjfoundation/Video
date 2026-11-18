@@ -52,8 +52,8 @@ export async function ownWriter(): Promise<OwnWriter | null> {
   if (await azureOnly()) {
     const [auth, dep, prem] = await Promise.all([foundryAuth(), pick("azureAiChatDeployment", "AZURE_AI_CHAT_DEPLOYMENT"), pick("azureAiPremiumDeployment", "AZURE_AI_PREMIUM_DEPLOYMENT")]);
     const premium = prem && prem !== "off" ? prem : undefined;
-    // Through API Management with the managed identity: the identity's token is the bearer (fresh for each writer).
-    if (auth?.via === "apim") return { url: `${auth.base}/openai/v1`, key: auth.headers.Authorization.replace(/^Bearer /, ""), model: dep || "gpt-5.4-mini", mode: "only", only: true, sees: true, premium };
+    // Through API Management, or straight to the resource, with the managed identity: its token is the bearer (fresh for each writer).
+    if (auth?.via === "apim" || auth?.via === "identity") return { url: `${auth.base}/openai/v1`, key: auth.headers.Authorization.replace(/^Bearer /, ""), model: dep || "gpt-5.4-mini", mode: "only", only: true, sees: true, premium };
     const [endpoint, key] = await Promise.all([pick("azureAiEndpoint", "AZURE_AI_ENDPOINT"), pick("azureAiKey", "AZURE_AI_KEY")]);
     if (endpoint && key) {
       const u = new URL(endpoint.trim());
