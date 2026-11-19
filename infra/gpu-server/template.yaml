@@ -1,0 +1,253 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  On-demand GPU backend for a SaaS app. One NVIDIA GPU EC2 instance that stops
+  itself after a period of inactivity, a fixed public IP that survives stops,
+  and a "wake" HTTPS endpoint the app calls to start the server when needed.
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: g5.xlarge
+    AllowedValues: [g4dn.xlarge, g5.xlarge, g5.2xlarge, g6.xlarge, g6e.xlarge]
+    Description: GPU instance size. g5.xlarge = 1x NVIDIA A10G 24 GB, 4 vCPU, 16 GB RAM.
+  IdleMinutes:
+    Type: Number
+    Default: 30
+    MinValue: 5
+    Description: Stop the server after this many minutes with no GPU work and no app traffic.
+  AppPort:
+    Type: Number
+    Default: 8000
+    Description: TCP port your application's API listens on.
+  AllowedCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Who may reach the app port. Narrow this to your app servers' IPs when you can.
+  VolumeSizeGiB:
+    Type: Number
+    Default: 100
+    MinValue: 75
+    Description: Root disk size (gp3). The Deep Learning AMI needs at least 75 GiB.
+  WakeToken:
+    Type: String
+    NoEcho: true
+    MinLength: 24
+    Description: Shared secret your app sends in the x-wake-token header to start the server.
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
+    Description: AWS Deep Learning Base AMI (NVIDIA driver, CUDA, Docker preinstalled).
+
+Resources:
+  GpuSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: GPU SaaS backend - app port only (admin access via SSM, no SSH)
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref AppPort
+          ToPort: !Ref AppPort
+          CidrIp: !Ref AllowedCidr
+
+  GpuRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  GpuInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref GpuRole]
+
+  GpuInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiId
+      IamInstanceProfile: !Ref GpuInstanceProfile
+      SecurityGroupIds: [!GetAtt GpuSecurityGroup.GroupId]
+      # "shutdown -h now" inside the OS stops (not terminates) the instance,
+      # so the disk, installed software and your data are kept.
+      InstanceInitiatedShutdownBehavior: stop
+      MetadataOptions:
+        HttpTokens: required
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: !Ref VolumeSizeGiB
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - { Key: Name, Value: !Sub "${AWS::StackName}-gpu" }
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -eux
+          # ---- Docker + NVIDIA container runtime (already on the DLAMI; install if missing)
+          if ! command -v docker >/dev/null; then
+            curl -fsSL https://get.docker.com | sh
+          fi
+          if ! command -v nvidia-ctk >/dev/null; then
+            apt-get update && apt-get install -y nvidia-container-toolkit
+            nvidia-ctk runtime configure --runtime=docker && systemctl restart docker
+          fi
+          usermod -aG docker ubuntu || true
+
+          # ---- Idle auto-stop
+          mkdir -p /etc/gpu-idle
+          echo "IDLE_MINUTES=${IdleMinutes}" >  /etc/gpu-idle/config
+          echo "APP_PORT=${AppPort}"         >> /etc/gpu-idle/config
+          cat > /usr/local/bin/gpu-idle-check <<'EOF'
+          #!/bin/bash
+          # Runs every minute. Marks the server active when the GPU is busy,
+          # clients are connected to the app port, or an admin session is open.
+          # Stops the instance after IDLE_MINUTES with none of those.
+          source /etc/gpu-idle/config
+          STATE=/var/lib/gpu-idle/last-active
+          mkdir -p /var/lib/gpu-idle
+          NOW=$(date +%s)
+          # Fresh boot: start the idle clock now, so a wake-up gets the full grace period.
+          BOOT=$(( NOW - $(cut -d. -f1 /proc/uptime) ))
+          if [ ! -f $STATE ] || [ "$(cat $STATE)" -lt "$BOOT" ]; then echo $NOW > $STATE; fi
+
+          ACTIVE=0
+          GPU=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits 2>/dev/null | sort -n | tail -1)
+          [ -n "$GPU" ] && [ "$GPU" -gt 5 ] && ACTIVE=1
+          CONNS=$(ss -Htn state established "( sport = :$APP_PORT )" | wc -l)
+          [ "$CONNS" -gt 0 ] && ACTIVE=1
+          pgrep -f ssm-session-worker >/dev/null && ACTIVE=1
+          [ -f /etc/gpu-idle/keep-awake ] && ACTIVE=1
+
+          if [ $ACTIVE -eq 1 ]; then echo $NOW > $STATE; exit 0; fi
+          IDLE=$(( (NOW - $(cat $STATE)) / 60 ))
+          logger -t gpu-idle "idle $IDLE/$IDLE_MINUTES min"
+          if [ $IDLE -ge $IDLE_MINUTES ]; then
+            logger -t gpu-idle "stopping instance after $IDLE idle minutes"
+            shutdown -h now
+          fi
+          EOF
+          chmod +x /usr/local/bin/gpu-idle-check
+
+          cat > /etc/systemd/system/gpu-idle.service <<'EOF'
+          [Unit]
+          Description=Stop the GPU server when idle
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/gpu-idle-check
+          EOF
+          cat > /etc/systemd/system/gpu-idle.timer <<'EOF'
+          [Unit]
+          Description=Check GPU idleness every minute
+          [Timer]
+          OnBootSec=2min
+          OnUnitActiveSec=1min
+          [Install]
+          WantedBy=timers.target
+          EOF
+          systemctl daemon-reload
+          systemctl enable --now gpu-idle.timer
+
+  GpuElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref GpuInstance
+
+  # ---------------- Wake endpoint (Lambda function URL) ----------------
+  WakeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: start-this-gpu-only
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ec2:StartInstances
+                Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${GpuInstance}"
+              - Effect: Allow
+                Action: ec2:DescribeInstances
+                Resource: "*"
+
+  WakeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 15
+      Role: !GetAtt WakeRole.Arn
+      Environment:
+        Variables:
+          INSTANCE_ID: !Ref GpuInstance
+          WAKE_TOKEN: !Ref WakeToken
+          PUBLIC_IP: !Ref GpuElasticIp
+          APP_PORT: !Ref AppPort
+      Code:
+        ZipFile: |
+          import hmac, json, os, boto3
+          ec2 = boto3.client("ec2")
+          def reply(code, body):
+              return {"statusCode": code, "headers": {"content-type": "application/json"},
+                      "body": json.dumps(body)}
+          def handler(event, context):
+              headers = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
+              if not hmac.compare_digest(headers.get("x-wake-token", ""), os.environ["WAKE_TOKEN"]):
+                  return reply(401, {"error": "unauthorized"})
+              iid = os.environ["INSTANCE_ID"]
+              state = ec2.describe_instances(InstanceIds=[iid])["Reservations"][0]["Instances"][0]["State"]["Name"]
+              if state == "stopped":
+                  ec2.start_instances(InstanceIds=[iid])
+                  state = "pending"
+              base = f"http://{os.environ['PUBLIC_IP']}:{os.environ['APP_PORT']}"
+              # ready=True only once the instance is running; the app should
+              # still poll its own /health endpoint before sending work.
+              return reply(200, {"state": state, "ready": state == "running", "url": base})
+
+  WakeFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt WakeFunction.Arn
+      AuthType: NONE   # protected by the x-wake-token shared secret
+      Cors:
+        AllowOrigins: ["*"]
+        AllowMethods: [POST, GET]
+        AllowHeaders: [x-wake-token, content-type]
+
+  WakeFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref WakeFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+Outputs:
+  InstanceId:
+    Value: !Ref GpuInstance
+  PublicIp:
+    Description: Fixed public IP (kept across stops/starts).
+    Value: !Ref GpuElasticIp
+  AppUrl:
+    Value: !Sub "http://${GpuElasticIp}:${AppPort}"
+  WakeUrl:
+    Description: POST here with header x-wake-token to start the server.
+    Value: !GetAtt WakeFunctionUrl.FunctionUrl
+  AdminShell:
+    Description: Open a shell without SSH.
+    Value: !Sub "aws ssm start-session --target ${GpuInstance} --region ${AWS::Region}"
