@@ -33,7 +33,24 @@ You need Node 22 with Playwright and Chromium, Python 3 with `numpy` and `scipy`
 ./build.sh
 ```
 
-Rendering is CPU-only and takes a few minutes. To render single frames for checking:
+This builds the 1080p master, `out/ghost-post.mp4` (H.264). Rendering is CPU-only and takes a few minutes.
+
+### 8K
+
+```bash
+./build-8k.sh
+```
+
+This builds `out/ghost-post-8k.mp4`: native 7680×4320 at 30 fps, 10-bit HEVC (Main 10) with 320 kbps AAC audio, about 440 MB. The renderer draws in 1920×1080 logical coordinates at any output scale, so every 8K frame is redrawn, not upscaled. The build has two stages:
+
+1. Three browser workers draw JPEG frames to `out/frames8k/` (about 4 GB of temporary files). This stage is resumable: re-running skips frames already drawn.
+2. One HEVC encode. It needs about 6 GB of RAM, so it runs on its own, after drawing.
+
+On a 4-core machine with no GPU, drawing takes about 25 minutes and encoding about 30. The 8K file is larger than GitHub's 100 MB per-file limit, so it isn't committed.
+
+The audio is limited at 4× oversampling, so peaks stay under -1 dBTP after AAC encoding. Loudness is -16 LUFS.
+
+To render single frames for checking:
 
 ```bash
 node render.cjs --stills 12.5,21.0,30.2 /tmp/stills
