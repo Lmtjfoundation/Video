@@ -63,6 +63,39 @@ describe("engine capabilities and wake on use", () => {
     await expect(wakeEngine("https://gpu.example", { kind: "gpu", pollMs: 1, waitMs: 50 })).rejects.toThrow(/refused the token/);
   });
 
+  it("starts the GPU as soon as a task starts, without waiting, and leaves a running one alone", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const { wakeForTask, wakeEngine } = await import("@/lib/vm-wake");
+      process.env.VIDEO_ENGINE_GPU_URL = "https://gpu.example";
+      process.env.VIDEO_ENGINE_GPU_TOKEN = "gpu-token-123";
+      process.env.VM_WAKE_GPU = "url=https://abc123.lambda-url.us-east-1.on.aws/;token=wake-token-1234567";
+      let up = false;
+      const calls: string[] = [];
+      vi.stubGlobal("fetch", vi.fn(async (u: string) => {
+        calls.push(String(u));
+        if (String(u).includes("lambda-url")) {
+          up = true;
+          return Response.json({ state: "pending" });
+        }
+        return up ? Response.json({ ok: true }) : new Response("", { status: 502 });
+      }));
+      wakeForTask(); // returns at once
+      await vi.waitFor(() => expect(calls.filter((c) => c.includes("lambda-url"))).toHaveLength(1), { timeout: 3_000 });
+      // A minute later, with the GPU up: checked, not woken again.
+      vi.setSystemTime(Date.now() + 61_000);
+      const before = calls.length;
+      wakeForTask();
+      await vi.waitFor(() => expect(calls.length).toBeGreaterThan(before), { timeout: 3_000 });
+      expect(calls.filter((c) => c.includes("lambda-url"))).toHaveLength(1);
+      // AWS refusing the link (the Lambda's missing permission) says why.
+      vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 403 })));
+      await expect(wakeEngine("https://gpu.example", { kind: "gpu", pollMs: 1, waitMs: 50 })).rejects.toThrow(/lambda:InvokeFunction/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("lets a machine without a GPU do only its tools", async () => {
     vi.stubGlobal("fetch", vi.fn(async (u: string) => (String(u).endsWith("/v1/info") ? Response.json({ profile: "tools", capabilities: ["upscale", "remove-bg", "isolate"] }) : new Response("{}", { status: 404 }))));
     const { ownEngineReady, testOwnEngine } = await import("@/lib/own-video");

@@ -99,7 +99,14 @@ export function wakeEngine(url: string, o: { waitMs?: number; pollMs?: number; k
       if (w.url) {
         // Wake link (AWS): it starts the machine and answers with its state; the engine is polled below.
         const res = await fetch(w.url, { method: "POST", headers: { "x-wake-token": w.token ?? "" }, signal: AbortSignal.timeout(30_000) }).catch(() => null);
-        if (!res?.ok) throw new Error(res?.status === 401 ? "The engine's wake link refused the token. Check the wake line in Admin → Integrations." : `The engine's wake link didn't start the machine (${res ? `HTTP ${res.status}` : "no answer"}).`);
+        if (!res?.ok)
+          throw new Error(
+            res?.status === 401
+              ? "The engine's wake link refused the token. Check the wake line in Admin → Integrations."
+              : res?.status === 403
+                ? "AWS refused the engine's wake link (HTTP 403): its Lambda function needs both the lambda:InvokeFunctionUrl and lambda:InvokeFunction permissions."
+                : `The engine's wake link didn't start the machine (${res ? `HTTP ${res.status}` : "no answer"}).`,
+          );
       } else {
         const tok = w.identity
           ? // The app VM's own identity, from Azure's instance metadata service (reachable only from inside the VM).
@@ -130,4 +137,27 @@ export function wakeEngine(url: string, o: { waitMs?: number; pollMs?: number; k
   })();
   starting.set(kind, p);
   return p;
+}
+
+let lastEarly = 0;
+/**
+ * A task just started (a background job or a render): start the engine's machines now, without waiting, so a GPU that
+ * stopped itself while idle is booting while the task writes its script and voice instead of when it first needs the
+ * engine. Each engine with wake on use is checked; one that already answers is left alone. At most once a minute,
+ * and it never throws (the task's own engine calls still wake and wait as before).
+ */
+export function wakeForTask(): void {
+  if (Date.now() - lastEarly < 60_000) return;
+  lastEarly = Date.now();
+  void (async () => {
+    const { videoEngineGpuUrl, videoEngineUrl } = await import("./integrations");
+    const seen = new Set<string>();
+    for (const [kind, url] of [["gpu", await videoEngineGpuUrl()], ["main", await videoEngineUrl()]] as const) {
+      const u = (url ?? "").trim().replace(/\/+$/, "");
+      if (!u || seen.has(u) || !(await wakeConfigured(kind))) continue;
+      seen.add(u);
+      if (await engineHealthy(u)) continue;
+      await wakeEngine(u, { kind, waitMs: 15 * 60_000 }).catch((e) => console.warn(`[vm-wake] early wake for a task: ${(e as Error).message.slice(0, 200)}`));
+    }
+  })().catch(() => {});
 }

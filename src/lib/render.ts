@@ -73,6 +73,7 @@ async function announce(userId: string, post: Post, status: "done" | "failed", m
 /** Renders one video at a time so a burst of requests can't starve the web server of CPU. */
 export function enqueueRender(userId: string, postId: string, credits = 0) {
   inFlight.add(postId);
+  void import("./vm-wake").then((m) => m.wakeForTask()); // a GPU that stopped while idle starts booting now
   queue = queue.then(() =>
     asUser(userId, () => withPreview(userId, postId, () => renderVideoPost(userId, postId, credits)))
       .catch(() => {})

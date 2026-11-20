@@ -100,6 +100,7 @@ export async function startJob(userId: string, o: { kind: JobKind; title: string
   const t = nowIso();
   const job: Job = { id: uid("job"), kind: o.kind, title: o.title.slice(0, 120), status: "queued", message: "Waiting to start…", createdAt: t, updatedAt: t, ...(o.resume ? { resume: { ...o.resume, userId } } : {}) };
   await put(job);
+  (await import("./vm-wake")).wakeForTask(); // a GPU that stopped while idle starts booting now
   run(userId, job, fn, false);
   return { ...job, status: "queued", message: "Waiting to start…" };
 }
