@@ -1,0 +1,44 @@
+{
+  "fps": 30,
+  "duration": 36,
+  "width": 1920,
+  "height": 1080,
+  "bpm": 96,
+  "gunStart": 12.5,
+  "typed": [
+    { "text": "SOUTH CENTRAL, L.A.", "t": 0.9, "cps": 16, "x": 120, "y": 862, "size": 46, "hide": 3.7 },
+    { "text": "2:13 A.M.", "t": 2.4, "cps": 12, "x": 120, "y": 914, "size": 34, "hide": 3.7 },
+    { "text": "SOME CORNERS KEEP THEIR OWN.", "t": 31.8, "cps": 22, "x": 960, "y": 742, "size": 40, "hide": 99 }
+  ],
+  "cards": { "deuce": 4.6, "ghost": 6.6 },
+  "ghostAppear": 6.0,
+  "subs": [
+    { "who": "DEUCE", "line": "You standin' on my corner, homie.", "t0": 8.15, "t1": 9.6 },
+    { "who": "???", "line": "Been standin' here since '92.", "t0": 10.5, "t1": 11.8 }
+  ],
+  "cuts": [8.0, 9.6, 10.4, 11.8, 14.75, 16.75, 18.5, 20.3125, 28.0],
+  "draw": 12.5,
+  "deuceShots": [12.5, 12.8125, 13.125, 13.4375, 16.875, 17.1875, 17.5, 17.8125, 18.125, 18.4375, 18.75, 19.0625, 19.375, 19.6875, 20.38],
+  "ghostShots": [
+    { "t": 13.75, "x": -120, "y": 560 },
+    { "t": 14.0625, "x": 870, "y": 684 },
+    { "t": 14.375, "x": 960, "y": 742 },
+    { "t": 14.6875, "x": 640, "y": 736 }
+  ],
+  "glass": { "t": 14.0625, "x": 870, "y": 684 },
+  "sparks": [ { "t": 14.375, "x": 960, "y": 742 }, { "t": 14.6875, "x": 640, "y": 736 } ],
+  "reloadHits": [ { "t": 15.3125, "x": 1500, "y": 430 }, { "t": 16.25, "x": 1690, "y": 690 } ],
+  "reload": { "start": 14.75, "magOut": 15.0, "magLand": 15.32, "magIn": 15.625, "rackBack": 15.9375, "rackFwd": 16.0, "end": 16.75 },
+  "blam": [
+    { "t": 17.1875, "x": 1240, "y": 330, "r": -10 },
+    { "t": 18.125, "x": 760, "y": 350, "r": 8 },
+    { "t": 19.0625, "x": 600, "y": 330, "r": -6 }
+  ],
+  "casing": { "delay": 0.55, "gravity": 1600 },
+  "bt": {
+    "slowStart": 20.42, "slowFull": 20.55, "fastStart": 25.15, "fastFull": 25.35, "minSpeed": 0.04,
+    "bulletStart": 20.42, "bulletHit": 24.6, "bulletEnd": 25.15, "snap": 25.3, "ringEvery": 0.22
+  },
+  "aftermath": { "dissolve0": 25.9, "dissolve1": 28.0, "lower0": 26.5, "lower1": 27.5, "push0": 28.0, "push1": 30.3, "photoGlint": 30.0 },
+  "title": { "t": 30.5, "slash": 31.2, "fadeOut": 35.0, "end": 35.6 }
+}
