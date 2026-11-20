@@ -73,3 +73,17 @@ To keep the server awake during maintenance, run `sudo touch /etc/gpu-idle/keep-
 - This setup serves plain **HTTP**. For a public SaaS, put HTTPS in front of it, either with a reverse proxy such as Caddy or nginx with a TLS certificate, or with a load balancer.
 - Narrow `AllowedCidr` to your app servers' IPs.
 - One instance means requests wait through a cold start of about 1–3 minutes after an idle stop. If users can't wait that long, raise `IdleMinutes` or keep the server running during business hours.
+
+## Ghost Post (Vueio) wake on use for this AWS engine
+
+`ghost-post-aws-wake.patch` adds AWS support to Ghost Post's wake on use (`src/lib/vm-wake.ts`, the integrations
+validation and tests), written against `nexus-pulse-autopilot` at 5ad27cc. With it, the app's wake line can be
+`aws=<WakeUrl>;token=<wake token from SSM /saas-gpu/wake-token>;vm=saas-gpu`. Tested: the full suite passes
+(68 files, 396 tests, 1 skipped) and `tsc --noEmit` is clean. Not applied to `nexus-pulse-autopilot` yet; that branch
+deploys to the live servers, so apply it only with the owner's approval:
+
+    git checkout nexus-pulse-autopilot && git apply infra/gpu-server/ghost-post-aws-wake.patch
+
+Changes made directly with EC2 (outside this stack) on i-09b833f0739de464c: root volume grown to 300 GB, port 8000
+removed and 80/443 opened on its security group. The stack template in this folder expects a SubnetId and defaults to
+g6e.xlarge (L40S), which had no capacity in us-east-1 on 2026-11-19.

@@ -1,0 +1,165 @@
+diff --git a/src/app/api/admin/integrations/route.ts b/src/app/api/admin/integrations/route.ts
+index cfcde55..37415bd 100644
+--- a/src/app/api/admin/integrations/route.ts
++++ b/src/app/api/admin/integrations/route.ts
+@@ -36,14 +36,14 @@ const KEY_RULES: Record<string, { re: RegExp; msg: string }> = {
+   azureAiImageDeployment: { re: /^[A-Za-z0-9._-]{1,64}$/, msg: "The deployment name is what you called the FLUX Kontext deployment, e.g. flux-kontext." },
+   videoEngineUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the engine's web address, e.g. https://ghostpost-1a2b3c.eastus.cloudapp.azure.com (Azure) or https://abc123-8000.proxy.runpod.net (RunPod)." },
+   videoEngineToken: { re: /^[A-Za-z0-9_.~-]{12,}$/, msg: "Paste the ENGINE_TOKEN you started the engine with (12+ letters, numbers, - or _)." },
+-  vmWake: { re: /^(?=.*tenant=)(?=.*client=)(?=.*secret=)(?=.*subscription=)(?=.*group=)(?=.*vm=)[^\s]{40,1000}$/, msg: "Paste the whole wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" },
++  vmWake: { re: /^(?:(?=.*tenant=)(?=.*client=)(?=.*secret=)(?=.*subscription=)(?=.*group=)(?=.*vm=)|(?=aws=https:\/\/)(?=.*token=))[^\s]{40,1000}$/, msg: "Paste the whole wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=… (Azure) or aws=https://…;token=…;vm=… (AWS)" },
+   uploadPostKey: { re: /^[A-Za-z0-9_.\-]{16,400}$/, msg: "Paste the API key from Upload-Post (app.upload-post.com → API keys)." },
+   ownWriterUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the writer's address, e.g. https://writer.20-127-104-87.sslip.io/v1 (it ends in /v1)." },
+   ownWriterKey: { re: /^[A-Za-z0-9_.~-]{12,200}$/, msg: "Paste the writer's key (OWN_WRITER_KEY on the server)." },
+   ownWriterModel: { re: /^[A-Za-z0-9_.:/-]{2,120}$/, msg: "A model name looks like qwen3:4b-instruct-2507-q4_K_M." },
+   videoEngineGpuUrl: { re: /^https?:\/\/[^\s/$.?#][^\s]*$/i, msg: "Paste the GPU engine's web address, e.g. https://20-1-2-3.sslip.io." },
+   videoEngineGpuToken: { re: /^[A-Za-z0-9_.~-]{12,}$/, msg: "Paste the ENGINE_TOKEN the GPU engine was started with (12+ letters, numbers, - or _)." },
+-  vmWakeGpu: { re: /^(?=.*tenant=)(?=.*client=)(?=.*secret=)(?=.*subscription=)(?=.*group=)(?=.*vm=)[^\s]{40,1000}$/, msg: "Paste the GPU machine's whole wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" },
++  vmWakeGpu: { re: /^(?:(?=.*tenant=)(?=.*client=)(?=.*secret=)(?=.*subscription=)(?=.*group=)(?=.*vm=)|(?=aws=https:\/\/)(?=.*token=))[^\s]{40,1000}$/, msg: "Paste the GPU machine's whole wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=… (Azure) or aws=https://…;token=…;vm=… (AWS)" },
+   pixabayKey: { re: /^[A-Za-z0-9-]{20,}$/, msg: "That doesn't look like a Pixabay API key. Sign in at pixabay.com/api/docs and copy the value in the \"key\" row (numbers, a dash, then letters and numbers)." },
+   pexelsKey: { re: /^[A-Za-z0-9]{20,}$/, msg: "That doesn't look like a Pexels API key (pexels.com/api)." },
+   resendKey: { re: /^re_[A-Za-z0-9_]{10,}$/, msg: "A Resend API key starts with re_ (resend.com → API Keys)." },
+diff --git a/src/lib/vm-wake.ts b/src/lib/vm-wake.ts
+index 510b0a4..599eaf1 100644
+--- a/src/lib/vm-wake.ts
++++ b/src/lib/vm-wake.ts
+@@ -8,6 +8,8 @@ import "server-only";
+  * When Vueio itself runs on an Azure VM, its managed identity can do it instead, with no secret to store:
+  *   identity=1;subscription=…;group=GHOSTPOST;vm=Ghost
+  * (give the app VM's identity "Virtual Machine Contributor" on the engine VM).
++ * An engine on AWS (infra/gpu-server: an EC2 GPU instance with a wake link that may only start that one instance):
++ *   aws=https://<id>.lambda-url.<region>.on.aws/;token=<the stack's wake token>;vm=saas-gpu
+  */
+ export interface WakeSettings {
+   /** Empty when the app VM's managed identity is used. */
+@@ -18,6 +20,9 @@ export interface WakeSettings {
+   subscription: string;
+   group: string;
+   vm: string;
++  /** AWS: the wake link (HTTPS) and its token. Set only for an AWS engine; the Azure fields are empty then. */
++  aws?: string;
++  token?: string;
+ }
+ 
+ const KEYS = ["tenant", "client", "secret", "subscription", "group", "vm"] as const;
+@@ -32,6 +37,16 @@ export function parseWake(line: string | undefined | null): WakeSettings | null
+       .filter((p) => p.length >= 2)
+       .map(([k, ...v]) => [k.trim().toLowerCase(), v.join("=").trim()]),
+   );
++  if (parts.aws !== undefined) {
++    let url: URL | null = null;
++    try {
++      url = new URL(parts.aws);
++    } catch {
++      url = null;
++    }
++    const ok = url?.protocol === "https:" && /^[A-Za-z0-9_.~-]{24,200}$/.test(parts.token ?? "") && /^[A-Za-z0-9._-]{1,64}$/.test(parts.vm || "aws-engine");
++    return ok ? { tenant: "", client: "", secret: "", subscription: "", group: "", vm: parts.vm || "aws-engine", aws: parts.aws, token: parts.token } : null;
++  }
+   const guid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+   const target = guid.test(parts.subscription ?? "") && /^[A-Za-z0-9._()-]{1,90}$/.test(parts.group ?? "") && /^[A-Za-z0-9._-]{1,64}$/.test(parts.vm ?? "");
+   if (/^(1|true|yes)$/i.test(parts.identity ?? "")) {
+@@ -68,6 +83,15 @@ export const engineHealthy = async (url: string) => {
+ 
+ const starting = new Map<WakeKind, Promise<void>>();
+ 
++async function waitHealthy(url: string, vm: string, o: { waitMs?: number; pollMs?: number }) {
++  const deadline = Date.now() + (o.waitMs ?? 5 * 60_000);
++  while (Date.now() < deadline) {
++    if (await engineHealthy(url)) return;
++    await new Promise((r) => setTimeout(r, o.pollMs ?? 5_000));
++  }
++  throw new Error(`The VM “${vm}” was started but the engine didn't answer within ${Math.round((o.waitMs ?? 300_000) / 60_000)} minutes. Try again in a minute.`);
++}
++
+ /**
+  * Starts the VM (if wake is set up) and waits until the engine at `url` answers, up to `waitMs`. One start at a
+  * time: requests that arrive meanwhile wait for the same one. Throws with a plain reason when it can't.
+@@ -80,6 +104,14 @@ export function wakeEngine(url: string, o: { waitMs?: number; pollMs?: number; k
+     try {
+       const w = await wakeLine(kind);
+       if (!w) throw new Error("The engine's machine is off and wake on use isn't set up (Admin → Integrations → Wake the engine's VM).");
++      if (w.aws) {
++        const res = await fetch(w.aws, { method: "POST", headers: { "x-wake-token": w.token ?? "" }, signal: AbortSignal.timeout(20_000) }).catch(() => null);
++        if (res?.status === 401) throw new Error("The AWS wake link refused the token. Check the token= part of the wake line (the saas-gpu stack's wake token).");
++        if (!res?.ok) throw new Error(`The AWS wake link couldn't start the engine (${res ? `HTTP ${res.status}` : "no answer"}).`);
++        console.info(`[vm-wake] starting ${w.vm} on AWS`);
++        await waitHealthy(url, w.vm, o);
++        return;
++      }
+       const tok = w.identity
+         ? // The app VM's own identity, from Azure's instance metadata service (reachable only from inside the VM).
+           await fetch("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fmanagement.azure.com%2F", { headers: { Metadata: "true" }, signal: AbortSignal.timeout(10_000) }).catch(() => null)
+@@ -96,12 +128,7 @@ export function wakeEngine(url: string, o: { waitMs?: number; pollMs?: number; k
+       });
+       if (!start.ok && start.status !== 202) throw new Error(`Azure couldn't start the VM “${w.vm}” (HTTP ${start.status}).`);
+       console.info(`[vm-wake] starting ${w.vm}`);
+-      const deadline = Date.now() + (o.waitMs ?? 5 * 60_000);
+-      while (Date.now() < deadline) {
+-        if (await engineHealthy(url)) return;
+-        await new Promise((r) => setTimeout(r, o.pollMs ?? 5_000));
+-      }
+-      throw new Error(`The VM “${w.vm}” was started but the engine didn't answer within ${Math.round((o.waitMs ?? 300_000) / 60_000)} minutes. Try again in a minute.`);
++      await waitHealthy(url, w.vm, o);
+     } finally {
+       starting.delete(kind);
+     }
+diff --git a/tests/engine-wake.test.ts b/tests/engine-wake.test.ts
+index 6d3c01e..61ac4e9 100644
+--- a/tests/engine-wake.test.ts
++++ b/tests/engine-wake.test.ts
+@@ -137,6 +137,54 @@ describe("engine capabilities and wake on use", () => {
+     expect(seen).toEqual(["imds:true", "start:Bearer mi"]);
+   });
+ 
++  it("reads an AWS wake line (wake link + token)", async () => {
++    const { parseWake } = await import("@/lib/vm-wake");
++    const AWS = "aws=https://abc123.lambda-url.us-east-1.on.aws/;token=" + "t".repeat(32) + ";vm=saas-gpu";
++    expect(parseWake(AWS)).toEqual({ tenant: "", client: "", secret: "", subscription: "", group: "", vm: "saas-gpu", aws: "https://abc123.lambda-url.us-east-1.on.aws/", token: "t".repeat(32) });
++    expect(parseWake(AWS.replace(";vm=saas-gpu", ""))?.vm).toBe("aws-engine");
++    expect(parseWake(AWS.replace("https://", "http://"))).toBeNull(); // the token never goes over plain HTTP
++    expect(parseWake(AWS.replace("t".repeat(32), "short"))).toBeNull();
++    expect(parseWake("aws=not a url;token=" + "t".repeat(32))).toBeNull();
++  });
++
++  it("starts the switched-off AWS engine through its wake link, waits for it, then does the job", async () => {
++    const WAKE = "https://abc123.lambda-url.us-east-1.on.aws/";
++    process.env.VM_WAKE = `aws=${WAKE};token=${"w".repeat(40)};vm=saas-gpu`;
++    let up = false;
++    const calls: string[] = [];
++    vi.stubGlobal("fetch", vi.fn(async (u: string, init?: RequestInit) => {
++      const url = String(u);
++      calls.push(`${init?.method ?? "GET"} ${url}`);
++      if (url === WAKE) {
++        expect(new Headers(init?.headers).get("x-wake-token")).toBe("w".repeat(40));
++        up = true;
++        return Response.json({ state: "pending", ready: false, url: "https://ghost.example" });
++      }
++      if (!up) throw new TypeError("fetch failed: connect ETIMEDOUT");
++      if (url.endsWith("/health")) return Response.json({ ok: true });
++      if (url.endsWith("/v1/images") && init?.method === "POST") return Response.json({ id: "j1", status: "queued" });
++      if (url.endsWith("/v1/images/j1")) return Response.json({ status: "succeeded" });
++      if (url.endsWith("/v1/images/j1/file")) return new Response(new Uint8Array(PNG));
++      return new Response("{}", { status: 404 });
++    }));
++    const { ownImageTool } = await import("@/lib/own-video");
++    const out = await ownImageTool({ op: "upscale", image: PNG, mime: "image/png" });
++    expect(out.equals(PNG)).toBe(true);
++    expect(calls.filter((c) => c.includes("lambda-url"))).toEqual([`POST ${WAKE}`]);
++    expect(calls.some((c) => c.includes("azure.com") || c.includes("microsoftonline"))).toBe(false);
++    expect(calls.indexOf("GET https://ghost.example/health")).toBeGreaterThan(calls.indexOf(`POST ${WAKE}`));
++  });
++
++  it("says plainly when the AWS wake link refuses the token", async () => {
++    process.env.VM_WAKE = `aws=https://abc123.lambda-url.us-east-1.on.aws/;token=${"w".repeat(40)};vm=saas-gpu`;
++    vi.stubGlobal("fetch", vi.fn(async (u: string) => {
++      if (String(u).includes("lambda-url")) return Response.json({ error: "unauthorized" }, { status: 401 });
++      throw new TypeError("fetch failed: connect ETIMEDOUT");
++    }));
++    const { wakeEngine } = await import("@/lib/vm-wake");
++    await expect(wakeEngine("https://ghost.example", { waitMs: 50, pollMs: 10 })).rejects.toThrow(/refused the token/);
++  });
++
+   it("keeps the engine's own 503 as its answer (no wake)", async () => {
+     process.env.VM_WAKE = LINE;
+     process.env.VIDEO_ENGINE_URL = "https://never-answered.example"; // no capabilities remembered for this one

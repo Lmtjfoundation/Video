@@ -1,31 +1,30 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  On-demand GPU backend for a SaaS app. One NVIDIA GPU EC2 instance that stops
-  itself after a period of inactivity, a fixed public IP that survives stops,
-  and a "wake" HTTPS endpoint the app calls to start the server when needed.
+  On-demand GPU server for the Ghost Post (Vueio) video engine. One NVIDIA GPU EC2
+  instance that stops itself after a period of inactivity, a fixed public IP that
+  survives stops, and a "wake" HTTPS endpoint the app calls to start it when needed.
 
 Parameters:
   InstanceType:
     Type: String
-    Default: g5.xlarge
-    AllowedValues: [g4dn.xlarge, g5.xlarge, g5.2xlarge, g6.xlarge, g6e.xlarge]
-    Description: GPU instance size. g5.xlarge = 1x NVIDIA A10G 24 GB, 4 vCPU, 16 GB RAM.
+    Default: g6e.xlarge
+    AllowedValues: [g5.xlarge, g5.2xlarge, g6e.xlarge, g6e.2xlarge]
+    Description: GPU instance size. g6e.xlarge = 1x NVIDIA L40S 48 GB, 4 vCPU, 32 GB RAM.
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet in an Availability Zone that offers the instance type (g6e is not in every zone).
   IdleMinutes:
     Type: Number
     Default: 30
     MinValue: 5
-    Description: Stop the server after this many minutes with no GPU work and no app traffic.
-  AppPort:
-    Type: Number
-    Default: 8000
-    Description: TCP port your application's API listens on.
+    Description: Stop the server after this many minutes with no GPU work and no authorized engine requests.
   AllowedCidr:
     Type: String
     Default: 0.0.0.0/0
-    Description: Who may reach the app port. Narrow this to your app servers' IPs when you can.
+    Description: Who may reach HTTPS (443). Port 80 stays open to all for Let's Encrypt certificate checks.
   VolumeSizeGiB:
     Type: Number
-    Default: 100
+    Default: 300
     MinValue: 75
     Description: Root disk size (gp3). The Deep Learning AMI needs at least 75 GiB.
   WakeToken:
@@ -42,12 +41,10 @@ Resources:
   GpuSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: GPU SaaS backend - app port only (admin access via SSM, no SSH)
+      GroupDescription: GPU engine - HTTPS only (admin access via SSM, no SSH)
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: !Ref AppPort
-          ToPort: !Ref AppPort
-          CidrIp: !Ref AllowedCidr
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: !Ref AllowedCidr }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
 
   GpuRole:
     Type: AWS::IAM::Role
@@ -72,6 +69,7 @@ Resources:
       InstanceType: !Ref InstanceType
       ImageId: !Ref AmiId
       IamInstanceProfile: !Ref GpuInstanceProfile
+      SubnetId: !Ref SubnetId
       SecurityGroupIds: [!GetAtt GpuSecurityGroup.GroupId]
       # "shutdown -h now" inside the OS stops (not terminates) the instance,
       # so the disk, installed software and your data are kept.
@@ -104,12 +102,12 @@ Resources:
           # ---- Idle auto-stop
           mkdir -p /etc/gpu-idle
           echo "IDLE_MINUTES=${IdleMinutes}" >  /etc/gpu-idle/config
-          echo "APP_PORT=${AppPort}"         >> /etc/gpu-idle/config
           cat > /usr/local/bin/gpu-idle-check <<'EOF'
           #!/bin/bash
-          # Runs every minute. Marks the server active when the GPU is busy,
-          # clients are connected to the app port, or an admin session is open.
-          # Stops the instance after IDLE_MINUTES with none of those.
+          # Runs every minute. Marks the server active when the GPU is busy, the
+          # engine answered an authorized /v1 request in the last 3 minutes (from
+          # Caddy's access log: internet scanners get 401/404 and don't count), or
+          # an admin session is open. Stops the instance after IDLE_MINUTES idle.
           source /etc/gpu-idle/config
           STATE=/var/lib/gpu-idle/last-active
           mkdir -p /var/lib/gpu-idle
@@ -121,8 +119,28 @@ Resources:
           ACTIVE=0
           GPU=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits 2>/dev/null | sort -n | tail -1)
           [ -n "$GPU" ] && [ "$GPU" -gt 5 ] && ACTIVE=1
-          CONNS=$(ss -Htn state established "( sport = :$APP_PORT )" | wc -l)
-          [ "$CONNS" -gt 0 ] && ACTIVE=1
+          REQS=$(python3 - /var/log/caddy/engine-access.log <<'PY'
+          import json, sys, time
+          try:
+              with open(sys.argv[1], "rb") as f:
+                  f.seek(0, 2)
+                  f.seek(max(0, f.tell() - 262144))
+                  lines = f.read().decode("utf-8", "ignore").splitlines()
+          except OSError:
+              lines = []
+          cutoff, n = time.time() - 180, 0
+          for line in lines:
+              try:
+                  e = json.loads(line)
+                  uri = str((e.get("request") or {}).get("uri", ""))
+                  if float(e.get("ts", 0)) >= cutoff and int(e.get("status", 999)) < 400 and uri.startswith("/v1"):
+                      n += 1
+              except (ValueError, TypeError, AttributeError):
+                  continue
+          print(n)
+          PY
+          )
+          [ "0$REQS" -gt 0 ] 2>/dev/null && ACTIVE=1
           pgrep -f ssm-session-worker >/dev/null && ACTIVE=1
           [ -f /etc/gpu-idle/keep-awake ] && ACTIVE=1
 
@@ -197,7 +215,6 @@ Resources:
           INSTANCE_ID: !Ref GpuInstance
           WAKE_TOKEN: !Ref WakeToken
           PUBLIC_IP: !Ref GpuElasticIp
-          APP_PORT: !Ref AppPort
       Code:
         ZipFile: |
           import hmac, json, os, boto3
@@ -214,7 +231,7 @@ Resources:
               if state == "stopped":
                   ec2.start_instances(InstanceIds=[iid])
                   state = "pending"
-              base = f"http://{os.environ['PUBLIC_IP']}:{os.environ['APP_PORT']}"
+              base = "https://" + os.environ["PUBLIC_IP"].replace(".", "-") + ".sslip.io"
               # ready=True only once the instance is running; the app should
               # still poll its own /health endpoint before sending work.
               return reply(200, {"state": state, "ready": state == "running", "url": base})
@@ -243,8 +260,9 @@ Outputs:
   PublicIp:
     Description: Fixed public IP (kept across stops/starts).
     Value: !Ref GpuElasticIp
-  AppUrl:
-    Value: !Sub "http://${GpuElasticIp}:${AppPort}"
+  EngineUrl:
+    Description: The engine's HTTPS address (Caddy + Let's Encrypt on <ip>.sslip.io).
+    Value: !Join ["", ["https://", !Join ["-", !Split [".", !Ref GpuElasticIp]], ".sslip.io"]]
   WakeUrl:
     Description: POST here with header x-wake-token to start the server.
     Value: !GetAtt WakeFunctionUrl.FunctionUrl
