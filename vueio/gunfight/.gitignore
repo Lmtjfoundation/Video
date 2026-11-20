@@ -1,2 +1,4 @@
 out/audio.wav
 out/video.mp4
+out/seg/
+out/*-8k.mp4
