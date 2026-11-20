@@ -1,5 +1,6 @@
 import "server-only";
 import { assCaptions, estimateWordTimes, subtitlesFilter } from "./captions-ass";
+import { showPreview, withPreview } from "./preview";
 import { makeImage } from "./pictures";
 import { spawn } from "child_process";
 import { createHash } from "crypto";
@@ -71,7 +72,7 @@ async function announce(userId: string, post: Post, status: "done" | "failed", m
 export function enqueueRender(userId: string, postId: string, credits = 0) {
   inFlight.add(postId);
   queue = queue.then(() =>
-    asUser(userId, () => renderVideoPost(userId, postId, credits))
+    asUser(userId, () => withPreview(userId, postId, () => renderVideoPost(userId, postId, credits)))
       .catch(() => {})
       .finally(() => inFlight.delete(postId)),
   );
@@ -763,6 +764,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
         job.visual = { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] };
         segs.push(await renderSegment(job, i, dir, W, H, plan.style === "fiction"));
       }
+      await showPreview({ file: segs.at(-1)!, mime: "video/mp4", label: `Scene ${i + 1} of ${jobs.length}` });
       const [from, span] = ai ? [50, 45] : [40, 55];
       await setRender(post, { progress: Math.round(from + (span * (i + 1)) / jobs.length), message: `Rendering scene ${i + 1} of ${jobs.length}…` });
     }

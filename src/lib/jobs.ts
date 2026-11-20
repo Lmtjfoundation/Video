@@ -1,5 +1,6 @@
 import "server-only";
-import { asUser, db } from "./db";
+import { asUser, currentUserId, db } from "./db";
+import { listPreview, withPreview, type PreviewItem } from "./preview";
 import { kvGet, kvSet } from "./repo";
 import type { Post } from "./types";
 import { nowIso, uid } from "./utils";
@@ -116,14 +117,14 @@ function run(userId: string, job: Job, fn: JobFn, resumed: boolean) {
         try {
           // Long jobs say which step they're on ("Shot 2 of 5…"); the tray shows the latest. Saves run one after
           // another, and all finish before the final save, so a late one can never overwrite "done".
-          const r = await fn(
+          const r = await withPreview(userId, job.id, () => fn(
             (message) => {
               job.message = message.slice(0, 200);
               const snapshot = { ...job, updatedAt: nowIso() };
               saving = saving.then(() => put(snapshot)).catch(() => {});
             },
             { jobId: job.id, resumed },
-          );
+          ));
           await saving;
           job.status = "done";
           job.postId = r.post?.id;
@@ -185,6 +186,8 @@ export async function resumeInterrupted(): Promise<number> {
 /** A job as the tray shows it: a finished job whose video is rendering reads as rendering, with its progress. */
 export interface JobView extends Job {
   progress: number;
+  /** The live preview: pieces made so far (a job's own, or its video's render) and where to fetch them. */
+  preview?: { key: string; items: PreviewItem[] };
 }
 
 export async function jobViews(): Promise<JobView[]> {
@@ -212,6 +215,17 @@ export async function jobViews(): Promise<JobView[]> {
         view.status = "failed";
         view.message = r.message || "The render failed.";
       } else if (r?.status === "done") view.message = r.message || "Ready";
+    }
+    // A finished job whose video is rendering shows the render's scenes; otherwise its own pieces.
+    const owner = currentUserId();
+    if (owner && view.status !== "failed") {
+      for (const key of j.postId ? [j.postId, j.id] : [j.id]) {
+        const items = await listPreview(owner, key);
+        if (items.length) {
+          view.preview = { key, items };
+          break;
+        }
+      }
     }
     out.push(view);
   }

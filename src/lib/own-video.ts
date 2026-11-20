@@ -1,4 +1,5 @@
 import "server-only";
+import { showPreview } from "./preview";
 import { videoEngineGpuToken, videoEngineGpuUrl, videoEngineToken, videoEngineUrl } from "./integrations";
 import { MediaGenError } from "./gemini-media";
 import { sleep } from "./utils";
@@ -203,7 +204,11 @@ export async function ownClip(o: OwnClipRequest): Promise<Buffer> {
   const deadline = Date.now() + (o.timeoutMs ?? 25 * 60_000);
   for (;;) {
     const s = await call<{ status: string; error?: string | null }>(e, `/v1/videos/${job.id}`);
-    if (s.status === "succeeded") return call<Buffer>(e, `/v1/videos/${job.id}/file`, {}, true);
+    if (s.status === "succeeded") {
+      const clip = await call<Buffer>(e, `/v1/videos/${job.id}/file`, {}, true);
+      await showPreview({ bytes: clip, mime: "video/mp4", label: "Clip" }); // the jobs tray's live preview
+      return clip;
+    }
     if (s.status === "failed") throw new MediaGenError(`The video engine couldn't make this clip: ${(s.error ?? "no reason given").slice(0, 300)}`);
     if (Date.now() > deadline) throw new MediaGenError("The video engine took too long on this clip. A bigger GPU makes clips faster.");
     await sleep(5000);

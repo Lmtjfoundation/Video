@@ -5,12 +5,14 @@ import { CheckCircle2, ChevronDown, Loader2, TriangleAlert } from "lucide-react"
 import { api } from "@/lib/client";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { LivePreview, type PreviewItem } from "./live-preview";
 
-type Job = { id: string; title: string; status: "queued" | "running" | "done" | "failed"; message: string; progress: number; href?: string; updatedAt: string };
+type Job = { id: string; title: string; status: "queued" | "running" | "done" | "failed"; message: string; progress: number; href?: string; updatedAt: string; preview?: { key: string; items: PreviewItem[] } };
 
 /**
- * Videos being made in the background: a small tray on every page with each one's progress, a message (and a
- * browser notification, if allowed) when one is ready, and a link to open it.
+ * Videos being made in the background: a small tray on every page with each one's progress, a live preview of the
+ * pieces finished so far (clips, pictures, rendered scenes), a message (and a browser notification, if allowed) when
+ * one is ready, and a link to open it.
  */
 export function JobsTray() {
   const { toast, refresh } = useApp();
@@ -90,7 +92,7 @@ export function JobsTray() {
             </div>
           </div>
           {!!active.length && <p className="px-4 pb-2 text-[11.5px] text-white/50">Runs on Vueio&apos;s server. You can close the app or lock your phone; you&apos;ll get a notification when it&apos;s ready.</p>}
-          <ul className="max-h-80 divide-y divide-white/[0.06] overflow-y-auto">
+          <ul className="max-h-[70vh] divide-y divide-white/[0.06] overflow-y-auto">
             {recent.map((j) => (
               <li key={j.id} className="px-4 py-2.5">
                 <div className="flex items-start gap-2">
@@ -102,6 +104,9 @@ export function JobsTray() {
                       <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/[0.07]">
                         <div className="h-full rounded-full bg-gold-400 transition-all" style={{ width: `${Math.max(4, j.progress)}%` }} />
                       </div>
+                    )}
+                    {j.preview && j.status !== "failed" && (j.status !== "done" || j.id === recent.find((x) => x.status === "done")?.id) && (
+                      <LivePreview k={j.preview.key} items={j.preview.items} live={j.status === "queued" || j.status === "running"} />
                     )}
                   </div>
                   {j.href && j.status === "done" && (

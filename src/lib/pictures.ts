@@ -3,6 +3,7 @@ import { geminiImage, mediaKey, MediaGenError, type Aspect, type RefImage } from
 import { engineFirst, ownEngineAwake, ownEngineReady, ownImage } from "./own-video";
 import { fluxImage, replicateReady } from "./replicate-video";
 import { foundryImage, foundryReady } from "./azure-foundry";
+import { showPreview } from "./preview";
 
 /**
  * Every AI picture in the app goes through here. Vueio's own engine (Qwen-Image on the owner's GPU) makes it
@@ -12,6 +13,13 @@ import { foundryImage, foundryReady } from "./azure-foundry";
  * pictures rather than stock footage.
  */
 export async function makeImage(o: { prompt: string; refs?: RefImage[]; aspect: Aspect; size?: "1K" | "2K" }): Promise<{ bytes: Buffer; mimeType: string }> {
+  const img = await makeImageFrom(o);
+  // Shown in the jobs tray's live preview while a video is being made (nothing happens outside one).
+  await showPreview({ bytes: img.bytes, mime: img.mimeType, label: "Picture" });
+  return img;
+}
+
+async function makeImageFrom(o: { prompt: string; refs?: RefImage[]; aspect: Aspect; size?: "1K" | "2K" }): Promise<{ bytes: Buffer; mimeType: string }> {
   const cap = o.refs?.length ? "edit-pictures" : "pictures";
   const backup = !!(await mediaKey()) || (await replicateReady());
   if ((await ownEngineAwake(cap)) || (await engineFirst(cap)) || (!backup && (await ownEngineReady(cap)))) {
