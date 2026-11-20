@@ -7,6 +7,7 @@ import { api } from "@/lib/client";
 import { Badge, Button, Card, CardHeader, Empty, Field, PageHeader, Select, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { IMAGE_TOOLS, type ImageToolId } from "@/lib/image-tools";
+import { MOTION_ONLY } from "@/lib/product";
 
 type Pic = { id: string; name: string; url: string };
 type Data = {
@@ -127,7 +128,7 @@ export default function ImageStudio() {
                   </div>
                 ) : (
                   <p className="text-xs text-white/50">
-                    No characters yet. Make them in <Link href="/movies" className="text-mint-300 hover:underline">Movie Studio → Characters</Link>.
+                    No characters yet.{!MOTION_ONLY && <> Make them in <Link href="/movies" className="text-mint-300 hover:underline">Movie Studio → Characters</Link>.</>}
                   </p>
                 )}
               </div>

@@ -1,4 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+// These tests cover the cinematic tools, switched off in the app (src/lib/product.ts) but kept: test them switched on
+// (set before the app code below is imported).
+vi.hoisted(() => {
+  process.env.NEXT_PUBLIC_VUEIO_CINEMATIC = "on";
+});
 import { existsSync } from "node:fs";
 import { SECTIONS, activeTool, grouped, sectionFor } from "@/lib/nav";
 

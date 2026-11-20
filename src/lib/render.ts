@@ -1,6 +1,7 @@
 import "server-only";
 import { assCaptions, estimateWordTimes, subtitlesFilter } from "./captions-ass";
 import { showPreview, withPreview } from "./preview";
+import { MOTION_ONLY, videoSize } from "./product";
 import { makeImage } from "./pictures";
 import { spawn } from "child_process";
 import { createHash } from "crypto";
@@ -32,7 +33,8 @@ import { aiVisualCredits, animationSecondCredits, renderableScenes, veoSeconds }
  *    footage matching the scene's visual note, or a moving brand gradient. Movies and explainers (`plan.ai`) are
  *    pictured with Gemini instead, using the characters' portraits, and their key scenes are animated with Veo.
  *  - On-screen text (top) and word-group captions (bottom), burned in with a bundled font.
- * Output: 1080×1920 vertical (Shorts/Reels/TikTok) or 1920×1080 for YouTube long-form, H.264 + AAC, saved to
+ * Output: 4K motion graphics (src/lib/product.ts), 2160×3840 vertical (Shorts/Reels/TikTok) or 3840×2160 for YouTube
+ * long-form (1080×1920 / 1920×1080 with the cinematic tools switched on), H.264 + AAC, saved to
  * the user's Media Library and attached to the post.
  */
 
@@ -410,7 +412,7 @@ export async function renderSegment(job: SceneJob, i: number, dir: string, W: nu
       const nf = path.join(dir, `name${i}.txt`);
       await fs.writeFile(nf, vis.name.toUpperCase().slice(0, 30));
       const card = Math.round(Math.min(W, H) * 0.5);
-      v += `,drawtext=fontfile='${font}':textfile='${nf}':expansion=none:fontsize=${Math.round(W * 0.05)}:fontcolor=white:borderw=5:bordercolor=black@0.7:x=(w-text_w)/2:y=${Math.round(H * 0.25 + card + H * 0.03)}:alpha='min(1,max(0,(t-0.35)/0.3))'`;
+      v += `,drawtext=fontfile='${font}':textfile='${nf}':expansion=none:fontsize=${Math.round(W * 0.05)}:fontcolor=white:borderw=${Math.round((5 * Math.max(W, H)) / 1920)}:bordercolor=black@0.7:x=(w-text_w)/2:y=${Math.round(H * 0.25 + card + H * 0.03)}:alpha='min(1,max(0,(t-0.35)/0.3))'`;
     }
   } else {
     v = `[0:v]format=yuv420p`;
@@ -434,12 +436,12 @@ export async function renderSegment(job: SceneJob, i: number, dir: string, W: nu
     // A quiet chapter line at the top, faded in and out, instead of a big headline.
     const f = path.join(dir, `os${i}.txt`);
     await fs.writeFile(f, wrap(job.scene.onScreen.toUpperCase(), portrait ? 28 : 44));
-    v += `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.048 : 0.03))}:fontcolor=white@0.92:shadowcolor=black@0.6:shadowx=2:shadowy=2:line_spacing=6:text_align=C:x=(w-text_w)/2:y=h*0.075:alpha='min(1,max(0,(t-0.3)/0.4))*min(1,max(0,(${job.dur.toFixed(3)}-0.3-t)/0.4))'`;
+    v += `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.048 : 0.03))}:fontcolor=white@0.92:shadowcolor=black@0.6:shadowx=${Math.round((2 * Math.max(W, H)) / 1920)}:shadowy=${Math.round((2 * Math.max(W, H)) / 1920)}:line_spacing=${Math.round((6 * Math.max(W, H)) / 1920)}:text_align=C:x=(w-text_w)/2:y=h*0.075:alpha='min(1,max(0,(t-0.3)/0.4))*min(1,max(0,(${job.dur.toFixed(3)}-0.3-t)/0.4))'`;
   } else if (job.scene.onScreen) {
     const f = path.join(dir, `os${i}.txt`);
     await fs.writeFile(f, wrap(job.scene.onScreen.toUpperCase(), portrait ? 16 : 30));
     const y = job.visual.kind === "motion" ? `h*0.11+${Math.round(H * 0.03)}*pow(max(0,1-t/0.5),2)` : "h*0.11";
-    v += `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.085 : 0.05))}:fontcolor=white:borderw=${portrait ? 7 : 5}:bordercolor=black:line_spacing=8:text_align=C:x=(w-text_w)/2:y='${y}':alpha='min(1,t/0.25)'`;
+    v += `,drawtext=fontfile='${font}':textfile='${f}':expansion=none:fontsize=${Math.round(W * (portrait ? 0.085 : 0.05))}:fontcolor=white:borderw=${Math.round(((portrait ? 7 : 5) * Math.max(W, H)) / 1920)}:bordercolor=black:line_spacing=${Math.round((8 * Math.max(W, H)) / 1920)}:text_align=C:x=(w-text_w)/2:y='${y}':alpha='min(1,t/0.25)'`;
   }
   // Captions: word by word, the spoken word highlighted (ASS subtitles burned in with libass).
   if (job.scene.narration.trim()) {
@@ -650,8 +652,9 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
   try {
     if (!(await ffmpegAvailable())) throw new Error("Video rendering needs ffmpeg on the server. Install it (sudo apt-get install -y ffmpeg) and restart.");
     const long = plan.length === "long";
-    const [W, H] = long ? [1920, 1080] : [1080, 1920];
-    await setRender(post, { status: "rendering", progress: 2, message: "Preparing scenes…" });
+    // Motion graphics only (src/lib/product.ts): 4K, 2160×3840 vertical or 3840×2160 widescreen.
+    const [W, H] = videoSize(long);
+    await setRender(post, { status: "rendering", progress: 2, message: MOTION_ONLY ? "Preparing 4K motion graphics…" : "Preparing scenes…" });
 
     // User media to use as visuals (skip previously rendered outputs).
     const media: MediaItem[] = [];
@@ -675,7 +678,8 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       await fs.writeFile(recording, await readFile(m));
     }
     const voice = !recording && plan.voiceover !== false && (plan.narrator?.kind === "engine" || plan.narrator?.kind === "azure" || !!(await elevenlabsKey()) || freeVoiceEnabled());
-    const motionOnly = plan.visuals === "motion";
+    // Motion graphics only: every scene is drawn by the motion-graphics engine (no AI pictures, clips or stock footage).
+    const motionOnly = MOTION_ONLY || plan.visuals === "motion";
     const jobs: SceneJob[] = [];
     const planned = renderableScenes(plan);
     const scenes = planned.map((p) => p.scene);
@@ -698,12 +702,12 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
         dur = (await mediaDuration(audio)) + 0.25;
       }
       let visual: SceneJob["visual"];
-      const chosen = ai ? null : await sceneMedia(scene.mediaId); // AI videos handle chosen pictures while painting
+      const chosen = ai || MOTION_ONLY ? null : await sceneMedia(scene.mediaId); // AI videos handle chosen pictures while painting
       if (chosen) {
         const file = path.join(dir, `chosen${i}.${chosen.type.split("/")[1] === "quicktime" ? "mov" : chosen.type.split("/")[1]}`);
         await fs.writeFile(file, await readFile(chosen));
         visual = { kind: chosen.kind === "video" ? "video" : "image", file };
-      } else if (mediaFiles.length) visual = mediaFiles[i % mediaFiles.length];
+      } else if (mediaFiles.length && !MOTION_ONLY) visual = mediaFiles[i % mediaFiles.length];
       else if (motionOnly) visual = { kind: "motion" };
       else if (ai) visual = { kind: "motion" }; // pictured below (graphics styles keep the motion graphics)
       else {

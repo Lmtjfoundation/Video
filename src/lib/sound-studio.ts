@@ -1,4 +1,5 @@
 import "server-only";
+import { MOTION_ONLY, MOTION_ONLY_MESSAGE } from "./product";
 import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
@@ -178,6 +179,7 @@ export async function makeSfx(userId: string, o: SfxInput): Promise<LibraryAsset
 }
 
 export async function makeFootage(userId: string, o: FootageInput): Promise<LibraryAsset> {
+  if (MOTION_ONLY) throw new Error(MOTION_ONLY_MESSAGE);
   let start: { bytes: Buffer; mime: string } | undefined;
   if (o.startMediaId) {
     const m = await db().get<MediaItem>("media", o.startMediaId);

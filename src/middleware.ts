@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isCinematicPath, MOTION_ONLY_MESSAGE } from "@/lib/product";
 
 /**
  * Sends signed-out visitors to /login. The session itself is verified on every API call
@@ -62,6 +63,14 @@ export async function middleware(req: NextRequest) {
   if (!pathname.startsWith("/api/migrate/") && !pathname.startsWith("/api/cron/")) {
     const to = await movedTo(req);
     if (to) return NextResponse.redirect(`${to}${pathname}${search}`, 308);
+  }
+  // Motion graphics only (src/lib/product.ts): the cinematic tools' pages go to Make, and their API routes are closed.
+  if (isCinematicPath(pathname)) {
+    if (pathname.startsWith("/api/")) return NextResponse.json({ error: MOTION_ONLY_MESSAGE }, { status: 410 });
+    const url = req.nextUrl.clone();
+    url.pathname = "/make";
+    url.search = "";
+    return NextResponse.redirect(url);
   }
   if (pathname === "/welcome") {
     // Remember which ad or post the visitor came from (?src=tiktok) for 30 days; sign-up saves it on the account.

@@ -1,6 +1,7 @@
 import type { AnimationEngine, Platform, VideoPlan, VideoScene } from "./types";
 import { CREDIT_COST } from "./plans";
 import { isGraphicsLook } from "./looks";
+import { MOTION_ONLY } from "./product";
 
 type LengthTier = "short" | "mid" | "long";
 
@@ -56,7 +57,7 @@ export const animationSecondCredits = (engine?: AnimationEngine) =>
 
 /** Credits for the AI pictures and Veo clips of a plan with `ai` visuals (0 for stock-footage videos). */
 export function aiVisualCredits(plan: Pick<VideoPlan, "scenes" | "ai" | "visuals">) {
-  if (!plan.ai || plan.visuals === "motion" || isGraphicsLook(plan.ai.look)) return 0; // graphics styles are drawn by the free motion-graphics engine
+  if (MOTION_ONLY || !plan.ai || plan.visuals === "motion" || isGraphicsLook(plan.ai.look)) return 0; // graphics styles are drawn by the free motion-graphics engine
   const veo = new Set(plan.ai.veoScenes);
   const perSecond = animationSecondCredits(plan.ai.engine);
   return renderableScenes(plan).reduce(

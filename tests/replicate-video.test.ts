@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+// These tests cover the cinematic tools, switched off in the app (src/lib/product.ts) but kept: test them switched on.
+process.env.NEXT_PUBLIC_VUEIO_CINEMATIC = "on";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/utils", async (orig) => ({ ...(await orig<typeof import("@/lib/utils")>()), sleep: () => Promise.resolve() }));

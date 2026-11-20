@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Post, VideoScene } from "@/lib/types";
+// These tests cover the cinematic tools, switched off in the app (src/lib/product.ts) but kept: test them switched on.
+process.env.NEXT_PUBLIC_VUEIO_CINEMATIC = "on";
 
 /**
  * End to end with the real ffmpeg: a two-scene movie whose pictures come from "Gemini" and whose second scene is

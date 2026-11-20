@@ -3,6 +3,8 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+// These tests cover the cinematic tools, switched off in the app (src/lib/product.ts) but kept: test them switched on.
+process.env.NEXT_PUBLIC_VUEIO_CINEMATIC = "on";
 
 const dir = mkdtempSync(path.join(tmpdir(), "ghost-post-flows-"));
 process.env.DATA_DIR = dir;

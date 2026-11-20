@@ -18,6 +18,7 @@ import { NICHES } from "@/lib/niches";
 import { lengthAllowed, videoCredits, VIDEO_LENGTHS, VIDEO_STYLES, VIDEO_TARGET } from "@/lib/video-spec";
 import type { VideoPlan } from "@/lib/types";
 import { GENRES } from "@/lib/genres";
+import { MOTION_ONLY } from "@/lib/product";
 
 const FILTERS: { key: PostStatus | "all" | "video"; label: string }[] = [
   { key: "all", label: "All" },
@@ -61,7 +62,7 @@ export default function Studio() {
   const [faceless, setFaceless] = useState(true);
   const [renderNow, setRenderNow] = useState(false);
   const [voiceover, setVoiceover] = useState(true);
-  const [motion, setMotion] = useState(false);
+  const [motion, setMotion] = useState(MOTION_ONLY);
   const [autoPost, setAutoPost] = useState(false);
   const [placement, setPlacement] = useState<Placement>("auto");
   const [account, setAccount] = useState("");
@@ -307,7 +308,7 @@ export default function Studio() {
                 <div className="flex items-start justify-between gap-3 rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.07]">
                   <div>
                     <p className="text-[13px] font-medium text-white">Faceless</p>
-                    <p className="text-xs text-white/50">Voiceover over stock footage, maps, documents and AI scenes. Nobody on camera.</p>
+                    <p className="text-xs text-white/50">{MOTION_ONLY ? "Voiceover over 4K motion graphics. Nobody on camera." : "Voiceover over stock footage, maps, documents and AI scenes. Nobody on camera."}</p>
                   </div>
                   <Switch checked={faceless} onChange={setFaceless} label="Faceless video" />
                 </div>
@@ -319,13 +320,17 @@ export default function Studio() {
                     </div>
                     <Switch checked={voiceover} onChange={setVoiceover} label="Voiceover" />
                   </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[13px] font-medium text-white">Motion graphics</p>
-                      <p className="text-xs text-white/50">Animated shapes and kinetic words in every scene, instead of stock footage. Free.</p>
+                  {MOTION_ONLY ? (
+                    <p className="text-xs text-mint-200/80">Every video is 4K motion graphics: animated shapes, living backgrounds and kinetic words in every scene.</p>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[13px] font-medium text-white">Motion graphics</p>
+                        <p className="text-xs text-white/50">Animated shapes and kinetic words in every scene, instead of stock footage. Free.</p>
+                      </div>
+                      <Switch checked={motion} onChange={setMotion} label="Motion graphics" />
                     </div>
-                    <Switch checked={motion} onChange={setMotion} label="Motion graphics" />
-                  </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -633,13 +638,15 @@ function AudioPanel(p: {
             <Switch checked={p.landscape} onChange={p.setLandscape} label="16:9 landscape" />
           </div>
         )}
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[13px] font-medium text-white">Motion graphics</p>
-            <p className="text-xs text-white/50">Animated shapes and kinetic words instead of stock footage. Free.</p>
+        {!MOTION_ONLY && (
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[13px] font-medium text-white">Motion graphics</p>
+              <p className="text-xs text-white/50">Animated shapes and kinetic words instead of stock footage. Free.</p>
+            </div>
+            <Switch checked={p.motion} onChange={p.setMotion} label="Motion graphics" />
           </div>
-          <Switch checked={p.motion} onChange={p.setMotion} label="Motion graphics" />
-        </div>
+        )}
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[13px] font-medium text-white">Render the video right away</p>

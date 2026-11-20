@@ -7,6 +7,7 @@ import { ENGINE_CLIP_SECONDS, ownEngineReady } from "./own-video";
 import { CREDIT_COST } from "./plans";
 import { log } from "./repo";
 import { makeFootage, makeMusic, makeSfx, MUSIC_SECONDS, SFX_SECONDS } from "./sound-studio";
+import { MOTION_ONLY, MOTION_ONLY_MESSAGE } from "./product";
 
 const ASPECTS = ["9:16", "16:9", "1:1"];
 
@@ -40,6 +41,7 @@ export async function startGeneration(user: User, b: GenerationRequest) {
     title = `Sound: ${prompt.slice(0, 60)}`;
     make = () => makeSfx(user.id, { prompt, seconds, category: pickTags(SFX_CATEGORIES, [b.category], 1)[0] });
   } else if (b.kind === "footage") {
+    if (MOTION_ONLY) throw new RequestError(MOTION_ONLY_MESSAGE, 410);
     const secs = Math.round(Math.max(1, Math.min(ENGINE_CLIP_SECONDS, seconds || ENGINE_CLIP_SECONDS)));
     credits = CREDIT_COST.ownSecond * secs;
     title = `Footage: ${prompt.slice(0, 60)}`;

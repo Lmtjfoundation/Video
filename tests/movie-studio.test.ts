@@ -2,6 +2,11 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+// These tests cover the cinematic tools, switched off in the app (src/lib/product.ts) but kept: test them switched on
+// (set before the app code below is imported).
+vi.hoisted(() => {
+  process.env.NEXT_PUBLIC_VUEIO_CINEMATIC = "on";
+});
 import { CREDIT_COST } from "@/lib/plans";
 import { aiVisualCredits, movieEstimate, renderCredits, veoSeconds, videoCredits } from "@/lib/video-spec";
 import { findImage, geminiImage, googleProblem, veoClip } from "@/lib/gemini-media";

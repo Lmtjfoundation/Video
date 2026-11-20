@@ -1,3 +1,4 @@
+import { CINEMATIC_PAGES, MOTION_ONLY } from "./product";
 import { Activity, AudioLines, BookOpenText, CalendarDays, Clapperboard, Code2, Compass, CreditCard, Feather, Film, FlaskConical, Flame, FolderOpen, Images, LayoutDashboard, Library, Lightbulb, ListVideo, MessageSquare, MessagesSquare, Mic, Music2, Palette, Rocket, ScrollText, Settings, Share2, ShieldCheck, Sparkles, UserRound, Video, Wand2, Workflow } from "lucide-react";
 
 export type Tool = { href: string; label: string; blurb: string; icon: typeof Activity; badge?: "pending" | "review"; group?: string };
@@ -72,6 +73,21 @@ export const SECTIONS: Section[] = [
     blurb: "Owner tools: users, review queue and app settings.", tools: [],
   },
 ];
+
+// Motion graphics only: the cinematic tools leave the menus (and the Make hub), and the rest say what they make.
+if (MOTION_ONLY) {
+  const make = SECTIONS.find((s) => s.key === "make")!;
+  const off = (href: string) => CINEMATIC_PAGES.some((p) => href === p || href.startsWith(p + "?") || href.startsWith(p + "/")) || href === "/voice-lab?tab=presenter";
+  make.tools = make.tools.filter((t) => !off(t.href));
+  make.blurb = "Motion graphics videos in 4K: animated shapes, living backgrounds and kinetic type, with voice and music.";
+  const posts = make.tools.find((t) => t.href === "/studio");
+  if (posts) {
+    Object.assign(posts, { label: "Motion Graphics Videos", icon: Sparkles, blurb: "Scripts, captions and 4K motion graphics videos for every platform in one go." });
+    make.tools = [posts, ...make.tools.filter((t) => t !== posts)];
+  }
+  const explain = make.tools.find((t) => t.href === "/explain");
+  if (explain) explain.blurb = "Paste anything and get it in plain English, or as a 4K motion graphics video.";
+}
 
 /** Which section a path belongs to (a section's hub, or any of its tools). */
 export function sectionFor(path: string, search = ""): Section {
