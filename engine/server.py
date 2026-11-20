@@ -405,6 +405,10 @@ class Engine:
                 log.exception("Job %s failed", job.id)
                 job.status, job.error = "failed", f"{type(e).__name__}: {e}"[:500]
                 if self.device == "cuda":
+                    # A clip that failed part-way leaves its models on the GPU; with offloading they go back to memory.
+                    for pipe in (self.t2v, self.i2v) if self.offload else ():
+                        if pipe is not None:
+                            pipe.maybe_free_model_hooks()
                     torch.cuda.empty_cache()
             self.cleanup()
 
@@ -445,12 +449,24 @@ class Engine:
             args["max_sequence_length"] = 16
         if has_image:
             args["image"] = first_frame(r.image, width, height)
+        if self.offload and self.device == "cuda" and gpu_memory_gb() < 24:
+            args |= self.encode_text(pipe, args.pop("prompt"), args.pop("negative_prompt"))
         with torch.inference_mode():
             video = pipe(**args).frames[0]
         os.makedirs(OUT_DIR, exist_ok=True)
         path = os.path.join(OUT_DIR, f"{job.id}.mp4")
         export_to_video(video, path, fps=p.fps)
         return path
+
+    def encode_text(self, pipe, prompt: str, negative: str) -> dict:
+        """Small GPUs: the prompt is encoded first and the text encoder (11 GB) leaves the GPU before the VAE reads the
+        first frame. Diffusers' offloading keeps it there until the transformer runs, and on a 16 GB card the text
+        encoder and the VAE don't fit together."""
+        with torch.inference_mode():
+            pe, ne = pipe.encode_prompt(prompt=prompt, negative_prompt=negative, do_classifier_free_guidance=True, max_sequence_length=512, device=torch.device("cuda"))
+        pipe.text_encoder.to("cpu")
+        torch.cuda.empty_cache()
+        return {"prompt_embeds": pe, "negative_prompt_embeds": ne}
 
     def picture(self, job: Job) -> str:
         """One picture: from the prompt alone (Qwen-Image) or an edit of up to three pictures (Qwen-Image-Edit)."""

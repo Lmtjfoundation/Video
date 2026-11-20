@@ -13,6 +13,7 @@ write_files:
       ENGINE_QUALITY=__QUALITY__
       HF_HOME=/opt/ghost-post/hf
       HF_HUB_ENABLE_HF_TRANSFER=1
+      PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
       PORT=8000
   - path: /usr/local/sbin/ghost-post-swap
     permissions: "0755"
