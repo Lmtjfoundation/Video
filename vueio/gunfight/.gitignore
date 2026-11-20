@@ -1,4 +1,6 @@
 out/audio.wav
 out/video.mp4
 out/seg/
+out/frames8k/
+out/build-8k.log
 out/*-8k.mp4

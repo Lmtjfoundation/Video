@@ -1,7 +1,8 @@
 // Renders scene.html frame by frame in headless Chromium and pipes the frames to ffmpeg.
 //   node render.cjs out/video.mp4                       1080p H.264 (no audio)
 //   node render.cjs out/seg0.mp4 --scale 4 --range 0:270 one 8K HEVC segment (frames 0..269)
-//   node render.cjs --stills 1.5,12.6 dir [--scale 4]    single frames as PNGs, for checking
+//   node render.cjs --frames dir --scale 4 --range 0:90  numbered 8K JPEG frames (skips existing)
+//   node render.cjs --stills 1.5,12.6 dir [--scale 4]    single frames, for checking
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -28,7 +29,23 @@ cues.renderScale = scale;
   const fmt = scale > 1 ? ['image/jpeg', 0.96] : ['image/png'];
   const grab = t => page.evaluate(([t, f]) => { window.render(t); return document.getElementById('c').toDataURL(...f); }, [t, fmt]);
 
-  if (argv[0] === '--stills') {
+  if (argv[0] === '--frames') {
+    // Write numbered frames to a folder, skipping any already there (resumable).
+    const outDir = argv[1];
+    fs.mkdirSync(outDir, { recursive: true });
+    const ext = scale > 1 ? 'jpg' : 'png';
+    const started = Date.now();
+    let done = 0;
+    for (let i = r0; i < r1; i++) {
+      const f = path.join(outDir, `f_${String(i).padStart(5, '0')}.${ext}`);
+      if (fs.existsSync(f)) continue;
+      const url = await grab(i / cues.fps);
+      fs.writeFileSync(f + '.tmp', Buffer.from(url.split(',')[1], 'base64'));
+      fs.renameSync(f + '.tmp', f);
+      if (++done % 30 === 0) console.log(`frames ${r0}-${r1}: ${done} new  ${((Date.now() - started) / 1000).toFixed(0)}s`);
+    }
+    console.log(`wrote frames ${r0}-${r1}`);
+  } else if (argv[0] === '--stills') {
     const times = argv[1].split(',').map(Number), outDir = argv[2];
     fs.mkdirSync(outDir, { recursive: true });
     for (const t of times) {
@@ -39,7 +56,7 @@ cues.renderScale = scale;
     const out = argv[0];
     const enc = scale > 1
       ? ['-c:v', 'libx265', '-preset', 'medium', '-crf', '17', '-pix_fmt', 'yuv420p10le', '-tag:v', 'hvc1',
-         '-x265-params', 'log-level=error:pools=2:aq-mode=3']
+         '-x265-params', 'log-level=error:pools=2:frame-threads=2:rc-lookahead=10:aq-mode=3']
       : ['-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-tune', 'film'];
     const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(cues.fps),
       '-c:v', scale > 1 ? 'mjpeg' : 'png', '-i', '-', ...enc, out], { stdio: ['pipe', 'inherit', 'inherit'] });
