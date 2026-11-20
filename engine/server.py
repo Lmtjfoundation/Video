@@ -152,13 +152,29 @@ MAIN = PROFILES[QUALITY]
 TEXT = PROFILES["fast"]  # clips with no first frame (the A14B model needs one)
 
 
+SMALL_GPU_AREA = 832 * 480  # 480p, for GPUs under 20 GB
+
+
+def video_area(p: Profile) -> int:
+    """Pixels per frame: the model card's 720p, or ENGINE_AREA. On GPUs under 20 GB (a T4 has 16) TI2V-5B makes 480p
+    clips, about four times faster, so a clip takes minutes instead of an hour; the Film Engine scales them to the
+    film's size."""
+    want = os.environ.get("ENGINE_AREA", "").strip()
+    if want.isdigit():
+        return int(want)
+    if p.model == FIVE_B and torch.cuda.is_available() and gpu_memory_gb() < 20:
+        return SMALL_GPU_AREA
+    return p.area
+
+
 def size_for(aspect: str, p: Profile) -> tuple[int, int]:
-    """Width and height for a frame shape at the profile's 720p pixel count, rounded to the model's grid."""
+    """Width and height for a frame shape at the profile's pixel count, rounded to the model's grid."""
     if TINY:
         return (32, 32)
     r = ASPECTS[aspect]
-    width = round(math.sqrt(p.area * r) / p.mod) * p.mod
-    height = round(math.sqrt(p.area / r) / p.mod) * p.mod
+    area = video_area(p)
+    width = round(math.sqrt(area * r) / p.mod) * p.mod
+    height = round(math.sqrt(area / r) / p.mod) * p.mod
     return width, height
 
 
@@ -289,6 +305,16 @@ def cpu_picture_dtype() -> "torch.dtype":
     return torch.bfloat16 if ("avx512_bf16" in flags or "amx_bf16" in flags) else torch.float32
 
 
+def video_dtype() -> "torch.dtype":
+    """bfloat16 on GPUs with native bfloat16 math (Ampere and newer: A10G, L4, A100, H100), float16 on older ones (T4,
+    V100), where bfloat16 is emulated and about five times slower. The Wan models keep their norms and time embedding
+    in float32 either way, and their VAE runs in float32. ENGINE_DTYPE=bfloat16|float16 overrides."""
+    want = os.environ.get("ENGINE_DTYPE", "auto")
+    if want in ("float16", "bfloat16"):
+        return getattr(torch, want)
+    return torch.bfloat16 if torch.cuda.get_device_capability(0)[0] >= 8 else torch.float16
+
+
 class Engine:
     def __init__(self) -> None:
         self.i2v = None  # first frame -> video (best: A14B; fast: TI2V-5B)
@@ -303,6 +329,7 @@ class Engine:
         self.load_error: str | None = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.dtype = torch.bfloat16 if self.device == "cuda" else torch.float32
+        self.video_dtype = video_dtype() if self.device == "cuda" else torch.float32  # the Wan video models
         mode = os.environ.get("ENGINE_OFFLOAD", "auto")
         # The A14B pair (two 14B experts plus the text encoder) doesn't fit on one GPU at once, even at 80 GB:
         # Alibaba runs it with offloading. TI2V-5B fits on 40 GB and up.
@@ -317,7 +344,7 @@ class Engine:
             from diffusers import WanImageToVideoPipeline
 
             if QUALITY == "best":
-                self.i2v = WanImageToVideoPipeline(**tiny_a14b()) if TINY else WanImageToVideoPipeline.from_pretrained(A14B, torch_dtype=self.dtype)
+                self.i2v = WanImageToVideoPipeline(**tiny_a14b()) if TINY else WanImageToVideoPipeline.from_pretrained(A14B, torch_dtype=self.video_dtype)
                 self.place(self.i2v)
             else:
                 self.t2v = self.five_b()
@@ -337,7 +364,7 @@ class Engine:
             pipe = WanPipeline(**tiny_5b(), transformer_2=None, boundary_ratio=None, expand_timesteps=True)
         else:
             vae = AutoencoderKLWan.from_pretrained(FIVE_B, subfolder="vae", torch_dtype=torch.float32)
-            pipe = WanPipeline.from_pretrained(FIVE_B, vae=vae, torch_dtype=self.dtype)
+            pipe = WanPipeline.from_pretrained(FIVE_B, vae=vae, torch_dtype=self.video_dtype)
         self.place(pipe)
         return pipe
 
@@ -805,6 +832,8 @@ def info() -> dict:
         "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
         "vram_gb": round(gpu_memory_gb(), 1),
         "offload": engine.offload,
+        "video_dtype": str(engine.video_dtype).removeprefix("torch."),
+        "video_size": dict(zip(("width", "height"), size_for("16:9", MAIN))),
         "queue": engine.q.qsize(),
         "max_seconds": round(MAIN.max_frames / MAIN.fps, 2),
         "fps": MAIN.fps,

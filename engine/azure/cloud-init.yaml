@@ -14,12 +14,40 @@ write_files:
       HF_HOME=/opt/ghost-post/hf
       HF_HUB_ENABLE_HF_TRANSFER=1
       PORT=8000
+  - path: /usr/local/sbin/ghost-post-swap
+    permissions: "0755"
+    content: |
+      #!/bin/sh
+      # Swap for GPU machines with less memory than the video models (AWS g4dn.xlarge has 16 GB): while the models
+      # load and move between the GPU and memory they need more than that, and without swap the engine is killed.
+      # AWS instance storage (a local NVMe drive, wiped at every stop) is set up again at each boot; machines without
+      # one get a swap file. Machines with 64 GB and up don't need it.
+      mem_gb=$(awk '/MemTotal/{print int($2/1048576)}' /proc/meminfo)
+      [ "$mem_gb" -ge 64 ] && exit 0
+      swapon --show --noheadings | grep -q . && exit 0
+      disk=$(lsblk -dpno NAME,MODEL | awk '/Instance Storage/{print $1; exit}')
+      if [ -n "$disk" ] && ! lsblk -no MOUNTPOINT "$disk" | grep -q .; then
+        mkswap -f "$disk" >/dev/null && swapon "$disk" && exit 0
+      fi
+      [ -f /swapfile ] || { fallocate -l 32G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null; }
+      swapon /swapfile
+  - path: /etc/systemd/system/ghost-post-swap.service
+    content: |
+      [Unit]
+      Description=Ghost Post swap (for GPU machines with less memory than the video models)
+      Before=ghost-post-engine.service
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/bin/sh /usr/local/sbin/ghost-post-swap
+      [Install]
+      WantedBy=multi-user.target
   - path: /etc/systemd/system/ghost-post-engine.service
     content: |
       [Unit]
       Description=Ghost Post Video Engine
-      After=network-online.target
-      Wants=network-online.target
+      After=network-online.target ghost-post-swap.service
+      Wants=network-online.target ghost-post-swap.service
       [Service]
       EnvironmentFile=/etc/ghost-post-engine.env
       WorkingDirectory=/opt/ghost-post/repo/engine
@@ -130,6 +158,7 @@ runcmd:
   - cp /etc/caddy/Caddyfile.ghost-post /etc/caddy/Caddyfile
   - systemctl restart caddy
   - systemctl daemon-reload
+  - systemctl enable --now ghost-post-swap
   - systemctl enable --now ghost-post-engine
   - systemctl enable --now ghost-post-audio
   - systemctl enable --now ghost-post-speech ghost-post-lipsync ghost-post-voicedesign

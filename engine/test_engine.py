@@ -75,6 +75,28 @@ def test_clip_lengths_and_sizes():
         assert server.size_for("9:16", fast) == (704, 1280) and server.size_for("16:9", fast) == (1280, 704)
 
 
+def test_small_gpu_settings(monkeypatch):
+    """GPUs under 20 GB make 480p TI2V-5B clips; GPUs older than Ampere run the video models in float16."""
+    best, fast = server.PROFILES["best"], server.PROFILES["fast"]
+    monkeypatch.delenv("ENGINE_AREA", raising=False)
+    monkeypatch.delenv("ENGINE_DTYPE", raising=False)
+    monkeypatch.setattr(server.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(server, "gpu_memory_gb", lambda: 15.6)  # a T4
+    assert server.video_area(fast) == server.SMALL_GPU_AREA and server.video_area(best) == best.area
+    if not server.TINY:
+        assert server.size_for("9:16", fast) == (480, 832) and server.size_for("16:9", fast) == (832, 480)
+    monkeypatch.setattr(server, "gpu_memory_gb", lambda: 24.0)  # an L4 or A10G: the model card's 720p
+    assert server.video_area(fast) == fast.area
+    monkeypatch.setenv("ENGINE_AREA", str(960 * 544))
+    assert server.video_area(fast) == 960 * 544
+    monkeypatch.setattr(server.torch.cuda, "get_device_capability", lambda *_: (7, 5))
+    assert server.video_dtype() is server.torch.float16
+    monkeypatch.setattr(server.torch.cuda, "get_device_capability", lambda *_: (8, 9))
+    assert server.video_dtype() is server.torch.bfloat16
+    monkeypatch.setenv("ENGINE_DTYPE", "float16")
+    assert server.video_dtype() is server.torch.float16
+
+
 def test_pictures(tmp_path):
     with TestClient(server.app) as client:
         for _ in range(600):
