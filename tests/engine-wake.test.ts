@@ -35,6 +35,34 @@ describe("engine capabilities and wake on use", () => {
     expect(parseWake(`identity=1;subscription=${T};group=GHOSTPOST`)).toBeNull();
   });
 
+  it("reads an AWS wake link and starts the machine through it", async () => {
+    const { parseWake, wakeEngine } = await import("@/lib/vm-wake");
+    const AWS = "url=https://abc123.lambda-url.us-east-1.on.aws/;token=wake-token-1234567";
+    expect(parseWake(AWS)).toMatchObject({ url: "https://abc123.lambda-url.us-east-1.on.aws/", token: "wake-token-1234567", vm: "abc123" });
+    expect(parseWake("url=http://abc123.lambda-url.us-east-1.on.aws/;token=wake-token-1234567")).toBeNull(); // https only
+    expect(parseWake("url=https://abc123.lambda-url.us-east-1.on.aws/;token=short")).toBeNull();
+    expect(parseWake("url=https://abc123.lambda-url.us-east-1.on.aws/")).toBeNull();
+    process.env.VM_WAKE_GPU = AWS;
+    let healthy = false;
+    const calls: { url: string; init?: RequestInit }[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (u: string, init?: RequestInit) => {
+      calls.push({ url: String(u), init });
+      if (String(u).includes("lambda-url")) {
+        healthy = true;
+        return Response.json({ state: "pending", ready: false });
+      }
+      return healthy ? Response.json({ ok: true }) : new Response("", { status: 502 });
+    }));
+    await wakeEngine("https://gpu.example", { kind: "gpu", pollMs: 1, waitMs: 2_000 });
+    const wake = calls.find((c) => c.url.includes("lambda-url"));
+    expect(wake?.init?.method).toBe("POST");
+    expect((wake?.init?.headers as Record<string, string>)["x-wake-token"]).toBe("wake-token-1234567");
+    expect(calls.some((c) => c.url === "https://gpu.example/health")).toBe(true);
+    // A refused token says so plainly.
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 401 })));
+    await expect(wakeEngine("https://gpu.example", { kind: "gpu", pollMs: 1, waitMs: 50 })).rejects.toThrow(/refused the token/);
+  });
+
   it("lets a machine without a GPU do only its tools", async () => {
     vi.stubGlobal("fetch", vi.fn(async (u: string) => (String(u).endsWith("/v1/info") ? Response.json({ profile: "tools", capabilities: ["upscale", "remove-bg", "isolate"] }) : new Response("{}", { status: 404 }))));
     const { ownEngineReady, testOwnEngine } = await import("@/lib/own-video");

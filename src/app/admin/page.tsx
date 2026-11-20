@@ -983,7 +983,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
           state={st.vmWake ?? { set: false }}
         >
           {st.vmWake?.set && <p className="text-xs text-white/55">Set for the VM “{st.vmWake.vm}”.</p>}
-          <Input type="password" autoComplete="off" spellCheck={false} placeholder="tenant=…;client=…;secret=…;subscription=…;group=…;vm=…" value={vals.vmWake ?? ""} onChange={set("vmWake")} />
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder="tenant=…;client=…;secret=…;subscription=…;group=…;vm=… (Azure) or url=https://…;token=… (AWS)" value={vals.vmWake ?? ""} onChange={set("vmWake")} />
           <Actions>
             <Button size="sm" variant="primary" loading={busy === "save:Wake"} onClick={() => save(["vmWake"], "Wake")}>Save</Button>
             {st.vmWake?.set && st.vmWake.source === "app" && (
@@ -1002,7 +1002,7 @@ function IntegrationsCard({ onChange }: { onChange: () => void }) {
         >
           <Input autoComplete="off" spellCheck={false} placeholder={st.videoEngineGpu?.url || "GPU engine address, e.g. https://20-1-2-3.sslip.io"} value={vals.videoEngineGpuUrl ?? ""} onChange={set("videoEngineGpuUrl")} />
           <Input type="password" autoComplete="off" spellCheck={false} placeholder="ENGINE_TOKEN" value={vals.videoEngineGpuToken ?? ""} onChange={set("videoEngineGpuToken")} />
-          <Input type="password" autoComplete="off" spellCheck={false} placeholder={st.vmWakeGpu?.set ? `Wake line set for “${st.vmWakeGpu.vm}”` : "Wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=…"} value={vals.vmWakeGpu ?? ""} onChange={set("vmWakeGpu")} />
+          <Input type="password" autoComplete="off" spellCheck={false} placeholder={st.vmWakeGpu?.set ? `Wake line set for “${st.vmWakeGpu.vm}”` : "Wake line: tenant=…;client=…;secret=…;subscription=…;group=…;vm=… (Azure) or url=https://…;token=… (AWS)"} value={vals.vmWakeGpu ?? ""} onChange={set("vmWakeGpu")} />
           <label className="flex items-center gap-3 text-sm text-white/80">
             <Switch
               checked={st.engineFirst !== false}

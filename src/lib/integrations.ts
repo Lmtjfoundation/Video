@@ -281,7 +281,7 @@ export async function integrationStatus() {
       insights: !!(i.azureInsightsConnection || process.env.APPLICATIONINSIGHTS_CONNECTION_STRING),
     },
     videoEngine: { ...entry("VIDEO_ENGINE_TOKEN", i.videoEngineToken), url: i.videoEngineUrl || process.env.VIDEO_ENGINE_URL || "" },
-    vmWake: { ...entry("VM_WAKE", i.vmWake), vm: (i.vmWake || process.env.VM_WAKE || "").match(/vm=([^;]+)/)?.[1] ?? "" },
+    vmWake: { ...entry("VM_WAKE", i.vmWake), vm: (i.vmWake || process.env.VM_WAKE || "").match(/vm=([^;]+)/)?.[1] ?? (i.vmWake || process.env.VM_WAKE || "").match(/url=https:\/\/([^./;]+)/)?.[1] ?? "" },
     uploadPost: entry("UPLOAD_POST_API_KEY", i.uploadPostKey),
     ownWriter: {
       ...entry("OWN_WRITER_KEY", i.ownWriterKey),
@@ -292,7 +292,7 @@ export async function integrationStatus() {
     },
     videoEngineGpu: { ...entry("VIDEO_ENGINE_GPU_TOKEN", i.videoEngineGpuToken), url: i.videoEngineGpuUrl || process.env.VIDEO_ENGINE_GPU_URL || "" },
     engineFirst: i.engineFirst !== false && process.env.ENGINE_FIRST !== "off",
-    vmWakeGpu: { ...entry("VM_WAKE_GPU", i.vmWakeGpu), vm: (i.vmWakeGpu || process.env.VM_WAKE_GPU || "").match(/vm=([^;]+)/)?.[1] ?? "" },
+    vmWakeGpu: { ...entry("VM_WAKE_GPU", i.vmWakeGpu), vm: (i.vmWakeGpu || process.env.VM_WAKE_GPU || "").match(/vm=([^;]+)/)?.[1] ?? (i.vmWakeGpu || process.env.VM_WAKE_GPU || "").match(/url=https:\/\/([^./;]+)/)?.[1] ?? "" },
     pixabay: entry("PIXABAY_API_KEY", i.pixabayKey),
     pexels: entry("PEXELS_API_KEY", i.pexelsKey),
     email: {

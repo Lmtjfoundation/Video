@@ -8,6 +8,9 @@ import "server-only";
  * When Vueio itself runs on an Azure VM, its managed identity can do it instead, with no secret to store:
  *   identity=1;subscription=…;group=GHOSTPOST;vm=Ghost
  * (give the app VM's identity "Virtual Machine Contributor" on the engine VM).
+ * An engine on AWS (or anywhere else) can instead have a wake link: a web address that starts its machine when it gets
+ * a POST with the token in the x-wake-token header (e.g. the WakeUrl Lambda of the AWS GPU stack):
+ *   url=https://….lambda-url.us-east-1.on.aws/;token=…
  */
 export interface WakeSettings {
   /** Empty when the app VM's managed identity is used. */
@@ -18,6 +21,9 @@ export interface WakeSettings {
   subscription: string;
   group: string;
   vm: string;
+  /** Wake link (AWS): POST here with x-wake-token. Set instead of the Azure fields. */
+  url?: string;
+  token?: string;
 }
 
 const KEYS = ["tenant", "client", "secret", "subscription", "group", "vm"] as const;
@@ -32,6 +38,16 @@ export function parseWake(line: string | undefined | null): WakeSettings | null 
       .filter((p) => p.length >= 2)
       .map(([k, ...v]) => [k.trim().toLowerCase(), v.join("=").trim()]),
   );
+  if (parts.url || parts.token) {
+    let u: URL | null = null;
+    try {
+      u = new URL(parts.url ?? "");
+    } catch {
+      u = null;
+    }
+    const ok = !!u && u.protocol === "https:" && /^[A-Za-z0-9_.~-]{12,200}$/.test(parts.token ?? "");
+    return ok ? { tenant: "", client: "", secret: "", subscription: "", group: "", vm: u!.hostname.split(".")[0], url: u!.toString(), token: parts.token } : null;
+  }
   const guid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const target = guid.test(parts.subscription ?? "") && /^[A-Za-z0-9._()-]{1,90}$/.test(parts.group ?? "") && /^[A-Za-z0-9._-]{1,64}$/.test(parts.vm ?? "");
   if (/^(1|true|yes)$/i.test(parts.identity ?? "")) {
@@ -80,21 +96,27 @@ export function wakeEngine(url: string, o: { waitMs?: number; pollMs?: number; k
     try {
       const w = await wakeLine(kind);
       if (!w) throw new Error("The engine's machine is off and wake on use isn't set up (Admin → Integrations → Wake the engine's VM).");
-      const tok = w.identity
-        ? // The app VM's own identity, from Azure's instance metadata service (reachable only from inside the VM).
-          await fetch("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fmanagement.azure.com%2F", { headers: { Metadata: "true" }, signal: AbortSignal.timeout(10_000) }).catch(() => null)
-        : await fetch(`https://login.microsoftonline.com/${w.tenant}/oauth2/v2.0/token`, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ grant_type: "client_credentials", client_id: w.client, client_secret: w.secret, scope: "https://management.azure.com/.default" }),
-          });
-      if (!tok?.ok) throw new Error(w.identity ? `This server's Azure identity couldn't sign in (${tok ? `HTTP ${tok.status}` : "no answer"}). Turn on its system-assigned identity in Azure.` : `Azure refused the wake credentials (HTTP ${tok?.status}). Check the line in Admin → Integrations.`);
-      const { access_token } = (await tok.json()) as { access_token: string };
-      const start = await fetch(`https://management.azure.com/subscriptions/${w.subscription}/resourceGroups/${w.group}/providers/Microsoft.Compute/virtualMachines/${w.vm}/start?api-version=2024-07-01`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${access_token}` },
-      });
-      if (!start.ok && start.status !== 202) throw new Error(`Azure couldn't start the VM “${w.vm}” (HTTP ${start.status}).`);
+      if (w.url) {
+        // Wake link (AWS): it starts the machine and answers with its state; the engine is polled below.
+        const res = await fetch(w.url, { method: "POST", headers: { "x-wake-token": w.token ?? "" }, signal: AbortSignal.timeout(30_000) }).catch(() => null);
+        if (!res?.ok) throw new Error(res?.status === 401 ? "The engine's wake link refused the token. Check the wake line in Admin → Integrations." : `The engine's wake link didn't start the machine (${res ? `HTTP ${res.status}` : "no answer"}).`);
+      } else {
+        const tok = w.identity
+          ? // The app VM's own identity, from Azure's instance metadata service (reachable only from inside the VM).
+            await fetch("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fmanagement.azure.com%2F", { headers: { Metadata: "true" }, signal: AbortSignal.timeout(10_000) }).catch(() => null)
+          : await fetch(`https://login.microsoftonline.com/${w.tenant}/oauth2/v2.0/token`, {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: new URLSearchParams({ grant_type: "client_credentials", client_id: w.client, client_secret: w.secret, scope: "https://management.azure.com/.default" }),
+            });
+        if (!tok?.ok) throw new Error(w.identity ? `This server's Azure identity couldn't sign in (${tok ? `HTTP ${tok.status}` : "no answer"}). Turn on its system-assigned identity in Azure.` : `Azure refused the wake credentials (HTTP ${tok?.status}). Check the line in Admin → Integrations.`);
+        const { access_token } = (await tok.json()) as { access_token: string };
+        const start = await fetch(`https://management.azure.com/subscriptions/${w.subscription}/resourceGroups/${w.group}/providers/Microsoft.Compute/virtualMachines/${w.vm}/start?api-version=2024-07-01`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${access_token}` },
+        });
+        if (!start.ok && start.status !== 202) throw new Error(`Azure couldn't start the VM “${w.vm}” (HTTP ${start.status}).`);
+      }
       console.info(`[vm-wake] starting ${w.vm}`);
       const deadline = Date.now() + (o.waitMs ?? 5 * 60_000);
       while (Date.now() < deadline) {
