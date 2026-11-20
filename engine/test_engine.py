@@ -65,8 +65,10 @@ def test_engine_end_to_end(tmp_path):
             assert int(probe.stdout.strip()) == server.clip_frames(1, profile)  # 4n+1 frames at the profile's fps
 
 
-def test_clip_lengths_and_sizes():
+def test_clip_lengths_and_sizes(monkeypatch):
     best, fast = server.PROFILES["best"], server.PROFILES["fast"]
+    monkeypatch.delenv("ENGINE_AREA", raising=False)
+    monkeypatch.setattr(server, "gpu_memory_gb", lambda: 80.0)  # 720p on GPUs of 20 GB and up
     assert server.clip_frames(5, best) == 81 and server.clip_frames(5, fast) == 121
     assert server.clip_frames(0.2, fast) == 17 and server.clip_frames(2, fast) == 49
     if not server.TINY:

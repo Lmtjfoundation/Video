@@ -20,21 +20,26 @@ write_files:
       #!/bin/sh
       # Swap for GPU machines with less memory than the video models (AWS g4dn.xlarge has 16 GB): while the models
       # load and move between the GPU and memory they need more than that, and without swap the engine is killed.
-      # AWS instance storage (a local NVMe drive, wiped at every stop) is set up again at each boot; machines without
-      # one get a swap file. Machines with 64 GB and up don't need it.
+      # AWS instance storage (a local NVMe drive, much faster than the boot disk, wiped at every stop) is set up again
+      # at each boot: the whole drive, or a swap file on it where the AWS Deep Learning AMI has mounted it
+      # (/opt/dlami/nvme). Machines without one get a swap file on the boot disk. Machines with 64 GB and up skip it.
       mem_gb=$(awk '/MemTotal/{print int($2/1048576)}' /proc/meminfo)
       [ "$mem_gb" -ge 64 ] && exit 0
       swapon --show --noheadings | grep -q . && exit 0
+      file=/swapfile
       disk=$(lsblk -dpno NAME,MODEL | awk '/Instance Storage/{print $1; exit}')
-      if [ -n "$disk" ] && ! lsblk -no MOUNTPOINT "$disk" | grep -q .; then
-        mkswap -f "$disk" >/dev/null && swapon "$disk" && exit 0
+      if [ -n "$disk" ]; then
+        mnt=$(lsblk -nro MOUNTPOINT "$disk" | grep -m1 .)
+        [ -z "$mnt" ] && mkswap -f "$disk" >/dev/null && swapon "$disk" && exit 0
+        [ -n "$mnt" ] && file="$mnt/swapfile"
       fi
-      [ -f /swapfile ] || { fallocate -l 32G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null; }
-      swapon /swapfile
+      [ -f "$file" ] || { fallocate -l 32G "$file" && chmod 600 "$file" && mkswap "$file" >/dev/null; }
+      swapon "$file"
   - path: /etc/systemd/system/ghost-post-swap.service
     content: |
       [Unit]
       Description=Ghost Post swap (for GPU machines with less memory than the video models)
+      After=local-fs.target dlami-nvme.service
       Before=ghost-post-engine.service
       [Service]
       Type=oneshot
