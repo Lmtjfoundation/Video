@@ -20,7 +20,7 @@ done
 for p in "${pids[@]}"; do wait "$p"; done
 ffmpeg -y -loglevel error -f concat -safe 0 -i out/seg/list.txt -i out/audio.wav \
   -map 0:v -map 1:a -c:v copy -tag:v hvc1 \
-  -af "volume=3.4dB,alimiter=limit=0.89:level=false" -c:a aac -b:a 320k -ar 48000 \
+  -af "aresample=192000,volume=3.4dB,alimiter=limit=0.62:attack=1:release=60:level=false,aresample=48000" -c:a aac -b:a 320k -ar 48000 \
   -movflags +faststart -shortest out/ghost-post-8k.mp4
 rm -rf out/seg out/audio.wav
 echo "Built out/ghost-post-8k.mp4"
