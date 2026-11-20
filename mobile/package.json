@@ -1,0 +1,22 @@
+{
+  "name": "southern-heat-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android and iOS app shell for Grand Theft: Southern Heat",
+  "scripts": {
+    "sync-web": "node scripts/copy-web.mjs",
+    "sync": "npm run sync-web && cap sync",
+    "android": "npm run sync && cap open android",
+    "ios": "npm run sync && cap open ios",
+    "build:android": "npm run sync && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.4.3",
+    "@capacitor/core": "7.4.3",
+    "@capacitor/ios": "7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "7.4.3"
+  }
+}
