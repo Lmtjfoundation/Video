@@ -365,6 +365,8 @@ class Engine:
         else:
             vae = AutoencoderKLWan.from_pretrained(FIVE_B, subfolder="vae", torch_dtype=torch.float32)
             pipe = WanPipeline.from_pretrained(FIVE_B, vae=vae, torch_dtype=self.video_dtype)
+            if self.device == "cuda" and gpu_memory_gb() < 24 and hasattr(vae, "enable_tiling"):
+                vae.enable_tiling()  # decodes in tiles, so a 16 GB card has room for it
         self.place(pipe)
         return pipe
 
@@ -430,8 +432,14 @@ class Engine:
         width, height = size_for(r.aspect, p)
         steps = r.steps or int(os.environ.get("ENGINE_STEPS", p.steps))
 
+        small = self.offload and self.device == "cuda" and gpu_memory_gb() < 24
+
         def on_step(_pipe, i, _t, kwargs):
             job.progress = min(0.99, (i + 1) / steps)
+            if small and i == 0:
+                # The VAE read the first frame and would stay beside the transformer; it comes back to decode.
+                _pipe.vae.to("cpu")
+                torch.cuda.empty_cache()
             return kwargs
 
         args = dict(
@@ -449,7 +457,7 @@ class Engine:
             args["max_sequence_length"] = 16
         if has_image:
             args["image"] = first_frame(r.image, width, height)
-        if self.offload and self.device == "cuda" and gpu_memory_gb() < 24:
+        if small:
             args |= self.encode_text(pipe, args.pop("prompt"), args.pop("negative_prompt"))
         with torch.inference_mode():
             video = pipe(**args).frames[0]
@@ -503,8 +511,14 @@ class Engine:
                 self.t2i.enable_model_cpu_offload()
             pipe, steps = self.t2i, r.steps or 50
 
+        small = self.offload and self.device == "cuda" and gpu_memory_gb() < 24
+
         def on_step(_pipe, i, _t, kwargs):
             job.progress = min(0.99, (i + 1) / steps)
+            if small and i == 0:
+                # The VAE read the first frame and would stay beside the transformer; it comes back to decode.
+                _pipe.vae.to("cpu")
+                torch.cuda.empty_cache()
             return kwargs
 
         args = dict(
@@ -681,8 +695,14 @@ class Engine:
             self.vace.enable_model_cpu_offload()  # shares the GPU with the other models
         steps = r.steps or 30
 
+        small = self.offload and self.device == "cuda" and gpu_memory_gb() < 24
+
         def on_step(_pipe, i, _t, kwargs):
             job.progress = min(0.99, (i + 1) / steps)
+            if small and i == 0:
+                # The VAE read the first frame and would stay beside the transformer; it comes back to decode.
+                _pipe.vae.to("cpu")
+                torch.cuda.empty_cache()
             return kwargs
 
         with torch.inference_mode():
