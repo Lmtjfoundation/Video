@@ -56,6 +56,34 @@ describe("motion graphics only", () => {
     await expect(makeFootage("usr_x", { prompt: "a city", aspect: "16:9", seconds: 3 })).rejects.toThrow(/motion graphics in 4K/);
   });
 
+  it.skipIf(!hasFfmpeg)("falls back to the motion-graphics engine when the Azure scene renderer can't run", async () => {
+    const { asUser, db } = await import("@/lib/db");
+    const { renderVideoPost } = await import("@/lib/render");
+    const { savePost } = await import("@/lib/repo");
+    const gemini = process.env.GEMINI_API_KEY;
+    delete process.env.GEMINI_API_KEY; // keyframes can't be painted, so the Azure path fails at its first step
+    process.env.AZURE_SCENES_ACCOUNT = "vueioscfallback1";
+    try {
+      await asUser("usr_motion_fb", async () => {
+        const t = new Date().toISOString();
+        const post = {
+          id: "post_motion_fb", platform: "tiktok", pillar: "ai_leverage", format: "video_script", kind: "video", hook: "Fallback", body: "", parts: [], hashtags: [],
+          status: "draft", moneyScore: 0, revenue: { low: 0, high: 0, basis: "" }, scoreNotes: [], safetyFlags: [], attempts: 0, createdAt: t, updatedAt: t,
+          video: { niche: "Explainer", style: "explainer", length: "s30", titles: ["Fallback"], thumbnail: {}, voice: "", music: "", loopLine: "", factCheck: [], voiceover: false,
+            scenes: [{ time: "", narration: "Still finishes.", onScreen: "STILL", visual: "", motion: "", sfx: "", cast: [] }] },
+        } as unknown as Post;
+        await savePost(post);
+        await renderVideoPost("usr_motion_fb", post.id, 0);
+        const done = await db().get<Post>("posts", post.id);
+        expect(done?.render?.status, done?.render?.message).toBe("done");
+        expect(done?.render?.message).toMatch(/motion graphics/);
+      });
+    } finally {
+      delete process.env.AZURE_SCENES_ACCOUNT;
+      if (gemini) process.env.GEMINI_API_KEY = gemini;
+    }
+  }, 300_000);
+
   it.skipIf(!hasFfmpeg)("renders a video as 4K motion graphics even when its plan asks for AI pictures and its own footage", async () => {
     const { asUser, db } = await import("@/lib/db");
     const { renderVideoPost } = await import("@/lib/render");

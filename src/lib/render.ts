@@ -2,6 +2,7 @@ import "server-only";
 import { assCaptions, estimateWordTimes, subtitlesFilter } from "./captions-ass";
 import { showPreview, withPreview } from "./preview";
 import { MOTION_ONLY, videoSize } from "./product";
+import { azureScenesReady, renderOnAzureScenes } from "./azure-scenes";
 import { makeImage } from "./pictures";
 import { spawn } from "child_process";
 import { createHash } from "crypto";
@@ -739,61 +740,91 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
         if (who) job.visual = { kind: "motion", portrait: files.get(who), name: cast.find((c) => c.name.toLowerCase() === who)?.name };
       }
     }
+    // Stylized motion-graphics scenes on Azure (azure/scene-render), when it's set up: every scene renders at once on
+    // serverless A100s and an FFmpeg job adds the typography, transitions and voice. Any failure (no GPU quota yet,
+    // an outage) falls back to the motion-graphics engine below, so the video always finishes.
+    const out = path.join(dir, "final.mp4");
+    let azureDone = false;
+    if (!recording && (await azureScenesReady())) {
+      azureDone = await renderOnAzureScenes({
+        id: post.id, plan, W, H, dir, out,
+        scenes: jobs.map((j) => ({ scene: j.scene, dur: j.dur, audio: j.audio })),
+        say: (progress, message) => setRender(post, { progress, message }),
+      }).then(
+        () => true,
+        (e) => {
+          console.warn(`[render] Azure scene rendering failed, using the motion-graphics engine: ${(e as Error).message.slice(0, 300)}`);
+          return false;
+        },
+      );
+      if (azureDone) {
+        await setRender(post, { progress: 95, message: "Mixing music and sound…" });
+        const cuts: number[] = [];
+        jobs.reduce((t, j) => (cuts.push(t), t + j.dur), 0);
+        try {
+          const { finishSound } = await import("./mix");
+          await finishSound({ video: out, dir, cuts, musicNote: plan.music, style: plan.style, music: plan.music !== "none" });
+        } catch (e) {
+          console.warn(`[render] the sound mix failed, keeping the voice only: ${(e as Error).message.slice(0, 300)}`);
+        }
+      }
+    }
     // Attached media (or choosing motion graphics) replaces the AI pictures, so their credits go back.
     let unused = plan.ai && !ai ? aiVisualCredits({ ...plan, visuals: "auto" }) : 0;
     let aiBlocked: string | undefined;
-    if (ai && !isGraphicsLook(ai.look)) {
-      const painted = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long);
-      aiBlocked = painted.blocked;
-      if (plan.ai) unused = painted.unused; // default pictures were never charged, so nothing to give back
-    }
-
-    // Motion: picture scenes become 2–3 moving shots each (depth camera, effects, grade, transitions).
-    const { animateScenes } = await import("./motion-scenes");
-    const animated = await animateScenes({
-      dir, W, H, style: plan.style,
-      scenes: jobs.map((j) => (j.visual.kind === "image" ? { scene: j.scene, image: j.visual.file, dur: j.dur } : null)),
-      say: (m) => void setRender(post, { message: m }),
-    });
-    for (const [k, file] of animated) jobs[k].visual = { kind: "video", file, hold: true, graded: true };
-
-    const segs: string[] = [];
-    for (const [i, job] of jobs.entries()) {
-      try {
-        segs.push(await renderSegment(job, i, dir, W, H, plan.style === "fiction"));
-      } catch (e) {
-        // A visual that ffmpeg can't handle (e.g. an iPhone HEIC photo or a damaged clip) shouldn't sink the whole
-        // video: redo this scene on an animated background and keep going.
-        if (job.visual.kind === "gradient") throw e;
-        console.warn(`[render] scene ${i + 1} visual failed, using a background instead: ${(e as Error).message.slice(0, 200)}`);
-        job.visual = { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] };
-        segs.push(await renderSegment(job, i, dir, W, H, plan.style === "fiction"));
+    if (!azureDone) {
+      if (ai && !isGraphicsLook(ai.look)) {
+        const painted = await paintScenes(post, ai, planned.map((p) => p.index), jobs, dir, long);
+        aiBlocked = painted.blocked;
+        if (plan.ai) unused = painted.unused; // default pictures were never charged, so nothing to give back
       }
-      await showPreview({ file: segs.at(-1)!, mime: "video/mp4", label: `Scene ${i + 1} of ${jobs.length}` });
-      const [from, span] = ai ? [50, 45] : [40, 55];
-      await setRender(post, { progress: Math.round(from + (span * (i + 1)) / jobs.length), message: `Rendering scene ${i + 1} of ${jobs.length}…` });
-    }
 
-    const list = path.join(dir, "list.txt");
-    await fs.writeFile(list, segs.map((s) => `file '${s}'`).join("\n"));
-    const out = path.join(dir, "final.mp4");
-    if (recording) {
-      // The scenes were cut silent to the recording's timing; lay the whole recording back over them in one piece,
-      // so the sound has no seams between scenes.
-      const pictures = path.join(dir, "pictures.mp4");
-      await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", pictures]);
-      await runCmd("ffmpeg", ["-hide_banner", "-y", "-i", pictures, "-i", recording, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", "-shortest", "-movflags", "+faststart", out]);
-    } else {
-      await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out]);
-      // Sound: music bed under the voice, a whoosh on each scene change, mastered to -14 LUFS.
-      await setRender(post, { message: "Mixing music and sound…" });
-      const cuts: number[] = [];
-      jobs.reduce((t, j) => (cuts.push(t), t + j.dur), 0);
-      try {
-        const { finishSound } = await import("./mix");
-        await finishSound({ video: out, dir, cuts, musicNote: plan.music, style: plan.style, music: plan.music !== "none" });
-      } catch (e) {
-        console.warn(`[render] the sound mix failed, keeping the voice only: ${(e as Error).message.slice(0, 300)}`);
+      // Motion: picture scenes become 2–3 moving shots each (depth camera, effects, grade, transitions).
+      const { animateScenes } = await import("./motion-scenes");
+      const animated = await animateScenes({
+        dir, W, H, style: plan.style,
+        scenes: jobs.map((j) => (j.visual.kind === "image" ? { scene: j.scene, image: j.visual.file, dur: j.dur } : null)),
+        say: (m) => void setRender(post, { message: m }),
+      });
+      for (const [k, file] of animated) jobs[k].visual = { kind: "video", file, hold: true, graded: true };
+
+      const segs: string[] = [];
+      for (const [i, job] of jobs.entries()) {
+        try {
+          segs.push(await renderSegment(job, i, dir, W, H, plan.style === "fiction"));
+        } catch (e) {
+          // A visual that ffmpeg can't handle (e.g. an iPhone HEIC photo or a damaged clip) shouldn't sink the whole
+          // video: redo this scene on an animated background and keep going.
+          if (job.visual.kind === "gradient") throw e;
+          console.warn(`[render] scene ${i + 1} visual failed, using a background instead: ${(e as Error).message.slice(0, 200)}`);
+          job.visual = { kind: "gradient", colors: GRADIENTS[i % GRADIENTS.length] };
+          segs.push(await renderSegment(job, i, dir, W, H, plan.style === "fiction"));
+        }
+        await showPreview({ file: segs.at(-1)!, mime: "video/mp4", label: `Scene ${i + 1} of ${jobs.length}` });
+        const [from, span] = ai ? [50, 45] : [40, 55];
+        await setRender(post, { progress: Math.round(from + (span * (i + 1)) / jobs.length), message: `Rendering scene ${i + 1} of ${jobs.length}…` });
+      }
+
+      const list = path.join(dir, "list.txt");
+      await fs.writeFile(list, segs.map((s) => `file '${s}'`).join("\n"));
+      if (recording) {
+        // The scenes were cut silent to the recording's timing; lay the whole recording back over them in one piece,
+        // so the sound has no seams between scenes.
+        const pictures = path.join(dir, "pictures.mp4");
+        await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", pictures]);
+        await runCmd("ffmpeg", ["-hide_banner", "-y", "-i", pictures, "-i", recording, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", "-shortest", "-movflags", "+faststart", out]);
+      } else {
+        await runCmd("ffmpeg", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", out]);
+        // Sound: music bed under the voice, a whoosh on each scene change, mastered to -14 LUFS.
+        await setRender(post, { message: "Mixing music and sound…" });
+        const cuts: number[] = [];
+        jobs.reduce((t, j) => (cuts.push(t), t + j.dur), 0);
+        try {
+          const { finishSound } = await import("./mix");
+          await finishSound({ video: out, dir, cuts, musicNote: plan.music, style: plan.style, music: plan.music !== "none" });
+        } catch (e) {
+          console.warn(`[render] the sound mix failed, keeping the voice only: ${(e as Error).message.slice(0, 300)}`);
+        }
       }
     }
     const bytes = await fs.readFile(out);

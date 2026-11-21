@@ -59,6 +59,10 @@ export interface Integrations {
   azureAiPremiumDeployment?: string;
   /** Azure OpenAI Whisper deployment for speech to text (words with timings). "off" keeps the free on-server Whisper. */
   azureAiTranscribeDeployment?: string;
+  /** Azure OpenAI image deployment for scene keyframes (e.g. gpt-image-1.5); FLUX.2 on Azure Foundry when empty. */
+  azureAiKeyframeDeployment?: string;
+  /** Storage account of the Azure scene renderer (azure/scene-render); switches scene rendering on Azure GPUs on. */
+  azureScenesAccount?: string;
   /**
    * Keyless Azure (managed identity). The API Management gateway every model call goes through, the storage account
    * name (blobs and the render queues, reached with the server's identity), the Cosmos DB endpoint (presets, prompt
