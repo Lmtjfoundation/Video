@@ -13,6 +13,7 @@ import { VoicePicker } from "@/components/voice-picker";
 import { RecordVoiceTab } from "@/components/record-voice";
 import { EMOTION_TAGS, stripTags, toSrt, toTxt, toVtt, type TimedText } from "@/lib/speech-text";
 import { DESIGN_PRESETS, STOCK_VOICES, VOICE_USES, type VoiceChoice, type VoiceUse } from "@/lib/voice-catalog";
+import { MOTION_ONLY } from "@/lib/product";
 
 type Tab = "record" | "tts" | "library" | "design" | "stt" | "isolate" | "studio" | "v2v" | "presenter";
 const TABS: { id: Tab; label: string; icon: typeof Mic }[] = [
@@ -26,6 +27,9 @@ const TABS: { id: Tab; label: string; icon: typeof Mic }[] = [
   { id: "v2v", label: "Voice to Video", icon: Video },
   { id: "presenter", label: "Talking Presenter", icon: UserRound },
 ];
+
+// Motion graphics only (src/lib/product.ts): no lifelike talking presenter.
+const SHOWN_TABS = TABS.filter((t) => !MOTION_ONLY || t.id !== "presenter");
 
 type Credits = { voiceover: number; speech: number; voiceDesign: number; isolateMinute: number; lipsyncSecond: number };
 type Block = { id: string; text: string; voice: VoiceChoice };
@@ -657,12 +661,12 @@ function VoiceToVideoTab({ info, voice, setVoice, onRecord }: { info: Info | nul
 
 function VoiceLab() {
   const params = useSearchParams();
-  const initial = TABS.some((t) => t.id === params.get("tab")) ? (params.get("tab") as Tab) : "record";
+  const initial = SHOWN_TABS.some((t) => t.id === params.get("tab")) ? (params.get("tab") as Tab) : "record";
   const [tab, setTab] = useState<Tab>(initial);
   // The side menu's Record Voice shortcut links here with ?tab=record: follow it while the page is open too.
   useEffect(() => {
     const t = params.get("tab");
-    if (TABS.some((x) => x.id === t)) setTab(t as Tab);
+    if (SHOWN_TABS.some((x) => x.id === t)) setTab(t as Tab);
   }, [params]);
   const { info, reload } = useInfo();
   const [voice, setVoice] = useState<VoiceChoice>(DEFAULT_VOICE);
@@ -676,7 +680,7 @@ function VoiceLab() {
     <>
       <PageHeader title="Voice Lab" subtitle="Record your voice over a video, lifelike speech, voice design, a voice library, transcripts, voice isolation, audiobooks and voice-over for video, all built into Vueio. No outside voice service needed." />
       <div ref={strip} className="mb-5 flex gap-2 overflow-x-auto pb-1">
-        {TABS.map((t) => (
+        {SHOWN_TABS.map((t) => (
           <button key={t.id} data-active={tab === t.id} onClick={() => setTab(t.id)} className={cn("flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition", tab === t.id ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>
             <t.icon className="h-4 w-4" /> {t.label}
           </button>

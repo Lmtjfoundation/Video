@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { FLOW_STEP_TYPES, flowCredits, STEP_LABEL, type Flow, type FlowStep, type FlowStepType } from "@/lib/flow-types";
 import { SPEECH_LANGUAGES } from "@/lib/languages";
 import { useVoices } from "@/components/voice-tools";
+import { MOTION_ONLY } from "@/lib/product";
 
 type Listed = Omit<Flow, "id" | "createdAt"> & { id?: string; createdAt?: string; credits: number };
 type Data = { flows: Listed[]; templates: Listed[]; engine: boolean };
@@ -76,7 +77,7 @@ export default function FlowsPage() {
       {data && !data.engine && <Card className="mb-5 p-4 text-sm text-white/70">Flows run on Vueio&apos;s own engine. The admin connects it in Admin → App settings → Integrations → Vueio Video Engine.</Card>}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
         <Card className="h-fit">
-          <CardHeader title="Your flows" icon={<Workflow className="h-4 w-4" />} action={<Button size="sm" onClick={() => setEdit({ name: "New flow", steps: [{ type: "image" }, { type: "footage" }, { type: "music" }, { type: "finish" }], credits: 0 })}><Plus className="h-3.5 w-3.5" /> New</Button>} />
+          <CardHeader title="Your flows" icon={<Workflow className="h-4 w-4" />} action={<Button size="sm" onClick={() => setEdit({ name: "New flow", steps: MOTION_ONLY ? [{ type: "image" }, { type: "music" }, { type: "finish" }] : [{ type: "image" }, { type: "footage" }, { type: "music" }, { type: "finish" }], credits: 0 })}><Plus className="h-3.5 w-3.5" /> New</Button>} />
           <div className="grid grid-cols-1 gap-1.5 p-3">
             {!data?.flows.length && <div className="px-2 text-sm text-white/50">None saved yet. Start from a ready-made one:</div>}
             {data?.flows.map((f) => (
@@ -109,7 +110,7 @@ export default function FlowsPage() {
                 <div className="mb-3 flex items-center gap-2">
                   <Badge tone="mint">{i + 1}</Badge>
                   <Select aria-label="Step type" className="w-auto" value={s.type} onChange={(e) => setStep(i, { type: e.target.value as FlowStepType })}>
-                    {FLOW_STEP_TYPES.map((t) => <option key={t} value={t}>{STEP_LABEL[t].title}</option>)}
+                    {FLOW_STEP_TYPES.filter((t) => !MOTION_ONLY || t !== "footage" || s.type === "footage").map((t) => <option key={t} value={t}>{STEP_LABEL[t].title}</option>)}
                   </Select>
                   <span className="hidden text-xs text-white/50 md:inline">{STEP_LABEL[s.type].hint}</span>
                   <div className="ml-auto flex gap-1">
@@ -133,7 +134,7 @@ export default function FlowsPage() {
                       )}
                       {s.type === "prompt" && (
                         <Select aria-label="Clip kind" value={s.kind ?? "footage"} onChange={(e) => setStep(i, { kind: e.target.value as FlowStep["kind"] })}>
-                          <option value="footage">For footage</option><option value="image">For a picture</option><option value="music">For music</option><option value="sfx">For a sound</option>
+                          {!MOTION_ONLY && <option value="footage">For footage</option>}<option value="image">For a picture</option><option value="music">For music</option><option value="sfx">For a sound</option>
                         </Select>
                       )}
                       {s.type === "voiceover" && (
@@ -152,7 +153,7 @@ export default function FlowsPage() {
                 )}
               </Card>
             ))}
-            <Button variant="ghost" onClick={() => setEdit({ ...edit, steps: [...edit.steps, { type: "footage" }] })}><Plus className="h-4 w-4" /> Add a step</Button>
+            <Button variant="ghost" onClick={() => setEdit({ ...edit, steps: [...edit.steps, { type: MOTION_ONLY ? "image" : "footage" }] })}><Plus className="h-4 w-4" /> Add a step</Button>
             <Card className="p-5">
               <Field label="Run it with an idea" hint="Fills {idea} in every step">
                 <Textarea rows={3} value={idea} maxLength={2000} onChange={(e) => setIdea(e.target.value)} placeholder="e.g. A cold brew coffee brand called Midnight, for night-shift workers" />

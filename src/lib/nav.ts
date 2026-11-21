@@ -85,6 +85,8 @@ if (MOTION_ONLY) {
     Object.assign(posts, { label: "Motion Graphics Videos", icon: Sparkles, blurb: "Scripts, captions and 4K motion graphics videos for every platform in one go." });
     make.tools = [posts, ...make.tools.filter((t) => t !== posts)];
   }
+  const sound = make.tools.find((t) => t.href === "/create");
+  if (sound) sound.blurb = "Music, sound effects and voiceovers from a description.";
   const explain = make.tools.find((t) => t.href === "/explain");
   if (explain) explain.blurb = "Paste anything and get it in plain English, or as a 4K motion graphics video.";
 }

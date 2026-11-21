@@ -13,9 +13,11 @@ import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, Select, Spin
 import { cn } from "@/lib/utils";
 import { FOOTAGE_CATEGORIES, GENRES, MOODS, SFX_CATEGORIES } from "@/lib/library-tags";
 import { fillSubject, presetsFor, type Preset } from "@/lib/presets";
+import { MOTION_ONLY } from "@/lib/product";
 
 type Tab = "music" | "sfx" | "footage" | "voice" | "voices" | "dub" | "avatar" | "templates";
-const ALL_TABS: Tab[] = ["music", "sfx", "footage", "voice", "voices", "dub", "avatar", "templates"];
+// Motion graphics only (src/lib/product.ts): no AI footage clips and no talking-face avatars.
+const ALL_TABS: Tab[] = (["music", "sfx", "footage", "voice", "voices", "dub", "avatar", "templates"] as Tab[]).filter((t) => !MOTION_ONLY || (t !== "footage" && t !== "avatar"));
 type Info = { engine: boolean; credits: { music: number; sfx: number; footageSecond: number; autoPrompt: number } };
 type Voices = { voices: { id: string; label: string }[]; maxChars: number; creditsPer1000: number; enabled: boolean };
 
@@ -51,11 +53,11 @@ function AiStudio() {
     <>
       <PageHeader
         title="AI Studio"
-        subtitle="Make music, sound effects, footage and voiceovers on Vueio's own models. Everything lands in your Library with a title, tags and a commercial license."
+        subtitle={`Make music, sound effects${MOTION_ONLY ? "" : ", footage"} and voiceovers on Vueio's own models. Everything lands in your Library with a title, tags and a commercial license.`}
         actions={<Link href="/library"><Button><Library className="h-4 w-4" /> Open Library</Button></Link>}
       />
       <div className="mb-5 flex flex-wrap gap-2">
-        {TABS.map((t) => (
+        {TABS.filter((t) => ALL_TABS.includes(t.id)).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} className={cn("flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition", tab === t.id ? "bg-mint-400 text-ink-950" : "bg-white/5 text-white/70 hover:bg-white/10")}>
             <t.icon className="h-4 w-4" /> {t.label}
           </button>
