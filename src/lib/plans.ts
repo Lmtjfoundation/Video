@@ -166,6 +166,11 @@ export const CREDIT_COST = {
   veoSecond: 7,
   /** Seedance 2.5 on Replicate is $0.2312 a second at 720p from an image (Oct 2026), so 16 credits (32¢). */
   seedanceSecond: 16,
+  /**
+   * An Episode Studio second filmed in 4K by Gemini Omni 1.2 Flash on the app's Gemini key: $0.209 a second at 4K
+   * (Nov 2026), plus the trim margin and retakes of frozen or broken shots, so 16 credits.
+   */
+  omni4kSecond: 16,
   /** Wan 2.2 (open weights) on Replicate is at most $0.145 a ~5-second 720p clip (Oct 2026); 2 credits a second covers it from a 4-second scene up. */
   wanSecond: 2,
   /** A character portrait: one 2K picture plus a short description written from the photo. */
@@ -260,6 +265,7 @@ export const CREDIT_LABEL: Record<CreditAction, string> = {
   filmReview: "Writers' Room: awards-readiness review",
   filmPromo: "Writers' Room: promotion kit",
   ownSecond: "Each second of footage from Vueio's own video engine",
+  omni4kSecond: "Each second of an Episode Studio episode filmed with the 4K cinema camera",
   filmPlan: "Film Engine: plan a film as beats with timestamped shot lists",
   filmBeat: "Film Engine: write the next beat",
 };

@@ -1,12 +1,13 @@
 import "server-only";
 import { spawn } from "child_process";
 import { promises as fs } from "fs";
+import os from "os";
 import path from "path";
 import { refundCredits } from "../auth";
 import type { JobFn } from "../jobs";
 import { azureSpeakActed } from "../azure-speech";
 import { foundryImage } from "../azure-foundry";
-import { MediaGenError, type RefImage } from "../gemini-media";
+import { geminiClip, mediaKey, MediaGenError, type RefImage } from "../gemini-media";
 import { claudeJson } from "../llm";
 import { storeFilePath } from "../media";
 import { dataDir } from "../migrate";
@@ -14,7 +15,7 @@ import { engineFor, ownAudio, ownClipEngineInfo, ownClipFile, ownClipStatus, own
 import { kvGet, kvSet, log } from "../repo";
 import { mediaDuration, runCmd } from "../render";
 import { nowIso, sleep, uid } from "../utils";
-import { allShots, motionPrompt, nameTags, negativeFor, portraitPrompt, shotMax, stillPrompt, type EpisodeAspect, type EpisodeLength, type EpisodePlan, type Shot } from "./plan";
+import { allShots, LAST_RESORT_TAKE, motionPrompt, nameTags, negativeFor, omniPrompt, portraitPrompt, shotMax, stillPrompt, type EpisodeAspect, type EpisodeLength, type EpisodePlan, type Shot } from "./plan";
 import { buildTimeline, captions, type Timeline } from "./timeline";
 import { writeEpisodePlan } from "./write";
 
@@ -24,8 +25,13 @@ import { writeEpisodePlan } from "./write";
  *   plan → cast portraits → first frames → acted voices → the edit → filmed shots (checked, retaken when frozen or
  *   broken, lips synced) → score, effects and mix → the finish (grade, titles, captions) → the Media Library.
  * Pictures: FLUX.2 pro on the owner's Azure AI (keeps every face from its portrait). Voices: Azure neural voices,
- * acted. Shots, music, effects and lip sync: Vueio's GPU engine. Writing and the visual check: Claude.
+ * acted. Shots: Gemini Omni Flash in 4K on the app's Gemini key, or Vueio's GPU engine (480p-720p, upscaled in the
+ * finish). Music, sound effects and lip sync: Vueio's GPU engine. Writing and the visual check: Claude. Every shot is
+ * moving footage: a shot that can't be filmed borrows a neighbouring shot's footage, never a still picture.
  */
+export type FilmEngine = "gemini" | "own";
+/** The longest shot the writer may plan when Gemini films (it makes 3-15 second clips). */
+const OMNI_SHOT_MAX = 8;
 export type Step = "queued" | "planning" | "casting" | "stills" | "voices" | "filming" | "lipsync" | "sound" | "finishing" | "done" | "failed";
 export const STEP_LABEL: Record<Step, string> = {
   queued: "Waiting to start",
@@ -63,6 +69,8 @@ export interface EpisodeRecord {
   plan?: EpisodePlan;
   timeline?: Timeline;
   clips: Record<string, ClipState>;
+  /** Who films the shots: Gemini Omni in 4K, or Vueio's GPU engine. Chosen when the episode starts. */
+  engine?: FilmEngine;
   /** Shots dropped because their picture couldn't be made (e.g. a safety filter), so the episode still finishes. */
   dropped?: string[];
   mediaId?: string;
@@ -93,8 +101,8 @@ async function save(r: EpisodeRecord) {
   await kvSet(row(r.id), r);
 }
 
-export async function newEpisode(owner: string, o: { prompt: string; length: EpisodeLength; aspect: EpisodeAspect; credits: number }): Promise<EpisodeRecord> {
-  const r: EpisodeRecord = { id: uid(), owner, prompt: o.prompt.trim().slice(0, 4000), length: o.length, aspect: o.aspect, step: "queued", message: STEP_LABEL.queued, progress: 0, clips: {}, credits: o.credits, createdAt: nowIso(), updatedAt: nowIso() };
+export async function newEpisode(owner: string, o: { prompt: string; length: EpisodeLength; aspect: EpisodeAspect; credits: number; engine?: FilmEngine }): Promise<EpisodeRecord> {
+  const r: EpisodeRecord = { id: uid(), owner, prompt: o.prompt.trim().slice(0, 4000), length: o.length, aspect: o.aspect, engine: o.engine, step: "queued", message: STEP_LABEL.queued, progress: 0, clips: {}, credits: o.credits, createdAt: nowIso(), updatedAt: nowIso() };
   await save(r);
   const ids = (await kvGet<string[]>(INDEX)) ?? [];
   await kvSet(INDEX, [r.id, ...ids.filter((x) => x !== r.id)].slice(0, 50));
@@ -119,9 +127,9 @@ async function writePicture(file: string, img: { bytes: Buffer; mimeType: string
 const py = (script: string, args: string[], timeoutMs = 30 * 60_000) => runCmd("python3", [path.join(SCRIPTS, script), ...args], timeoutMs);
 
 /** The finish streams "item k/n" lines: shown as progress while it renders. */
-function runFinish(spec: string, out: string, onItem: (k: number, n: number) => void): Promise<void> {
+function runFinish(spec: string, out: string, onItem: (k: number, n: number) => void, extra: string[] = []): Promise<void> {
   return new Promise((resolve, reject) => {
-    const p = spawn("python3", [path.join(SCRIPTS, "finish.py"), spec, out], { stdio: ["ignore", "pipe", "pipe"] });
+    const p = spawn("python3", [path.join(SCRIPTS, "finish.py"), spec, out, ...extra], { stdio: ["ignore", "pipe", "pipe"] });
     let err = "";
     p.stdout.on("data", (d: Buffer) => {
       for (const m of d.toString().matchAll(/item (\d+)\/(\d+)/g)) onItem(Number(m[1]), Number(m[2]));
@@ -156,7 +164,7 @@ async function visualCheck(plan: EpisodePlan, shot: Shot, clip: string, dir: str
     const who = shot.cast.map((k) => plan.cast.find((c) => c.key === k)).filter(Boolean).map((c) => `${c!.key}: ${c!.look}`).join("; ");
     const r = await claudeJson<{ ok?: boolean; problem?: string }>({
       system: "You check shots from an AI video model for a drama series. Be practical: motion blur, small background glitches and imperfect detail are fine. Reject only clear defects a viewer would notice: a melted, smeared or distorted face; one person morphing into another or two faces merging; extra or broken limbs or hands in focus; a person's identity changing; the shot frozen like a still photo; the described action plainly not happening. Answer JSON {\"ok\": true|false, \"problem\": \"one short sentence, empty if ok\"}.",
-      user: `Six frames in order from one 5-second shot. Intended action: ${shot.motion}${who ? `\nPeople: ${who}` : ""}`,
+      user: `Six frames in order from one shot. Intended action: ${shot.motion}${who ? `\nPeople: ${who}` : ""}`,
       images: [{ mediaType: "image/jpeg", base64: (await fs.readFile(file)).toString("base64") }],
       maxTokens: 300,
       temperature: 0,
@@ -172,7 +180,10 @@ async function visualCheck(plan: EpisodePlan, shot: Shot, clip: string, dir: str
 /* ───────────── the job ───────────── */
 
 const QMAX = 5; // clips allowed to wait in the engine's queue: each finishes well inside the engine's job retention
-const MAX_ATTEMPTS = 3;
+/** Tries per shot; the last asks for the simplest motion (see LAST_RESORT_TAKE) so the shot still comes back moving. */
+const MAX_ATTEMPTS = LAST_RESORT_TAKE + 1;
+/** Gemini clips made at the same time. */
+const OMNI_PARALLEL = 3;
 
 export async function runEpisode(id: string, say: (m: string) => void): Promise<EpisodeRecord> {
   let r = await getEpisode(id);
@@ -188,14 +199,21 @@ export async function runEpisode(id: string, say: (m: string) => void): Promise<
   };
 
   try {
-    // 1 · The plan. The shot length limit comes from the engine (it wakes the GPU, which is needed next anyway).
-    let maxSeconds = 5.04;
-    try {
-      maxSeconds = Math.min(5.04, (await ownClipEngineInfo()).maxSeconds || 5.04);
-    } catch (e) {
-      if (e instanceof MediaGenError && e.kind === "config") throw e;
+    // 1 · The plan. Gemini films 3-15 second clips in 4K; the GPU engine's limit comes from the engine (asking wakes
+    // the GPU, which is needed next anyway).
+    if (!r.engine) {
+      r.engine = (await mediaKey()) ? "gemini" : "own";
+      await save(r);
     }
-    const maxShot = shotMax(maxSeconds);
+    let maxSeconds = 5.04;
+    if (r.engine === "own") {
+      try {
+        maxSeconds = Math.min(5.04, (await ownClipEngineInfo()).maxSeconds || 5.04);
+      } catch (e) {
+        if (e instanceof MediaGenError && e.kind === "config") throw e;
+      }
+    }
+    const maxShot = r.engine === "gemini" ? OMNI_SHOT_MAX : shotMax(maxSeconds);
     if (!r.plan) {
       await step("planning", "Writing the episode: cast, script and shot list…", 2);
       r.plan = await writeEpisodePlan({ prompt: r.prompt, length: r.length, aspect: r.aspect, maxShot });
@@ -263,12 +281,13 @@ export async function runEpisode(id: string, say: (m: string) => void): Promise<
     await save(r);
     const tl = r.timeline;
 
-    // 6 · Filming: shots go to the GPU a few at a time (a long queue would outlive the engine's job retention), each
-    // downloaded as soon as it's ready, checked, and filmed again when it's frozen or visibly broken.
-    await film(r, plan, tl, dir, maxSeconds, step);
+    // 6 · Filming. Each shot is checked when it arrives and filmed again when it's frozen or visibly broken.
+    if (r.engine === "gemini") await filmOmni(r, plan, tl, dir, step);
+    else await film(r, plan, tl, dir, maxSeconds, step);
 
-    // 7 · Lip sync, where a speaking face is on screen and the engine has lip sync.
-    const lipEngine = await engineFor("lipsync").catch(() => null);
+    // 7 · Lip sync, where a speaking face is on screen and the engine has lip sync. Gemini's 4K shots are filmed
+    // with the speaker talking; the GPU's lip sync works on its own lower-resolution clips only.
+    const lipEngine = r.engine === "own" ? await engineFor("lipsync").catch(() => null) : null;
     if (lipEngine) {
       const talking = allShots(plan).filter((s) => s.talking && s.line);
       for (const [i, s] of talking.entries()) {
@@ -297,30 +316,28 @@ export async function runEpisode(id: string, say: (m: string) => void): Promise<
     const mix = path.join(dir, "sound", "mix.wav");
     if (!(await exists(mix))) await sound(r, plan, tl, dir, step);
 
-    // 9 · The finish.
+    // 9 · The finish, in 4K: segments rendered side by side, joined, then the mix.
     const out = path.join(dir, "episode.mp4");
     if (!(await exists(out))) {
-      await step("finishing", "Grading, titles and captions…", 90);
+      await step("finishing", "Effects, grade, titles and captions in 4K…", 90);
       const tags = nameTags(plan);
       const supers: Record<string, { title: string; sub?: string; seconds: number }> = {};
       for (const b of plan.beats) if (b.super && b.shots?.[0]) supers[b.shots[0].id] = { ...b.super, seconds: 3.2 };
       const byId = new Map(allShots(plan).map((s) => [s.id, s]));
-      const [w, h] = r.aspect === "9:16" ? [1080, 1920] : [1920, 1080];
+      const [w, h] = r.aspect === "9:16" ? [2160, 3840] : [3840, 2160];
       const accent = [1, 3, 5].map((k) => parseInt(plan.accent.slice(k, k + 2), 16));
-      const items = await Promise.all(
-        tl.items.map(async (it) => {
-          if (it.kind === "card") return { kind: "card", start: it.start, dur: it.dur, text: it.text, sub: it.sub, style: it.style };
-          const lip = path.join(dir, "clips", `${it.id}.lip.mp4`);
-          const clip = (await exists(lip)) ? lip : path.join(dir, "clips", `${it.id}.mp4`);
-          return { kind: "shot", id: it.id, start: it.start, dur: it.dur, mood: it.mood, clip, still: path.join(dir, "stills", `${it.id}.png`), impacts: byId.get(it.id!)?.impacts ?? [] };
-        }),
-      );
+      const footage = await shotFootage(r, tl, dir);
+      const items = tl.items.map((it) => {
+        if (it.kind === "card") return { kind: "card", start: it.start, dur: it.dur, text: it.text, sub: it.sub, style: it.style, transition: it.transition };
+        const s = byId.get(it.id!);
+        return { kind: "shot", id: it.id, start: it.start, dur: it.dur, mood: it.mood, clip: footage[it.id!], impacts: s?.impacts ?? [], fx: s?.fx ?? [], transition: s?.transition };
+      });
       const spec = { w, h, fps: 24, total: tl.total, fonts: FONTS, mix, accent, note: "ORIGINAL FICTION  ·  MADE WITH VUEIO", items, captions: captions(plan, tl), supers, tags };
       const specFile = path.join(dir, "finish.json");
       await fs.writeFile(specFile, JSON.stringify(spec));
-      await runFinish(specFile, out + ".part.mp4", (k, n) => {
+      await finishParallel(specFile, items, tl.total, mix, out + ".part.mp4", (k, n) => {
         const p = 90 + (8 * k) / n;
-        if (Math.round(p) !== r!.progress) void step("finishing", `Grading, titles and captions: ${k} of ${n}…`, p);
+        if (Math.round(p) !== r!.progress) void step("finishing", `Effects, grade, titles and captions in 4K: ${k} of ${n}…`, p);
       });
       await fs.rename(out + ".part.mp4", out);
     }
@@ -392,7 +409,7 @@ async function film(r: EpisodeRecord, plan: EpisodePlan, tl: Timeline, dir: stri
           await submit(id);
           queue++;
         } catch (e) {
-          // One shot the engine refuses doesn't stop the episode: it's tried again, then its still stands in.
+          // One shot the engine refuses doesn't stop the episode: it's tried again, then a neighbouring shot stands in.
           const c = r.clips[id];
           c.attempts++;
           c.note = (e as Error).message.slice(0, 160);
@@ -414,7 +431,7 @@ async function film(r: EpisodeRecord, plan: EpisodePlan, tl: Timeline, dir: stri
       if (st.status === "gone") {
         c.job = undefined;
         c.lost++;
-        if (c.lost > 4) c.done = true; // the still's slow push-in stands in
+        if (c.lost > 4) c.done = true; // a neighbouring shot's footage stands in
         await save(r);
         continue;
       }
@@ -435,20 +452,7 @@ async function film(r: EpisodeRecord, plan: EpisodePlan, tl: Timeline, dir: stri
       }
       c.job = undefined;
       // The numbers first (a frozen shot reads as a still picture), then a look at the frames.
-      let verdict = "ok";
-      try {
-        verdict = (JSON.parse((await py("qc.py", [tmp, path.join(dir, "stills", `${id}.png`)], 120_000)).trim().split("\n").pop() || "{}") as { verdict?: string }).verdict ?? "ok";
-      } catch {
-        /* no check: keep the shot */
-      }
-      let problem = "";
-      if (verdict === "ok") {
-        const v = await visualCheck(plan, s, tmp, path.join(dir, "clips"));
-        if (v && !v.ok) {
-          verdict = "broken";
-          problem = v.problem;
-        }
-      }
+      const { verdict, problem } = await checkShot(plan, s, tmp, dir);
       const keep = verdict === "ok" || c.attempts + 1 >= MAX_ATTEMPTS;
       if (keep && (verdict === "ok" || !(await exists(clipFile(id))))) await fs.rename(tmp, clipFile(id));
       else await fs.rm(tmp, { force: true });
@@ -464,6 +468,147 @@ async function film(r: EpisodeRecord, plan: EpisodePlan, tl: Timeline, dir: stri
     lastNote = note;
     await sleep(20_000);
   }
+}
+
+/** The shot's numbers, then Claude's look at its frames: "ok", "frozen" or "broken" (with what's wrong). */
+async function checkShot(plan: EpisodePlan, s: Shot, clip: string, dir: string): Promise<{ verdict: string; problem: string }> {
+  let verdict = "ok";
+  try {
+    verdict = (JSON.parse((await py("qc.py", [clip, path.join(dir, "stills", `${s.id}.png`)], 300_000)).trim().split("\n").pop() || "{}") as { verdict?: string }).verdict ?? "ok";
+  } catch {
+    /* no check: keep the shot */
+  }
+  if (verdict !== "ok") return { verdict, problem: "" };
+  const v = await visualCheck(plan, s, clip, path.join(dir, "clips"));
+  return v && !v.ok ? { verdict: "broken", problem: v.problem } : { verdict: "ok", problem: "" };
+}
+
+/**
+ * Filming with Gemini Omni Flash in 4K: a few shots at a time, each starting on its first frame, checked when it
+ * arrives and filmed again (a new take, then the simplest motion) when it's frozen or broken.
+ */
+async function filmOmni(r: EpisodeRecord, plan: EpisodePlan, tl: Timeline, dir: string, step: (s: Step, m: string, p: number) => Promise<void>) {
+  const order = tl.items.filter((i) => i.kind === "shot").map((i) => i.id!);
+  const byId = new Map(allShots(plan).map((s) => [s.id, s]));
+  const clipFile = (id: string) => path.join(dir, "clips", `${id}.mp4`);
+  for (const id of order) {
+    r.clips[id] ??= { attempts: 0, lost: 0 };
+    if (!r.clips[id].done && (await exists(clipFile(id)))) r.clips[id].done = true;
+  }
+  const todo = order.filter((id) => !r.clips[id].done);
+  let filmed = order.length - todo.length;
+  const report = () => step("filming", `Filming in 4K: ${filmed} of ${order.length} shots done…`, 30 + (50 * filmed) / order.length);
+  await report();
+  const one = async (id: string) => {
+    const s = byId.get(id)!;
+    const c = r.clips[id];
+    while (!c.done) {
+      const still = await fs.readFile(path.join(dir, "stills", `${id}.png`));
+      const tmp = clipFile(id) + ".new.mp4";
+      try {
+        const clip = await geminiClip({
+          prompt: omniPrompt(s, c.attempts),
+          start: { base64: still.toString("base64"), mimeType: still[0] === 0xff ? "image/jpeg" : "image/png" },
+          aspect: r.aspect,
+          seconds: Math.ceil((tl.clips[id] ?? s.seconds) + 0.3),
+          resolution: "4k",
+        });
+        await fs.writeFile(tmp, clip);
+      } catch (e) {
+        if (e instanceof MediaGenError && e.kind === "config") throw e; // the key or billing: every shot would fail
+        c.attempts++;
+        c.note = (e as Error).message.slice(0, 160);
+        if (c.attempts >= MAX_ATTEMPTS) c.done = true;
+        await save(r);
+        continue;
+      }
+      const { verdict, problem } = await checkShot(plan, s, tmp, dir);
+      const keep = verdict === "ok" || c.attempts + 1 >= MAX_ATTEMPTS;
+      if (keep && (verdict === "ok" || !(await exists(clipFile(id))))) await fs.rename(tmp, clipFile(id));
+      else await fs.rm(tmp, { force: true });
+      c.attempts++;
+      c.verdict = verdict;
+      c.note = problem || undefined;
+      c.done = keep;
+      await save(r);
+    }
+    filmed++;
+    await report();
+  };
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(OMNI_PARALLEL, todo.length) }, async () => {
+      while (next < todo.length) await one(todo[next++]);
+    }),
+  );
+}
+
+/**
+ * The footage for every shot in the edit: its lip-synced take, its filmed take, or (when a shot couldn't be filmed
+ * at all) the nearest filmed shot in the same scene, then anywhere. Never a still picture.
+ */
+async function shotFootage(r: EpisodeRecord, tl: Timeline, dir: string): Promise<Record<string, string>> {
+  const shots = tl.items.filter((i) => i.kind === "shot");
+  const own: Record<string, string | null> = {};
+  for (const it of shots) {
+    const lip = path.join(dir, "clips", `${it.id}.lip.mp4`);
+    const clip = path.join(dir, "clips", `${it.id}.mp4`);
+    own[it.id!] = (await exists(lip)) ? lip : (await exists(clip)) ? clip : null;
+  }
+  if (!Object.values(own).some(Boolean)) throw new Error("None of the shots could be filmed, so there's no footage to finish. Check the video engine, then press Resume.");
+  const out: Record<string, string> = {};
+  for (const [i, it] of shots.entries()) {
+    if (own[it.id!]) {
+      out[it.id!] = own[it.id!]!;
+      continue;
+    }
+    const near = shots.map((x, j) => ({ x, d: Math.abs(j - i) + (x.beat === it.beat ? 0 : 1000) })).filter((o) => own[o.x.id!]).sort((a, b) => a.d - b.d)[0];
+    out[it.id!] = own[near.x.id!]!;
+    r.clips[it.id!] = { ...(r.clips[it.id!] ?? { attempts: 0, lost: 0 }), note: `not filmed: uses ${near.x.id}'s footage` };
+  }
+  await save(r);
+  return out;
+}
+
+/**
+ * The 4K finish, split into contiguous runs of items rendered side by side (as many as the server's cores and
+ * memory allow), joined without re-encoding, then the mix added and loudness-normalised.
+ */
+async function finishParallel(specFile: string, items: { dur: number }[], total: number, mix: string, out: string, onItem: (k: number, n: number) => void) {
+  const n = items.length;
+  const byCores = Math.floor(os.cpus().length / 2);
+  // A 4K worker holds about 1.3 GB of frames plus two ffmpeg processes (decode and encode): measured about 2.5 GB,
+  // so 3 GB each, keeping 4 GB for the app itself.
+  const byMemory = Math.floor((os.totalmem() / 2 ** 30 - 4) / 3);
+  const workers = Math.max(1, Math.min(6, byCores, byMemory, n));
+  const ranges: [number, number][] = [];
+  const all = items.reduce((a, it) => a + it.dur, 0);
+  let at = 0;
+  let acc = 0;
+  for (let i = 0; i < n; i++) {
+    acc += items[i].dur;
+    if (acc >= (all * (ranges.length + 1)) / workers && ranges.length < workers - 1) {
+      ranges.push([at, i + 1]);
+      at = i + 1;
+    }
+  }
+  if (at < n) ranges.push([at, n]);
+  const done = new Array(ranges.length).fill(0);
+  const segs = ranges.map((_, k) => `${out}.seg${k}.mp4`);
+  await Promise.all(
+    ranges.map(([a, b], k) =>
+      runFinish(specFile, segs[k], () => {
+        done[k] = Math.min(b - a, done[k] + 1);
+        onItem(done.reduce((x, y) => x + y, 0), n);
+      }, ["--items", `${a}:${b}`]),
+    ),
+  );
+  const list = `${out}.txt`;
+  await fs.writeFile(list, segs.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join("\n"));
+  const video = `${out}.video.mp4`;
+  await runCmd("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", video], 30 * 60_000);
+  await runCmd("ffmpeg", ["-v", "error", "-y", "-i", video, "-i", mix, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11,alimiter=limit=0.85:level=false", "-c:a", "aac", "-b:a", "256k", "-t", total.toFixed(3), "-movflags", "+faststart", out], 30 * 60_000);
+  await Promise.all([...segs, list, video].map((f) => fs.rm(f, { force: true })));
 }
 
 async function sound(r: EpisodeRecord, plan: EpisodePlan, tl: Timeline, dir: string, step: (s: Step, m: string, p: number) => Promise<void>) {

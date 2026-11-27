@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { allShots, motionPrompt, nameTags, normalizePlan, shotMax, stillPrompt } from "@/lib/episode-studio/plan";
+import { allShots, LAST_RESORT_TAKE, motionPrompt, nameTags, normalizePlan, omniPrompt, shotMax, stillPrompt } from "@/lib/episode-studio/plan";
+import { omniRequest } from "@/lib/gemini-media";
 import { buildTimeline, captionChunks, captions } from "@/lib/episode-studio/timeline";
 
 const raw = {
@@ -19,13 +20,13 @@ const raw = {
       mood: "warm",
       super: { title: "The 7th Ward", sub: "New Orleans" },
       shots: [
-        { id: "s01", cast: [], still: "parade under the overpass", motion: "the crowd dances", seconds: 4.5, line: { speaker: "N", text: "Super Sunday. The whole ward comes out." } },
+        { id: "s01", cast: [], still: "parade under the overpass", motion: "the crowd dances", seconds: 4.5, line: { speaker: "N", text: "Super Sunday. The whole ward comes out." }, fx: ["Rain", "lens flare", "lasers", "fog", "dust", "embers"], transition: "Whip" },
         { id: "s02", cast: ["LOCS", "JOJO", "GHOST"], still: "Locs and Jojo laughing", motion: "they laugh", seconds: 9, line: { speaker: "LOCS", style: "shouting", text: "Jojo, come here!" }, talking: true, impacts: [1, 20] },
         { id: "s02", cast: ["JOJO"], still: "Jojo dancing", motion: "he dances in place", seconds: 1 },
         { id: "s04", cast: [], still: "", motion: "missing still" },
       ],
     },
-    { name: "rain", mood: "not-a-mood", shots: [{ id: "s05", cast: [], still: "rain", motion: "rain falls", line: { speaker: "WHO", text: "nobody" } }] },
+    { name: "rain", mood: "not-a-mood", shots: [{ id: "s05", cast: [], still: "rain", motion: "rain falls", line: { speaker: "WHO", text: "nobody" }, transition: "cut" }] },
   ],
 };
 
@@ -52,6 +53,15 @@ describe("normalizePlan", () => {
   it("adds a series title card after the cold open when the writer forgot one", () => {
     expect(plan.beats[1].card).toEqual({ title: "SECOND LINE", sub: "BRASS & BLOOD", seconds: 3.5, style: "series" });
   });
+  it("keeps up to three known effects and a known transition; a plain cut needs no field", () => {
+    const [s01, , , s05] = allShots(plan);
+    expect(s01.fx).toEqual(["rain", "lens_flare", "fog"]);
+    expect(s01.transition).toBe("whip");
+    expect(s05.fx).toBeUndefined();
+    expect(s05.transition).toBeUndefined();
+    const withCard = normalizePlan({ ...raw, beats: [...raw.beats, { name: "later", mood: "night", card: { title: "Three days later", style: "card", transition: "dip-black" } }] }, "short");
+    expect(withCard.beats.find((b) => b.name === "later")?.card?.transition).toBe("dip_black");
+  });
   it("never asks the engine for more than its 5.04-second clips", () => {
     expect(shotMax(5.04) + 0.15).toBeLessThanOrEqual(5.04);
   });
@@ -64,9 +74,32 @@ describe("normalizePlan", () => {
     expect(stillPrompt(plan, s)).toContain("Image 2 is JOJO");
     expect(motionPrompt(s)).toMatch(/stay in place/);
     expect(motionPrompt(s, 1)).toMatch(/^Continuous, clearly visible natural movement/);
+    // The last take asks for the simplest motion there is, so the shot still comes back as footage.
+    expect(motionPrompt(s, LAST_RESORT_TAKE)).toMatch(/slow, steady camera push-in/);
+    expect(motionPrompt(s, LAST_RESORT_TAKE)).not.toContain(s.motion);
+  });
+  it("tells Gemini what to avoid in the prompt (it has no negative prompt) and asks a talking face to speak", () => {
+    const s = allShots(plan)[1];
+    expect(omniPrompt(s)).toMatch(/Avoid: blurry, distorted face/);
+    expect(omniPrompt(s)).toMatch(/lips and jaw moving/);
+    expect(omniPrompt(allShots(plan)[0])).not.toMatch(/lips and jaw/);
   });
   it("tags each character once, on their first appearance", () => {
     expect(nameTags(plan)).toEqual({ s02: { name: 'DASHON "LOCS" BATISTE', role: "21 · THE LEADER" }, s02x: { name: "JOJO", role: "15" } });
+  });
+});
+
+describe("omniRequest", () => {
+  const start = { mimeType: "image/png", base64: "AAAA" };
+  it("asks Gemini Omni for a 4K vertical clip of whole seconds, delivered as a file", () => {
+    const b = omniRequest("gemini-omni-1.2-flash", { prompt: "He nods.", start, aspect: "9:16", seconds: 4.3, resolution: "4k" });
+    expect(b.response_format).toEqual({ type: "video", aspect_ratio: "9:16", resolution: "4k", duration: "4s", delivery: "uri" });
+    expect(b.input[0]).toEqual({ type: "image", mime_type: "image/png", data: "AAAA" });
+    expect(b.input[1].text).toMatch(/^One continuous shot of 4 seconds/);
+  });
+  it("keeps the length inside Gemini's 3-15 seconds, 720p inline, and drops fields an older model rejects", () => {
+    expect(omniRequest("m", { prompt: "", start, aspect: "16:9", seconds: 1 }).response_format).toEqual({ type: "video", aspect_ratio: "16:9", resolution: "720p", duration: "3s" });
+    expect(omniRequest("m", { prompt: "", start, aspect: "16:9", seconds: 40, resolution: "1080p" }, ["duration", "delivery"]).response_format).toEqual({ type: "video", aspect_ratio: "16:9", resolution: "1080p" });
   });
 });
 
@@ -87,6 +120,11 @@ describe("buildTimeline", () => {
     const caps = captions(plan, tl);
     expect(caps[0].speaker).toBeNull();
     expect(caps.find((c) => c.text.startsWith("Jojo"))?.speaker).toBe("LOCS");
+  });
+  it("carries a card's transition into the edit", () => {
+    const withCard = normalizePlan({ ...raw, beats: [...raw.beats, { name: "later", mood: "night", card: { title: "Three days later", style: "card", transition: "dip_black" } }] }, "short");
+    const tl = buildTimeline(withCard, { s01: 3, s02: 2 }, 4.89);
+    expect(tl.items.find((i) => i.kind === "card" && i.text === "THREE DAYS LATER")?.transition).toBe("dip_black");
   });
 });
 

@@ -13,6 +13,7 @@ type Episode = {
   prompt: string;
   length: string;
   aspect: "9:16" | "16:9";
+  engine: "gemini" | "own" | null;
   step: string;
   stepLabel: string;
   message: string;
@@ -31,20 +32,22 @@ type Episode = {
 };
 type Data = {
   episodes: Episode[];
-  ready: { clips: boolean; lipsync: boolean; pictures: boolean; voices: boolean; ffmpeg: boolean; python: boolean };
-  lengths: { id: string; label: string; seconds: number; shots: number; credits: number }[];
+  ready: { gemini: boolean; clips: boolean; lipsync: boolean; pictures: boolean; voices: boolean; ffmpeg: boolean; python: boolean };
+  lengths: { id: string; label: string; seconds: number; shots: number; credits: number; gpuCredits: number }[];
 };
 type Gpu = { ready: boolean; queue: number; device: string; quality: string } | null;
 
 const READY_LABEL: Record<keyof Data["ready"], string> = {
-  clips: "GPU engine (filming)",
+  gemini: "4K cinema camera",
+  clips: "GPU engine (films in 480p-720p)",
   pictures: "Azure AI pictures (FLUX.2)",
   voices: "Azure neural voices",
   lipsync: "Lip sync (MuseTalk)",
   ffmpeg: "ffmpeg",
   python: "Finishing tools (Python, OpenCV)",
 };
-const OPTIONAL = new Set(["lipsync"]);
+/** Not needed on their own: either camera films (Gemini or the GPU), and lip sync is a bonus on the GPU's shots. */
+const OPTIONAL = new Set(["lipsync", "gemini", "clips"]);
 const running = (e: Episode) => !["done", "failed"].includes(e.step);
 
 export default function EpisodeStudio() {
@@ -53,6 +56,7 @@ export default function EpisodeStudio() {
   const [prompt, setPrompt] = useState("");
   const [length, setLength] = useState("short");
   const [aspect, setAspect] = useState<"9:16" | "16:9">("9:16");
+  const [engine, setEngine] = useState<"gemini" | "own" | null>(null);
   const [busy, setBusy] = useState(false);
   const [gpu, setGpu] = useState<Gpu | undefined>(undefined);
   const [checking, setChecking] = useState(false);
@@ -78,14 +82,17 @@ export default function EpisodeStudio() {
   }, [anyRunning, load]);
 
   const chosen = useMemo(() => data?.lengths.find((l) => l.id === length), [data, length]);
-  const blockers = data ? (Object.keys(data.ready) as (keyof Data["ready"])[]).filter((k) => !data.ready[k] && !OPTIONAL.has(k)) : [];
+  // The camera: Gemini in 4K when the app has its key, unless the GPU is picked.
+  const camera = engine ?? (data?.ready.gemini || !data?.ready.clips ? "gemini" : "own");
+  const blockers = data ? [...(Object.keys(data.ready) as (keyof Data["ready"])[]).filter((k) => !data.ready[k] && !OPTIONAL.has(k)), ...(data.ready[camera === "gemini" ? "gemini" : "clips"] ? [] : [camera])] : [];
+  const credits = chosen ? (camera === "gemini" ? chosen.credits : chosen.gpuCredits) : 0;
   // Measured while making Second Line episode 1: about 15 minutes of GPU per shot on a T4.
   const perShot = gpu?.device && /T4/i.test(gpu.device) ? 15 : null;
 
   async function make() {
     setBusy(true);
     try {
-      await api("/api/episodes", { body: { action: "create", prompt, length, aspect } });
+      await api("/api/episodes", { body: { action: "create", prompt, length, aspect, engine: camera } });
       jobStarted();
       setPrompt("");
       toast("Episode started. It keeps going if you leave this page; the jobs tray shows each step.", "success");
@@ -122,7 +129,7 @@ export default function EpisodeStudio() {
     <div>
       <PageHeader
         title="Episode Studio"
-        subtitle="Type a premise. Vueio writes the episode, casts it, films every shot with real motion, gives each character an acted voice and synced lips, scores it, grades it and adds titles and captions."
+        subtitle="Type a premise. Vueio writes the episode, casts it, films every shot as moving footage, gives each character an acted voice, scores it, and finishes it in 4K with special effects, transitions, animated titles and captions."
       />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
@@ -138,7 +145,7 @@ export default function EpisodeStudio() {
                 placeholder="A New Orleans crime drama: four friends from the 7th Ward turn to the street after a stray bullet hits a cousin at a second line parade, and a crooked detective wants a cut."
               />
             </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <Field label="Length">
                 <Select value={length} onChange={(e) => setLength(e.target.value)}>
                   {(data?.lengths ?? []).map((l) => (
@@ -154,11 +161,21 @@ export default function EpisodeStudio() {
                   <option value="16:9">Widescreen 16:9 (YouTube)</option>
                 </Select>
               </Field>
+              <Field label="Camera">
+                <Select value={camera} onChange={(e) => setEngine(e.target.value as "gemini" | "own")}>
+                  <option value="gemini" disabled={!!data && !data.ready.gemini}>
+                    Cinema camera · 4K{data && !data.ready.gemini ? " (not set up)" : ""}
+                  </option>
+                  <option value="own" disabled={!!data && !data.ready.clips}>
+                    Vueio GPU · upscaled to 4K{data && !data.ready.clips ? " (not connected)" : ""}
+                  </option>
+                </Select>
+              </Field>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-white/50">
-                {chosen ? `Up to ${chosen.shots} shots · ${chosen.credits.toLocaleString()} credits (refunded if it stops)` : ""}
-                {perShot && chosen ? ` · about ${Math.round((chosen.shots * perShot) / 60)} hours on this GPU` : ""}
+                {chosen ? `4K · up to ${chosen.shots} shots · ${credits.toLocaleString()} credits (refunded if it stops)` : ""}
+                {camera === "own" && perShot && chosen ? ` · about ${Math.round((chosen.shots * perShot) / 60)} hours on this GPU` : ""}
               </p>
               <Button variant="primary" size="lg" loading={busy} disabled={prompt.trim().length < 12 || blockers.length > 0} onClick={make}>
                 <ListVideo className="h-4 w-4" /> Make the episode
@@ -184,7 +201,8 @@ export default function EpisodeStudio() {
                   {data.ready[k] ? <CheckCircle2 className="h-4 w-4 text-mint-300" /> : <XCircle className={cn("h-4 w-4", OPTIONAL.has(k) ? "text-white/50" : "text-red-300")} />}
                   <span className={data.ready[k] ? "text-white/80" : "text-white/50"}>
                     {READY_LABEL[k]}
-                    {!data.ready[k] && OPTIONAL.has(k) ? " (optional: lips aren't synced without it)" : ""}
+                    {!data.ready[k] && k === "lipsync" ? " (optional: lips aren't synced without it)" : ""}
+                    {!data.ready[k] && k === "gemini" ? " (the admin turns it on in Admin → App settings → Integrations)" : ""}
                   </span>
                 </li>
               ))}
@@ -210,6 +228,7 @@ export default function EpisodeStudio() {
               <div className="flex items-center gap-2">
                 <Badge tone={e.step === "done" ? "mint" : e.step === "failed" ? "red" : "sky"}>{e.stepLabel}</Badge>
                 <Badge>{e.aspect}</Badge>
+                {e.engine === "gemini" && <Badge tone="sky">4K cinema camera</Badge>}
                 {e.step === "failed" && (
                   <Button size="sm" onClick={() => act("resume", e.id)}>
                     <RotateCcw className="h-3.5 w-3.5" /> Resume

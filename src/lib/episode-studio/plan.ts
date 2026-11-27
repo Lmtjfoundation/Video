@@ -46,6 +46,26 @@ export const EPISODE_VOICES: { name: string; who: string; gender: "male" | "fema
 ];
 export const voiceInfo = (name: string) => EPISODE_VOICES.find((v) => v.name === name);
 
+/**
+ * Special effects the finish draws over a shot (scripts/episode/finish.py), in 4K: weather, light and texture. The
+ * writer picks up to three where the scene motivates them.
+ */
+export const EPISODE_FX = ["rain", "snow", "embers", "dust", "fog", "sparks", "bloom", "neon", "lens_flare", "light_leak", "film_burn", "glitch", "heat_haze"] as const;
+export type EpisodeFx = (typeof EPISODE_FX)[number];
+
+/** How the edit moves into a shot or card. Most shots are plain cuts; the rest mark a shock, a jump or a memory. */
+export const EPISODE_TRANSITIONS = ["cut", "flash", "whip", "glitch", "light_leak", "dip_black", "zoom_punch", "dissolve"] as const;
+export type EpisodeTransition = (typeof EPISODE_TRANSITIONS)[number];
+
+const fxList = (v: unknown): EpisodeFx[] | undefined => {
+  const out = [...new Set((Array.isArray(v) ? v : []).map((x) => String(x).toLowerCase().trim().replace(/[\s-]+/g, "_")))].filter((x): x is EpisodeFx => (EPISODE_FX as readonly string[]).includes(x)).slice(0, 3);
+  return out.length ? out : undefined;
+};
+const transitionOf = (v: unknown): EpisodeTransition | undefined => {
+  const t = String(v ?? "").toLowerCase().trim().replace(/[\s-]+/g, "_");
+  return (EPISODE_TRANSITIONS as readonly string[]).includes(t) && t !== "cut" ? (t as EpisodeTransition) : undefined;
+};
+
 export interface CastMember {
   /** How shots and lines name them: LOCS, MAYA. */
   key: string;
@@ -86,6 +106,10 @@ export interface Shot {
   impacts?: number[];
   /** A sound effect for this shot (made on the engine), e.g. "rain on a tin roof, distant thunder". */
   sfx?: string;
+  /** Special effects drawn over the shot in the finish (up to three). */
+  fx?: EpisodeFx[];
+  /** How the edit moves into this shot; a plain cut when absent. */
+  transition?: EpisodeTransition;
 }
 
 export interface Card {
@@ -93,6 +117,8 @@ export interface Card {
   sub?: string;
   seconds: number;
   style: "series" | "title" | "card" | "next";
+  /** How the edit moves into the card; a plain cut when absent. */
+  transition?: EpisodeTransition;
 }
 
 export interface Beat {
@@ -160,7 +186,7 @@ export function normalizePlan(raw: unknown, length: EpisodeLength, maxShot = sho
     const cardIn = b.card as Record<string, unknown> | undefined;
     if (cardIn && clean(cardIn.title, 60)) {
       const style = (["series", "title", "card", "next"] as const).find((s) => s === cardIn.style) ?? "card";
-      beats.push({ name: clean(b.name, 40) || "card", mood, card: { title: clean(cardIn.title, 60).toUpperCase(), sub: clean(cardIn.sub, 60).toUpperCase() || undefined, seconds: clamp(Number(cardIn.seconds) || 3, 2, 5), style } });
+      beats.push({ name: clean(b.name, 40) || "card", mood, card: { title: clean(cardIn.title, 60).toUpperCase(), sub: clean(cardIn.sub, 60).toUpperCase() || undefined, seconds: clamp(Number(cardIn.seconds) || 3, 2, 5), style, transition: transitionOf(cardIn.transition) } });
       continue;
     }
     const shots: Shot[] = [];
@@ -195,6 +221,8 @@ export function normalizePlan(raw: unknown, length: EpisodeLength, maxShot = sho
         talking: !!s.talking && !!line && line.speaker !== "N" && castKeys.includes(line.speaker),
         impacts: impacts.length ? impacts : undefined,
         sfx: clean(s.sfx, 200) || undefined,
+        fx: fxList(s.fx),
+        transition: transitionOf(s.transition),
       });
       shotCount++;
     }
@@ -247,9 +275,20 @@ export function stillPrompt(plan: EpisodePlan, shot: Shot): string {
 export const portraitPrompt = (plan: EpisodePlan, c: CastMember) =>
   `Cinematic portrait of ${c.look}, chest-up, facing the camera, neutral expression, soft key light, plain dark background, sharp focus on the face. ${plan.look}. No text, no watermark.`;
 
+/** The attempt that asks for the simplest motion there is, so a shot that keeps failing still comes back as footage. */
+export const LAST_RESORT_TAKE = 3;
+const SIMPLE_MOTION = "A slow, steady camera push-in. Everyone in the frame breathes, blinks and shifts their weight naturally; hair and clothes move slightly; the background stays alive.";
+
 /** The motion prompt the video engine receives, with the rules that keep people moving like people. */
 export const motionPrompt = (shot: Shot, retake = 0) =>
-  `${retake ? "Continuous, clearly visible natural movement from the first frame to the last. " : ""}${shot.motion} The people stay in place and keep facing the same way. Natural human motion, real-time speed. Photoreal cinematic film footage, consistent faces, natural lighting.`;
+  `${retake ? "Continuous, clearly visible natural movement from the first frame to the last. " : ""}${retake >= LAST_RESORT_TAKE ? SIMPLE_MOTION : shot.motion} The people stay in place and keep facing the same way. Natural human motion, real-time speed. Photoreal cinematic film footage, consistent faces, natural lighting.`;
+
+/**
+ * The prompt for Gemini Omni, which has no negative prompt: the motion, what to avoid, and the sound (replaced by the
+ * episode's own mix, so ambience only). A talking shot asks for natural speech movement on the speaker's face.
+ */
+export const omniPrompt = (shot: Shot, retake = 0) =>
+  `${motionPrompt(shot, retake)}${shot.talking && retake < LAST_RESORT_TAKE ? " The person speaking talks naturally, lips and jaw moving with the words." : ""} Avoid: ${negativeFor(shot)}. Sound: natural ambience only, no music.`;
 
 export const NEGATIVE =
   "blurry, distorted face, deformed hands, extra fingers, extra limbs, frozen, static, still image, slow motion, text, watermark, subtitles, cartoon, turning around, spinning, morphing, melting face, faces merging";

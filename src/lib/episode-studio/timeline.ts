@@ -1,4 +1,4 @@
-import { allShots, SHOT_MIN, type EpisodePlan, type Mood } from "./plan";
+import { allShots, SHOT_MIN, type EpisodePlan, type EpisodeTransition, type Mood } from "./plan";
 
 /**
  * The edit: where every shot, card and line sits, from the plan and the length of each recorded line. A line starts a
@@ -11,6 +11,8 @@ export interface TimelineItem {
   text?: string;
   sub?: string;
   style?: "series" | "title" | "card" | "next";
+  /** A card's way in (a shot's comes from its plan). */
+  transition?: EpisodeTransition;
   start: number;
   dur: number;
   beat: string;
@@ -43,7 +45,7 @@ export function buildTimeline(plan: EpisodePlan, voiceSeconds: Record<string, nu
   const clips: Record<string, number> = {};
   for (const b of plan.beats) {
     if (b.card) {
-      items.push({ kind: "card", text: b.card.title, sub: b.card.sub, style: b.card.style, start: r3(t), dur: b.card.seconds, beat: b.name, mood: b.mood });
+      items.push({ kind: "card", text: b.card.title, sub: b.card.sub, style: b.card.style, transition: b.card.transition, start: r3(t), dur: b.card.seconds, beat: b.name, mood: b.mood });
       t += b.card.seconds;
       continue;
     }

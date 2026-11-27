@@ -17,8 +17,13 @@ const IMAGE_MODELS = () => unique([process.env.GEMINI_IMAGE_MODEL, "gemini-nano-
 /** Veo 3.1 Fast ($0.10/s at 720p) is the default; the full model costs 4× as much for a small quality gain. */
 const VEO_MODELS = () => unique([process.env.VEO_MODEL, "veo-3.1-fast-generate-preview", "veo-3.1-generate-preview"]);
 
-/** Gemini Omni Flash replaced the Veo 3.1 previews (shut down 2026-10-22); about $0.10 a second at 720p, paid tier only. */
-const OMNI_MODELS = () => unique([process.env.OMNI_MODEL, "gemini-omni-1.1-flash"]);
+/**
+ * Gemini Omni Flash replaced the Veo 3.1 previews (shut down 2026-10-22). 1.2 is current (paid tier only): about
+ * $0.07 a second at 720p, $0.104 at 1080p and $0.209 at 4K (both upscaled by Google), 3–15 second clips, 9:16 or 16:9.
+ * From 2026-12-03 Google routes 1.1 requests to 1.2.
+ */
+const OMNI_MODELS = () => unique([process.env.OMNI_MODEL, "gemini-omni-1.2-flash", "gemini-omni-1.1-flash"]);
+export type OmniResolution = "720p" | "1080p" | "4k";
 
 const unique = (xs: (string | undefined)[]) => [...new Set(xs.map((x) => x?.trim()).filter((x): x is string => !!x))];
 
@@ -208,60 +213,122 @@ export function findVideo(json: unknown): { data?: string; uri?: string } | null
 }
 
 /**
- * Animates a picture into a clip of about `seconds` (3–10) with Gemini Omni Flash at 720p; the model makes its own
- * sound. One synchronous Interactions call; returns null when no Omni model is on this key (the caller falls back).
+ * The Interactions request for one image-to-video clip. Larger clips (1080p and 4K) come back as a file to download
+ * instead of inline base64, which is capped at 4 MB. `drop` leaves out fields an older model rejects.
  */
-async function omniClip(key: string, o: { prompt: string; start: RefImage; aspect: "9:16" | "16:9"; seconds: number; timeoutMs?: number }): Promise<Buffer | null> {
-  for (const model of OMNI_MODELS()) {
-    let res: Response;
-    try {
-      res = await fetch(`${BASE}/interactions`, {
-        method: "POST",
-        headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model,
-          input: [
-            { type: "image", mime_type: o.start.mimeType, data: o.start.base64 },
-            { type: "text", text: `One continuous shot of about ${o.seconds} seconds that starts exactly on this picture. ${o.prompt}` },
-          ],
-          response_format: { type: "video", aspect_ratio: o.aspect, resolution: "720p" },
-          generation_config: { video_config: { task: "image_to_video" } },
-          background: false,
-          store: false,
-          stream: false,
-        }),
-        signal: AbortSignal.timeout(o.timeoutMs ?? 10 * 60_000),
-      });
-    } catch (e) {
-      throw new MediaGenError(`Gemini Omni didn't answer (${(e as Error).message}).`);
+export function omniRequest(model: string, o: { prompt: string; start: RefImage; aspect: "9:16" | "16:9"; seconds: number; resolution?: OmniResolution }, drop: ("duration" | "delivery")[] = []) {
+  const resolution = o.resolution ?? "720p";
+  const seconds = Math.min(15, Math.max(3, Math.round(o.seconds)));
+  const format: Record<string, string> = { type: "video", aspect_ratio: o.aspect, resolution };
+  if (!drop.includes("duration")) format.duration = `${seconds}s`;
+  if (resolution !== "720p" && !drop.includes("delivery")) format.delivery = "uri";
+  return {
+    model,
+    input: [
+      { type: "image", mime_type: o.start.mimeType, data: o.start.base64 },
+      { type: "text", text: `One continuous shot of ${seconds} seconds that starts exactly on this picture. ${o.prompt}` },
+    ],
+    response_format: format,
+    generation_config: { video_config: { task: "image_to_video" } },
+    background: false,
+    store: false,
+    stream: false,
+  };
+}
+
+type OmniAnswer = { id?: string; status?: string; error?: { message?: string } };
+const RUNNING = /^(queued|pending|in_progress|running|processing)$/i;
+
+/** Downloads a clip Google kept as a file (`files/…`), once the file is ready. */
+async function omniDownload(key: string, uri: string, deadline: number): Promise<Buffer> {
+  const id = uri.match(/files\/([^/?:]+)/)?.[1];
+  if (id) {
+    for (;;) {
+      const st = await fetch(`${BASE}/files/${id}`, { headers: { "x-goog-api-key": key } }).catch(() => null);
+      const state = st?.ok ? String(((await st.json().catch(() => ({}))) as { state?: string }).state ?? "") : "";
+      if (state === "FAILED") throw new MediaGenError("Google couldn't prepare the finished clip for download.");
+      if (!state || state === "ACTIVE") break;
+      if (Date.now() > deadline) throw new MediaGenError("Google took too long to prepare the finished clip.");
+      await sleep(5000);
     }
-    const text = await res.text();
-    if (res.status === 404) continue;
-    if (!res.ok) {
+  }
+  const dl = await fetch(id ? `${BASE}/files/${id}:download?alt=media` : uri, { headers: { "x-goog-api-key": key }, redirect: "follow" });
+  if (!dl.ok) throw new MediaGenError(`Downloading the Gemini Omni clip failed (${dl.status}).`);
+  return Buffer.from(await dl.arrayBuffer());
+}
+
+/**
+ * Animates a picture into a clip of `seconds` (3–15) with Gemini Omni Flash, at 720p, 1080p or 4K; the model makes
+ * its own sound (Episode Studio replaces it with its own mix). Returns null when no Omni model is on this key (the
+ * caller falls back). A request still running when it answers is checked every 10 seconds until it finishes.
+ */
+async function omniClip(key: string, o: { prompt: string; start: RefImage; aspect: "9:16" | "16:9"; seconds: number; resolution?: OmniResolution; timeoutMs?: number }): Promise<Buffer | null> {
+  const deadline = Date.now() + (o.timeoutMs ?? 15 * 60_000);
+  for (const model of OMNI_MODELS()) {
+    const drop: ("duration" | "delivery")[] = [];
+    let json: OmniAnswer | null = null;
+    for (let tries = 0; tries < 6 && !json; tries++) {
+      let res: Response;
+      try {
+        res = await fetch(`${BASE}/interactions`, {
+          method: "POST",
+          headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
+          body: JSON.stringify(omniRequest(model, o, drop)),
+          signal: AbortSignal.timeout(Math.max(60_000, deadline - Date.now())),
+        });
+      } catch (e) {
+        throw new MediaGenError(`Gemini Omni didn't answer (${(e as Error).message}).`);
+      }
+      const text = await res.text();
+      if (res.status === 404) break;
+      if (res.ok) {
+        json = JSON.parse(text);
+        break;
+      }
       const problem = googleProblem(res.status, text);
       if (problem) throw new MediaGenError(problem, "config");
       if (/safety|blocked|policy/i.test(text)) throw new MediaGenError("Google's safety filter declined this clip. Reword the shot.", "blocked");
+      // An older model that doesn't know a field: send the request without it.
+      if (res.status === 400 && /duration/i.test(text) && !drop.includes("duration")) {
+        drop.push("duration");
+        continue;
+      }
+      if (res.status === 400 && /delivery/i.test(text) && !drop.includes("delivery")) {
+        drop.push("delivery");
+        continue;
+      }
+      if ((res.status === 429 || res.status >= 500) && Date.now() < deadline) {
+        await sleep(Math.min(60_000, 5000 * 2 ** tries));
+        continue;
+      }
       throw new MediaGenError(`Gemini Omni couldn't make the clip (${res.status} ${text.replace(/\s+/g, " ").slice(0, 200)}).`);
     }
-    const json = JSON.parse(text) as { status?: string; error?: { message?: string } };
+    if (!json) continue; // this model isn't on the key: the next one
+    let answer: OmniAnswer = json;
+    while (answer.id && RUNNING.test(String(answer.status ?? "")) && !findVideo(answer)) {
+      if (Date.now() > deadline) throw new MediaGenError("Gemini Omni took too long to make this clip.");
+      await sleep(10_000);
+      const poll: Response | null = await fetch(`${BASE}/interactions/${answer.id}`, { headers: { "x-goog-api-key": key } }).catch(() => null);
+      if (poll?.ok) answer = (await poll.json()) as OmniAnswer;
+    }
+    json = answer;
     if (json.error?.message) throw new MediaGenError(`Gemini Omni couldn't make the clip: ${json.error.message.slice(0, 200)}`);
     const video = findVideo(json);
     if (video?.data) return Buffer.from(video.data, "base64");
-    if (video?.uri) {
-      const id = video.uri.match(/files\/([^/?:]+)/)?.[1];
-      const dl = await fetch(id ? `${BASE}/files/${id}:download?alt=media` : video.uri, { headers: { "x-goog-api-key": key }, redirect: "follow" });
-      if (!dl.ok) throw new MediaGenError(`Downloading the Gemini Omni clip failed (${dl.status}).`);
-      return Buffer.from(await dl.arrayBuffer());
-    }
+    if (video?.uri) return omniDownload(key, video.uri, deadline);
     throw new MediaGenError(`Google's safety filter declined this clip${json.status && json.status !== "completed" ? ` (${json.status})` : ""}. Reword the shot.`, "blocked");
   }
   return null;
 }
 
-/** One clip: Gemini Omni Flash, or Veo 3.1 when Omni isn't on the key. */
-export async function geminiClip(o: { prompt: string; start: RefImage; aspect: "9:16" | "16:9"; seconds: 4 | 6 | 8; timeoutMs?: number }): Promise<Buffer> {
+/** One clip: Gemini Omni Flash, or (720p only) Veo 3.1 when Omni isn't on the key. */
+export async function geminiClip(o: { prompt: string; start: RefImage; aspect: "9:16" | "16:9"; seconds: number; resolution?: OmniResolution; timeoutMs?: number }): Promise<Buffer> {
   const key = await requireKey();
-  return (await omniClip(key, o)) ?? veoClip(o);
+  const clip = await omniClip(key, o);
+  if (clip) return clip;
+  if ((o.resolution ?? "720p") !== "720p") throw new MediaGenError("Gemini Omni Flash isn't available on this Gemini key, and it's the only Google model that films in 1080p or 4K. Turn on billing for the key's Google Cloud project.", "config");
+  const s = o.seconds <= 5 ? 4 : o.seconds <= 7 ? 6 : 8;
+  return veoClip({ ...o, seconds: s });
 }
 
 /**

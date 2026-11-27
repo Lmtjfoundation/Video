@@ -95,7 +95,7 @@ describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Gemini cli
     expect(withMaya.filter((p) => p.type === "image")).toHaveLength(1); // Maya's portrait guides her scene
     expect((pictures[2].body.input as { type: string }[]).filter((p) => p.type === "image")).toHaveLength(0);
     const omni = requests.find((r) => r.url.endsWith("/interactions") && isVideo(r))!;
-    expect(omni.body).toMatchObject({ model: "gemini-omni-1.1-flash", input: [{ type: "image", mime_type: "image/png", data: png }, { type: "text" }], response_format: { type: "video", aspect_ratio: "9:16", resolution: "720p" } });
+    expect(omni.body).toMatchObject({ model: "gemini-omni-1.2-flash", input: [{ type: "image", mime_type: "image/png", data: png }, { type: "text" }], response_format: { type: "video", aspect_ratio: "9:16", resolution: "720p" } });
     expect(requests.some((r) => r.url.endsWith(":predictLongRunning"))).toBe(false); // Veo only when Omni isn't on the key
   }, 120_000);
 

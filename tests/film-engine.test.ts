@@ -256,8 +256,9 @@ describe.skipIf(!hasFfmpeg)("Film Engine making footage", () => {
       expect(done.segments.map((s) => [s.status, s.message])).toEqual([["done", "Filmed with Gemini Omni Flash."], ["done", "Filmed with Gemini Omni Flash."]]);
     });
     // Beat one is 4 seconds; each mocked clip is 3 seconds, so a second clip picks up at 3s.
-    expect(omni.map((b) => [b.model, b.response_format.aspect_ratio, b.response_format.resolution])).toEqual([["gemini-omni-1.1-flash", "9:16", "720p"], ["gemini-omni-1.1-flash", "9:16", "720p"]]);
-    expect(omni[0].input[1].text).toMatch(/about 4 seconds/);
+    expect(omni.map((b) => [b.model, b.response_format.aspect_ratio, b.response_format.resolution])).toEqual([["gemini-omni-1.2-flash", "9:16", "720p"], ["gemini-omni-1.2-flash", "9:16", "720p"]]);
+    expect(omni[0].input[1].text).toMatch(/shot of 4 seconds/);
+    expect(omni[0].response_format.duration).toBe("4s");
     expect(omni[1].input[1].text).toContain('"Thank you."'); // native sound on: the model speaks the line
     expect(omni[1].input[0].data).not.toBe(omni[0].input[0].data); // continues from the last frame
     expect(veo.map((b) => b.parameters.durationSeconds)).toEqual(["4"]);

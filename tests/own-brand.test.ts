@@ -12,6 +12,8 @@ describe("own brand", () => {
     for (const v of Object.values(CREDIT_LABEL)) expect(v).not.toMatch(VENDORS);
     const movies = readFileSync("src/app/movies/page.tsx", "utf8");
     for (const line of movies.split("\n").filter((l) => /<option value=|engineName =|subtitle=/.test(l))) expect(line).not.toMatch(VENDORS);
+    const episodes = readFileSync("src/app/episodes/page.tsx", "utf8");
+    for (const line of episodes.split("\n").filter((l) => /<option value=|Cinema camera|<Badge|subtitle=/.test(l))) expect(line).not.toMatch(VENDORS);
     const film = readFileSync("src/app/film-engine/page.tsx", "utf8");
     for (const line of film.split("\n").filter((l) => /ENGINE_LABEL|subtitle=|ENGINES\.map/.test(l))) expect(line).not.toMatch(VENDORS);
   });

@@ -4,18 +4,19 @@ import { authed, body, fail, ok } from "@/lib/http-api";
 import { spendCredits } from "@/lib/auth";
 import { azureSpeechReady } from "@/lib/azure-speech";
 import { foundryReady } from "@/lib/azure-foundry";
+import { mediaKey } from "@/lib/gemini-media";
 import { startJob } from "@/lib/jobs";
 import { signedUrl } from "@/lib/media";
 import { engineFor, ownClipEngineInfo } from "@/lib/own-video";
 import { CREDIT_COST } from "@/lib/plans";
 import { ffmpegAvailable, runCmd } from "@/lib/render";
 import { allShots, EPISODE_ASPECTS, EPISODE_LENGTHS, type EpisodeAspect, type EpisodeLength } from "@/lib/episode-studio/plan";
-import { deleteEpisode, episodeDir, episodeJob, getEpisode, listEpisodes, newEpisode, STEP_LABEL, type EpisodeRecord } from "@/lib/episode-studio/run";
+import { deleteEpisode, episodeDir, episodeJob, getEpisode, listEpisodes, newEpisode, STEP_LABEL, type EpisodeRecord, type FilmEngine } from "@/lib/episode-studio/run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const cost = (length: EpisodeLength) => CREDIT_COST.filmPlan + CREDIT_COST.ownSecond * EPISODE_LENGTHS[length].seconds;
+const cost = (length: EpisodeLength, engine: FilmEngine) => CREDIT_COST.filmPlan + (engine === "gemini" ? CREDIT_COST.omni4kSecond : CREDIT_COST.ownSecond) * EPISODE_LENGTHS[length].seconds;
 
 const pythonReady = async () => {
   try {
@@ -37,6 +38,7 @@ async function view(r: EpisodeRecord, userId: string) {
     prompt: r.prompt,
     length: r.length,
     aspect: r.aspect,
+    engine: r.engine ?? null,
     step: r.step,
     stepLabel: STEP_LABEL[r.step],
     message: r.message,
@@ -59,7 +61,8 @@ async function view(r: EpisodeRecord, userId: string) {
 /** Your episodes, and whether this server can make them. */
 export const GET = authed(async (_req, user) => {
   const all = (await listEpisodes()).filter((r) => r.owner === user.id || user.role === "admin");
-  const [clips, lipsync, pictures, voices, ffmpeg, python] = await Promise.all([
+  const [gemini, clips, lipsync, pictures, voices, ffmpeg, python] = await Promise.all([
+    mediaKey().then((k) => !!k, () => false),
     engineFor("clips").then((e) => !!e, () => false),
     engineFor("lipsync").then((e) => !!e, () => false),
     foundryReady().catch(() => false),
@@ -69,12 +72,12 @@ export const GET = authed(async (_req, user) => {
   ]);
   return ok({
     episodes: await Promise.all(all.map((r) => view(r, user.id))),
-    ready: { clips, lipsync, pictures, voices, ffmpeg, python },
-    lengths: Object.entries(EPISODE_LENGTHS).map(([id, l]) => ({ id, label: l.label, seconds: l.seconds, shots: l.maxShots, credits: cost(id as EpisodeLength) })),
+    ready: { gemini, clips, lipsync, pictures, voices, ffmpeg, python },
+    lengths: Object.entries(EPISODE_LENGTHS).map(([id, l]) => ({ id, label: l.label, seconds: l.seconds, shots: l.maxShots, credits: cost(id as EpisodeLength, "gemini"), gpuCredits: cost(id as EpisodeLength, "own") })),
   });
 });
 
-type Body = { action?: "create" | "resume" | "delete" | "gpu"; id?: string; prompt?: string; length?: EpisodeLength; aspect?: EpisodeAspect };
+type Body = { action?: "create" | "resume" | "delete" | "gpu"; id?: string; prompt?: string; length?: EpisodeLength; aspect?: EpisodeAspect; engine?: FilmEngine };
 
 export const POST = authed(async (req, user) => {
   const b = await body<Body>(req);
@@ -96,7 +99,7 @@ export const POST = authed(async (req, user) => {
       return ok({ deleted: true });
     }
     if (r.step !== "failed") return fail("Only a stopped episode can be resumed.");
-    const credits = cost(r.length);
+    const credits = cost(r.length, r.engine ?? "own");
     await spendCredits(user.id, credits);
     r.credits = credits;
     r.step = "queued";
@@ -113,16 +116,20 @@ export const POST = authed(async (req, user) => {
   if (prompt.length > 4000) return fail("Keep the premise under 4,000 characters.");
   const length: EpisodeLength = b.length && b.length in EPISODE_LENGTHS ? b.length : "short";
   const aspect: EpisodeAspect = b.aspect && (EPISODE_ASPECTS as readonly string[]).includes(b.aspect) ? b.aspect : "9:16";
+  const [hasGemini, hasGpu] = await Promise.all([mediaKey().then((k) => !!k, () => false), engineFor("clips").then((e) => !!e, () => false)]);
+  // Gemini films in 4K when the app has its key; the GPU engine when asked for, or when there's no Gemini key.
+  const engine: FilmEngine = b.engine === "own" || (!b.engine && !hasGemini) ? "own" : "gemini";
   const missing: string[] = [];
-  if (!(await engineFor("clips").catch(() => null))) missing.push("Vueio's GPU engine (Admin → Integrations)");
+  if (engine === "gemini" && !hasGemini) missing.push("the 4K cinema camera (the admin adds the Gemini key in Admin → App settings → Integrations → Gemini)");
+  if (engine === "own" && !hasGpu) missing.push("Vueio's GPU engine (Admin → Integrations)");
   if (!(await foundryReady().catch(() => false))) missing.push("Azure AI pictures (Admin → Integrations)");
   if (!(await azureSpeechReady().catch(() => false))) missing.push("Azure voices (Admin → Integrations)");
   if (!(await ffmpegAvailable())) missing.push("ffmpeg on the server");
   if (!(await pythonReady())) missing.push("python3 with OpenCV, NumPy, Pillow and SciPy on the server");
   if (missing.length) return fail(`Episode Studio needs: ${missing.join("; ")}.`);
-  const credits = cost(length);
+  const credits = cost(length, engine);
   await spendCredits(user.id, credits);
-  const r = await newEpisode(user.id, { prompt, length, aspect, credits });
+  const r = await newEpisode(user.id, { prompt, length, aspect, credits, engine });
   await startJob(user.id, { kind: "film", title: prompt.slice(0, 60), resume: { kind: "episode-studio", input: { id: r.id } } }, episodeJob(user.id, { id: r.id }));
   return ok({ episode: await view(r, user.id) });
 });
