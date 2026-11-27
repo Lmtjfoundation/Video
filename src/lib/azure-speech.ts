@@ -69,6 +69,35 @@ export async function azureSpeak(text: string, voice: string, speed = 1): Promis
   return Buffer.from(await res.arrayBuffer());
 }
 
+/**
+ * A character's line, acted: one of the Episode Studio's voices, in an acting style when the voice has one (sad,
+ * shouting, whispering…), at its own pace. 48 kHz mono WAV.
+ */
+export async function azureSpeakActed(text: string, voice: string, o: { style?: string; rate?: string } = {}): Promise<Buffer> {
+  const { voiceInfo, ACTING_STYLES } = await import("./episode-studio/plan");
+  const v = voiceInfo(voice);
+  if (!v) throw new Error(`Unknown voice: ${voice}`);
+  const words = stripTags(text).trim();
+  if (!words) throw new Error("Type what the voice says.");
+  const style = v.styles && o.style && (ACTING_STYLES as readonly string[]).includes(o.style) ? o.style : "";
+  const pace = /^[+-]\d{1,2}%$/.test(o.rate ?? "") ? o.rate : "+0%";
+  const body =
+    `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="en-US"><voice name="${esc(voice)}">` +
+    (style ? `<mstts:express-as style="${style}" styledegree="1.3">` : "") +
+    `<prosody rate="${pace}">${esc(words)}</prosody>` +
+    (style ? "</mstts:express-as>" : "") +
+    "</voice></speak>";
+  const tts = await speech("tts");
+  const res = await fetch(tts.url, {
+    method: "POST",
+    headers: { ...tts.headers, "Content-Type": "application/ssml+xml", "X-Microsoft-OutputFormat": "riff-48khz-16bit-mono-pcm", "User-Agent": "ghost-post" },
+    body,
+    signal: AbortSignal.timeout(180_000),
+  });
+  if (!res.ok) throw new Error(`Azure voice failed (${res.status}): ${(await res.text()).slice(0, 200) || "check the Azure AI key and region in Admin"}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
 export interface PresenterInput {
   script: string;
   voice: string;

@@ -216,6 +216,53 @@ export async function ownClip(o: OwnClipRequest): Promise<Buffer> {
 }
 
 /**
+ * The clip engine's queue and limits, for callers that keep many clips in flight (the Episode Studio). `queue` counts
+ * the clips waiting behind the one rendering. Wakes the machine when it's switched off.
+ */
+export async function ownClipEngineInfo(): Promise<{ ready: boolean; queue: number; maxSeconds: number; quality: string; device: string }> {
+  const e = await need("clips");
+  const i = await call<{ ready?: boolean; queue?: number; max_seconds?: number; quality?: string; device?: string }>(e, "/v1/info");
+  return { ready: !!i.ready, queue: Number(i.queue ?? 0), maxSeconds: Number(i.max_seconds ?? ENGINE_CLIP_SECONDS), quality: String(i.quality ?? ""), device: String(i.device ?? "") };
+}
+
+/** Starts one clip and returns its job id (see ownClipStatus / ownClipFile). */
+export async function ownClipSubmit(o: OwnClipRequest & { negative?: string; seed?: number; steps?: number; maxSeconds?: number }): Promise<string> {
+  const e = await need("clips");
+  const job = await call<{ id: string }>(e, "/v1/videos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt: o.prompt.slice(0, 4000),
+      negative_prompt: o.negative?.slice(0, 2000),
+      image: o.start ? `data:${o.start.mime};base64,${o.start.bytes.toString("base64")}` : undefined,
+      aspect: o.aspect,
+      seconds: Math.max(1, Math.min(o.maxSeconds ?? ENGINE_CLIP_SECONDS, o.seconds)),
+      steps: o.steps,
+      seed: o.seed,
+    }),
+  });
+  return job.id;
+}
+
+/** A submitted clip's state; "gone" when the engine no longer knows the job (it restarted, or dropped the result). */
+export async function ownClipStatus(id: string): Promise<{ status: "queued" | "running" | "succeeded" | "failed" | "gone"; progress: number; error?: string }> {
+  const e = await need("clips");
+  try {
+    const s = await call<{ status: string; progress?: number; error?: string | null }>(e, `/v1/videos/${encodeURIComponent(id)}`);
+    const status = (["queued", "running", "succeeded", "failed"].includes(s.status) ? s.status : "queued") as "queued" | "running" | "succeeded" | "failed";
+    return { status, progress: Number(s.progress ?? 0), error: s.error ?? undefined };
+  } catch (err) {
+    if (/no such job/i.test((err as Error).message)) return { status: "gone", progress: 0 };
+    throw err;
+  }
+}
+
+/** The finished clip (MP4). */
+export async function ownClipFile(id: string): Promise<Buffer> {
+  return call<Buffer>(await need("clips"), `/v1/videos/${encodeURIComponent(id)}/file`, {}, true);
+}
+
+/**
  * Makes one picture on the engine (Qwen-Image), or, with reference pictures, an edit that keeps their people and
  * places (Qwen-Image-Edit): up to three cast portraits or photos. Returns the PNG.
  */

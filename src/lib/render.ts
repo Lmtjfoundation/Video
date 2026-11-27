@@ -654,9 +654,10 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
   try {
     if (!(await ffmpegAvailable())) throw new Error("Video rendering needs ffmpeg on the server. Install it (sudo apt-get install -y ffmpeg) and restart.");
     const long = plan.length === "long";
-    // Motion graphics only (src/lib/product.ts): 4K, 2160×3840 vertical or 3840×2160 widescreen.
-    const [W, H] = videoSize(long);
-    await setRender(post, { status: "rendering", progress: 2, message: MOTION_ONLY ? "Preparing 4K motion graphics…" : "Preparing scenes…" });
+    // Motion graphics (src/lib/product.ts) are drawn in 4K, 2160×3840 vertical or 3840×2160 widescreen; filmed videos in full HD.
+    const motionOnly = MOTION_ONLY || plan.visuals === "motion";
+    const [W, H] = videoSize(long, motionOnly);
+    await setRender(post, { status: "rendering", progress: 2, message: motionOnly ? "Preparing 4K motion graphics…" : "Preparing scenes…" });
 
     // User media to use as visuals (skip previously rendered outputs).
     const media: MediaItem[] = [];
@@ -680,8 +681,7 @@ export async function renderVideoPost(userId: string, postId: string, credits = 
       await fs.writeFile(recording, await readFile(m));
     }
     const voice = !recording && plan.voiceover !== false && (plan.narrator?.kind === "engine" || plan.narrator?.kind === "azure" || !!(await elevenlabsKey()) || freeVoiceEnabled());
-    // Motion graphics only: every scene is drawn by the motion-graphics engine (no AI pictures, clips or stock footage).
-    const motionOnly = MOTION_ONLY || plan.visuals === "motion";
+    // Motion graphics: every scene is drawn by the motion-graphics engine (no AI pictures, clips or stock footage).
     const jobs: SceneJob[] = [];
     const planned = renderableScenes(plan);
     const scenes = planned.map((p) => p.scene);

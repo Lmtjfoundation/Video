@@ -6,12 +6,12 @@ import { describe, expect, it, vi } from "vitest";
 import type { Post, VideoScene } from "@/lib/types";
 
 /**
- * Vueio makes motion graphics only, in 4K (src/lib/product.ts, the default): no cinematic tools in the menus, their
- * pages and API routes closed, and every video drawn by the motion-graphics engine at 2160×3840 or 3840×2160 even when
- * its plan asks for AI pictures, AI clips or the person's own footage.
+ * Motion-graphics-only mode (src/lib/product.ts, built with NEXT_PUBLIC_VUEIO_CINEMATIC=off): no cinematic tools in the
+ * menus, their pages and API routes closed, and every video drawn by the motion-graphics engine at 2160×3840 or
+ * 3840×2160 even when its plan asks for AI pictures, AI clips or the person's own footage.
  */
 vi.hoisted(() => {
-  delete process.env.NEXT_PUBLIC_VUEIO_CINEMATIC;
+  process.env.NEXT_PUBLIC_VUEIO_CINEMATIC = "off";
 });
 
 const hasFfmpeg = (() => {

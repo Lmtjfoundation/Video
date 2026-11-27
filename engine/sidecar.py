@@ -38,6 +38,7 @@ class Job:
     file: str | None = None
     meta: dict = field(default_factory=dict)
     created: float = field(default_factory=time.time)
+    finished: float | None = None  # results are kept for 3 hours after this, not after `created`
 
 
 def decode_file(b64: str, path: str, what: str) -> str:
@@ -71,7 +72,7 @@ def create_app(name: str, prefix: str, req_model: type[BaseModel], run: Callable
     def cleanup() -> None:
         cutoff = time.time() - KEEP_SECONDS
         with lock:
-            for jid in [j.id for j in jobs.values() if j.created < cutoff and j.status in ("succeeded", "failed")]:
+            for jid in [j.id for j in jobs.values() if (j.finished or j.created) < cutoff and j.status in ("succeeded", "failed")]:
                 job = jobs.pop(jid)
                 import shutil
 
@@ -85,10 +86,10 @@ def create_app(name: str, prefix: str, req_model: type[BaseModel], run: Callable
             job.status = "running"
             try:
                 job.file = run(job)
-                job.status, job.progress = "succeeded", 1.0
+                job.status, job.progress, job.finished = "succeeded", 1.0, time.time()
             except Exception as e:  # noqa: BLE001
                 log.exception("Job %s failed", job.id)
-                job.status, job.error = "failed", f"{type(e).__name__}: {e}"[:500]
+                job.status, job.error, job.finished = "failed", f"{type(e).__name__}: {e}"[:500], time.time()
                 try:
                     import torch
 

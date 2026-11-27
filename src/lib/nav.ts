@@ -15,6 +15,7 @@ export const SECTIONS: Section[] = [
     blurb: "Pick what you want to make. Start here has the most-used; everything else is below.",
     tools: [
       // Start here: the five things most people come to make, each one tap away.
+      { group: "Start here", href: "/episodes", label: "Episode Studio", icon: ListVideo, blurb: "Type a premise. Get a finished episode: a recurring cast, filmed shots, acted voices, lip sync, score, titles and captions." },
       { group: "Start here", href: "/video-lab", label: "Video Lab", icon: FlaskConical, blurb: "Describe a video. AI writes every shot and films it with camera moves, effects, voice and music." },
       { group: "Start here", href: "/story-video", label: "Pitch to Movie", icon: Clapperboard, blurb: "Type a one-line pitch. Get a narrated, finished movie with pictures, voice and music." },
       { group: "Start here", href: "/video-tools?tab=music", label: "Music Video", icon: Music2, blurb: "Add your song, describe the look. Get a video cut to the beat." },

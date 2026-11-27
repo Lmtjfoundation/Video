@@ -277,6 +277,9 @@ class Job:
     error: str | None = None
     file: str | None = None
     created: float = field(default_factory=time.time)
+    # When it succeeded or failed. Results are kept for KEEP_SECONDS after this, not after `created`: a clip that
+    # waited hours in a long queue must still be there for the app to download when it finishes.
+    finished: float | None = None
 
 
 def sdxl_prompts(text: str) -> tuple[str, str]:
@@ -392,7 +395,7 @@ class Engine:
             while not self.ready and not self.load_error:
                 time.sleep(2)
             if self.load_error:
-                job.status, job.error = "failed", f"The model couldn't load: {self.load_error}"
+                job.status, job.error, job.finished = "failed", f"The model couldn't load: {self.load_error}", time.time()
                 continue
             job.status = "running"
             try:
@@ -402,10 +405,10 @@ class Engine:
                     job.file = self.edit_video(job)
                 else:
                     job.file = self.render(job)
-                job.status, job.progress = "succeeded", 1.0
+                job.status, job.progress, job.finished = "succeeded", 1.0, time.time()
             except Exception as e:  # noqa: BLE001
                 log.exception("Job %s failed", job.id)
-                job.status, job.error = "failed", f"{type(e).__name__}: {e}"[:500]
+                job.status, job.error, job.finished = "failed", f"{type(e).__name__}: {e}"[:500], time.time()
                 if self.device == "cuda":
                     # A clip that failed part-way leaves its models on the GPU; with offloading they go back to memory.
                     for pipe in (self.t2v, self.i2v) if self.offload else ():
@@ -749,7 +752,7 @@ class Engine:
     def cleanup(self) -> None:
         cutoff = time.time() - KEEP_SECONDS
         with self.lock:
-            for jid in [j.id for j in self.jobs.values() if j.created < cutoff and j.status in ("succeeded", "failed")]:
+            for jid in [j.id for j in self.jobs.values() if (j.finished or j.created) < cutoff and j.status in ("succeeded", "failed")]:
                 job = self.jobs.pop(jid)
                 if job.file and os.path.exists(job.file):
                     os.remove(job.file)
@@ -899,7 +902,7 @@ def create(req: VideoRequest) -> dict:
 def status(job_id: str) -> dict:
     job = engine.jobs.get(job_id)
     if not job:
-        raise HTTPException(404, "No such job (finished clips are kept for 3 hours).")
+        raise HTTPException(404, "No such job (finished clips are kept for 3 hours after they finish).")
     return {"id": job.id, "status": job.status, "progress": round(job.progress, 3), "error": job.error}
 
 

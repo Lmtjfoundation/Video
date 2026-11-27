@@ -62,7 +62,8 @@ export default function Studio() {
   const [faceless, setFaceless] = useState(true);
   const [renderNow, setRenderNow] = useState(false);
   const [voiceover, setVoiceover] = useState(true);
-  const [motion, setMotion] = useState(MOTION_ONLY);
+  // 4K motion graphics stay the default; switching them off films the video with AI scenes instead.
+  const [motion, setMotion] = useState(true);
   const [autoPost, setAutoPost] = useState(false);
   const [placement, setPlacement] = useState<Placement>("auto");
   const [account, setAccount] = useState("");
@@ -326,7 +327,7 @@ export default function Studio() {
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-[13px] font-medium text-white">Motion graphics</p>
-                        <p className="text-xs text-white/50">Animated shapes and kinetic words in every scene, instead of stock footage. Free.</p>
+                        <p className="text-xs text-white/50">4K animated shapes and kinetic words in every scene. Off: filmed AI scenes and stock footage in full HD.</p>
                       </div>
                       <Switch checked={motion} onChange={setMotion} label="Motion graphics" />
                     </div>
@@ -642,7 +643,7 @@ function AudioPanel(p: {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[13px] font-medium text-white">Motion graphics</p>
-              <p className="text-xs text-white/50">Animated shapes and kinetic words instead of stock footage. Free.</p>
+              <p className="text-xs text-white/50">4K animated shapes and kinetic words. Off: filmed AI scenes and stock footage in full HD.</p>
             </div>
             <Switch checked={p.motion} onChange={p.setMotion} label="Motion graphics" />
           </div>

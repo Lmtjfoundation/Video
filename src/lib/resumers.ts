@@ -7,3 +7,5 @@ import { longVideoJob } from "./video-lab-long";
 import type { LongJobInput } from "./video-lab";
 registerResumer("video-lab-long", (userId, input) => longVideoJob(userId, input as LongJobInput));
 registerResumer("movie-maker", (userId, input) => movieJob(userId, input as RenderInput & { credits: number }));
+import { episodeJob } from "./episode-studio/run";
+registerResumer("episode-studio", (userId, input) => episodeJob(userId, input as { id: string }));

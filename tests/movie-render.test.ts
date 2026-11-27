@@ -199,7 +199,8 @@ describe.skipIf(!hasFfmpeg)("rendering a movie with AI pictures and a Gemini cli
         const mp4 = path.join(dir, "cast.mp4");
         (await import("node:fs")).writeFileSync(mp4, await readFile(item!));
         // Centre of the card, one second in (after it has slid in): the portrait's red shows through in scene 1 only.
-        const pixel = (t: number) => execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-ss", String(t), "-i", mp4, "-vf", "crop=4:4:538:686,scale=1:1", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]);
+        // Motion graphics are drawn in 4K (2160×3840), so the card sits at twice its full-HD position.
+        const pixel = (t: number) => execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-ss", String(t), "-i", mp4, "-vf", "crop=8:8:1076:1372,scale=1:1", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]);
         const [r, g, b] = pixel(1);
         expect(r).toBeGreaterThan(180);
         expect(g + b).toBeLessThan(120);
